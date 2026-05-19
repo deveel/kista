@@ -31,6 +31,27 @@ dotnet add package Deveel.Repository.DynamicLinq
 
 Once installed, filterable and queryable repositories automatically accept string-based filter expressions in addition to the usual lambda-based ones.
 
+### Filter Expression Cache
+
+For production workloads where the same filter shapes are executed repeatedly, the framework includes a **bounded, thread-safe expression cache** that eliminates redundant parsing and compilation overhead. The cache uses LRU eviction with a configurable maximum size and exposes hit/miss statistics for monitoring.
+
+Enable it with a single DI registration:
+
+```csharp
+builder.Services.AddFilterCache(maxCapacity: 2048);
+```
+
+Once registered, the cache is resolved automatically by `DynamicLinqFilter` when the repository is constructed with an `IServiceProvider`. No manual passing is required:
+
+```csharp
+var filter = new DynamicLinqFilter("x.Status == \"Active\"");
+var results = await repository.FindAllAsync(filter);
+```
+
+If you need to override the DI-registered cache for a specific query, you can still pass it manually — the constructor-provided cache takes precedence.
+
+See the [Filter Cache documentation](../filtering/filter-cache.md) for the full automatic resolution mechanism, configuration guidance, monitoring integration, and benchmark results.
+
 ## Design Pattern: Separation of Data Logic
 
 One of the most valuable aspects of using a Repository pattern is that it allows you to express data access requirements at the **domain level** and swap the underlying implementation without changing any application code.

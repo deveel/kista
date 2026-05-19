@@ -44,11 +44,15 @@ namespace Deveel.Data
 		/// <param name="userAccessor">
 		/// A service used to get the current user context.
 		/// </param>
+		/// <param name="services">
+		/// An optional service provider used to resolve infrastructure services
+		/// such as expression caches for filter initialization.
+		/// </param>
 		/// <param name="logger">
 		/// A logger used to log the operations of the repository.
 		/// </param>
-		public EntityUserRepository(DbContext context, IUserAccessor<TUserKey> userAccessor, ILogger<EntityUserRepository<TEntity, object, TUserKey>>? logger = null) 
-			: base(context, userAccessor, logger)
+		public EntityUserRepository(DbContext context, IUserAccessor<TUserKey> userAccessor, IServiceProvider? services = null, ILogger<EntityUserRepository<TEntity, object, TUserKey>>? logger = null) 
+			: base(context, userAccessor, services, logger)
 		{
 		}
 	}

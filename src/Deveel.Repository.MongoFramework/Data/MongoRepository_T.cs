@@ -41,7 +41,11 @@ namespace Deveel.Data {
 		/// <param name="logger">
 		/// A logger instance that is used to log messages from the repository.
 		/// </param>
-		protected internal MongoRepository(IMongoDbContext context, ILogger? logger = null) : base(context, logger) {
+		/// <param name="services">
+		/// An optional service provider used to resolve infrastructure services
+		/// such as expression caches for filter optimization.
+		/// </param>
+		protected internal MongoRepository(IMongoDbContext context, ILogger? logger = null, IServiceProvider? services = null) : base(context, logger, services) {
 		}
 
 		/// <summary>
@@ -53,8 +57,12 @@ namespace Deveel.Data {
 		/// <param name="logger">
 		/// A logger instance that is used to log messages from the repository.
 		/// </param>
-		public MongoRepository(IMongoDbContext context, ILogger<MongoRepository<TEntity>>? logger = null)
-			: base(context, logger) {
+		/// <param name="services">
+		/// An optional service provider used to resolve infrastructure services
+		/// such as expression caches for filter optimization.
+		/// </param>
+		public MongoRepository(IMongoDbContext context, ILogger<MongoRepository<TEntity>>? logger = null, IServiceProvider? services = null)
+			: base(context, logger, services) {
 		}
 
 		IQueryable<TEntity> IQueryableRepository<TEntity, object>.AsQueryable() => DbSet.AsQueryable();

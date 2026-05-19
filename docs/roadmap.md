@@ -21,7 +21,7 @@ See the [full roadmap](../ROADMAP.md) for detailed feature descriptions, timelin
 **Release Target:** Q2 2026  
 **Theme:** Correctness, coherence, and runtime modernization
 
-Features: Package Namespace Correction, Thread-Safe In-Memory Repository, Expression Compilation Cache, Full .NET 10 Compatibility and Benchmark Baseline, XML Documentation Completeness, Conversion to ValueTask Results, General Performance Optimizations.
+Features: Package Namespace Correction, Thread-Safe In-Memory Repository, Expression Compilation Cache (✅ completed), Full .NET 10 Compatibility and Benchmark Baseline, XML Documentation Completeness, Conversion to ValueTask Results, General Performance Optimizations.
 
 ## Milestone 2: v1.6.0 — "Developer Flow"
 

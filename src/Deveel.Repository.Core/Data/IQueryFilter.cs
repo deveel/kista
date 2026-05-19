@@ -19,6 +19,53 @@ namespace Deveel.Data {
 	/// A marker interface that is implemented by objects
 	/// representing filters of a query to a repository
 	/// </summary>
+	/// <remarks>
+	/// <para>
+	/// Implementations can override <see cref="Initialize"/> to receive a
+	/// <see cref="IFilterContext"/> before the filter is applied to a query.
+	/// This allows filters to resolve supporting infrastructure services
+	/// such as expression caches from the repository's service provider.
+	/// </para>
+	/// <para>
+	/// The default implementation of <see cref="Initialize"/> is a no-op,
+	/// so existing filter implementations continue to work without modification.
+	/// </para>
+	/// </remarks>
+	/// <seealso cref="IFilterContext"/>
+	/// <seealso cref="IExpressionQueryFilter"/>
+	/// <seealso cref="IQueryableFilter{TEntity}"/>
 	public interface IQueryFilter {
+		/// <summary>
+		/// Initializes the filter with the given context before it is applied
+		/// to a query.
+		/// </summary>
+		/// <param name="context">
+		/// The filter context providing access to the repository's service
+		/// provider and other infrastructure services.
+		/// </param>
+		/// <remarks>
+		/// <para>
+		/// This method is called by repository implementations immediately
+		/// before applying the filter to a query. Filters can use this opportunity
+		/// to resolve services such as <see cref="IExpressionCache"/> or
+		/// <see cref="IFilterCache"/> that enable optimizations like expression caching.
+		/// </para>
+		/// <para>
+		/// The default implementation does nothing. Override this method only
+		/// when the filter needs to resolve services from the context.
+		/// </para>
+		/// </remarks>
+		/// <example>
+		/// <code>
+		/// public class MyFilter : IQueryFilter {
+		///     private IExpressionCache? _cache;
+		/// 
+		///     public void Initialize(IFilterContext context) {
+		///         _cache = context.Services.GetService&lt;IExpressionCache&gt;();
+		///     }
+		/// }
+		/// </code>
+		/// </example>
+		void Initialize(IFilterContext context) { }
 	}
 }

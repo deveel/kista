@@ -14,11 +14,31 @@
 
 using System.Linq.Dynamic.Core;
 using System.Linq.Expressions;
+using System.Text;
 
 namespace Deveel.Data {
 	/// <summary>
-	/// Provides helpers to create and evaluate filter expressions
+	/// Provides helper methods for creating, parsing, and compiling dynamic LINQ
+	/// filter expressions from string representations.
 	/// </summary>
+	/// <remarks>
+	/// <para>
+	/// This class bridges the <c>System.Linq.Dynamic.Core</c> library with the
+	/// repository framework, converting expression strings into typed
+	/// <see cref="Expression{TDelegate}"/> predicates or compiled
+	/// <see cref="Delegate"/> instances.
+	/// </para>
+	/// <para>
+	/// The <see cref="AsLambda{T}(string, string)"/> and <see cref="Compile(Type[], string[], string)"/> methods
+	/// invoke <c>DynamicExpressionParser.ParseLambda</c> on each call. For scenarios
+	/// where the same expression string is used repeatedly, use the overloads that accept
+	/// an <see cref="IExpressionCache"/> or <see cref="IFilterCache"/> to avoid the
+	/// parsing and compilation overhead.
+	/// </para>
+	/// </remarks>
+	/// <seealso cref="IExpressionCache"/>
+	/// <seealso cref="IFilterCache"/>
+	/// <seealso cref="DynamicLinqFilter"/>
 	public static class FilterExpression {
 		/// <summary>
 		/// Converts the given expression string into a <see cref="LambdaExpression"/>
@@ -53,6 +73,72 @@ namespace Deveel.Data {
 			} catch (Exception ex) {
 				throw new InvalidOperationException("Could not create the lambda expression", ex);
 			}
+		}
+
+		/// <summary>
+		/// Converts the given expression string into a <see cref="LambdaExpression"/>,
+		/// using the provided cache to avoid re-parsing of identical expressions.
+		/// </summary>
+		/// <typeparam name="T">
+		/// The type of the object to be filtered.
+		/// </typeparam>
+		/// <param name="cache">
+		/// An <see cref="IExpressionCache"/> used to store and retrieve parsed expressions.
+		/// When <c>null</c>, this method behaves identically to <see cref="AsLambda{T}(string, string)"/>.
+		/// </param>
+		/// <param name="paramName">
+		/// The name of the parameter to be used in the expression.
+		/// </param>
+		/// <param name="expression">
+		/// The LINQ expression string to be parsed.
+		/// </param>
+		/// <returns>
+		/// An <see cref="Expression{TDelegate}"/> of type <c>Func{T, bool}</c> that can be used as a filter
+		/// in a <see cref="System.Linq.Queryable.Where{TSource}(System.Linq.IQueryable{TSource}, Expression{Func{TSource, bool}})"/> call.
+		/// </returns>
+		/// <exception cref="InvalidOperationException">
+		/// Thrown when the resulting expression is not a filter (the
+		/// result type is not <see cref="bool"/>), or when the expression
+		/// string cannot be parsed.
+		/// </exception>
+		/// <remarks>
+		/// <para>
+		/// The cache key is a composite of the entity type's full name, the parameter name,
+		/// and the expression text, separated by pipe characters. This ensures that expressions
+		/// for different entity types or parameter names do not collide in the cache.
+		/// </para>
+		/// <para>
+		/// On a cache miss, the expression is parsed using
+		/// <see cref="AsLambda{T}(string, string)"/> and the result is stored in the cache
+		/// before being returned. Subsequent calls with the same type, parameter name, and
+		/// expression string will retrieve the cached expression.
+		/// </para>
+		/// </remarks>
+		/// <seealso cref="IExpressionCache"/>
+		/// <seealso cref="AsLambda{T}(string, string)"/>
+		public static Expression<Func<T, bool>> AsLambda<T>(IExpressionCache? cache, string paramName, string expression) {
+			if (cache == null)
+				return AsLambda<T>(paramName, expression);
+
+			var cacheKey = BuildCacheKey<T>(paramName, expression);
+
+			if (cache.TryGet(cacheKey, out var cached)) {
+				return (Expression<Func<T, bool>>)cached!;
+			}
+
+			var result = AsLambda<T>(paramName, expression);
+			cache.Set(cacheKey, result);
+			return result;
+		}
+
+		private static string BuildCacheKey<T>(string paramName, string expression) {
+			var sb = new StringBuilder(typeof(T).FullName!.Length + paramName.Length + expression.Length + 4);
+			sb.Append(typeof(T).FullName);
+			sb.Append('|');
+			sb.Append(paramName);
+			sb.Append('|');
+			sb.Append(expression);
+			return sb.ToString();
 		}
 
 		#region Compile

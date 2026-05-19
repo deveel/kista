@@ -11,17 +11,20 @@ internal sealed record DriverSelection(
 	private static readonly Type[] InMemoryBenchmarks = [typeof(InMemoryRepositoryBenchmarks)];
 	private static readonly Type[] EntityFrameworkBenchmarks = [typeof(EfRepositoryBenchmarks)];
 	private static readonly Type[] MongoBenchmarks = [typeof(MongoRepositoryBenchmarks)];
+	private static readonly Type[] DynamicLinqBenchmarks = [typeof(DynamicLinqFilterCacheBenchmarks)];
 	private static readonly Type[] AllBenchmarks =
 	[
 		typeof(InMemoryRepositoryBenchmarks),
 		typeof(EfRepositoryBenchmarks),
-		typeof(MongoRepositoryBenchmarks)
+		typeof(MongoRepositoryBenchmarks),
+		typeof(DynamicLinqFilterCacheBenchmarks)
 	];
 
 	public Type[] BenchmarkTypes => Driver switch {
 		BenchmarkDriver.InMemory => InMemoryBenchmarks,
 		BenchmarkDriver.EntityFramework => EntityFrameworkBenchmarks,
 		BenchmarkDriver.Mongo => MongoBenchmarks,
+		BenchmarkDriver.DynamicLinq => DynamicLinqBenchmarks,
 		_ => AllBenchmarks
 	};
 
@@ -107,6 +110,7 @@ internal sealed record DriverSelection(
 		writer.WriteLine("  --driver in-memory");
 		writer.WriteLine("  --driver ef");
 		writer.WriteLine("  --driver mongo");
+		writer.WriteLine("  --driver dynamic-linq");
 		writer.WriteLine("  --driver all");
 		writer.WriteLine("  /driver:in-memory");
 		writer.WriteLine("  --export markdown,csv,html,plain");
@@ -122,6 +126,7 @@ internal sealed record DriverSelection(
 		writer.WriteLine("  dotnet run -c Release --framework net8.0 --project benchmarks/repobench/repobench.csproj -- --driver ef --filter '*FindAsync_ByKey*'");
 		writer.WriteLine("  dotnet run -c Release --framework net8.0 --project benchmarks/repobench/repobench.csproj -- /driver:mongo --list flat");
 		writer.WriteLine("  dotnet run -c Release --framework net8.0 --project benchmarks/repobench/repobench.csproj -- --driver in-memory --output docs/benchmarks/in-memory.md");
+		writer.WriteLine("  dotnet run -c Release --framework net8.0 --project benchmarks/repobench/repobench.csproj -- --driver dynamic-linq");
 	}
 
 	private static List<BenchmarkExportFormat> NormalizeExportFormats(IEnumerable<BenchmarkExportFormat> exportFormats) {
@@ -197,6 +202,7 @@ internal sealed record DriverSelection(
 			"in-memory" or "inmemory" or "memory" => BenchmarkDriver.InMemory,
 			"ef" or "entityframework" or "entity-framework" => BenchmarkDriver.EntityFramework,
 			"mongo" or "mongodb" => BenchmarkDriver.Mongo,
+			"dynamiclinq" or "dynamic-linq" or "dlinq" => BenchmarkDriver.DynamicLinq,
 			"all" => BenchmarkDriver.All,
 			_ => throw new ArgumentException($"Unsupported benchmark driver '{value}'.")
 		};

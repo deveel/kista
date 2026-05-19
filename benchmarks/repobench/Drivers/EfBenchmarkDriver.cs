@@ -17,7 +17,7 @@ internal sealed class EfBenchmarkDriver : IRepositoryBenchmarkDriver<EfBenchPers
 		_repository ?? throw new InvalidOperationException("The Entity Framework repository was not initialized.");
 
 	public void Initialize() {
-		_container = new MySqlBuilder()
+		_container = new MySqlBuilder("mongo:6.0")
 			.WithDatabase("benchdb")
 			.WithUsername("benchmark")
 			.WithPassword("benchmark")

@@ -74,6 +74,12 @@ namespace Deveel.Data {
 		}
 
 		/// <inheritdoc/>
+		public void Initialize(IFilterContext context) {
+			foreach (var filter in filters)
+				filter.Initialize(context);
+		}
+
+		/// <inheritdoc/>
 		public Expression<Func<TEntity, bool>> AsLambda<TEntity>()
 			where TEntity : class {
 

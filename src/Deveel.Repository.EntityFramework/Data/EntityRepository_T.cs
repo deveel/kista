@@ -37,11 +37,15 @@ namespace Deveel.Data {
 		/// <param name="context">
 		/// The <see cref="DbContext"/> used to access the data of the entities.
 		/// </param>
+		/// <param name="services">
+		/// An optional service provider used to resolve infrastructure services
+		/// such as expression caches for filter initialization.
+		/// </param>
 		/// <param name="logger">
 		/// A logger used to log the operations of the repository.
 		/// </param>
-        public EntityRepository(DbContext context, ILogger<EntityRepository<TEntity>>? logger = null)
-            : base(context, logger) {
+        public EntityRepository(DbContext context, IServiceProvider? services = null, ILogger<EntityRepository<TEntity>>? logger = null)
+            : base(context, services, logger) {
         }
 	}
 }

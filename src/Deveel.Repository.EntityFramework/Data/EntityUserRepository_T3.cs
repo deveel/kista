@@ -42,13 +42,17 @@ namespace Deveel.Data
 		/// <param name="userAccessor">
 		/// A service used to get the current user context.
 		/// </param>
+		/// <param name="services">
+		/// An optional service provider used to resolve infrastructure services
+		/// such as expression caches for filter initialization.
+		/// </param>
 		/// <param name="logger">
 		/// A logger used to log the operations of the repository.
 		/// </param>
 		/// <exception cref="ArgumentNullException">
 		/// Thrown when the given <paramref name="userAccessor"/> is <c>null</c>.
 		/// </exception>
-		public EntityUserRepository(DbContext context, IUserAccessor<TUserKey> userAccessor, ILogger<EntityUserRepository<TEntity, TKey, TUserKey>>? logger = null) : base(context, logger)
+		public EntityUserRepository(DbContext context, IUserAccessor<TUserKey> userAccessor, IServiceProvider? services = null, ILogger<EntityUserRepository<TEntity, TKey, TUserKey>>? logger = null) : base(context, services, logger)
 		{
 			ArgumentNullException.ThrowIfNull(userAccessor, nameof(userAccessor));
 			UserAccessor = userAccessor;

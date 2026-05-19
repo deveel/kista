@@ -24,7 +24,7 @@ internal sealed class MongoBenchmarkDriver : IRepositoryBenchmarkDriver<MongoBen
 		_repository ?? throw new InvalidOperationException("The Mongo repository was not initialized.");
 
 	public void Initialize() {
-		_container = new MongoDbBuilder()
+		_container = new MongoDbBuilder("mongo:6.0")
 			.WithUsername(String.Empty)
 			.WithPassword(String.Empty)
 			.Build();

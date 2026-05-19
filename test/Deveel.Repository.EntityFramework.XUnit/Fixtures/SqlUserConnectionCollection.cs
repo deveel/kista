@@ -1,7 +1,14 @@
 ﻿namespace Deveel.Data
 {
 	[CollectionDefinition(nameof(SqlUserConnectionCollection))]
-	public class SqlUserConnectionCollection : SqlConnectionCollection
+	public class SqlUserConnectionCollection : ICollectionFixture<SqlUserTestConnection>
 	{
+	}
+
+	public class SqlUserTestConnection : SqlTestConnection
+	{
+		public SqlUserTestConnection() : base("deveel-user-test")
+		{
+		}
 	}
 }

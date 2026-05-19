@@ -9,16 +9,16 @@ namespace Deveel.Data;
 [Trait("Category", "Integration")]
 [Trait("Layer", "Infrastructure")]
 [Trait("Feature", "UserRepository")]
-public class UserEntityRepositoryTestSuite : UserRepositoryTestSuite<DbBookWithOwner, Guid, string>
-{
-	private readonly SqlTestConnection sql;
-
-	public UserEntityRepositoryTestSuite(ITestOutputHelper? outputHelper, SqlTestConnection sql) 
-		: base(outputHelper)
+	public class UserEntityRepositoryTestSuite : UserRepositoryTestSuite<DbBookWithOwner, Guid, string>
 	{
-		this.sql = sql;
-		BookFaker = new DbBookFaker(UserId);
-	}
+		private readonly SqlUserTestConnection sql;
+
+		public UserEntityRepositoryTestSuite(ITestOutputHelper? outputHelper, SqlUserTestConnection sql) 
+			: base(outputHelper)
+		{
+			this.sql = sql;
+			BookFaker = new DbBookFaker(UserId);
+		}
 
 	protected override Faker<DbBookWithOwner> BookFaker { get; }
     

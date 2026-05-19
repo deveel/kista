@@ -1,10 +1,7 @@
 ﻿using Bogus;
-
 using Microsoft.Extensions.DependencyInjection;
-
 using MongoDB.Bson;
 using MongoDB.Driver;
-
 using MongoFramework;
 
 namespace Deveel.Data;
@@ -61,5 +58,44 @@ public class MongoRepositoryTests : MongoRepositoryTestSuite<MongoPerson> {
 		for (int i = 0; i < sorted.Count; i++) {
 			Assert.Equal(sorted[i].FirstName, result.Items.ElementAt(i).FirstName);
 		}
+	}
+
+	[Fact]
+	public async Task Should_ReturnNull_When_FindByNonExistingId() {
+		// Arrange
+		var nonExistingId = ObjectId.GenerateNewId();
+
+		// Act
+		var result = await Repository.FindAsync(nonExistingId, TestContext.Current.CancellationToken);
+
+		// Assert
+		Assert.Null(result);
+	}
+
+	[Fact]
+	public async Task Should_AsQueryable_ReturnQueryable() {
+		// Arrange
+	 var queryableRepo = (IQueryableRepository<MongoPerson, ObjectId>)Repository;
+
+		// Act
+		var queryable = queryableRepo.AsQueryable();
+
+		// Assert
+		Assert.NotNull(queryable);
+		Assert.NotEmpty(queryable);
+	}
+
+	[Fact]
+	public async Task Should_GetEntityKey_When_PersonExists() {
+		// Arrange
+		var person = await RandomPersonAsync();
+		var keyedRepo = (IRepository<MongoPerson, ObjectId>)Repository;
+
+		// Act
+		var key = keyedRepo.GetEntityKey(person);
+
+		// Assert
+		Assert.NotNull(key);
+		Assert.Equal(person.Id, key);
 	}
 }

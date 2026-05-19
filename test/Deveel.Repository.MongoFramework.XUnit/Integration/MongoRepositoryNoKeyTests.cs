@@ -1,10 +1,7 @@
 ﻿using Bogus;
-
 using Microsoft.Extensions.DependencyInjection;
-
 using MongoDB.Bson;
 using MongoDB.Driver;
-
 using MongoFramework;
 
 namespace Deveel.Data;
@@ -61,5 +58,31 @@ public class MongoRepositoryNoKeyTests : MongoRepositoryNoKeyTestSuite<MongoPers
 		for (int i = 0; i < sorted.Count; i++) {
 			Assert.Equal(sorted[i].FirstName, result.Items.ElementAt(i).FirstName);
 		}
+	}
+
+	[Fact]
+	public async Task Should_AsQueryable_ReturnQueryable() {
+		// Arrange
+		var queryableRepo = (IQueryableRepository<MongoPerson, object>)Repository;
+
+		// Act
+		var queryable = queryableRepo.AsQueryable();
+
+		// Assert
+		Assert.NotNull(queryable);
+		Assert.NotEmpty(queryable);
+	}
+
+	[Fact]
+	public async Task Should_GetEntityKey_ViaInterface() {
+		// Arrange
+		var person = await RandomPersonAsync();
+		var keyedRepo = (IRepository<MongoPerson, object>)Repository;
+
+		// Act
+		var key = keyedRepo.GetEntityKey(person);
+
+		// Assert
+		Assert.NotNull(key);
 	}
 }

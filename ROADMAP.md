@@ -100,6 +100,8 @@ The DynamicLinq driver recompiles filter expressions on every query invocation. 
 - Observable behavior — cache statistics are ready to be scraped by monitoring dashboards
 - No behavioral change for query results; only compilation is cached, not result sets
 
+**Status:** ✅ Completed. See [Filter Cache documentation](docs/dynamic-linq/filter-cache.md).
+
 ---
 
 ### Feature — Full .NET 10 Compatibility and Benchmark Baseline

@@ -39,9 +39,14 @@ namespace Deveel.Data {
 		/// A service that maps a field by name to an expression that
 		/// can select the field from an entity.
 		/// </param>
+		/// <param name="services">
+		/// An optional service provider used to resolve infrastructure services
+		/// such as expression caches for filter optimization.
+		/// </param>
 		public InMemoryRepository(
 			IEnumerable<TEntity>? list = null,
-			IFieldMapper<TEntity>? fieldMapper = null) : base(list, fieldMapper) {
+			IFieldMapper<TEntity>? fieldMapper = null,
+			IServiceProvider? services = null) : base(list, fieldMapper, services) {
 		}
 
 		/// <summary>

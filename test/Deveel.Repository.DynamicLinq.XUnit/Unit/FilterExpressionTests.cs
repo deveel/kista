@@ -78,5 +78,7 @@ public class FilterExpressionTests {
 
         public bool TryGet(string expression, out Delegate? lambda) =>
             _cache.TryGetValue(expression, out lambda);
+
+        public void Clear() => _cache.Clear();
     }
 }

@@ -11,6 +11,8 @@ To learn about the specific usage of the framework, you can read the following d
 | [_Using the Entity Framework Core Repository_](repository-implementations/ef-core.md) | Learn how to use the Repository pattern with [Entity Framework Core](https://github.com/dotnet/efcore) |
 | [_Using the MongoDB Repository_](repository-implementations/mongodb.md) | Accessing [MongoDB](https://mongodb.com) databases through the Repository pattern |
 | [_Using the In-Memory Repository_](repository-implementations/in-memory.md) | Interface a volatile and in-process storage using a Repository pattern. |
+| [_Filtering_](filtering/) | Expression-based and Dynamic LINQ filtering with automatic service resolution |
+| [_Filter Cache_](filtering/filter-cache.md) | Bounded expression caching for high-throughput Dynamic LINQ queries |
 | [_The Entity Manager_](entity-manager/) | Provide your application with a business layer on top of the Repository for additional functions (_logging_, _validation_, _caching_, _event sourcing_, etc.) |
 | [_Extending the Repository_](custom-repository.md) | Learn how to create a custom repository to access your data source, according to your specific data logic |
 | [_Multi-Tenancy_](multi-tenancy.md) | Learn how to use the framework in a multi-tenant application |

@@ -3,8 +3,8 @@ using Microsoft.Extensions.Logging;
 
 namespace Deveel.Data.Entities {
 	public class DbPersonRepository : EntityRepository<DbPerson, Guid> {
-		public DbPersonRepository(PersonDbContext context, ILogger<EntityRepository<DbPerson, Guid>>? logger = null) 
-			: base(context, logger) {
+		public DbPersonRepository(PersonDbContext context, IServiceProvider? services = null, ILogger<EntityRepository<DbPerson, Guid>>? logger = null) 
+			: base(context, services, logger) {
 		}
 
 		public override IQueryable<DbPerson> AsQueryable() => base.Entities.Include(x => x.Relationships);

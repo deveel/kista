@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Deveel.Repository.InMemory\Deveel.Repository.InMemory.csproj" />
+    <ProjectReference Include="..\..\src\Deveel.Repository.DynamicLinq\Deveel.Repository.DynamicLinq.csproj" />
     <ProjectReference Include="..\Deveel.Repository.Testing\Deveel.Repository.Testing.csproj" />
   </ItemGroup>
 

@@ -27,6 +27,29 @@ namespace Deveel.Data {
 	/// </typeparam>
 	public interface IRepository<TEntity, TKey> where TEntity : class {
 		/// <summary>
+		/// Gets the service provider associated with this repository, if any.
+		/// </summary>
+		/// <value>
+		/// An <see cref="IServiceProvider"/> used to resolve infrastructure services
+		/// such as expression caches, or <c>null</c> if no service provider is available.
+		/// </value>
+		/// <remarks>
+		/// <para>
+		/// The default implementation returns <c>null</c>. Repository implementations
+		/// registered through dependency injection should expose their service provider
+		/// through this property so that filters can resolve supporting infrastructure
+		/// via <see cref="IFilterContext"/>.
+		/// </para>
+		/// <para>
+		/// This property is primarily used internally by the repository to initialize
+		/// filters before applying them to queries. Consumer code typically does not
+		/// need to access this property directly.
+		/// </para>
+		/// </remarks>
+		/// <seealso cref="IFilterContext"/>
+		IServiceProvider? Services => null;
+
+		/// <summary>
 		/// Gets the unique identifier of the entity given
 		/// </summary>
 		/// <param name="entity">

@@ -42,18 +42,23 @@ namespace Deveel.Data
 		where TEntity : class {
 		private bool disposedValue;
 
-		/// <summary>
-		/// Constructs the repository using the given <see cref="DbContext"/>.
-		/// </summary>
-		/// <param name="context">
-		/// The <see cref="DbContext"/> used to access the data of the entities.
-		/// </param>
-		/// <param name="logger">
-		/// A logger used to log the operations of the repository.
-		/// </param>
-		public EntityRepository(DbContext context, ILogger<EntityRepository<TEntity, TKey>>? logger = null) {
-			Context = context ?? throw new ArgumentNullException(nameof(context));
-			Logger = logger ?? NullLogger<EntityRepository<TEntity, TKey>>.Instance;
+	/// <summary>
+	/// Constructs the repository using the given <see cref="DbContext"/>.
+	/// </summary>
+	/// <param name="context">
+	/// The <see cref="DbContext"/> used to access the data of the entities.
+	/// </param>
+	/// <param name="services">
+	/// An optional service provider used to resolve infrastructure services
+	/// such as expression caches for filter initialization.
+	/// </param>
+	/// <param name="logger">
+	/// A logger used to log the operations of the repository.
+	/// </param>
+	public EntityRepository(DbContext context, IServiceProvider? services = null, ILogger<EntityRepository<TEntity, TKey>>? logger = null) {
+		Context = context ?? throw new ArgumentNullException(nameof(context));
+		Services = services;
+		Logger = logger ?? NullLogger<EntityRepository<TEntity, TKey>>.Instance;
 
 			var entityKey = Context.Model.FindEntityType(typeof(TEntity))?.FindPrimaryKey();
 
@@ -80,6 +85,9 @@ namespace Deveel.Data
 		/// </summary>
 		protected DbContext Context { get; private set; }
 
+		/// <inheritdoc />
+		public IServiceProvider? Services { get; }
+
 		/// <summary>
 		/// Gets a reference to the primary key of the entity.
 		/// </summary>
@@ -103,6 +111,11 @@ namespace Deveel.Data
 			Context.ChangeTracker.QueryTrackingBehavior != QueryTrackingBehavior.NoTracking;
 
 		bool ITrackingRepository<TEntity, TKey>.IsTrackingChanges => IsTrackingChanges;
+
+		private void InitializeFilter(IQueryFilter? filter) {
+			if (filter != null && Services != null)
+				filter.Initialize(new DefaultFilterContext(Services));
+		}
 
 		/// <summary>
 		/// Assesses if the repository has been disposed.
@@ -374,6 +387,7 @@ namespace Deveel.Data
 			ThrowIfDisposed();
 
 			try {
+				InitializeFilter(filter);
 				var query = AsQueryable().AsNoTracking();
 				query = ApplyFilter(query, filter);
 
@@ -401,6 +415,7 @@ namespace Deveel.Data
 			ThrowIfDisposed();
 
 			try {
+				InitializeFilter(filter);
 				var query = AsQueryable().AsNoTracking();
 				query = ApplyFilter(query, filter);
 
@@ -414,6 +429,7 @@ namespace Deveel.Data
 		/// <inheritdoc/>
 		public virtual async ValueTask<TEntity?> FindFirstAsync(IQuery query, CancellationToken cancellationToken = default) {
 			try {
+				InitializeFilter(query.Filter);
 				var result = EfQueryNormalizer.Normalize(query.Apply(AsQueryable()));
 
 				return await result.FirstOrDefaultAsync(cancellationToken);
@@ -465,6 +481,7 @@ namespace Deveel.Data
 		/// <inheritdoc/>
 		public virtual async ValueTask<IList<TEntity>> FindAllAsync(IQuery query, CancellationToken cancellationToken = default) {
 			try {
+				InitializeFilter(query.Filter);
 				var result = EfQueryNormalizer.Normalize(query.Apply(AsQueryable()));
 				return await result.ToListAsync(cancellationToken);
 			} catch (Exception ex) {

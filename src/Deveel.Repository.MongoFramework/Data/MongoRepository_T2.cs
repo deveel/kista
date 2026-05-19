@@ -57,9 +57,14 @@ namespace Deveel.Data {
 		/// <param name="logger">
 		/// A logger instance that is used to log messages from the repository.
 		/// </param>
-		protected internal MongoRepository(IMongoDbContext context, ILogger? logger = null) {
+		/// <param name="services">
+		/// An optional service provider used to resolve infrastructure services
+		/// such as expression caches for filter optimization.
+		/// </param>
+		protected internal MongoRepository(IMongoDbContext context, ILogger? logger = null, IServiceProvider? services = null) {
 			Context = context;
 			Logger = logger ?? NullLogger.Instance;
+			Services = services;
 		}
 
 		/// <summary>
@@ -71,8 +76,12 @@ namespace Deveel.Data {
 		/// <param name="logger">
 		/// A logger instance that is used to log messages from the repository.
 		/// </param>
-		public MongoRepository(IMongoDbContext context, ILogger<MongoRepository<TEntity, TKey>>? logger = null)
-			: this(context, (ILogger?)logger) {
+		/// <param name="services">
+		/// An optional service provider used to resolve infrastructure services
+		/// such as expression caches for filter optimization.
+		/// </param>
+		public MongoRepository(IMongoDbContext context, ILogger<MongoRepository<TEntity, TKey>>? logger = null, IServiceProvider? services = null)
+			: this(context, (ILogger?)logger, services) {
 		}
 
 		/// <summary>
@@ -90,6 +99,14 @@ namespace Deveel.Data {
 		/// Gets the <see cref="ILogger"/> instance that is used to log messages
 		/// </summary>
 		protected ILogger Logger { get; }
+
+		/// <inheritdoc />
+		public IServiceProvider? Services { get; }
+
+		private void InitializeFilter(IQueryFilter? filter) {
+			if (filter != null && Services != null)
+				filter.Initialize(new DefaultFilterContext(Services));
+		}
 
 		IQueryable<TEntity> IQueryableRepository<TEntity, TKey>.AsQueryable() => DbSet.AsQueryable();
 
@@ -630,6 +647,7 @@ namespace Deveel.Data {
 		/// <inheritdoc/>
 		public async ValueTask<TEntity?> FindFirstAsync(IQuery query, CancellationToken cancellationToken = default) {
 			try {
+				InitializeFilter(query.Filter);
 				var entities = query.Apply(DbSet.AsQueryable());
 				return await entities.FirstOrDefaultAsync(cancellationToken);
 			} catch (Exception ex) {
@@ -640,6 +658,7 @@ namespace Deveel.Data {
 		/// <inheritdoc/>
 		public async ValueTask<IList<TEntity>> FindAllAsync(IQuery query, CancellationToken cancellationToken = default) {
 			try {
+				InitializeFilter(query.Filter);
 				var entities = query.Apply(DbSet.AsQueryable());
 				return await entities.ToListAsync(cancellationToken);
 			} catch (Exception ex) {
@@ -651,6 +670,7 @@ namespace Deveel.Data {
 		/// <inheritdoc/>
 		public async ValueTask<PageResult<TEntity>> GetPageAsync(PageQuery<TEntity> query, CancellationToken cancellationToken = default) {
 			try {
+				InitializeFilter(((IQuery)query).Filter);
 				var entitySet = query.ApplyQuery(DbSet.AsQueryable());
 
 				var totalCount = await entitySet.CountAsync(cancellationToken);
@@ -668,6 +688,7 @@ namespace Deveel.Data {
 		/// <inheritdoc/>
 		public ValueTask<bool> ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken = default) {
 			try {
+				InitializeFilter(filter);
 				var query = DbSet.AsQueryable();
 				if (filter != null) {
 					query = filter.Apply(query);
@@ -683,6 +704,7 @@ namespace Deveel.Data {
 		/// <inheritdoc/>
 		public async ValueTask<long> CountAsync(IQueryFilter filter, CancellationToken cancellationToken = default) {
 			try {
+				InitializeFilter(filter);
 				var query = DbSet.AsQueryable();
 				if (filter != null) {
 					query = filter.Apply(query);

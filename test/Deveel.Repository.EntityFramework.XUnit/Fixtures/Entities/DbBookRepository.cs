@@ -5,8 +5,8 @@ namespace Deveel.Data.Entities
 {
 	public class DbBookRepository : EntityUserRepository<DbBookWithOwner, Guid, string>
 	{
-		public DbBookRepository(DbContext context, IUserAccessor<string> userAccessor, ILogger<DbBookRepository>? logger = null)
-			: base(context, userAccessor, logger)
+		public DbBookRepository(DbContext context, IUserAccessor<string> userAccessor, IServiceProvider? services = null, ILogger<DbBookRepository>? logger = null)
+			: base(context, userAccessor, services, logger)
 		{
 		}
 	}

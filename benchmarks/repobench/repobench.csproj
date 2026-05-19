@@ -25,6 +25,7 @@
     <ProjectReference Include="..\..\src\Deveel.Repository.EntityFramework\Deveel.Repository.EntityFramework.csproj" />
     <ProjectReference Include="..\..\src\Deveel.Repository.InMemory\Deveel.Repository.InMemory.csproj" />
     <ProjectReference Include="..\..\src\Deveel.Repository.MongoFramework\Deveel.Repository.MongoFramework.csproj" />
+    <ProjectReference Include="..\..\src\Deveel.Repository.DynamicLinq\Deveel.Repository.DynamicLinq.csproj" />
   </ItemGroup>
 
 </Project>

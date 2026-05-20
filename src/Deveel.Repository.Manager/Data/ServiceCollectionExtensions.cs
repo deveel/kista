@@ -41,6 +41,7 @@ namespace Deveel.Data {
 		/// Returns the given collection of services for chaining calls.
 		/// </returns>
 		/// <seealso cref="AddEntityManager(IServiceCollection, Type, ServiceLifetime)"/>
+        [Obsolete("Use AddRepositoryContext().WithManagement() instead.", false)]
         public static IServiceCollection AddEntityManager<TManager>(this IServiceCollection services, ServiceLifetime lifetime = ServiceLifetime.Scoped)
             where TManager : class
             => AddEntityManager(services, typeof(TManager), lifetime);
@@ -61,6 +62,7 @@ namespace Deveel.Data {
 		/// <returns>
 		/// Returns the given collection of services for chaining calls.
 		/// </returns>
+		[Obsolete("Use AddRepositoryContext().WithManagement() instead.", false)]
 		public static IServiceCollection AddManagerFor<TEntity>(this IServiceCollection services, ServiceLifetime lifetime = ServiceLifetime.Scoped)
 			where TEntity : class
 			=> AddEntityManager(services, typeof(EntityManager<TEntity>), lifetime);
@@ -90,6 +92,7 @@ namespace Deveel.Data {
 		/// Thrown when the given <paramref name="managerType"/> is not a concrete class,
 		/// or if the type is not a valid <see cref="EntityManager{TEntity}"/>.
 		/// </exception>
+        [Obsolete("Use AddRepositoryContext().WithManagement() instead.", false)]
         public static IServiceCollection AddEntityManager(this IServiceCollection services, Type managerType, ServiceLifetime lifetime = ServiceLifetime.Scoped) {
             ArgumentNullException.ThrowIfNull(managerType, nameof(managerType));
 
@@ -154,6 +157,7 @@ namespace Deveel.Data {
 		/// <returns>
 		/// Returns the given collection of services for chaining calls.
 		/// </returns>
+		[Obsolete("Use AddRepositoryContext().WithManagement() instead.", false)]
 		public static IServiceCollection AddEntityCacheOptions<TEntity>(this IServiceCollection services, Action<EntityCacheOptions> configure) where TEntity : class {
 			ArgumentNullException.ThrowIfNull(configure, nameof(configure));
 
@@ -185,6 +189,7 @@ namespace Deveel.Data {
 		/// <exception cref="ArgumentNullException">
 		/// Thrown when the given <paramref name="configSectionPath"/> is <c>null</c>.
 		/// </exception>
+		[Obsolete("Use AddRepositoryContext().WithManagement() instead.", false)]
 		public static IServiceCollection AddEntityCacheOptions<TEntity>(this IServiceCollection services, string configSectionPath) where TEntity : class {
 			ArgumentNullException.ThrowIfNull(configSectionPath, nameof(configSectionPath));
 
@@ -214,6 +219,7 @@ namespace Deveel.Data {
 		/// Thrown when the given <paramref name="generatorType"/> is not a valid
 		/// implementation of <see cref="IEntityCacheKeyGenerator{TEntity}"/>.
 		/// </exception>
+		[Obsolete("Use AddRepositoryContext().WithManagement() instead.", false)]
 		public static IServiceCollection AddEntityCacheKeyGenerator(this IServiceCollection services, Type generatorType, ServiceLifetime lifetime = ServiceLifetime.Singleton) {
 			if (!generatorType.IsClass || generatorType.IsAbstract)
 				throw new ArgumentException($"The type {generatorType} is not a valid generator type");
@@ -249,6 +255,7 @@ namespace Deveel.Data {
 		/// <returns>
 		/// Returns the given collection of services for chaining calls.
 		/// </returns>
+		[Obsolete("Use AddRepositoryContext().WithManagement() instead.", false)]
 		public static IServiceCollection AddEntityCacheKeyGenerator<TGenerator>(this IServiceCollection services, ServiceLifetime lifetime = ServiceLifetime.Singleton)
 			where TGenerator : class {
 			return AddEntityCacheKeyGenerator(services, typeof(TGenerator), lifetime);
@@ -270,6 +277,7 @@ namespace Deveel.Data {
 		/// Returns the given collection of services for chaining calls.
 		/// </returns>
 		/// <seealso cref="AddEntityValidator(IServiceCollection, Type, ServiceLifetime)"/>
+		[Obsolete("Use AddRepositoryContext().WithManagement() instead.", false)]
 		public static IServiceCollection AddEntityValidator<TValidator>(this IServiceCollection services, ServiceLifetime lifetime = ServiceLifetime.Transient)
 			where TValidator : class 
 			=> AddEntityValidator(services, typeof(TValidator), lifetime);
@@ -292,6 +300,7 @@ namespace Deveel.Data {
 		/// <exception cref="ArgumentException">
 		/// Thrown when the given type is not a concrete class.
 		/// </exception>
+		[Obsolete("Use AddRepositoryContext().WithManagement() instead.", false)]
 		public static IServiceCollection AddEntityValidator(this IServiceCollection services, Type validatorType, ServiceLifetime lifetime = ServiceLifetime.Transient) {
 			ArgumentNullException.ThrowIfNull(validatorType, nameof(validatorType));
 

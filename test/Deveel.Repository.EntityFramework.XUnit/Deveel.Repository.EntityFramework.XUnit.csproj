@@ -11,6 +11,7 @@
         <PackageReference Include="Finbuckle.MultiTenant.EntityFrameworkCore" Version="9.4.7" />
     </ItemGroup>
     <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+        <PackageReference Include="Finbuckle.MultiTenant" Version="10.0.4" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="10.0.5" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.NetTopologySuite" Version="10.0.5" />
         <PackageReference Include="Finbuckle.MultiTenant.EntityFrameworkCore" Version="10.0.4" />
@@ -33,14 +34,13 @@
 
           • Windows → bundle_e_sqlite3  no system SQLite; the bundled version is always used.
         -->
-        <PackageReference Include="SQLitePCLRaw.bundle_sqlite3"   Version="2.1.11"
-            Condition="$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))" />
-        <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.11"
-            Condition="!$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))" />
+        <PackageReference Include="SQLitePCLRaw.bundle_sqlite3" Version="2.1.11" Condition="$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))" />
+        <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.11" Condition="!$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))" />
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\Deveel.Repository.EntityFramework\Deveel.Repository.EntityFramework.csproj" />
+        <ProjectReference Include="..\..\src\Deveel.Repository.EntityFramework.MultiTenant\Deveel.Repository.EntityFramework.MultiTenant.csproj" />
         <ProjectReference Include="..\Deveel.Repository.Management.Testing\Deveel.Repository.Management.Testing.csproj" />
         <ProjectReference Include="..\Deveel.Repository.Testing\Deveel.Repository.Testing.csproj" />
     </ItemGroup>

@@ -7,7 +7,7 @@
 | Queryable | ✅ | Native EF Core `IQueryable` |
 | Pageable | ✅ | |
 | Tracking | ✅ | EF Core change tracking |
-| Multi-tenant | ✅ | Via [Finbuckle.MultiTenant](https://www.finbuckle.com/MultiTenant) |
+| Multi-tenant | ✅ | Via `Deveel.Repository.EntityFramework.MultiTenant` |
 
 The _Deveel Repository_ `Deveel.Repository.EntityFramework` package provides an implementation of the repository pattern that uses [Entity Framework Core](https://github.com/dotnet/efcore), enabling access to any relational database that EF Core supports (SQL Server, PostgreSQL, SQLite, MySQL, and others).
 
@@ -21,58 +21,117 @@ dotnet add package Deveel.Repository.EntityFramework
 
 ## Registration
 
-You need to register a `DbContext` yourself (using the standard EF Core methods), and then register the repository on top of it. The library does not manage the `DbContext` registration.
+Use the fluent builder API to register the EF Core driver. The builder handles both `DbContext` and repository registration in a single call:
 
 ```csharp
 // Program.cs
-builder.Services.AddDbContext<MyDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
-
-// Generic form — registers EntityRepository<MyEntity> and all its interface projections
-builder.Services.AddRepository<EntityRepository<MyEntity>>();
-
-// Shortcut form provided by this package
-builder.Services.AddEntityRepository<MyEntity>();
+builder.Services.AddRepositoryContext()
+    .UseEntityFramework<MyDbContext>(b => b
+        .ConfigureDbContext(opts =>
+            opts.UseSqlServer(builder.Configuration.GetConnectionString("Default"))));
 ```
 
 For a custom repository that derives from `EntityRepository<TEntity>`:
 
 ```csharp
-builder.Services.AddRepository<MyEntityRepository>();
+builder.Services.AddRepositoryContext()
+    .UseEntityFramework<MyDbContext>(b => b
+        .ConfigureDbContext(opts => opts.UseSqlServer("...")))
+    .AddRepository<MyEntityRepository>();
 ```
+
+### Configuration Options
+
+| Method | Description |
+| ------ | ----------- |
+| `ConfigureDbContext(Action<DbContextOptionsBuilder>)` | Configures the `DbContext` options (provider, connection string, etc.) |
+| `WithLifetime(ServiceLifetime)` | Sets the service lifetime for the `DbContext` and repositories (default: `Scoped`) |
 
 ## Multi-tenant Support
 
-Starting from version 1.4, multi-tenancy in EF Core repositories is handled externally via [Finbuckle.MultiTenant](https://www.finbuckle.com/MultiTenant). The library does not provide its own tenant-isolation logic for EF Core; instead, configure the `DbContext` to use tenant information from the `ITenantInfo` interface:
+Install the `Deveel.Repository.EntityFramework.MultiTenant` package:
 
-```csharp
-builder.Services.AddMultiTenant<TenantInfo>()
-    .WithConfigurationStore()
-    .WithRouteStrategy();
+```bash
+dotnet add package Deveel.Repository.EntityFramework.MultiTenant
 ```
 
-Then wire the tenant connection string into your `DbContext`:
+Two multi-tenancy strategies are supported, both built on [Finbuckle.MultiTenant](https://www.finbuckle.com/MultiTenant):
+
+### Strategy 1: Database-per-Tenant (`WithDatabasePerTenant`)
+
+Each tenant connects to its own database. Your `ITenantInfo` implementation must have a `ConnectionString` property.
 
 ```csharp
-public class MyDbContext : DbContext
-{
-    private readonly IMultiTenantContext<TenantInfo> _tenantContext;
+builder.Services.AddMultiTenant<AppTenantInfo>()
+    .WithInMemoryStore()
+    .WithRouteStrategy();
 
-    public MyDbContext(
-        DbContextOptions<MyDbContext> options,
-        IMultiTenantContext<TenantInfo> tenantContext) : base(options)
+builder.Services.AddRepositoryContext()
+    .UseEntityFramework<AppDbContext>()
+    .WithDatabasePerTenant<AppTenantInfo>(defaultConnection: "Data Source=default.db")
+    .Build();
+```
+
+Your `DbContext` resolves the connection string in `OnConfiguring`:
+
+```csharp
+public class AppDbContext : DbContext
+{
+    private readonly IMultiTenantContextAccessor<AppTenantInfo> _tenantAccessor;
+    private readonly IOptions<EntityFrameworkTenantConnectionOptions> _options;
+
+    public AppDbContext(
+        DbContextOptions<AppDbContext> options,
+        IMultiTenantContextAccessor<AppTenantInfo> tenantAccessor,
+        IOptions<EntityFrameworkTenantConnectionOptions> options) : base(options)
     {
-        _tenantContext = tenantContext;
+        _tenantAccessor = tenantAccessor;
+        _options = options;
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.UseSqlServer(_tenantContext.TenantInfo!.ConnectionString);
+        var connectionString = _tenantAccessor.MultiTenantContext?.TenantInfo?.ConnectionString
+            ?? _options.Value.DefaultConnectionString;
+
+        if (string.IsNullOrEmpty(connectionString))
+            throw new InvalidOperationException("No connection string available.");
+
+        optionsBuilder.UseSqlServer(connectionString);
     }
 }
 ```
 
-After that, inject and use `IRepository<MyEntity>` normally — tenant isolation is handled transparently by the `DbContext`.
+### Strategy 2: Shared Database (`WithSharedTenantDatabase`)
+
+All tenants share a single database. Data isolation is achieved by filtering queries based on the current tenant's ID. Your `DbContext` must derive from `Finbuckle.MultiTenant.EntityFrameworkCore.MultiTenantDbContext` and entities must be configured with `IsMultiTenant()`.
+
+```csharp
+builder.Services.AddMultiTenant<AppTenantInfo>()
+    .WithInMemoryStore()
+    .WithRouteStrategy();
+
+builder.Services.AddRepositoryContext()
+    .UseEntityFramework<AppDbContext>(b => b
+        .ConfigureDbContext(opts => opts.UseSqlServer("..."))
+        .WithSharedTenantDatabase());
+```
+
+```csharp
+public class AppDbContext : MultiTenantDbContext
+{
+    public AppDbContext(
+        IMultiTenantContextAccessor multiTenantContextAccessor,
+        DbContextOptions<AppDbContext> options) : base(multiTenantContextAccessor, options) { }
+
+    public DbSet<Order> Orders { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Order>().IsMultiTenant();
+    }
+}
+```
 
 ## Querying
 
@@ -96,6 +155,6 @@ var entities = await repository.FindAllAsync(query);
 
 ## Notes
 
-- Register your `DbContext` using the standard EF Core `AddDbContext` extension — the repository package does not wrap or replace that registration.
+- The `UseEntityFramework<TDbContext>()` builder method handles `DbContext` registration — you do not need to call `AddDbContext` separately.
 - Refer to the [Entity Framework Core documentation](https://learn.microsoft.com/en-us/ef/core/) for migration and schema configuration details.
-- Refer to the [Finbuckle.MultiTenant documentation](https://www.finbuckle.com/MultiTenant) for multi-tenant EF Core configuration.
+- Refer to the [Finbuckle.MultiTenant documentation](https://www.finbuckle.com/MultiTenant) for multi-tenant configuration.

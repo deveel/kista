@@ -44,6 +44,7 @@ namespace Deveel.Data.Caching {
 		/// Thrown when the given <paramref name="cacheType"/> is not a valid
 		/// type for an EasyCaching cache.
 		/// </exception>
+		[Obsolete("Use AddRepositoryContext().WithEasyCaching() instead.", false)]
 		public static IServiceCollection AddEntityEasyCache(this IServiceCollection services, Type cacheType, ServiceLifetime lifetime = ServiceLifetime.Singleton) {
 			var baseClass = cacheType;
 			bool isCache = false;
@@ -99,6 +100,7 @@ namespace Deveel.Data.Caching {
 		/// Thrown when the given <typeparamref name="TCache"/> is not a valid
 		/// type for an EasyCaching cache.
 		/// </exception>
+		[Obsolete("Use AddRepositoryContext().WithEasyCaching() instead.", false)]
 		public static IServiceCollection AddEntityEasyCache<TCache>(this IServiceCollection services, ServiceLifetime lifetime = ServiceLifetime.Singleton)
 			where TCache : class {
 			return AddEntityEasyCache(services, typeof(TCache), lifetime);
@@ -120,6 +122,7 @@ namespace Deveel.Data.Caching {
 		/// <returns>
 		/// Returns the given collection of services for chaining calls.
 		/// </returns>
+		[Obsolete("Use AddRepositoryContext().WithEasyCaching() instead.", false)]
 		public static IServiceCollection AddEntityEasyCacheFor<TEntity>(this IServiceCollection services, ServiceLifetime lifetime = ServiceLifetime.Singleton)
 			where TEntity : class {
 			return AddEntityEasyCache(services, typeof(EntityEasyCache<TEntity>), lifetime);
@@ -144,6 +147,7 @@ namespace Deveel.Data.Caching {
 		/// <returns>
 		/// Returns the given collection of services for chaining calls.
 		/// </returns>
+		[Obsolete("Use AddRepositoryContext().WithEasyCaching() instead.", false)]
 		public static IServiceCollection AddEntityEasyCacheFor<TEntity>(this IServiceCollection services, Action<EntityCacheOptions> configure, ServiceLifetime lifetime = ServiceLifetime.Singleton)
 			where TEntity : class {
 			services.AddEntityCacheOptions<TEntity>(configure);
@@ -170,6 +174,7 @@ namespace Deveel.Data.Caching {
 		/// <returns>
 		/// Returns the given collection of services for chaining calls.
 		/// </returns>
+		[Obsolete("Use AddRepositoryContext().WithEasyCaching() instead.", false)]
 		public static IServiceCollection AddEntityEasyCacheFor<TEntity>(this IServiceCollection services, string configSectionPath, ServiceLifetime lifetime = ServiceLifetime.Singleton)
 			where TEntity : class {
 			services.AddEntityCacheOptions<TEntity>(configSectionPath);
@@ -197,6 +202,7 @@ namespace Deveel.Data.Caching {
 		/// Thrown when the given <paramref name="converterType"/> is not a valid
 		/// instance of <see cref="IEntityEasyCacheConverter{TEntity, TCached}"/>.
 		/// </exception>
+		[Obsolete("Use AddRepositoryContext().WithEasyCaching() instead.", false)]
 		public static IServiceCollection AddEntityEasyCacheConverter(this IServiceCollection services, Type converterType,  ServiceLifetime lifetime = ServiceLifetime.Singleton) {
 			if (!converterType.IsClass || converterType.IsAbstract)
 				throw new ArgumentException($"The type {converterType} is not a valid converter type");
@@ -239,6 +245,7 @@ namespace Deveel.Data.Caching {
 		/// Thrown when the given <typeparamref name="TConverter"/> is not a valid
 		/// instance of <see cref="IEntityEasyCacheConverter{TEntity, TCached}"/>.
 		/// </exception>
+		[Obsolete("Use AddRepositoryContext().WithEasyCaching() instead.", false)]
 		public static IServiceCollection AddEntityEasyCacheConverter<TConverter>(this IServiceCollection services, ServiceLifetime lifetime = ServiceLifetime.Singleton)
 			where TConverter : class {
 			return AddEntityEasyCacheConverter(services, typeof(TConverter), lifetime);

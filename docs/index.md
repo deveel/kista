@@ -52,6 +52,7 @@ dotnet add package Deveel.Repository.Core
 | [_MongoDB_](repository-implementations/mongodb.md) | `Deveel.Repository.MongoFramework` | Stores entities in a MongoDB database via [MongoFramework](https://github.com/turnersoftware/mongoframework). |
 | [_MongoDB Multi-Tenant_](multi-tenancy.md) | `Deveel.Repository.MongoFramework.MultiTenant` | Multi-tenant MongoDB connection management via [Finbuckle.MultiTenant](https://github.com/Finbuckle/Finbuckle.MultiTenant). |
 | [_Entity Framework Core_](repository-implementations/ef-core.md) | `Deveel.Repository.EntityFramework` | Stores entities in any relational database supported by [Entity Framework Core](https://github.com/dotnet/efcore). |
+| [_EF Core Multi-Tenant_](repository-implementations/ef-core.md#multi-tenant-support) | `Deveel.Repository.EntityFramework.MultiTenant` | Multi-tenant EF Core with database-per-tenant or shared-database strategies. |
 | [_Dynamic LINQ_](repository-implementations/README.md#dynamic-linq-support) | `Deveel.Repository.DynamicLinq` | Runtime string-based filter expressions via [System.Linq.Dynamic.Core](https://github.com/zzzprojects/System.Linq.Dynamic.Core). |
 | [_Entity Manager_](entity-manager/) | `Deveel.Repository.Manager` | Business layer with validation, normalization, caching, and event sourcing. |
 | [_Entity Manager EasyCaching_](entity-manager/caching-entities.md) | `Deveel.Repository.Manager.EasyCaching` | Second-level caching for EntityManager via [EasyCaching](https://github.com/dotnetcore/EasyCaching). |
@@ -60,24 +61,63 @@ dotnet add package Deveel.Repository.Core
 
 ## Instrumentation
 
-The library provides extension methods on `IServiceCollection` to register repositories in the dependency injection container.
+The library provides a fluent builder API via `AddRepositoryContext()` to configure repositories, drivers, and cross-cutting concerns in a unified way.
 
-Use `AddRepository<TRepository>` to register a concrete repository type. The method uses reflection to discover all `IRepository<TEntity>` interface implementations on the given type and registers them automatically.
+### Using the Fluent Builder
 
 ```csharp
 // Program.cs
+
+// In-Memory driver
+builder.Services.AddRepositoryContext()
+    .UseInMemory();
+
+// Entity Framework Core driver
+builder.Services.AddRepositoryContext()
+    .UseEntityFramework<MyDbContext>(b => b
+        .ConfigureDbContext(opts => opts.UseSqlServer("...")));
+
+// MongoDB driver
+builder.Services.AddRepositoryContext()
+    .UseMongoDB<MyMongoContext>(b => b
+        .WithConnectionString("mongodb://..."));
+```
+
+Each driver call returns to the parent builder, allowing you to chain multiple concerns:
+
+```csharp
+builder.Services.AddRepositoryContext()
+    .UseEntityFramework<AppDbContext>(b => b
+        .ConfigureDbContext(opts => opts.UseSqlServer("...")))
+    .WithManagement()
+    .WithEasyCaching();
+```
+
+### Assembly Scanning
+
+Use `ScanRepositories()` to automatically discover and register repository types from one or more assemblies:
+
+```csharp
+builder.Services.AddRepositoryContext()
+    .UseInMemory()
+    .ScanRepositories(typeof(MyEntityRepository).Assembly);
+```
+
+Open generic repositories are registered as open generics; closed repositories are registered via their service interfaces.
+
+### Legacy Registration
+
+The older `AddRepository<T>` extension method is still available for backward compatibility:
+
+```csharp
 builder.Services.AddRepository<InMemoryRepository<MyEntity>>();
 ```
 
-For custom repositories:
-
-```csharp
-builder.Services.AddRepository<MyCustomRepository>();
-```
+> **Note:** `AddRepository<T>` is marked `[Obsolete]` but not as an error. It will continue to work. Prefer `AddRepositoryContext()` for new code.
 
 ### Consuming the Repository
 
-After calling `AddRepository<TRepository>`, the following service types become available in the DI container (availability depends on which interfaces the concrete repository implements):
+After registration, the following service types become available in the DI container (availability depends on which interfaces the concrete repository implements):
 
 | Service | Description |
 | ------- | ----------- |

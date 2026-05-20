@@ -52,7 +52,7 @@ namespace Deveel.Data {
 	/// <seealso cref="IFilterCache"/>
 	/// <seealso cref="IFilterCacheStatistics"/>
 	/// <seealso cref="BoundedExpressionCache"/>
-	/// <seealso cref="FilterCacheServiceCollectionExtensions"/>
+	/// <seealso cref="ServiceCollectionExtensions"/>
 	public interface IExpressionCache {
 		/// <summary>
 		/// Attempts to retrieve a previously parsed <see cref="LambdaExpression"/>

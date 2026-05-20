@@ -58,7 +58,7 @@ namespace Deveel.Data {
 	/// <seealso cref="IFilterCache"/>
 	/// <seealso cref="BoundedExpressionCache"/>
 	/// <seealso cref="BoundedFilterCache"/>
-	public static class FilterCacheServiceCollectionExtensions {
+	public static class ServiceCollectionExtensions {
 		/// <summary>
 		/// Registers bounded LRU caches for both parsed expressions and compiled delegates
 		/// as singleton services with the specified maximum capacity.

@@ -44,7 +44,7 @@ namespace Deveel.Data {
 			return false;
 		}
 
-		private static Type? GetEntityType(Type serviceType) {
+		internal static Type? GetEntityType(Type serviceType) {
 			if (serviceType.IsGenericType) {
 				var genericTypeDefinition = serviceType.GetGenericTypeDefinition();
 				var genericTypes = serviceType.GenericTypeArguments;
@@ -67,7 +67,7 @@ namespace Deveel.Data {
 			return null;
 		}
 
-		private static Type? GetKeyType(Type serviceType) {
+		internal static Type? GetKeyType(Type serviceType) {
 			if (serviceType.IsGenericType) {
 				var genericTypeDefinition = serviceType.GetGenericTypeDefinition();
 				var genericTypes = serviceType.GenericTypeArguments;

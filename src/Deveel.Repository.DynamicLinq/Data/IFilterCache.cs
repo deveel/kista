@@ -42,7 +42,7 @@ namespace Deveel.Data {
 	/// <seealso cref="IFilterCacheStatistics"/>
 	/// <seealso cref="IExpressionCache"/>
 	/// <seealso cref="BoundedFilterCache"/>
-	/// <seealso cref="FilterCacheServiceCollectionExtensions"/>
+	/// <seealso cref="ServiceCollectionExtensions"/>
 	public interface IFilterCache {
 		/// <summary>
 		/// Attempts to retrieve a previously compiled <see cref="Delegate"/> from the cache.

@@ -23,7 +23,7 @@ namespace Deveel.Data {
 	/// Extensions for the <see cref="IServiceCollection"/> to register
 	/// repositories and providers.
 	/// </summary>
-	public static class ServiceCollectionExtensions {
+	public static partial class ServiceCollectionExtensions {
 		/// <summary>
 		/// Registers a repository of the given type in the service collection.
 		/// </summary>
@@ -40,6 +40,7 @@ namespace Deveel.Data {
 		/// Returns the same <see cref="IServiceCollection"/> to allow chaining.
 		/// </returns>
 		/// <seealso cref="AddRepository(IServiceCollection, Type, ServiceLifetime)"/>
+		[Obsolete("Use AddRepositoryContext().AddRepository<TRepository>() instead.", false)]
 		public static IServiceCollection AddRepository<TRepository>(this IServiceCollection services, ServiceLifetime lifetime = ServiceLifetime.Scoped)
 			=> services.AddRepository(typeof(TRepository), lifetime);
 
@@ -69,6 +70,7 @@ namespace Deveel.Data {
 		/// Thrown when the given <paramref name="repositoryType"/> is not a valid
 		/// repository type.
 		/// </exception>
+		[Obsolete("Use AddRepositoryContext().AddRepository() instead.", false)]
 		public static IServiceCollection AddRepository(this IServiceCollection services, Type repositoryType, ServiceLifetime lifetime = ServiceLifetime.Scoped) {
 			ArgumentNullException.ThrowIfNull(repositoryType, nameof(repositoryType));
 
@@ -104,6 +106,7 @@ namespace Deveel.Data {
         /// <returns>
         /// Returns the same <see cref="IServiceCollection"/> to allow chaining.
         /// </returns>
+        [Obsolete("Use AddRepositoryContext() instead.", false)]
         public static IServiceCollection AddRepositoryController<TController>(this IServiceCollection services, Action<RepositoryControllerOptions>? configure = null)
             where TController : class, IRepositoryController {
 
@@ -130,6 +133,7 @@ namespace Deveel.Data {
         /// <returns>
         /// Returns the same <see cref="IServiceCollection"/> to allow chaining.
         /// </returns>
+        [Obsolete("Use AddRepositoryContext() instead.", false)]
         public static IServiceCollection AddRepositoryController(this IServiceCollection services, Action<RepositoryControllerOptions>? configure = null)
             => services.AddRepositoryController<DefaultRepositoryController>(configure);
 

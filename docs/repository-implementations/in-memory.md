@@ -24,18 +24,34 @@ dotnet add package Deveel.Repository.InMemory
 
 ## Registration
 
-Register the repository in the DI container using the generic `AddRepository<T>` method from the kernel package:
+Use the fluent builder API to register the In-Memory driver:
 
 ```csharp
 // Program.cs
-builder.Services.AddRepository<InMemoryRepository<MyEntity>>();
+builder.Services.AddRepositoryContext()
+    .UseInMemory();
 ```
 
-The library does not provide a type-specific shortcut method for the in-memory driver. Use the generic `AddRepository<T>` form shown above, or register your own concrete sub-class if you have one.
+You can also configure field mappers and initial data:
 
-## Pre-seeding Data
+```csharp
+builder.Services.AddRepositoryContext()
+    .UseInMemory(b => b
+        .WithFieldMapper<MyEntity, MyFieldMapper>()
+        .WithInitialData(new[] { new MyEntity { /* ... */ } }));
+```
 
-The `InMemoryRepository<TEntity>` constructor accepts an optional initial list of entities:
+### Pre-seeding Data
+
+You can seed initial data using the `WithInitialData` method:
+
+```csharp
+var seeded = new List<MyEntity> { /* ... */ };
+builder.Services.AddRepositoryContext()
+    .UseInMemory(b => b.WithInitialData(seeded));
+```
+
+Or register the repository directly with pre-seeded data:
 
 ```csharp
 var seeded = new List<MyEntity> { /* ... */ };

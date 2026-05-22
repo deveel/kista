@@ -8,40 +8,97 @@ The preferred approach of the library is to use the [Finbuckle.MultiTenant](http
 | ------ | ------------- | ----- |
 | _In-Memory_ | :x: | Not supported |
 | _MongoDB_ | :white_check_mark: | Via `Deveel.Repository.MongoFramework.MultiTenant` |
-| _Entity Framework Core_ | :white_check_mark: | Via [Finbuckle.MultiTenant](https://www.finbuckle.com/MultiTenant) |
+| _Entity Framework Core_ | :white_check_mark: | Via `Deveel.Repository.EntityFramework.MultiTenant` |
 
 ## Multi-Tenancy in Entity Framework Core
 
-Multi-tenancy in EF Core repositories is handled externally via [Finbuckle.MultiTenant](https://www.finbuckle.com/MultiTenant). The library does not provide its own tenant-isolation logic for EF Core; instead, configure the `DbContext` to use tenant information from the `ITenantInfo` interface:
+The `Deveel.Repository.EntityFramework.MultiTenant` package provides two multi-tenancy strategies, both built on [Finbuckle.MultiTenant](https://www.finbuckle.com/MultiTenant).
+
+### Strategy 1: Database-per-Tenant
+
+Each tenant connects to its own database. Your `ITenantInfo` implementation must have a `ConnectionString` property.
 
 ```csharp
-builder.Services.AddMultiTenant<TenantInfo>()
-    .WithConfigurationStore()
+builder.Services.AddMultiTenant<AppTenantInfo>()
+    .WithInMemoryStore()
     .WithRouteStrategy();
+
+builder.Services.AddRepositoryContext()
+    .UseEntityFramework<AppDbContext>()
+    .WithDatabasePerTenant<AppTenantInfo>(defaultConnection: "Data Source=default.db")
+    .Build();
 ```
 
-Then wire the tenant connection string into your `DbContext`:
+The `DbContext` resolves the connection string in `OnConfiguring`:
 
 ```csharp
-public class MyDbContext : DbContext
+public class AppDbContext : DbContext
 {
-    private readonly IMultiTenantContext<TenantInfo> _tenantContext;
+    private readonly IMultiTenantContextAccessor<AppTenantInfo> _tenantAccessor;
+    private readonly IOptions<EntityFrameworkTenantConnectionOptions> _options;
 
-    public MyDbContext(
-        DbContextOptions<MyDbContext> options,
-        IMultiTenantContext<TenantInfo> tenantContext) : base(options)
+    public AppDbContext(
+        DbContextOptions<AppDbContext> options,
+        IMultiTenantContextAccessor<AppTenantInfo> tenantAccessor,
+        IOptions<EntityFrameworkTenantConnectionOptions> options) : base(options)
     {
-        _tenantContext = tenantContext;
+        _tenantAccessor = tenantAccessor;
+        _options = options;
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.UseSqlServer(_tenantContext.TenantInfo!.ConnectionString);
+        var connectionString = _tenantAccessor.MultiTenantContext?.TenantInfo?.ConnectionString
+            ?? _options.Value.DefaultConnectionString;
+
+        if (string.IsNullOrEmpty(connectionString))
+            throw new InvalidOperationException("No connection string available.");
+
+        optionsBuilder.UseSqlServer(connectionString);
     }
 }
 ```
 
-After that, inject and use `IRepository<MyEntity>` normally — tenant isolation is handled transparently by the `DbContext`.
+### Strategy 2: Shared Database
+
+All tenants share a single database. Data isolation is achieved by filtering queries based on the current tenant's ID. The `DbContext` must derive from `Finbuckle.MultiTenant.EntityFrameworkCore.MultiTenantDbContext` and entities must be configured with `IsMultiTenant()`.
+
+```csharp
+builder.Services.AddMultiTenant<AppTenantInfo>()
+    .WithInMemoryStore()
+    .WithRouteStrategy();
+
+builder.Services.AddRepositoryContext()
+    .UseEntityFramework<AppDbContext>(b => b
+        .ConfigureDbContext(opts => opts.UseSqlServer("..."))
+        .WithSharedTenantDatabase());
+```
+
+```csharp
+public class AppDbContext : MultiTenantDbContext
+{
+    public AppDbContext(
+        IMultiTenantContextAccessor multiTenantContextAccessor,
+        DbContextOptions<AppDbContext> options) : base(multiTenantContextAccessor, options) { }
+
+    public DbSet<Order> Orders { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Order>().IsMultiTenant();
+    }
+}
+```
+
+### Choosing a Strategy
+
+| Aspect | Database-per-Tenant | Shared Database |
+| ------ | ------------------- | --------------- |
+| **Data isolation** | Complete (separate databases) | Logical (TenantId column) |
+| **Schema management** | Per-database migrations needed | Single schema for all tenants |
+| **Cost** | Higher (one DB per tenant) | Lower (shared infrastructure) |
+| **Tenant onboarding** | Create new database | Add tenant record |
+| **Compliance** | Easier for data residency | Requires careful query filtering |
 
 ## Multi-Tenancy in MongoDB
 

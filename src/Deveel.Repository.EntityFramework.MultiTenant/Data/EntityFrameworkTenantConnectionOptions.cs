@@ -1,4 +1,4 @@
-﻿// Copyright 2023-2025 Antonello Provenzano
+// Copyright 2023-2026 Antonello Provenzano
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,21 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-namespace Deveel.Data.Caching {
+namespace Deveel.Data {
 	/// <summary>
-	/// Provides a set of options for the caching of entities.
+	/// Provides options for configuring the connection
+	/// for a multi-tenant Entity Framework Core application.
 	/// </summary>
-	public class EntityCacheOptions {
+	public class EntityFrameworkTenantConnectionOptions {
 		/// <summary>
-		/// Gets or sets the maximum expiration
-		/// time for the cached entities.
+		/// Gets or sets the default connection string used to
+		/// connect to the database, when no tenant-specific
+		/// connection string is provided.
 		/// </summary>
-		public TimeSpan? Expiration { get; set; }
-
-		/// <summary>
-		/// Gets or sets a prefix to prepend to all cache keys.
-		/// Useful for isolating caches across environments or applications.
-		/// </summary>
-		public string? CacheKeyPrefix { get; set; }
+		public string? DefaultConnectionString { get; set; }
 	}
 }

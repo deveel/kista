@@ -7,7 +7,7 @@
 | Queryable | ✅ | Via MongoFramework `IQueryable` |
 | Pageable | ✅ | |
 | Tracking | ✅ | MongoFramework change tracking |
-| Multi-tenant | ✅ | Via [Finbuckle.MultiTenant](https://github.com/Finbuckle/Finbuckle.MultiTenant) |
+| Multi-tenant | ✅ | Via `Deveel.Repository.MongoFramework.MultiTenant` |
 
 The `MongoRepository<TEntity>` class is an implementation of the repository pattern that stores entities in a [MongoDB](https://www.mongodb.com) database, built on top of [MongoFramework](https://github.com/TurnerSoftware/MongoFramework).
 
@@ -21,40 +21,39 @@ dotnet add package Deveel.Repository.MongoFramework
 
 ## Registration
 
-The package provides `AddMongoDbContext<TContext>` to register the MongoDB context, followed by the standard `AddRepository<T>` to register the repository:
+Use the fluent builder API to register the MongoDB driver:
 
 ```csharp
 // Program.cs
-
-// 1. Register the MongoDB context
-builder.Services.AddMongoDbContext<MongoDbContext>(
-    "mongodb://localhost:27017/my_database");
-
-// 2. Register the repository
-builder.Services.AddRepository<MongoRepository<MyEntity>>();
+builder.Services.AddRepositoryContext()
+    .UseMongoDB<MyMongoContext>(b => b
+        .WithConnectionString("mongodb://localhost:27017/my_database"));
 ```
 
 You can also use a builder delegate to configure the connection:
 
 ```csharp
-builder.Services.AddMongoDbContext<MongoDbContext>(builder =>
-    builder.UseConnection("mongodb://localhost:27017/my_database"));
+builder.Services.AddRepositoryContext()
+    .UseMongoDB<MyMongoContext>(b => b
+        .WithConnection(conn => conn.UseConnection("mongodb://localhost:27017/my_database")));
 ```
 
-The following context registration methods are available:
+The following configuration methods are available on the MongoDB driver builder:
 
 | Method | Description |
 | ------ | ----------- |
-| `AddMongoDbContext<TContext>(string, ServiceLifetime)` | Registers a context using a connection string. |
-| `AddMongoDbContext<TContext>(Action<MongoConnectionBuilder>, ServiceLifetime)` | Registers a context using a connection builder delegate. |
+| `WithConnectionString(string)` | Sets the MongoDB connection string. |
+| `WithConnection(Action<MongoConnectionBuilder>)` | Configures the connection using a builder delegate. |
+| `WithLifetime(ServiceLifetime)` | Sets the service lifetime (default: `Scoped`). |
 
 ### Custom Context Type
 
 If you derive from `MongoDbContext` (or `MongoDbTenantContext` for multi-tenant scenarios), register your concrete type:
 
 ```csharp
-builder.Services.AddMongoDbContext<MyMongoDbContext>("mongodb://...");
-builder.Services.AddRepository<MongoRepository<MyEntity>>();
+builder.Services.AddRepositoryContext()
+    .UseMongoDB<MyMongoDbContext>(b => b
+        .WithConnectionString("mongodb://..."));
 ```
 
 ## Multi-tenant Support
@@ -70,10 +69,10 @@ builder.Services.AddMultiTenant<MongoDbTenantInfo>()
 Then register a tenant-aware MongoDB context (derived from `MongoDbTenantContext`) and the repository:
 
 ```csharp
-builder.Services.AddMongoDbContext<MyMongoTenantContext>(connectionBuilder =>
-    connectionBuilder.UseConnection("mongodb://..."));
-
-builder.Services.AddRepository<MongoRepository<MyEntity>>();
+builder.Services.AddRepositoryContext()
+    .UseMongoDB<MyMongoTenantContext>(b => b
+        .WithConnection(conn => conn.UseConnection("mongodb://...")))
+    .WithMongoMultiTenancy<MongoDbTenantInfo>(defaultConnection: "mongodb://...");
 ```
 
 The tenant context resolves the correct database connection for each tenant automatically.

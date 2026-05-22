@@ -44,6 +44,7 @@ namespace Deveel.Data
 		/// <returns>
 		/// Returns the service collection for chaining.
 		/// </returns>
+		[Obsolete("Use AddRepositoryContext().UseMongoDB<TContext>() instead.", false)]
 		public static IServiceCollection AddMongoDbContext<TContext>(this IServiceCollection services, string connectionString, ServiceLifetime lifetime = ServiceLifetime.Singleton)
 			where TContext : class, IMongoDbContext
 		{
@@ -68,6 +69,7 @@ namespace Deveel.Data
 		/// <returns>
 		/// Returns the service collection for chaining.
 		/// </returns>
+		[Obsolete("Use AddRepositoryContext().UseMongoDB<TContext>() instead.", false)]
 		public static IServiceCollection AddMongoDbContext<TContext>(this IServiceCollection services, Action<MongoConnectionBuilder> connectionBuilder, ServiceLifetime lifetime = ServiceLifetime.Scoped)
 			where TContext : class, IMongoDbContext
 		{

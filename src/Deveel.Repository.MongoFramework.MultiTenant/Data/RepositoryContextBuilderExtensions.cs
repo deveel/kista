@@ -22,7 +22,7 @@ using MongoFramework;
 
 namespace Deveel.Data {
 	/// <summary>
-	/// Extension methods for configuring MongoDB multi-tenancy on a <see cref="MongoDriverBuilder"/>.
+	/// Extension methods for configuring MongoDB multi-tenancy on a <see cref="MongoRepositoryBuilder"/>.
 	/// </summary>
 	public static class RepositoryContextBuilderExtensions {
 		/// <summary>
@@ -30,9 +30,9 @@ namespace Deveel.Data {
 		/// </summary>
 		/// <param name="builder">The MongoDB driver builder.</param>
 		/// <param name="defaultConnection">Optional default connection string when no tenant is resolved.</param>
-		/// <returns>The same <see cref="MongoDriverBuilder"/> for chaining.</returns>
-		public static MongoDriverBuilder WithMongoMultiTenancy<TTenantInfo>(
-			this MongoDriverBuilder builder,
+		/// <returns>The same <see cref="MongoRepositoryBuilder"/> for chaining.</returns>
+		public static MongoRepositoryBuilder WithMongoMultiTenancy<TTenantInfo>(
+			this MongoRepositoryBuilder builder,
 			string? defaultConnection = null)
 			where TTenantInfo : class, ITenantInfo {
 			builder.Services.AddOptions<MongoTenantConnectionOptions>()

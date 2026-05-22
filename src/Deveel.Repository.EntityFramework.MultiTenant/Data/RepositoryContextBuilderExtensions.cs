@@ -19,7 +19,7 @@ using Microsoft.Extensions.Options;
 
 namespace Deveel.Data {
 	/// <summary>
-	/// Extension methods for configuring Entity Framework Core multi-tenancy on an <see cref="EntityFrameworkBuilder"/>.
+	/// Extension methods for configuring Entity Framework Core multi-tenancy on an <see cref="EntityFrameworkRepositoryBuilder"/>.
 	/// </summary>
 	/// <remarks>
 	/// <para>
@@ -51,9 +51,9 @@ namespace Deveel.Data {
 		/// <typeparam name="TTenantInfo">The type of tenant info, must implement <see cref="ITenantInfo"/>.</typeparam>
 		/// <param name="builder">The Entity Framework driver builder.</param>
 		/// <param name="defaultConnection">Optional default connection string when no tenant is resolved.</param>
-		/// <returns>The same <see cref="EntityFrameworkBuilder"/> for chaining.</returns>
-		public static EntityFrameworkBuilder WithDatabasePerTenant<TTenantInfo>(
-			this EntityFrameworkBuilder builder,
+		/// <returns>The same <see cref="EntityFrameworkRepositoryBuilder"/> for chaining.</returns>
+		public static EntityFrameworkRepositoryBuilder WithDatabasePerTenant<TTenantInfo>(
+			this EntityFrameworkRepositoryBuilder builder,
 			string? defaultConnection = null)
 			where TTenantInfo : class, ITenantInfo {
 			builder.Services.AddOptions<EntityFrameworkTenantConnectionOptions>()
@@ -71,8 +71,8 @@ namespace Deveel.Data {
 		/// and entities must be configured with <c>IsMultiTenant()</c> in <c>OnModelCreating</c>.
 		/// </remarks>
 		/// <param name="builder">The Entity Framework driver builder.</param>
-		/// <returns>The same <see cref="EntityFrameworkBuilder"/> for chaining.</returns>
-		public static EntityFrameworkBuilder WithSharedTenantDatabase(this EntityFrameworkBuilder builder) {
+		/// <returns>The same <see cref="EntityFrameworkRepositoryBuilder"/> for chaining.</returns>
+		public static EntityFrameworkRepositoryBuilder WithSharedTenantDatabase(this EntityFrameworkRepositoryBuilder builder) {
 			var dbContextType = builder.DbContextType;
 			if (dbContextType == null)
 				throw new InvalidOperationException("DbContext type must be configured before enabling row-level filtering.");

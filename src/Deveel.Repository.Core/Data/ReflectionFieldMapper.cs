@@ -30,23 +30,24 @@ namespace Deveel.Data {
 		public Expression<Func<TEntity, object?>> MapField(string fieldName) {
 			ArgumentNullException.ThrowIfNull(fieldName, nameof(fieldName));
 
-			if (cachedExpr == null) {
+		if (cachedExpr == null) {
+			var param = Expression.Parameter(typeof(TEntity), "x");
+			var memberNames = fieldName.Split('.');
+			Expression expr = param;
 
-				// TODO: support dot-delimited field names to access nested properties
-				var member = typeof(TEntity).GetMembers(BindingFlags.Public | BindingFlags.Instance)
+			foreach (var name in memberNames) {
+				var member = expr.Type.GetMembers(BindingFlags.Public | BindingFlags.Instance)
 					.Where(x => x.MemberType == MemberTypes.Property || x.MemberType == MemberTypes.Field)
-					.FirstOrDefault(x => String.Equals(x.Name, fieldName, StringComparison.OrdinalIgnoreCase));
+					.FirstOrDefault(x => String.Equals(x.Name, name, StringComparison.OrdinalIgnoreCase));
 
 				if (member == null)
-					throw new InvalidOperationException($"The field '{fieldName}' is not a valid member of the entity '{typeof(TEntity).Name}'");
+					throw new InvalidOperationException($"The field '{fieldName}' is not a valid member path of the entity '{typeof(TEntity).Name}'");
 
-				// TODO: find a way to identify a variable name
-				//       that doesn't conflict with other variables
-				var param = Expression.Parameter(typeof(TEntity), "x");
-				var expr = Expression.MakeMemberAccess(param, member);
-
-				cachedExpr = Expression.Lambda<Func<TEntity, object?>>(expr, param);
+				expr = Expression.MakeMemberAccess(expr, member);
 			}
+
+			cachedExpr = Expression.Lambda<Func<TEntity, object?>>(expr, param);
+		}
 
 			return cachedExpr;
 		}

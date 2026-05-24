@@ -121,19 +121,6 @@ namespace Deveel.Data {
 			}
 		}
 
-		//private static string RequireString(object? value) {
-		//	if (value is string s)
-		//		return s;
-		//	if (value is ObjectId id)
-		//		return id.ToString();
-
-		//	var result = Convert.ToString(value, CultureInfo.InvariantCulture);
-		//	if (String.IsNullOrWhiteSpace(result))
-		//		throw new InvalidOperationException($"Could not convert '{value}' to string");
-
-		//	return result;
-		//}
-
 		/// <summary>
 		/// Throws an exception if the repository has been disposed.
 		/// </summary>
@@ -351,38 +338,43 @@ namespace Deveel.Data {
 				var entityDef = EntityMapping.GetOrCreateDefinition(typeof(TEntity));
 
 				foreach (var indexDef in entityDef.Indexes) {
-					var keysBuilder = new IndexKeysDefinitionBuilder<TEntity>();
-					var indices = new List<CreateIndexModel<TEntity>>();
-					foreach (var path in indexDef.IndexPaths) {
-						var fieldDef = new StringFieldDefinition<TEntity>(path.Path);
-						IndexKeysDefinition<TEntity>? keysDef = null;
-						if (path.IndexType == IndexType.Standard) {
-							keysDef = path.SortOrder == IndexSortOrder.Descending
-								? keysBuilder.Descending(fieldDef)
-								: keysBuilder.Ascending(fieldDef);
-						} else if (path.IndexType == IndexType.Geo2dSphere) {
-							keysDef = keysBuilder.Geo2DSphere(fieldDef);
-						} else if (path.IndexType == IndexType.Text) {
-							keysDef = keysBuilder.Text(fieldDef);
-						}
-
-						if (keysDef != null) {
-							var options = new CreateIndexOptions {
-								Unique = indexDef.IsUnique,
-								Name = indexDef.IndexName
-							};
-
-							var indexModel = new CreateIndexModel<TEntity>(keysDef, options);
-							indices.Add(indexModel);
-						}
-					}
-
+					var indices = BuildIndexModels(indexDef);
 					await Collection.Indexes.CreateManyAsync(indices, cancellationToken);
 				}
 			} catch (Exception ex) {
-
 				throw new RepositoryException("Unable to create the indices for the repository", ex);
 			}
+		}
+
+		private static List<CreateIndexModel<TEntity>> BuildIndexModels(IndexDefinition indexDef) {
+			var keysBuilder = new IndexKeysDefinitionBuilder<TEntity>();
+			var indices = new List<CreateIndexModel<TEntity>>();
+
+			foreach (var path in indexDef.IndexPaths) {
+				var keysDef = BuildIndexKeys(keysBuilder, path);
+				if (keysDef == null)
+					continue;
+
+				var options = new CreateIndexOptions {
+					Unique = indexDef.IsUnique,
+					Name = indexDef.IndexName
+				};
+				indices.Add(new CreateIndexModel<TEntity>(keysDef, options));
+			}
+
+			return indices;
+		}
+
+		private static IndexKeysDefinition<TEntity>? BuildIndexKeys(IndexKeysDefinitionBuilder<TEntity> builder, IndexPathDefinition path) {
+			var fieldDef = new StringFieldDefinition<TEntity>(path.Path);
+			return path.IndexType switch {
+				IndexType.Standard => path.SortOrder == IndexSortOrder.Descending
+					? builder.Descending(fieldDef)
+					: builder.Ascending(fieldDef),
+				IndexType.Geo2dSphere => builder.Geo2DSphere(fieldDef),
+				IndexType.Text => builder.Text(fieldDef),
+				_ => null
+			};
 		}
 
 		async ValueTask IControllableRepository.DropAsync(CancellationToken cancellationToken) {
@@ -718,13 +710,16 @@ namespace Deveel.Data {
 
 		#region Dispose
 
-		void IDisposable.Dispose() {
-			Dispose(false);
-#pragma warning disable CA1816 // Dispose methods should call SuppressFinalize
-			// Suppress finalization.
-			GC.SuppressFinalize(this);
-#pragma warning restore CA1816 // Dispose methods should call SuppressFinalize
+		/// <summary>
+		/// Finalizes the instance of the repository.
+		/// </summary>
+		~MongoRepository() {
+			Dispose(disposing: false);
+		}
 
+		void IDisposable.Dispose() {
+			Dispose(disposing: true);
+			GC.SuppressFinalize(this);
 			disposed = true;
 		}
 

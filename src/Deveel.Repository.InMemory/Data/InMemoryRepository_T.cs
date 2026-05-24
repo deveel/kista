@@ -56,6 +56,12 @@ namespace Deveel.Data {
 			Dispose(disposing: false);
 		}
 
+		/// <inheritdoc/>
+		public new void Dispose() {
+			base.Dispose();
+			GC.SuppressFinalize(this);
+		}
+
 		IQueryable<TEntity> IQueryableRepository<TEntity, object>.AsQueryable() => Entities.AsQueryable();
 
 		object? IRepository<TEntity, object>.GetEntityKey(TEntity entity) {

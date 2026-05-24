@@ -426,14 +426,14 @@ public abstract class RepositoryTestSuite<TPerson, TRelationship> : IAsyncLifeti
 	[Trait("Category", "Integration")]
 	[Trait("Layer", "Infrastructure")]
 	[Trait("Feature", "Repository")]
-	public async Task Should_ReturnFilteredCount_When_FilterAppliedSync() {
+	public async Task Should_ReturnFilteredCount_When_FilterAppliedAsync() {
 		// Arrange
 		var person = await RandomPersonAsync();
 		var firstName = person.FirstName;
 		var peopleCount = People?.Count(x => x.FirstName == firstName) ?? 0;
 
 		// Act
-		var count = Repository.Count(p => p.FirstName == firstName);
+		var count = await Repository.CountAsync(p => p.FirstName == firstName);
 
 		// Assert
 		Assert.Equal(peopleCount, count);
@@ -535,13 +535,13 @@ public abstract class RepositoryTestSuite<TPerson, TRelationship> : IAsyncLifeti
 	[Trait("Category", "Integration")]
 	[Trait("Layer", "Infrastructure")]
 	[Trait("Feature", "Repository")]
-	public async Task Should_ReturnTrue_When_PersonExistsSync() {
+	public async Task Should_ReturnTrue_When_PersonExistsAsync() {
 		// Arrange
 		var person = await RandomPersonAsync();
 		var firstName = person.FirstName;
 
 		// Act
-		var result = Repository.Exists(x => x.FirstName == firstName);
+		var result = await Repository.ExistsAsync(x => x.FirstName == firstName);
 
 		// Assert
 		Assert.True(result);
@@ -634,13 +634,13 @@ public abstract class RepositoryTestSuite<TPerson, TRelationship> : IAsyncLifeti
 	[Trait("Category", "Integration")]
 	[Trait("Layer", "Infrastructure")]
 	[Trait("Feature", "Repository")]
-	public async Task Should_ReturnFirstMatch_When_FilterAppliedSync() {
+	public async Task Should_ReturnFirstMatch_When_FilterAppliedAsync() {
 		// Arrange
 		var person = await RandomPersonAsync(x => x.FirstName != null);
 		var ordered = NaturalOrder(People!.Where(x => x.FirstName == person.FirstName)).ToList();
 
 		// Act
-		var result = Repository.FindFirst(QueryFilter.Where<TPerson>(x => x.FirstName == person.FirstName));
+		var result = await Repository.FindFirstAsync(QueryFilter.Where<TPerson>(x => x.FirstName == person.FirstName));
 
 		// Assert
 		Assert.NotNull(result);
@@ -1038,7 +1038,7 @@ public abstract class RepositoryTestSuite<TPerson, TRelationship> : IAsyncLifeti
 		// Arrange
 		var person = await RandomPersonAsync();
 		using var cts = new CancellationTokenSource();
-		cts.Cancel();
+	await cts.CancelAsync();
 
 		// Act & Assert
 		await Assert.ThrowsAsync<OperationCanceledException>(async () => await Repository.UpdateAsync(person, cts.Token));

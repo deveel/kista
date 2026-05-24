@@ -16,14 +16,10 @@ namespace Deveel.Data {
 
 		protected MongoRepositoryNoKeyTestSuite(MongoSingleDatabase mongo, ITestOutputHelper? testOutput) : base(testOutput) {
 			this.mongo = mongo;
-
-			// ConnectionString = mongo.SetDatabase(DatabaseName);
 			ConnectionString = mongo.ConnectionString;
 		}
 
 		protected string ConnectionString { get; }
-
-		// protected string DatabaseName => "test_db";
 
 		protected override string GeneratePersonId() => ObjectId.GenerateNewId().ToString();
 

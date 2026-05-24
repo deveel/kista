@@ -99,10 +99,6 @@ namespace Deveel.Data
 				typeof(MongoDbTenantContext) != typeof(TContext))
 				services.TryAdd(new ServiceDescriptor(typeof(MongoDbTenantContext), provider => provider.GetRequiredService<TContext>(), lifetime));
 
-			//if (typeof(MongoDbMultiTenantContext).IsAssignableFrom(typeof(TContext)) &&
-			//	typeof(MongoDbMultiTenantContext) != typeof(TContext))
-			//	services.TryAdd(new ServiceDescriptor(typeof(MongoDbMultiTenantContext), provider => provider.GetRequiredService<TContext>(), lifetime));
-
 			return services;
 		}
 	}

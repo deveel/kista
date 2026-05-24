@@ -97,10 +97,9 @@ internal static Type? GetKeyType(Type serviceType) {
 				var genericTypeDefinition = serviceType.GetGenericTypeDefinition();
 				var genericTypes = serviceType.GenericTypeArguments;
 
-				if (genericTypes.Length == 2 && genericTypes[0].IsClass) {
-					if (typeof(IRepository<,>).IsAssignableFrom(genericTypeDefinition))
+				if (genericTypes.Length == 2 && genericTypes[0].IsClass &&
+					typeof(IRepository<,>).IsAssignableFrom(genericTypeDefinition))
 					return genericTypes[1];
-				}
 			}
 
 			foreach (var iface in serviceType.GetInterfaces()) {
@@ -167,47 +166,52 @@ private static bool RegisterIfAssignable(IList<Type> types, Type genericType, Ty
 			var types = new List<Type>();
 
 			foreach (var iface in repositoryType.GetInterfaces()) {
-				var entityType = GetEntityType(iface);
-
-				if (entityType == null)
-					// skip the type if we cannot determine the entity
-					continue;
-
-				if (RegisterIfAssignable(types, typeof(IRepository<>), entityType, repositoryType)) {
-					RegisterIfAssignable(types, typeof(IQueryableRepository<>), entityType, repositoryType);
-					RegisterIfAssignable(types, typeof(IFilterableRepository<>), entityType, repositoryType);
-					RegisterIfAssignable(types, typeof(IPageableRepository<>), entityType, repositoryType);
-
-					if (!types.Contains(iface))
-						types.Add(iface);
-				}
-
-				var keyType = GetKeyType(iface);
-				if (keyType != null) {
-					if (RegisterIfAssignable(types, typeof(IRepository<,>), entityType, keyType, repositoryType)) {
-						RegisterIfAssignable(types, typeof(IQueryableRepository<,>), entityType, keyType, repositoryType);
-						RegisterIfAssignable(types, typeof(IFilterableRepository<,>), entityType, keyType, repositoryType);
-						RegisterIfAssignable(types, typeof(IPageableRepository<,>), entityType, keyType, repositoryType);
-
-						if (!types.Contains(iface))
-							types.Add(iface);
-					}
-				}
+				RegisterSingleTypeInterfaces(types, iface, repositoryType);
 			}
 
-			var baseType = repositoryType.BaseType;
-			while (baseType != null) {
-				if (Implements(typeof(IRepository<>), baseType) && 
-					!types.Contains(baseType))
-					types.Add(baseType);
-				if (Implements(typeof(IRepository<,>), baseType) &&
-					!types.Contains(baseType))
-					types.Add(baseType);
-
-				baseType = baseType.BaseType;
-			}
+			RegisterBaseTypes(types, repositoryType);
 
 			return types.AsReadOnly();
+		}
+
+		private static void RegisterSingleTypeInterfaces(IList<Type> types, Type iface, Type repositoryType) {
+			var entityType = GetEntityType(iface);
+			if (entityType == null)
+				return;
+
+			if (RegisterIfAssignable(types, typeof(IRepository<>), entityType, repositoryType)) {
+				RegisterIfAssignable(types, typeof(IQueryableRepository<>), entityType, repositoryType);
+				RegisterIfAssignable(types, typeof(IFilterableRepository<>), entityType, repositoryType);
+				RegisterIfAssignable(types, typeof(IPageableRepository<>), entityType, repositoryType);
+				AddIfMissing(types, iface);
+			}
+
+			var keyType = GetKeyType(iface);
+			if (keyType == null)
+				return;
+
+			if (RegisterIfAssignable(types, typeof(IRepository<,>), entityType, keyType, repositoryType)) {
+				RegisterIfAssignable(types, typeof(IQueryableRepository<,>), entityType, keyType, repositoryType);
+				RegisterIfAssignable(types, typeof(IFilterableRepository<,>), entityType, keyType, repositoryType);
+				RegisterIfAssignable(types, typeof(IPageableRepository<,>), entityType, keyType, repositoryType);
+				AddIfMissing(types, iface);
+			}
+		}
+
+		private static void RegisterBaseTypes(IList<Type> types, Type repositoryType) {
+			var baseType = repositoryType.BaseType;
+			while (baseType != null) {
+				if (Implements(typeof(IRepository<>), baseType))
+					AddIfMissing(types, baseType);
+				if (Implements(typeof(IRepository<,>), baseType))
+					AddIfMissing(types, baseType);
+				baseType = baseType.BaseType;
+			}
+		}
+
+		private static void AddIfMissing(IList<Type> types, Type type) {
+			if (!types.Contains(type))
+				types.Add(type);
 		}
 	}
 }

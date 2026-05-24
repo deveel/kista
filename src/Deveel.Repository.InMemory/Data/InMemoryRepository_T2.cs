@@ -700,14 +700,16 @@ namespace Deveel.Data {
 			/// </summary>
 			private static readonly Func<TEntity, TEntity> _cloner = BuildCloner();
 
-			private static Func<TEntity, TEntity> BuildCloner() {
-				var method = typeof(TEntity).GetMethod(
-					"MemberwiseClone",
-					BindingFlags.Instance | BindingFlags.NonPublic)!;
-				var param = Expression.Parameter(typeof(TEntity), "e");
-				var call  = Expression.Convert(Expression.Call(param, method), typeof(TEntity));
-				return Expression.Lambda<Func<TEntity, TEntity>>(call, param).Compile();
-			}
+		private static Func<TEntity, TEntity> BuildCloner() {
+#pragma warning disable S3011 // Reflection is used intentionally to create a shallow clone via MemberwiseClone
+			var method = typeof(TEntity).GetMethod(
+				"MemberwiseClone",
+				BindingFlags.Instance | BindingFlags.NonPublic)!;
+#pragma warning restore S3011
+			var param = Expression.Parameter(typeof(TEntity), "e");
+			var call  = Expression.Convert(Expression.Call(param, method), typeof(TEntity));
+			return Expression.Lambda<Func<TEntity, TEntity>>(call, param).Compile();
+		}
 
 			public Entry(TEntity entity) {
 				Entity   = entity;

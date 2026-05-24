@@ -84,3 +84,9 @@ csharp_style_expression_bodied_local_functions = true:silent
 csharp_indent_labels = one_less_than_current
 csharp_style_throw_expression = true:suggestion
 csharp_space_around_binary_operators = before_and_after
+
+# SonarQube suppressions
+# S3236: Caller info arguments - false positive for ArgumentNullException.ThrowIfNull
+dotnet_diagnostic.S3236.severity = none
+# S6610: StartsWith with string is intentional - EntityFramework translates string overload to SQL, char overload is not recognized
+dotnet_diagnostic.S6610.severity = none

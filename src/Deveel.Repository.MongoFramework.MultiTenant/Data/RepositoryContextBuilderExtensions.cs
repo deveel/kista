@@ -38,7 +38,9 @@ namespace Deveel.Data {
 			builder.Services.AddOptions<MongoTenantConnectionOptions>()
 				.Configure(options => options.DefaultConnectionString = defaultConnection);
 
+#pragma warning disable S3011 // Accessing internal builder field to extract context type for multi-tenant setup
 			var contextTypeField = builder.GetType().GetField("_contextType", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+#pragma warning restore S3011
 			var contextType = (Type?)contextTypeField?.GetValue(builder)
 				?? throw new InvalidOperationException("Cannot determine context type from builder.");
 

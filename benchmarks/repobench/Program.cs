@@ -22,15 +22,21 @@ try {
 
 	BenchmarkResultFileExporter.WriteSingleOutputFileIfRequested(selection, runPlan, summaries);
 } catch (ArgumentException ex) {
+#pragma warning disable S6966 // Console.Error.WriteLine is appropriate in error handling paths for benchmark CLI
 	Console.Error.WriteLine(ex.Message);
 	Console.Error.WriteLine();
 	DriverSelection.WriteUsage(Console.Error);
+#pragma warning restore S6966
 	Environment.ExitCode = 1;
 } catch (InvalidOperationException ex) {
+#pragma warning disable S6966
 	Console.Error.WriteLine(ex.Message);
+#pragma warning restore S6966
 	Environment.ExitCode = 1;
 } catch (FileNotFoundException ex) {
+#pragma warning disable S6966
 	Console.Error.WriteLine(ex.Message);
+#pragma warning restore S6966
 	Environment.ExitCode = 1;
 } finally {
 	BenchmarkResultFileExporter.CleanupTemporaryArtifacts(runPlan?.ArtifactsPath);

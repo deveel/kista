@@ -82,7 +82,7 @@ public class ListAsRepositoryTests : IClassFixture<PersonFixture>
 
         // Assert
         Assert.True(result);
-        Assert.Equal(initialCount - 1, _repository.AsFilterable().CountAll());
+	Assert.Equal(initialCount - 1, await _repository.AsFilterable().CountAllAsync());
     }
 
     [Fact]
@@ -98,7 +98,7 @@ public class ListAsRepositoryTests : IClassFixture<PersonFixture>
 
         // Assert
         Assert.True(result);
-        Assert.Equal(initialCount - 1, _repository.AsFilterable().CountAll());
+	Assert.Equal(initialCount - 1, await _repository.AsFilterable().CountAllAsync());
     }
 
     [Fact]
@@ -114,7 +114,7 @@ public class ListAsRepositoryTests : IClassFixture<PersonFixture>
 
         // Assert
         Assert.False(result);
-        Assert.Equal(initialCount, _repository.AsFilterable().CountAll());
+	Assert.Equal(initialCount, await _repository.AsFilterable().CountAllAsync());
     }
 
     [Fact]

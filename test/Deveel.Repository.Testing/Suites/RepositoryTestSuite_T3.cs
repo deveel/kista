@@ -147,12 +147,12 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 	[Trait("Category", "Integration")]
 	[Trait("Layer", "Infrastructure")]
 	[Trait("Feature", "Repository")]
-	public async Task Should_AddPerson_When_CalledSync() {
+	public async Task Should_AddPerson_When_CalledAsync() {
 		// Arrange
 		var person = GeneratePerson();
 
 		// Act
-		Repository.Add(person);
+		await Repository.AddAsync(person);
 
 		// Assert
 		var id = Repository.GetEntityKey(person);
@@ -222,13 +222,13 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 	[Trait("Category", "Integration")]
 	[Trait("Layer", "Infrastructure")]
 	[Trait("Feature", "Repository")]
-	public void Should_RemovePerson_When_CalledSync() {
+	public async Task Should_RemovePerson_When_CalledAsync() {
 		// Arrange
 		var person = People!.Random();
 		Assert.NotNull(person);
 
 		// Act
-		var result = Repository.Remove(person);
+		var result = await Repository.RemoveAsync(person);
 
 		// Assert
 		Assert.True(result);
@@ -254,13 +254,13 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 	[Trait("Category", "Integration")]
 	[Trait("Layer", "Infrastructure")]
 	[Trait("Feature", "Repository")]
-	public void Should_RemoveByKey_When_CalledSync() {
+	public async Task Should_RemoveByKey_When_CalledAsync() {
 		// Arrange
 		var key = Repository.GetEntityKey(People!.Random()!);
 		Assert.NotNull(key);
 
 		// Act
-		var result = Repository.RemoveByKey(key);
+		var result = await Repository.RemoveByKeyAsync(key);
 
 		// Assert
 		Assert.True(result);
@@ -339,9 +339,9 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 	[Trait("Category", "Integration")]
 	[Trait("Layer", "Infrastructure")]
 	[Trait("Feature", "Repository")]
-	public void Should_ReturnTotalCount_When_CountAllSync() {
+	public async Task Should_ReturnTotalCount_When_CountAllAsync() {
 		// Act
-		var result = Repository.CountAll();
+		var result = await Repository.CountAllAsync();
 
 		// Assert
 		Assert.NotEqual(0, result);
@@ -376,7 +376,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 		var peopleCount = People?.Count(x => x.FirstName == firstName) ?? 0;
 
 		// Act
-		var count = Repository.Count(p => p.FirstName == firstName);
+		var count = await Repository.CountAsync(p => p.FirstName == firstName);
 
 		// Assert
 		Assert.Equal(peopleCount, count);
@@ -449,9 +449,9 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 	[Trait("Category", "Integration")]
 	[Trait("Layer", "Infrastructure")]
 	[Trait("Feature", "Repository")]
-	public void Should_ReturnFirstPerson_When_FindFirstSync() {
+	public async Task Should_ReturnFirstPerson_When_FindFirstAsync() {
 		// Act
-		var result = Repository.FindFirst();
+		var result = await Repository.FindFirstAsync();
 
 		// Assert
 		Assert.NotNull(result);
@@ -484,7 +484,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 		var firstName = person.FirstName;
 
 		// Act
-		var result = Repository.Exists(x => x.FirstName == firstName);
+		var result = await Repository.ExistsAsync(x => x.FirstName == firstName);
 
 		// Assert
 		Assert.True(result);
@@ -583,7 +583,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 		var ordered = NaturalOrder(People!.Where(x => x.FirstName == person.FirstName)).ToList();
 
 		// Act
-		var result = Repository.FindFirst(QueryFilter.Where<TPerson>(x => x.FirstName == person.FirstName));
+		var result = await Repository.FindFirstAsync(QueryFilter.Where<TPerson>(x => x.FirstName == person.FirstName));
 
 		// Assert
 		Assert.NotNull(result);
@@ -610,9 +610,9 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 	[Trait("Category", "Integration")]
 	[Trait("Layer", "Infrastructure")]
 	[Trait("Feature", "Repository")]
-	public void Should_ReturnAllPeople_When_FindAllSync() {
+	public async Task Should_ReturnAllPeople_When_FindAllAsync() {
 		// Act
-		var result = Repository.FindAll();
+		var result = await Repository.FindAllAsync();
 
 		// Assert
 		Assert.NotNull(result);
@@ -930,7 +930,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 	[Trait("Category", "Integration")]
 	[Trait("Layer", "Infrastructure")]
 	[Trait("Feature", "Repository")]
-	public async Task Should_UpdatePerson_When_CalledSync() {
+	public async Task Should_UpdatePerson_When_CalledAsync() {
 		// Arrange
 		var person = await RandomPersonAsync(x => x.FirstName != "John");
 		var toUpdate = await Repository.FindAsync(person.Id!, TestContext.Current.CancellationToken);
@@ -938,7 +938,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 		toUpdate.FirstName = "John";
 
 		// Act
-		var result = Repository.Update(toUpdate);
+		var result = await Repository.UpdateAsync(toUpdate);
 
 		// Assert
 		Assert.True(result);

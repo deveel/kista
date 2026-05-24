@@ -356,12 +356,12 @@ public class CoverageGapTests {
     }
 
     /// <summary>
-    /// A testable subclass of <see cref="DefaultRepositoryLifecycleOrchestrator"/> that
-    /// exposes protected members (<see cref="DefaultRepositoryLifecycleOrchestrator.ResolveSeedStrategy"/>
-    /// and <see cref="DefaultRepositoryLifecycleOrchestrator.ResolveEnvironmentName"/>) as public,
+    /// A testable subclass of <see cref="RepositoryLifecycleService"/> that
+    /// exposes protected members (<see cref="RepositoryLifecycleService.ResolveSeedStrategy"/>
+    /// and <see cref="RepositoryLifecycleService.ResolveEnvironmentName"/>) as public,
     /// allowing unit tests to verify environment-aware seed strategy resolution.
     /// </summary>
-    private class LifecycleEnvOrchestrator : DefaultRepositoryLifecycleOrchestrator {
+    private class LifecycleEnvOrchestrator : RepositoryLifecycleService {
         /// <summary>
         /// Creates a new instance with the given options and service provider.
         /// The logger is set to <see cref="NullLogger.Instance"/>.
@@ -370,7 +370,7 @@ public class CoverageGapTests {
             : base(options, sp, NullLogger.Instance) { }
 
         /// <summary>
-        /// Public accessor for <see cref="DefaultRepositoryLifecycleOrchestrator.ResolveEnvironmentName"/>.
+        /// Public accessor for <see cref="RepositoryLifecycleService.ResolveEnvironmentName"/>.
         /// </summary>
         /// <returns>
         /// The resolved environment name.
@@ -378,7 +378,7 @@ public class CoverageGapTests {
         public string PublicResolveEnvironmentName() => base.ResolveEnvironmentName();
 
         /// <summary>
-        /// Public accessor for <see cref="DefaultRepositoryLifecycleOrchestrator.ResolveSeedStrategy"/>.
+        /// Public accessor for <see cref="RepositoryLifecycleService.ResolveSeedStrategy"/>.
         /// </summary>
         /// <returns>
         /// The resolved <see cref="SeedStrategy"/> value.

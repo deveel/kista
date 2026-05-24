@@ -5,12 +5,12 @@ using Microsoft.Extensions.Options;
 
 namespace Deveel.Data {
 	/// <summary>
-	/// The default implementation of <see cref="IRepositoryLifecycleOrchestrator"/> that
+	/// The default implementation of <see cref="IRepositoryLifecycleService"/> that
 	/// manages create, drop, and seed operations for repositories using
 	/// <see cref="IRepositoryLifecycleHandler{TEntity}"/> instances or
 	/// <see cref="IControllableRepository"/> fallback.
 	/// </summary>
-	public class DefaultRepositoryLifecycleOrchestrator : IRepositoryLifecycleOrchestrator {
+	public class RepositoryLifecycleService : IRepositoryLifecycleService {
 		/// <summary>
 		/// The default environment name used as a last resort when no environment
 		/// is configured and <c>IHostEnvironment</c> is not available.
@@ -27,10 +27,10 @@ namespace Deveel.Data {
 		/// <param name="options">The lifecycle configuration options.</param>
 		/// <param name="serviceProvider">The service provider for dependency resolution.</param>
 		/// <param name="logger">An optional typed logger instance.</param>
-		public DefaultRepositoryLifecycleOrchestrator(
+		public RepositoryLifecycleService(
 			IOptions<RepositoryLifecycleOptions> options,
 			IServiceProvider serviceProvider,
-			ILogger<DefaultRepositoryLifecycleOrchestrator>? logger = null)
+			ILogger<RepositoryLifecycleService>? logger = null)
 			: this(options, serviceProvider, (ILogger?)logger) {
 		}
 
@@ -40,7 +40,7 @@ namespace Deveel.Data {
 		/// <param name="options">The lifecycle configuration options.</param>
 		/// <param name="serviceProvider">The service provider for dependency resolution.</param>
 		/// <param name="logger">An optional untyped logger instance.</param>
-		protected DefaultRepositoryLifecycleOrchestrator(
+		protected RepositoryLifecycleService(
 			IOptions<RepositoryLifecycleOptions> options,
 			IServiceProvider serviceProvider,
 			ILogger? logger = null) {
@@ -268,12 +268,17 @@ namespace Deveel.Data {
 		}
 
 		/// <summary>
-		/// Resolves seed data from a registered <see cref="IRepositorySeedDataProvider{TEntity}"/>.
+		/// Resolves seed data from a registered <see cref="IRepositorySeedDataProvider{TEntity}"/>
+		/// or from the registered <see cref="IRepositoryLifecycleProfile"/>.
 		/// </summary>
 		protected virtual object? ResolveSeedDataFromProvider<TEntity>() where TEntity : class {
 			var provider = serviceProvider.GetService<IRepositorySeedDataProvider<TEntity>>();
 			if (provider != null)
 				return provider.GetSeedData();
+
+			var profile = serviceProvider.GetService<IRepositoryLifecycleProfile>();
+			if (profile != null)
+				return profile.GetSeedData<TEntity>();
 
 			return null;
 		}

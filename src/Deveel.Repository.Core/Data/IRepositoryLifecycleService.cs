@@ -2,10 +2,10 @@ using System;
 
 namespace Deveel.Data {
 	/// <summary>
-	/// Orchestrates the lifecycle of repositories, providing methods to create,
-	/// drop, and seed repositories for entity types with or without explicit keys.
+	/// Provides lifecycle operations for repositories, including create,
+	/// drop, and seed for entity types with or without explicit keys.
 	/// </summary>
-	public interface IRepositoryLifecycleOrchestrator {
+	public interface IRepositoryLifecycleService {
 		/// <summary>
 		/// Creates the repository for the given entity type.
 		/// </summary>

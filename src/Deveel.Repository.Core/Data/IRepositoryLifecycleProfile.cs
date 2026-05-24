@@ -18,15 +18,6 @@ namespace Deveel.Data {
 		SeedStrategy GetSeedStrategy(string? environmentName = null);
 
 		/// <summary>
-		/// Gets the seed data for the given entity type.
-		/// </summary>
-		/// <typeparam name="TEntity">The type of the entity to seed.</typeparam>
-		/// <returns>
-		/// Seed data for the entity type, or <c>null</c> if none is available.
-		/// </returns>
-		object? GetSeedData<TEntity>() where TEntity : class;
-
-		/// <summary>
 		/// Gets the seed data for the given entity type by <see cref="Type"/>.
 		/// </summary>
 		/// <param name="entityType">The type of the entity to seed.</param>

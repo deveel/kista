@@ -3,35 +3,35 @@ using System;
 namespace Deveel.Data {
 	/// <summary>
 	/// An obsolete adapter that bridges the legacy <see cref="IRepositoryController"/>
-	/// interface to the modern <see cref="IRepositoryLifecycleOrchestrator"/>.
-	/// Use <see cref="IRepositoryLifecycleOrchestrator"/> directly instead.
+	/// interface to the modern <see cref="IRepositoryLifecycleService"/>.
+	/// Use <see cref="IRepositoryLifecycleService"/> directly instead.
 	/// </summary>
-	[Obsolete("Use IRepositoryLifecycleOrchestrator instead")]
+	[Obsolete("Use IRepositoryLifecycleService instead")]
 	public class RepositoryControllerAdapter : IRepositoryController {
-		private readonly IRepositoryLifecycleOrchestrator orchestrator;
+		private readonly IRepositoryLifecycleService service;
 
 		/// <summary>
-		/// Creates a new adapter wrapping the given orchestrator.
+		/// Creates a new adapter wrapping the given lifecycle service.
 		/// </summary>
-		/// <param name="orchestrator">The orchestrator to delegate to.</param>
-		public RepositoryControllerAdapter(IRepositoryLifecycleOrchestrator orchestrator) {
-			this.orchestrator = orchestrator;
+		/// <param name="service">The lifecycle service to delegate to.</param>
+		public RepositoryControllerAdapter(IRepositoryLifecycleService service) {
+			this.service = service;
 		}
 
 		/// <inheritdoc/>
 		public ValueTask CreateRepositoryAsync<TEntity>(CancellationToken cancellationToken = default) where TEntity : class
-			=> orchestrator.CreateRepositoryAsync<TEntity>(cancellationToken);
+			=> service.CreateRepositoryAsync<TEntity>(cancellationToken);
 
 		/// <inheritdoc/>
 		public ValueTask CreateRepositoryAsync<TEntity, TKey>(CancellationToken cancellationToken = default) where TEntity : class
-			=> orchestrator.CreateRepositoryAsync<TEntity, TKey>(cancellationToken);
+			=> service.CreateRepositoryAsync<TEntity, TKey>(cancellationToken);
 
 		/// <inheritdoc/>
 		public ValueTask DropRepositoryAsync<TEntity>(CancellationToken cancellationToken = default) where TEntity : class
-			=> orchestrator.DropRepositoryAsync<TEntity>(cancellationToken);
+			=> service.DropRepositoryAsync<TEntity>(cancellationToken);
 
 		/// <inheritdoc/>
 		public ValueTask DropRepositoryAsync<TEntity, TKey>(CancellationToken cancellationToken = default) where TEntity : class
-			=> orchestrator.DropRepositoryAsync<TEntity, TKey>(cancellationToken);
+			=> service.DropRepositoryAsync<TEntity, TKey>(cancellationToken);
 	}
 }

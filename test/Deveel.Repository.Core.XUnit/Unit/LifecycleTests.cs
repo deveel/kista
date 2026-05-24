@@ -7,8 +7,8 @@ namespace Deveel.Data;
 
 /// <summary>
 /// Tests for the repository lifecycle feature, including
-/// <see cref="IRepositoryLifecycleOrchestrator"/> registration, option configuration,
-/// <see cref="DefaultRepositoryLifecycleOrchestrator"/> behavior (create, drop, seed),
+/// <see cref="IRepositoryLifecycleService"/> registration, option configuration,
+/// <see cref="RepositoryLifecycleService"/> behavior (create, drop, seed),
 /// controllable repository fallback, seed-data provider resolution, and
 /// obsolete <see cref="RepositoryControllerAdapter"/> / <see cref="DefaultRepositoryController"/>.
 /// </summary>
@@ -22,10 +22,10 @@ public class LifecycleTests {
 		services.AddRepositoryLifecycleOrchestrator();
 
 		var provider = services.BuildServiceProvider();
-		var orchestrator = provider.GetService<IRepositoryLifecycleOrchestrator>();
+		var orchestrator = provider.GetService<IRepositoryLifecycleService>();
 
 		Assert.NotNull(orchestrator);
-		Assert.IsType<DefaultRepositoryLifecycleOrchestrator>(orchestrator);
+		Assert.IsType<RepositoryLifecycleService>(orchestrator);
 	}
 
 	[Fact]
@@ -55,7 +55,7 @@ public class LifecycleTests {
 		});
 
 		var provider = services.BuildServiceProvider();
-		var orchestrator = provider.GetService<IRepositoryLifecycleOrchestrator>();
+		var orchestrator = provider.GetService<IRepositoryLifecycleService>();
 
 		Assert.NotNull(orchestrator);
 	}
@@ -68,7 +68,7 @@ public class LifecycleTests {
 		builder.ConfigureLifecycle();
 
 		var provider = services.BuildServiceProvider();
-		var orchestrator = provider.GetService<IRepositoryLifecycleOrchestrator>();
+		var orchestrator = provider.GetService<IRepositoryLifecycleService>();
 
 		Assert.NotNull(orchestrator);
 	}
@@ -86,7 +86,7 @@ public class LifecycleTests {
 		builder.ConfigureLifecycle();
 
 		var provider = services.BuildServiceProvider();
-		var orchestrator = provider.GetService<IRepositoryLifecycleOrchestrator>();
+		var orchestrator = provider.GetService<IRepositoryLifecycleService>();
 		Assert.NotNull(orchestrator);
 	}
 
@@ -101,7 +101,7 @@ public class LifecycleTests {
 		});
 
 		var provider = services.BuildServiceProvider();
-		var orchestrator = provider.GetService<IRepositoryLifecycleOrchestrator>();
+		var orchestrator = provider.GetService<IRepositoryLifecycleService>();
 		Assert.NotNull(orchestrator);
 	}
 
@@ -139,7 +139,7 @@ public class LifecycleTests {
 		services.AddRepositoryLifecycleOrchestrator();
 
 		var provider = services.BuildServiceProvider();
-		var orchestrator = provider.GetRequiredService<IRepositoryLifecycleOrchestrator>();
+		var orchestrator = provider.GetRequiredService<IRepositoryLifecycleService>();
 
 		await orchestrator.CreateRepositoryAsync<Person>();
 	}
@@ -150,7 +150,7 @@ public class LifecycleTests {
 		services.AddRepositoryLifecycleOrchestrator();
 
 		var provider = services.BuildServiceProvider();
-		var orchestrator = provider.GetRequiredService<IRepositoryLifecycleOrchestrator>();
+		var orchestrator = provider.GetRequiredService<IRepositoryLifecycleService>();
 
 		await orchestrator.DropRepositoryAsync<Person>();
 	}
@@ -161,7 +161,7 @@ public class LifecycleTests {
 		services.AddRepositoryLifecycleOrchestrator();
 
 		var provider = services.BuildServiceProvider();
-		var orchestrator = provider.GetRequiredService<IRepositoryLifecycleOrchestrator>();
+		var orchestrator = provider.GetRequiredService<IRepositoryLifecycleService>();
 
 		await orchestrator.SeedRepositoryAsync<Person>(new List<Person>());
 	}
@@ -174,7 +174,7 @@ public class LifecycleTests {
 		});
 
 		var provider = services.BuildServiceProvider();
-		var orchestrator = provider.GetRequiredService<IRepositoryLifecycleOrchestrator>();
+		var orchestrator = provider.GetRequiredService<IRepositoryLifecycleService>();
 
 		await Assert.ThrowsAsync<RepositoryException>(
 			() => orchestrator.CreateRepositoryAsync<Person>().AsTask()
@@ -183,7 +183,7 @@ public class LifecycleTests {
 
 	[Fact]
 	public void Adapter_WrapsOrchestrator() {
-		var orchestrator = new DefaultRepositoryLifecycleOrchestrator(
+		var orchestrator = new RepositoryLifecycleService(
 			Options.Create(new RepositoryLifecycleOptions()),
 			new ServiceCollection().BuildServiceProvider()
 		);
@@ -231,11 +231,11 @@ public class LifecycleTests {
 
 	[Fact]
 	public async Task Constructor_WithExplicitLogger() {
-		var logger = NullLogger<DefaultRepositoryLifecycleOrchestrator>.Instance;
+		var logger = NullLogger<RepositoryLifecycleService>.Instance;
 		var options = Options.Create(new RepositoryLifecycleOptions());
 		var sp = new ServiceCollection().BuildServiceProvider();
 
-		var orchestrator = new DefaultRepositoryLifecycleOrchestrator(options, sp, logger);
+		var orchestrator = new RepositoryLifecycleService(options, sp, logger);
 
 		await orchestrator.CreateRepositoryAsync<Person>();
 	}
@@ -259,7 +259,7 @@ public class LifecycleTests {
 		services.AddRepositoryLifecycleOrchestrator();
 
 		var provider = services.BuildServiceProvider();
-		var orchestrator = provider.GetRequiredService<IRepositoryLifecycleOrchestrator>();
+		var orchestrator = provider.GetRequiredService<IRepositoryLifecycleService>();
 
 		await orchestrator.CreateRepositoryAsync<Person>();
 
@@ -274,7 +274,7 @@ public class LifecycleTests {
 		services.AddRepositoryLifecycleOrchestrator();
 
 		var provider = services.BuildServiceProvider();
-		var orchestrator = provider.GetRequiredService<IRepositoryLifecycleOrchestrator>();
+		var orchestrator = provider.GetRequiredService<IRepositoryLifecycleService>();
 
 		await orchestrator.CreateRepositoryAsync<Person>();
 
@@ -289,7 +289,7 @@ public class LifecycleTests {
 		});
 
 		var provider = services.BuildServiceProvider();
-		var orchestrator = provider.GetRequiredService<IRepositoryLifecycleOrchestrator>();
+		var orchestrator = provider.GetRequiredService<IRepositoryLifecycleService>();
 
 		await orchestrator.CreateRepositoryAsync<Person>();
 	}
@@ -302,7 +302,7 @@ public class LifecycleTests {
 		services.AddRepositoryLifecycleOrchestrator();
 
 		var provider = services.BuildServiceProvider();
-		var orchestrator = provider.GetRequiredService<IRepositoryLifecycleOrchestrator>();
+		var orchestrator = provider.GetRequiredService<IRepositoryLifecycleService>();
 
 		await orchestrator.CreateRepositoryAsync<Person, string>();
 
@@ -317,7 +317,7 @@ public class LifecycleTests {
 		services.AddRepositoryLifecycleOrchestrator();
 
 		var provider = services.BuildServiceProvider();
-		var orchestrator = provider.GetRequiredService<IRepositoryLifecycleOrchestrator>();
+		var orchestrator = provider.GetRequiredService<IRepositoryLifecycleService>();
 
 		await orchestrator.CreateRepositoryAsync<Person, string>();
 
@@ -332,7 +332,7 @@ public class LifecycleTests {
 		});
 
 		var provider = services.BuildServiceProvider();
-		var orchestrator = provider.GetRequiredService<IRepositoryLifecycleOrchestrator>();
+		var orchestrator = provider.GetRequiredService<IRepositoryLifecycleService>();
 
 		await Assert.ThrowsAsync<RepositoryException>(
 			() => orchestrator.CreateRepositoryAsync<Person, string>().AsTask()
@@ -347,7 +347,7 @@ public class LifecycleTests {
 		});
 
 		var provider = services.BuildServiceProvider();
-		var orchestrator = provider.GetRequiredService<IRepositoryLifecycleOrchestrator>();
+		var orchestrator = provider.GetRequiredService<IRepositoryLifecycleService>();
 
 		await orchestrator.CreateRepositoryAsync<Person, string>();
 	}
@@ -360,7 +360,7 @@ public class LifecycleTests {
 		services.AddRepositoryLifecycleOrchestrator();
 
 		var provider = services.BuildServiceProvider();
-		var orchestrator = provider.GetRequiredService<IRepositoryLifecycleOrchestrator>();
+		var orchestrator = provider.GetRequiredService<IRepositoryLifecycleService>();
 
 		await orchestrator.DropRepositoryAsync<Person, string>();
 
@@ -377,7 +377,7 @@ public class LifecycleTests {
 		});
 
 		var provider = services.BuildServiceProvider();
-		var orchestrator = provider.GetRequiredService<IRepositoryLifecycleOrchestrator>();
+		var orchestrator = provider.GetRequiredService<IRepositoryLifecycleService>();
 
 		await orchestrator.SeedRepositoryAsync<Person, string>(new List<Person>());
 
@@ -703,7 +703,7 @@ public class LifecycleTests {
 	public void ResolveEnvironmentName_ReturnsProduction() {
 		var orchestrator = CreateTestOrchestrator(new RepositoryLifecycleOptions());
 
-		Assert.Equal(DefaultRepositoryLifecycleOrchestrator.ProductionEnvironment, orchestrator.ResolveEnvironmentName());
+		Assert.Equal(RepositoryLifecycleService.ProductionEnvironment, orchestrator.ResolveEnvironmentName());
 	}
 
 	[Fact]
@@ -721,7 +721,7 @@ public class LifecycleTests {
 			EnvironmentName = ""
 		});
 
-		Assert.Equal(DefaultRepositoryLifecycleOrchestrator.ProductionEnvironment, orchestrator.ResolveEnvironmentName());
+		Assert.Equal(RepositoryLifecycleService.ProductionEnvironment, orchestrator.ResolveEnvironmentName());
 	}
 
 	[Fact]
@@ -730,7 +730,328 @@ public class LifecycleTests {
 			EnvironmentName = "   "
 		});
 
-		Assert.Equal(DefaultRepositoryLifecycleOrchestrator.ProductionEnvironment, orchestrator.ResolveEnvironmentName());
+		Assert.Equal(RepositoryLifecycleService.ProductionEnvironment, orchestrator.ResolveEnvironmentName());
+	}
+
+	// -----------------------------------------------------------------------
+	// DefaultRepositoryLifecycleProfile tests
+	// -----------------------------------------------------------------------
+
+	[Theory]
+	[InlineData("Development", SeedStrategy.Always)]
+	[InlineData("development", SeedStrategy.Always)]
+	[InlineData("Dev", SeedStrategy.Always)]
+	[InlineData("dev", SeedStrategy.Always)]
+	[InlineData("Staging", SeedStrategy.IfMissing)]
+	[InlineData("staging", SeedStrategy.IfMissing)]
+	[InlineData("Stage", SeedStrategy.IfMissing)]
+	[InlineData("stage", SeedStrategy.IfMissing)]
+	[InlineData("Testing", SeedStrategy.Always)]
+	[InlineData("testing", SeedStrategy.Always)]
+	[InlineData("Test", SeedStrategy.Always)]
+	[InlineData("test", SeedStrategy.Always)]
+	[InlineData("Production", SeedStrategy.Never)]
+	[InlineData("production", SeedStrategy.Never)]
+	[InlineData("Prod", SeedStrategy.Never)]
+	[InlineData("prod", SeedStrategy.Never)]
+	[InlineData("Unknown", SeedStrategy.Always)]
+	[InlineData(null, SeedStrategy.Always)]
+	[InlineData("", SeedStrategy.Always)]
+	public void DefaultProfile_GetSeedStrategy_ReturnsCorrectStrategy(string? envName, SeedStrategy expected) {
+		var sp = new ServiceCollection().BuildServiceProvider();
+		var profile = new DefaultRepositoryLifecycleProfile(sp);
+
+		var result = profile.GetSeedStrategy(envName);
+
+		Assert.Equal(expected, result);
+	}
+
+	[Fact]
+	public void DefaultProfile_GetSeedData_WithProvider_ReturnsData() {
+		var services = new ServiceCollection();
+		services.AddSingleton<IRepositorySeedDataProvider<Person>, TestSeedDataProvider>();
+		var sp = services.BuildServiceProvider();
+		var profile = new DefaultRepositoryLifecycleProfile(sp);
+
+		var result = profile.GetSeedData<Person>();
+
+		Assert.NotNull(result);
+		var data = Assert.IsAssignableFrom<IEnumerable<Person>>(result);
+		Assert.Single(data);
+	}
+
+	[Fact]
+	public void DefaultProfile_GetSeedData_WithoutProvider_ReturnsNull() {
+		var sp = new ServiceCollection().BuildServiceProvider();
+		var profile = new DefaultRepositoryLifecycleProfile(sp);
+
+		var result = profile.GetSeedData<Person>();
+
+		Assert.Null(result);
+	}
+
+	[Fact]
+	public void DefaultProfile_GetSeedData_ByType_ReturnsData() {
+		var services = new ServiceCollection();
+		services.AddSingleton<IRepositorySeedDataProvider<Person>, TestSeedDataProvider>();
+		var sp = services.BuildServiceProvider();
+		var profile = new DefaultRepositoryLifecycleProfile(sp);
+
+		var result = profile.GetSeedData(typeof(Person));
+
+		Assert.NotNull(result);
+	}
+
+	[Fact]
+	public void DefaultProfile_GetSeedData_ByType_Null_Throws() {
+		var sp = new ServiceCollection().BuildServiceProvider();
+		var profile = new DefaultRepositoryLifecycleProfile(sp);
+
+		Assert.Throws<ArgumentNullException>(() => profile.GetSeedData(null!));
+	}
+
+	[Fact]
+	public void DefaultProfile_GetSeedData_CachesResults() {
+		var services = new ServiceCollection();
+		services.AddSingleton<IRepositorySeedDataProvider<Person>, TestSeedDataProvider>();
+		var sp = services.BuildServiceProvider();
+		var profile = new DefaultRepositoryLifecycleProfile(sp);
+
+		var result1 = profile.GetSeedData<Person>();
+		var result2 = profile.GetSeedData<Person>();
+
+		Assert.Same(result1, result2);
+	}
+
+	// -----------------------------------------------------------------------
+	// WithLifecycleProfile builder method tests
+	// -----------------------------------------------------------------------
+
+	[Fact]
+	public void WithLifecycleProfile_Type_RegistersService() {
+		var services = new ServiceCollection();
+		var builder = new RepositoryContextBuilder(services);
+
+		builder.WithLifecycleProfile<MockLifecycleProfile>();
+
+		var provider = services.BuildServiceProvider();
+		var profile = provider.GetService<IRepositoryLifecycleProfile>();
+
+		Assert.NotNull(profile);
+		Assert.IsType<MockLifecycleProfile>(profile);
+	}
+
+	[Fact]
+	public void WithLifecycleProfile_Type_SupportsCustomLifetime() {
+		var services = new ServiceCollection();
+		var builder = new RepositoryContextBuilder(services);
+
+		builder.WithLifecycleProfile<MockLifecycleProfile>(ServiceLifetime.Transient);
+
+		var provider = services.BuildServiceProvider();
+		var profile1 = provider.GetRequiredService<IRepositoryLifecycleProfile>();
+		var profile2 = provider.GetRequiredService<IRepositoryLifecycleProfile>();
+
+		Assert.NotSame(profile1, profile2);
+	}
+
+	[Fact]
+	public void WithLifecycleProfile_Instance_RegistersSingleton() {
+		var services = new ServiceCollection();
+		var builder = new RepositoryContextBuilder(services);
+		var instance = new MockLifecycleProfile(SeedStrategy.IfMissing);
+
+		builder.WithLifecycleProfile(instance);
+
+		var provider = services.BuildServiceProvider();
+		var profile = provider.GetService<IRepositoryLifecycleProfile>();
+
+		Assert.Same(instance, profile);
+	}
+
+	[Fact]
+	public void ConfigureLifecycle_AutoRegistersDefaultProfile() {
+		var services = new ServiceCollection();
+		var builder = new RepositoryContextBuilder(services);
+
+		builder.ConfigureLifecycle();
+
+		var provider = services.BuildServiceProvider();
+		var profile = provider.GetService<IRepositoryLifecycleProfile>();
+
+		Assert.NotNull(profile);
+		Assert.IsType<DefaultRepositoryLifecycleProfile>(profile);
+	}
+
+	[Fact]
+	public void ConfigureLifecycle_CustomProfileOverridesDefault() {
+		var services = new ServiceCollection();
+		var builder = new RepositoryContextBuilder(services);
+		var customProfile = new MockLifecycleProfile(SeedStrategy.IfMissing);
+
+		builder
+			.WithLifecycleProfile(customProfile)
+			.ConfigureLifecycle();
+
+		var provider = services.BuildServiceProvider();
+		var profile = provider.GetService<IRepositoryLifecycleProfile>();
+
+		Assert.Same(customProfile, profile);
+	}
+
+	[Fact]
+	public void WithLifecycleProfile_ReturnsBuilderForChaining() {
+		var services = new ServiceCollection();
+		var builder = new RepositoryContextBuilder(services);
+
+		var result = builder.WithLifecycleProfile<MockLifecycleProfile>();
+
+		Assert.Same(builder, result);
+	}
+
+	[Fact]
+	public void WithLifecycleProfile_Instance_ReturnsBuilderForChaining() {
+		var services = new ServiceCollection();
+		var builder = new RepositoryContextBuilder(services);
+		var instance = new MockLifecycleProfile(SeedStrategy.Never);
+
+		var result = builder.WithLifecycleProfile(instance);
+
+		Assert.Same(builder, result);
+	}
+
+	// -----------------------------------------------------------------------
+	// Orchestrator seed data resolution with profile fallback tests
+	// -----------------------------------------------------------------------
+
+	[Fact]
+	public void ResolveSeedDataFromProvider_WithProfile_ReturnsProfileData() {
+		var services = new ServiceCollection();
+		services.AddSingleton<IRepositoryLifecycleProfile>(new ProfileWithSeedData());
+		var orchestrator = new TestableOrchestrator(
+			Options.Create(new RepositoryLifecycleOptions()),
+			services.BuildServiceProvider()
+		);
+
+		var result = orchestrator.ResolveSeedDataFromProvider<Person>();
+
+		Assert.NotNull(result);
+		var data = Assert.IsAssignableFrom<IEnumerable<Person>>(result);
+		Assert.Single(data);
+	}
+
+	[Fact]
+	public void ResolveSeedDataFromProvider_PreferProviderOverProfile() {
+		var services = new ServiceCollection();
+		services.AddSingleton<IRepositorySeedDataProvider<Person>>(new TestSeedDataProvider());
+		services.AddSingleton<IRepositoryLifecycleProfile>(new ProfileWithDifferentData());
+		var orchestrator = new TestableOrchestrator(
+			Options.Create(new RepositoryLifecycleOptions()),
+			services.BuildServiceProvider()
+		);
+
+		var result = orchestrator.ResolveSeedDataFromProvider<Person>();
+
+		Assert.NotNull(result);
+		var data = Assert.IsAssignableFrom<IEnumerable<Person>>(result);
+		var person = Assert.Single(data);
+		Assert.Equal("Test", person.FirstName);
+	}
+
+	[Fact]
+	public async Task SeedRepository_UsesProfileData_WhenNoProviderRegistered() {
+		var handler = new MockHandler<Person>();
+		var services = new ServiceCollection();
+		services.AddSingleton<IRepositoryLifecycleProfile>(new ProfileWithSeedData());
+		var sp = services.BuildServiceProvider();
+		var opts = Options.Create(new RepositoryLifecycleOptions {
+			SeedStrategy = SeedStrategy.Always
+		});
+		var orchestrator = new TestableOrchestrator(opts, sp);
+
+		await orchestrator.SeedRepository(handler, null, default);
+
+		Assert.True(handler.SeedCalled);
+		Assert.NotNull(handler.SeedDataReceived);
+		var data = Assert.IsAssignableFrom<IEnumerable<Person>>(handler.SeedDataReceived);
+		var person = Assert.Single(data);
+		Assert.Equal("ProfilePerson", person.FirstName);
+	}
+
+	[Fact]
+	public async Task SeedRepository_ByEnvironment_UsesProfileStrategy() {
+		var handler = new MockHandler<Person>();
+		var services = new ServiceCollection();
+		services.AddSingleton<IRepositoryLifecycleProfile>(new EnvironmentAwareProfile());
+		services.AddSingleton<IRepositorySeedDataProvider<Person>>(new TestSeedDataProvider());
+		var sp = services.BuildServiceProvider();
+		var opts = Options.Create(new RepositoryLifecycleOptions {
+			SeedStrategy = SeedStrategy.ByEnvironment,
+			EnvironmentName = "Production"
+		});
+		var orchestrator = new TestableOrchestrator(opts, sp);
+
+		await orchestrator.SeedRepository(handler, null, default);
+
+		Assert.False(handler.SeedCalled);
+	}
+
+	[Fact]
+	public async Task SeedRepository_ByEnvironment_Development_SeedsWithProfile() {
+		var handler = new MockHandler<Person>();
+		var services = new ServiceCollection();
+		services.AddSingleton<IRepositoryLifecycleProfile>(new ProfileWithSeedData());
+		var sp = services.BuildServiceProvider();
+		var opts = Options.Create(new RepositoryLifecycleOptions {
+			SeedStrategy = SeedStrategy.ByEnvironment,
+			EnvironmentName = "Development"
+		});
+		var orchestrator = new TestableOrchestrator(opts, sp);
+
+		await orchestrator.SeedRepository(handler, null, default);
+
+		Assert.True(handler.SeedCalled);
+	}
+
+	[Fact]
+	public void ResolveSeedStrategy_ByEnvironment_WithDefaultProfile_ReturnsEnvironmentStrategy() {
+		var services = new ServiceCollection();
+		services.AddSingleton<IRepositoryLifecycleProfile, DefaultRepositoryLifecycleProfile>();
+		var sp = services.BuildServiceProvider();
+		var opts = Options.Create(new RepositoryLifecycleOptions {
+			SeedStrategy = SeedStrategy.ByEnvironment,
+			EnvironmentName = "Production"
+		});
+		var orchestrator = new TestableOrchestrator(opts, sp);
+
+		var strategy = orchestrator.ResolveSeedStrategy();
+
+		Assert.Equal(SeedStrategy.Never, strategy);
+	}
+
+	[Fact]
+	public void ResolveSeedStrategy_ByEnvironment_WithDefaultProfile_Development_ReturnsAlways() {
+		var services = new ServiceCollection();
+		services.AddSingleton<IRepositoryLifecycleProfile, DefaultRepositoryLifecycleProfile>();
+		var sp = services.BuildServiceProvider();
+		var opts = Options.Create(new RepositoryLifecycleOptions {
+			SeedStrategy = SeedStrategy.ByEnvironment,
+			EnvironmentName = "Development"
+		});
+		var orchestrator = new TestableOrchestrator(opts, sp);
+
+		var strategy = orchestrator.ResolveSeedStrategy();
+
+		Assert.Equal(SeedStrategy.Always, strategy);
+	}
+
+	[Fact]
+	public void ResolveSeedDataFromProvider_WithoutProviderOrProfile_ReturnsNull() {
+		var orchestrator = CreateTestOrchestrator(new RepositoryLifecycleOptions());
+
+		var result = orchestrator.ResolveSeedDataFromProvider<Person>();
+
+		Assert.Null(result);
 	}
 
 	[Fact]
@@ -811,11 +1132,11 @@ public class LifecycleTests {
 	}
 
 	/// <summary>
-	/// A testable subclass of <see cref="DefaultRepositoryLifecycleOrchestrator"/> that
+	/// A testable subclass of <see cref="RepositoryLifecycleService"/> that
 	/// exposes all internal and protected members as public, enabling direct
 	/// unit-testing of orchestration logic (create, drop, seed, strategy resolution).
 	/// </summary>
-	private class TestableOrchestrator : DefaultRepositoryLifecycleOrchestrator {
+	private class TestableOrchestrator : RepositoryLifecycleService {
 		/// <summary>
 		/// Creates a new instance with the given options, service provider, and optional logger.
 		/// </summary>
@@ -1056,6 +1377,8 @@ public class LifecycleTests {
 	private class MockLifecycleProfile : IRepositoryLifecycleProfile {
 		private readonly SeedStrategy strategy;
 
+		public MockLifecycleProfile() : this(SeedStrategy.Always) { }
+
 		public MockLifecycleProfile(SeedStrategy strategy) {
 			this.strategy = strategy;
 		}
@@ -1063,10 +1386,57 @@ public class LifecycleTests {
 		public SeedStrategy GetSeedStrategy(string? environmentName = null)
 			=> strategy;
 
-		public object? GetSeedData<TEntity>() where TEntity : class
-			=> null;
-
 		public object? GetSeedData(Type entityType)
 			=> null;
+	}
+
+	/// <summary>
+	/// A lifecycle profile that provides seed data for <see cref="Person"/> entities.
+	/// </summary>
+	private class ProfileWithSeedData : IRepositoryLifecycleProfile {
+		public SeedStrategy GetSeedStrategy(string? environmentName = null)
+			=> SeedStrategy.Always;
+
+		public object? GetSeedData(Type entityType) {
+			if (entityType == typeof(Person)) {
+				return new List<Person> { new Person { FirstName = "ProfilePerson" } };
+			}
+			return null;
+		}
+	}
+
+	/// <summary>
+	/// A lifecycle profile that provides different seed data to distinguish from providers.
+	/// </summary>
+	private class ProfileWithDifferentData : IRepositoryLifecycleProfile {
+		public SeedStrategy GetSeedStrategy(string? environmentName = null)
+			=> SeedStrategy.Always;
+
+		public object? GetSeedData(Type entityType) {
+			if (entityType == typeof(Person)) {
+				return new List<Person> { new Person { FirstName = "ProfilePerson" } };
+			}
+			return null;
+		}
+	}
+
+	/// <summary>
+	/// A lifecycle profile that provides environment-aware seed strategies.
+	/// </summary>
+	private class EnvironmentAwareProfile : IRepositoryLifecycleProfile {
+		public SeedStrategy GetSeedStrategy(string? environmentName = null) {
+			return environmentName?.ToLowerInvariant() switch {
+				"development" or "dev" => SeedStrategy.Always,
+				"production" or "prod" => SeedStrategy.Never,
+				_ => SeedStrategy.IfMissing
+			};
+		}
+
+		public object? GetSeedData(Type entityType) {
+			if (entityType == typeof(Person)) {
+				return new List<Person> { new Person { FirstName = "EnvProfilePerson" } };
+			}
+			return null;
+		}
 	}
 }

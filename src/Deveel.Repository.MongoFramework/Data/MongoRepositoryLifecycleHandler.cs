@@ -14,16 +14,17 @@ namespace Deveel.Data {
 	/// index creation defined in the entity mapping.
 	/// </summary>
 	/// <typeparam name="TEntity">The type of the entity.</typeparam>
-	public class MongoRepositoryLifecycleHandler<TEntity> : IRepositoryLifecycleHandler<TEntity>
+	public class MongoRepositoryLifecycleHandler<TEntity> : RepositoryLifecycleHandler<TEntity>
 		where TEntity : class {
-        /// <summary>
+
+		/// <summary>
 		/// Creates a new instance of the handler for the given MongoFramework context.
 		/// </summary>
 		/// <param name="context">The MongoFramework database context.</param>
 		/// <param name="logger">An optional typed logger instance.</param>
-		public MongoRepositoryLifecycleHandler(IMongoDbContext context, ILogger<MongoRepositoryLifecycleHandler<TEntity>>? logger = null) {
-			this.Context = context;
-			this.Logger = logger ?? NullLogger<MongoRepositoryLifecycleHandler<TEntity>>.Instance;
+		public MongoRepositoryLifecycleHandler(IMongoDbContext context, ILogger<MongoRepositoryLifecycleHandler<TEntity>>? logger = null)
+			: base(logger) {
+			Context = context;
 		}
 
 		/// <summary>
@@ -31,12 +32,7 @@ namespace Deveel.Data {
 		/// </summary>
 		protected IMongoDbContext Context { get; }
 
-        /// <summary>
-		/// Gets the logger used for diagnostic output.
-		/// </summary>
-		protected ILogger Logger { get; }
-
-        /// <summary>
+		/// <summary>
 		/// Resolves the MongoDB collection name for the entity type from the
 		/// MongoFramework entity mapping.
 		/// </summary>
@@ -47,7 +43,7 @@ namespace Deveel.Data {
 		}
 
 		/// <inheritdoc/>
-		public async ValueTask<bool> ExistsAsync(CancellationToken cancellationToken = default) {
+		public override async ValueTask<bool> ExistsAsync(CancellationToken cancellationToken = default) {
 			try {
 				var collectionName = ResolveCollectionName();
 				var options = new ListCollectionNamesOptions {
@@ -63,7 +59,7 @@ namespace Deveel.Data {
 		}
 
 		/// <inheritdoc/>
-		public async ValueTask CreateAsync(CancellationToken cancellationToken = default) {
+		public override async ValueTask CreateAsync(CancellationToken cancellationToken = default) {
 			try {
 				var collectionName = ResolveCollectionName();
 				await Context.Connection.GetDatabase()
@@ -120,7 +116,7 @@ namespace Deveel.Data {
 		}
 
 		/// <inheritdoc/>
-		public async ValueTask DropAsync(CancellationToken cancellationToken = default) {
+		public override async ValueTask DropAsync(CancellationToken cancellationToken = default) {
 			try {
 				var collectionName = ResolveCollectionName();
 				var collection = Context.Connection.GetDatabase()
@@ -135,35 +131,11 @@ namespace Deveel.Data {
 		}
 
 		/// <inheritdoc/>
-		public async ValueTask SeedAsync(object? seedData = null, CancellationToken cancellationToken = default) {
-			if (seedData == null)
-				return;
-
-			if (seedData is IEnumerable<TEntity> entities) {
-				var collectionName = ResolveCollectionName();
-				var collection = Context.Connection.GetDatabase()
-					.GetCollection<TEntity>(collectionName);
-				await collection.InsertManyAsync(entities, cancellationToken: cancellationToken);
-				return;
-			}
-
-			if (seedData is IEnumerable<object> objects) {
-				var typedEntities = objects.OfType<TEntity>().ToList();
-				if (typedEntities.Any()) {
-					var collectionName = ResolveCollectionName();
-					var collection = Context.Connection.GetDatabase()
-						.GetCollection<TEntity>(collectionName);
-					await collection.InsertManyAsync(typedEntities, cancellationToken: cancellationToken);
-				}
-				return;
-			}
-
-			if (seedData is TEntity single) {
-				var collectionName = ResolveCollectionName();
-				var collection = Context.Connection.GetDatabase()
-					.GetCollection<TEntity>(collectionName);
-				await collection.InsertOneAsync(single, cancellationToken: cancellationToken);
-			}
+		protected override async ValueTask SeedEntitiesAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) {
+			var collectionName = ResolveCollectionName();
+			var collection = Context.Connection.GetDatabase()
+				.GetCollection<TEntity>(collectionName);
+			await collection.InsertManyAsync(entities, cancellationToken: cancellationToken);
 		}
 	}
 }

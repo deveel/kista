@@ -1,5 +1,11 @@
 ﻿namespace Deveel.Data;
 
+/// <summary>
+/// Tests for <see cref="CombinedQueryFilter"/> and <see cref="QueryFilter.Combine"/>,
+/// verifying flattening of nested combined filters, empty-filter exclusion,
+/// and <see cref="IExpressionQueryFilter.AsLambda{T}"/> producing correct
+/// <c>AndAlso</c> expression trees.
+/// </summary>
 [Trait("Category", "Unit")]
 [Trait("Layer", "Core")]
 [Trait("Feature", "QueryFilter")]

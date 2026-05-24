@@ -15,6 +15,7 @@
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Deveel.Data {
+/// <inheritdoc cref="ServiceCollectionExtensions"/>
 	public static partial class ServiceCollectionExtensions {
 		/// <summary>
 		/// Creates a new <see cref="RepositoryContextBuilder"/> for configuring

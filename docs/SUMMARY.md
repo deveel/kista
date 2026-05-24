@@ -4,6 +4,7 @@
 * [The Repository Pattern](repository-pattern.md)
 * [Getting Started](index.md)
 * [Customize the Repository](custom-repository.md)
+* [Repository Lifecycle](repository-lifecycle.md)
 * [User Entities](user-entities.md)
 * [Multi-Tenancy of Data Sources](multi-tenancy.md)
 * [Repository Implementations](repository-implementations/README.md)
@@ -16,4 +17,5 @@
 * [The Entity Manager](entity-manager/README.md)
   * [HTTP Request Cancellation](entity-manager/http-request-cancellation.md)
   * [Caching Entities](entity-manager/caching-entities.md)
+* [Sample Application](sample-app.md)
 * [Roadmap](roadmap.md)

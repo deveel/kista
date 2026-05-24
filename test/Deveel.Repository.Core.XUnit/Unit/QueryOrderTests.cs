@@ -1,5 +1,10 @@
 ﻿namespace Deveel.Data;
 
+/// <summary>
+/// Tests for <see cref="QueryOrder"/>, <see cref="CombinedOrder"/>, <see cref="ExpressionSort{T}"/>,
+/// and <see cref="FieldOrder"/>, verifying combine semantics, flattening of nested combined orders,
+/// and <see cref="IQueryOrder.Apply(IQueryable)"/> with field-name and expression-based mappers.
+/// </summary>
 [Trait("Category", "Unit")]
 [Trait("Layer", "Core")]
 [Trait("Feature", "QueryOrder")]

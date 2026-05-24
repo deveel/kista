@@ -2,6 +2,11 @@
 
 namespace Deveel.Data;
 
+/// <summary>
+/// Tests for <see cref="PageQuery{T}"/> construction and fluent configuration,
+/// verifying default state, <c>Where</c> clause chaining, <c>OrderBy</c> and
+/// <c>OrderByDescending</c> methods with both expressions and field names.
+/// </summary>
 [Trait("Category", "Unit")]
 [Trait("Layer", "Core")]
 [Trait("Feature", "PageQuery")]

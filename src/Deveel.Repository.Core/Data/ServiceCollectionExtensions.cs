@@ -106,7 +106,7 @@ namespace Deveel.Data {
         /// <returns>
         /// Returns the same <see cref="IServiceCollection"/> to allow chaining.
         /// </returns>
-        [Obsolete("Use AddRepositoryContext() instead.", false)]
+        [Obsolete("Use AddRepositoryContext().ConfigureLifecycle() instead.", false)]
         public static IServiceCollection AddRepositoryController<TController>(this IServiceCollection services, Action<RepositoryControllerOptions>? configure = null)
             where TController : class, IRepositoryController {
 
@@ -133,7 +133,7 @@ namespace Deveel.Data {
         /// <returns>
         /// Returns the same <see cref="IServiceCollection"/> to allow chaining.
         /// </returns>
-        [Obsolete("Use AddRepositoryContext() instead.", false)]
+        [Obsolete("Use AddRepositoryContext().ConfigureLifecycle() instead.", false)]
         public static IServiceCollection AddRepositoryController(this IServiceCollection services, Action<RepositoryControllerOptions>? configure = null)
             => services.AddRepositoryController<DefaultRepositoryController>(configure);
 

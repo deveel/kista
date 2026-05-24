@@ -17,7 +17,9 @@ public abstract class UserRepositoryTestSuite<TBook, TKey, TUserKey> : IAsyncLif
 
 	protected UserRepositoryTestSuite(ITestOutputHelper? outputHelper) {
 		TestOutput = outputHelper;
+#pragma warning disable S1699 // Abstract method call in constructor is intentional for test suite initialization
 		UserId = GenerateUserId();
+#pragma warning restore S1699
 	}
 
 	protected ITestOutputHelper? TestOutput { get; }

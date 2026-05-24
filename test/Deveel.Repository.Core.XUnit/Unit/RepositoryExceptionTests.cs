@@ -1,5 +1,9 @@
 namespace Deveel.Data;
 
+/// <summary>
+/// Tests for <see cref="RepositoryException"/> construction, verifying
+/// parameterless, message-only, and message + inner exception constructors.
+/// </summary>
 [Trait("Category", "Unit")]
 [Trait("Layer", "Core")]
 [Trait("Feature", "Exceptions")]

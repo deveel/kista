@@ -32,6 +32,12 @@ namespace Deveel.Data {
 			typeof(IPageableRepository<,>)
 		];
 
+		/// <summary>
+		/// Scans the given assembly for repository types and registers them in the service collection.
+		/// </summary>
+		/// <param name="assembly">The assembly to scan for repository types.</param>
+		/// <param name="services">The service collection to register repositories into.</param>
+		/// <param name="builder">The builder to track registered repository types.</param>
 		public static void Scan(Assembly assembly, IServiceCollection services, RepositoryContextBuilder builder) {
 			var candidateTypes = assembly.GetTypes()
 				.Where(t => !t.IsAbstract && !t.IsInterface)

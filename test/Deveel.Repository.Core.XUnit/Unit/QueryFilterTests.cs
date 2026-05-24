@@ -1,17 +1,31 @@
 ﻿namespace Deveel.Data;
 
+/// <summary>
+/// Tests for <see cref="ExpressionQueryFilter{T}"/> and <see cref="QueryFilter"/>,
+/// verifying lambda conversion, type compatibility, <see cref="IQueryFilter.IsEmpty"/>,
+/// and LINQ extension method integration.
+/// </summary>
 [Trait("Category", "Unit")]
 [Trait("Layer", "Core")]
 [Trait("Feature", "QueryFilter")]
 public class QueryFilterTests
 {
     private readonly PersonFaker _faker = new PersonFaker();
+    /// <summary>
+    /// A simple entity type used to test <see cref="IQueryFilter.AsLambda{TEntity}"/>
+    /// type-incompatibility error paths when converting between unrelated entity types.
+    /// </summary>
     private class Company
     {
         public string Name { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;
     }
 
+    /// <summary>
+    /// A subclass of <see cref="Person"/> used to test that
+    /// <see cref="IQueryFilter.AsLambda{TEntity}"/> accepts target types
+    /// that are subtypes of the filter's declared entity type.
+    /// </summary>
     private class Employee : Person
     {
         public string CompanyName { get; set; } = string.Empty;

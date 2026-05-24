@@ -14,9 +14,11 @@ To learn about the specific usage of the framework, you can read the following d
 | [_Filtering_](filtering/) | Expression-based and Dynamic LINQ filtering with automatic service resolution |
 | [_Filter Cache_](filtering/filter-cache.md) | Bounded expression caching for high-throughput Dynamic LINQ queries |
 | [_The Entity Manager_](entity-manager/) | Provide your application with a business layer on top of the Repository for additional functions (_logging_, _validation_, _caching_, _event sourcing_, etc.) |
+| [_Repository Lifecycle_](repository-lifecycle.md) | Automate repository creation, teardown, and seeding during application startup |
 | [_Extending the Repository_](custom-repository.md) | Learn how to create a custom repository to access your data source, according to your specific data logic |
 | [_Multi-Tenancy_](multi-tenancy.md) | Learn how to use the framework in a multi-tenant application |
 | [_User Entities_](user-entities.md) | Learn how to define and query entities that are scoped to a specific user |
+| [_Sample Application_](sample-app.md) | A complete ASP.NET Core reference app with lifecycle management and CRUD endpoints |
 
 ## Installation
 

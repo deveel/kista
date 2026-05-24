@@ -1,5 +1,10 @@
 namespace Deveel.Data;
 
+/// <summary>
+/// Tests for <see cref="SystemTime"/> and the <see cref="ISystemTime"/> contract,
+/// verifying that <see cref="ISystemTime.UtcNow"/> and <see cref="ISystemTime.Now"/>
+/// return values close to the actual system clock.
+/// </summary>
 [Trait("Category", "Unit")]
 [Trait("Layer", "Core")]
 [Trait("Feature", "SystemTime")]

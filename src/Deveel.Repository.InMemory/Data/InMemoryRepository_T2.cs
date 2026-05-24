@@ -678,7 +678,13 @@ namespace Deveel.Data {
 		/// store wins, but all candidates are semantically equivalent.
 		/// </summary>
 		private sealed class SnapshotCache {
+			/// <summary>
+			/// Gets the version number of the snapshot.
+			/// </summary>
 			public readonly int Version;
+			/// <summary>
+			/// Gets the immutable snapshot of entities.
+			/// </summary>
 			public readonly IReadOnlyList<TEntity> Snapshot;
 			public SnapshotCache(int version, IReadOnlyList<TEntity> snapshot) {
 				Version  = version;
@@ -694,24 +700,36 @@ namespace Deveel.Data {
 			/// </summary>
 			private static readonly Func<TEntity, TEntity> _cloner = BuildCloner();
 
-			private static Func<TEntity, TEntity> BuildCloner() {
-				var method = typeof(TEntity).GetMethod(
-					"MemberwiseClone",
-					BindingFlags.Instance | BindingFlags.NonPublic)!;
-				var param = Expression.Parameter(typeof(TEntity), "e");
-				var call  = Expression.Convert(Expression.Call(param, method), typeof(TEntity));
-				return Expression.Lambda<Func<TEntity, TEntity>>(call, param).Compile();
-			}
+		private static Func<TEntity, TEntity> BuildCloner() {
+#pragma warning disable S3011 // Reflection is used intentionally to create a shallow clone via MemberwiseClone
+			var method = typeof(TEntity).GetMethod(
+				"MemberwiseClone",
+				BindingFlags.Instance | BindingFlags.NonPublic)!;
+#pragma warning restore S3011
+			var param = Expression.Parameter(typeof(TEntity), "e");
+			var call  = Expression.Convert(Expression.Call(param, method), typeof(TEntity));
+			return Expression.Lambda<Func<TEntity, TEntity>>(call, param).Compile();
+		}
 
 			public Entry(TEntity entity) {
 				Entity   = entity;
 				Original = _cloner(entity);
 			}
 
+			/// <summary>
+			/// Gets the original entity state at the time of entry creation or last update.
+			/// </summary>
 			public TEntity Original { get; private set; }
 
+			/// <summary>
+			/// Gets the current entity.
+			/// </summary>
 			public TEntity Entity { get; private set; }
 
+			/// <summary>
+			/// Updates the entry with a new entity, preserving a clone as the original.
+			/// </summary>
+			/// <param name="entity">The new entity.</param>
 			public void Update(TEntity entity) {
 				Original = _cloner(entity);
 				Entity   = entity;

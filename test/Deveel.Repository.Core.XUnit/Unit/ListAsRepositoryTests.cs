@@ -1,5 +1,10 @@
 ﻿namespace Deveel.Data;
 
+/// <summary>
+/// Integration-style tests for <see cref="RepositoryExtensions.AsRepository{T}(List{T})"/> and
+/// the resulting <see cref="RepositoryWrapper{TEntity}"/> behavior, covering add, remove, update,
+/// filter, and pagination operations against a list-backed repository.
+/// </summary>
 [Trait("Category", "Unit")]
 [Trait("Layer", "Core")]
 [Trait("Feature", "Repository")]
@@ -77,7 +82,7 @@ public class ListAsRepositoryTests : IClassFixture<PersonFixture>
 
         // Assert
         Assert.True(result);
-        Assert.Equal(initialCount - 1, _repository.AsFilterable().CountAll());
+	Assert.Equal(initialCount - 1, await _repository.AsFilterable().CountAllAsync());
     }
 
     [Fact]
@@ -93,7 +98,7 @@ public class ListAsRepositoryTests : IClassFixture<PersonFixture>
 
         // Assert
         Assert.True(result);
-        Assert.Equal(initialCount - 1, _repository.AsFilterable().CountAll());
+	Assert.Equal(initialCount - 1, await _repository.AsFilterable().CountAllAsync());
     }
 
     [Fact]
@@ -109,7 +114,7 @@ public class ListAsRepositoryTests : IClassFixture<PersonFixture>
 
         // Assert
         Assert.False(result);
-        Assert.Equal(initialCount, _repository.AsFilterable().CountAll());
+	Assert.Equal(initialCount, await _repository.AsFilterable().CountAllAsync());
     }
 
     [Fact]

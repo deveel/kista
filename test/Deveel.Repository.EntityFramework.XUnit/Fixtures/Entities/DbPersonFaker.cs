@@ -9,7 +9,7 @@ namespace Deveel.Data.Entities {
 
 			RuleFor(x => x.FirstName, f => f.Name.FirstName());
 			RuleFor(x => x.LastName, f => f.Name.LastName());
-			RuleFor(x => x.DateOfBirth, f => f.Date.Past(20));
+			RuleFor(x => x.DateOfBirth, f => f.Date.PastOffset(20).UtcDateTime);
 			RuleFor(x => x.Email, f => f.Internet.Email().OrNull(f));
 			RuleFor(x => x.PhoneNumber, f => f.Phone.PhoneNumber().OrNull(f));
 			RuleFor(x => x.Location, f => new Point(f.Random.Double(), f.Random.Double()).OrNull(f));

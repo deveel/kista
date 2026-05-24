@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Linq;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -27,7 +28,12 @@ namespace Deveel.Data {
 		private readonly HashSet<Type> _registeredEntityTypes = new();
 		private readonly List<Assembly> _scanAssemblies = new();
 		private bool _entityTypesResolved;
+		private bool _seedProvidersScanned;
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="RepositoryContextBuilder"/> class.
+		/// </summary>
+		/// <param name="services">The service collection to configure.</param>
 		public RepositoryContextBuilder(IServiceCollection services) {
 			_services = services;
 		}
@@ -53,6 +59,9 @@ namespace Deveel.Data {
 			}
 		}
 
+		/// <summary>
+		/// Resolves entity types from the service collection by scanning registered repository types.
+		/// </summary>
 		private void ResolveEntityTypes() {
 			if (_entityTypesResolved) return;
 
@@ -71,6 +80,10 @@ namespace Deveel.Data {
 			_entityTypesResolved = true;
 		}
 
+		/// <summary>
+		/// Tracks a repository type in the builder's internal collections.
+		/// </summary>
+		/// <param name="repositoryType">The repository type to track.</param>
 		internal void TrackRepositoryType(Type repositoryType) {
 			if (_registeredRepositoryTypes.Add(repositoryType)) {
 				var entityType = RepositoryRegistrationUtil.GetEntityType(repositoryType);
@@ -101,6 +114,11 @@ namespace Deveel.Data {
 			return this;
 		}
 
+		/// <summary>
+		/// Registers an open generic repository type with the service collection.
+		/// </summary>
+		/// <param name="repositoryType">The open generic repository type to register.</param>
+		/// <param name="lifetime">The service lifetime for the registration.</param>
 		private void RegisterOpenGenericRepository(Type repositoryType, ServiceLifetime lifetime) {
 			var serviceTypes = RepositoryScanner.GetServiceTypes(repositoryType);
 			foreach (var serviceType in serviceTypes) {
@@ -122,5 +140,105 @@ namespace Deveel.Data {
 			return this;
 		}
 
+		/// <summary>
+		/// Registers a seed data provider for the given entity type that will be
+		/// used by the lifecycle orchestrator during repository seeding.
+		/// </summary>
+		/// <typeparam name="TEntity">The type of the entity to seed.</typeparam>
+		/// <typeparam name="TProvider">
+		/// The type of the <see cref="IRepositorySeedDataProvider{TEntity}"/> implementation.
+		/// </typeparam>
+		/// <param name="lifetime">The service lifetime (default: <see cref="ServiceLifetime.Singleton"/>).</param>
+		/// <returns>The same builder for chaining.</returns>
+		public RepositoryContextBuilder WithSeedData<TEntity, TProvider>(ServiceLifetime lifetime = ServiceLifetime.Singleton)
+			where TEntity : class
+			where TProvider : class, IRepositorySeedDataProvider<TEntity> {
+
+			_services.Add(ServiceDescriptor.Describe(
+				typeof(IRepositorySeedDataProvider<TEntity>),
+				typeof(TProvider),
+				lifetime));
+
+			return this;
+		}
+
+		/// <summary>
+		/// Registers inline seed data for the given entity type that will be
+		/// used by the lifecycle orchestrator during repository seeding.
+		/// </summary>
+		/// <typeparam name="TEntity">The type of the entity to seed.</typeparam>
+		/// <param name="data">The seed data to register.</param>
+		/// <returns>The same builder for chaining.</returns>
+		public RepositoryContextBuilder WithSeedData<TEntity>(IEnumerable<TEntity> data)
+			where TEntity : class {
+
+			_services.AddSingleton<IRepositorySeedDataProvider<TEntity>>(
+				new CollectionSeedDataProvider<TEntity>(data));
+
+			return this;
+		}
+
+		/// <summary>
+		/// Scans the given assemblies for types implementing
+		/// <see cref="IRepositorySeedDataProvider{TEntity}"/> and registers them
+		/// as seed data providers in the service collection.
+		/// </summary>
+		/// <param name="assemblies">
+		/// The assemblies to scan. If none are provided, the entry assembly is used.
+		/// </param>
+		/// <returns>The same builder for chaining.</returns>
+		public RepositoryContextBuilder WithSeedDataFrom(params Assembly[] assemblies) {
+			if (assemblies.Length == 0)
+				assemblies = [Assembly.GetEntryAssembly() ?? Assembly.GetCallingAssembly()];
+
+			foreach (var assembly in assemblies) {
+				if (assembly == null) continue;
+
+				var providerTypes = assembly.GetTypes()
+					.Where(t => !t.IsAbstract && !t.IsInterface && !t.IsGenericTypeDefinition)
+					.Where(t => t.GetInterfaces()
+						.Any(i => i.IsGenericType &&
+								  i.GetGenericTypeDefinition() == typeof(IRepositorySeedDataProvider<>)));
+
+				foreach (var type in providerTypes) {
+					foreach (var iface in type.GetInterfaces()
+						.Where(i => i.IsGenericType &&
+									i.GetGenericTypeDefinition() == typeof(IRepositorySeedDataProvider<>))) {
+
+						_services.TryAdd(ServiceDescriptor.Describe(iface, type, ServiceLifetime.Singleton));
+					}
+				}
+			}
+
+			_seedProvidersScanned = true;
+			return this;
+		}
+
+		/// <summary>
+		/// Ensures that seed data providers have been scanned from the entry assembly
+		/// if the user did not explicitly call <see cref="WithSeedDataFrom(Assembly[])"/>
+		/// or register providers via <see cref="WithSeedData{TEntity, TProvider}(ServiceLifetime)"/>.
+		/// Called automatically by <c>ConfigureLifecycle</c>.
+		/// </summary>
+		internal void EnsureSeedProvidersScanned() {
+			if (!_seedProvidersScanned)
+				WithSeedDataFrom();
+		}
+
+		private class CollectionSeedDataProvider<TEntity> : IRepositorySeedDataProvider<TEntity>
+			where TEntity : class {
+
+			private readonly IEnumerable<TEntity> data;
+
+			public CollectionSeedDataProvider(IEnumerable<TEntity> data) {
+				this.data = data;
+			}
+
+			/// <inheritdoc/>
+			public IEnumerable<TEntity> GetSeedData() => data;
+
+			IEnumerable<object> IRepositorySeedDataProvider.GetSeedData()
+				=> data.Cast<object>();
+		}
 	}
 }

@@ -9,6 +9,10 @@ namespace Deveel.Data {
 		private readonly MongoDbContainer container;
 		private bool disposedValue;
 
+		~MongoSingleDatabase() {
+			Dispose(disposing: false);
+		}
+
 		public MongoSingleDatabase() {
 			container = new MongoDbBuilder()
 				.WithUsername("")
@@ -44,7 +48,17 @@ namespace Deveel.Data {
 		}
 
 		public void Dispose() {
-			DisposeAsync().GetAwaiter().GetResult();
+			Dispose(disposing: true);
+			GC.SuppressFinalize(this);
+		}
+
+		private void Dispose(bool disposing) {
+			if (!disposedValue) {
+				if (disposing) {
+					DisposeAsync().GetAwaiter().GetResult();
+				}
+				disposedValue = true;
+			}
 		}
 	}
 }

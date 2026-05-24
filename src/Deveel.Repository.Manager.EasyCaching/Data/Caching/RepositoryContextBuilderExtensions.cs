@@ -44,6 +44,7 @@ namespace Deveel.Data.Caching {
 			_prefix = prefix;
 		}
 
+		/// <inheritdoc/>
 		public void Configure(EntityCacheOptions<TEntity> options) {
 			if (_expiration.HasValue)
 				options.Expiration = _expiration;

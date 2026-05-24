@@ -15,13 +15,28 @@
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Deveel.Data {
-	static class RepositoryRegistrationUtil {
-		public static bool IsValidRepositoryType(Type repositoryType)
-			=> Implements(typeof(IRepository<>), repositoryType) ||
-				Implements(typeof(IRepository<,>), repositoryType);
+	/// <summary>
+/// Utility class for repository type registration and validation.
+/// </summary>
+static class RepositoryRegistrationUtil {
+/// <summary>
+/// Determines whether the specified type is a valid repository type by checking
+/// if it implements IRepository<> or IRepository<,>.
+/// </summary>
+/// <param name="repositoryType">The type to check.</param>
+/// <returns>True if the type is a valid repository type; otherwise, false.</returns>
+public static bool IsValidRepositoryType(Type repositoryType)
+		=> Implements(typeof(IRepository<>), repositoryType) ||
+			Implements(typeof(IRepository<,>), repositoryType);
 
 
-		public static bool Implements(Type genericType, Type type) {
+		/// <summary>
+/// Checks whether a type implements a specific generic type, either directly or through inheritance.
+/// </summary>
+/// <param name="genericType">The generic type definition to check for.</param>
+/// <param name="type">The type to examine.</param>
+/// <returns>True if the type implements the generic type; otherwise, false.</returns>
+public static bool Implements(Type genericType, Type type) {
 			if (type.IsGenericType) {
 				var genericTypeDefinition = type.GetGenericTypeDefinition();
 				if (genericTypeDefinition == genericType)
@@ -44,7 +59,12 @@ namespace Deveel.Data {
 			return false;
 		}
 
-		internal static Type? GetEntityType(Type serviceType) {
+		/// <summary>
+/// Extracts the entity type from a repository service type.
+/// </summary>
+/// <param name="serviceType">The repository service type (e.g., IRepository&lt;TEntity&gt;).</param>
+/// <returns>The entity type if found; otherwise, null.</returns>
+internal static Type? GetEntityType(Type serviceType) {
 			if (serviceType.IsGenericType) {
 				var genericTypeDefinition = serviceType.GetGenericTypeDefinition();
 				var genericTypes = serviceType.GenericTypeArguments;
@@ -67,15 +87,19 @@ namespace Deveel.Data {
 			return null;
 		}
 
-		internal static Type? GetKeyType(Type serviceType) {
+		/// <summary>
+/// Extracts the key type from a repository service type.
+/// </summary>
+/// <param name="serviceType">The repository service type (e.g., IRepository&lt;TEntity, TKey&gt;).</param>
+/// <returns>The key type if found; otherwise, null.</returns>
+internal static Type? GetKeyType(Type serviceType) {
 			if (serviceType.IsGenericType) {
 				var genericTypeDefinition = serviceType.GetGenericTypeDefinition();
 				var genericTypes = serviceType.GenericTypeArguments;
 
-				if (genericTypes.Length == 2 && genericTypes[0].IsClass) {
-					if (typeof(IRepository<,>).IsAssignableFrom(genericTypeDefinition))
+				if (genericTypes.Length == 2 && genericTypes[0].IsClass &&
+					typeof(IRepository<,>).IsAssignableFrom(genericTypeDefinition))
 					return genericTypes[1];
-				}
 			}
 
 			foreach (var iface in serviceType.GetInterfaces()) {
@@ -87,7 +111,15 @@ namespace Deveel.Data {
 			return null;
 		}
 
-		private static bool RegisterIfAssignable(IList<Type> types, Type genericType, Type entityType, Type repositoryType) {
+		/// <summary>
+/// Registers a service type if the repository type implements the generic repository interface.
+/// </summary>
+/// <param name="types">The collection to add service types to.</param>
+/// <param name="genericType">The generic repository interface type (e.g., IRepository&lt;&gt;).</param>
+/// <param name="entityType">The entity type to use for the generic argument.</param>
+/// <param name="repositoryType">The repository type to check.</param>
+/// <returns>True if the type was registered; otherwise, false.</returns>
+private static bool RegisterIfAssignable(IList<Type> types, Type genericType, Type entityType, Type repositoryType) {
 			var serviceType = genericType.MakeGenericType(entityType);
 			if (serviceType.IsAssignableFrom(repositoryType)) {
 				if (!types.Contains(serviceType))
@@ -99,7 +131,16 @@ namespace Deveel.Data {
 			return false;
 		}
 
-		private static bool RegisterIfAssignable(IList<Type> types, Type genericType, Type entityType, Type keyType, Type repositoryType) {
+		/// <summary>
+/// Registers a service type if the repository type implements the generic repository interface with entity and key types.
+/// </summary>
+/// <param name="types">The collection to add service types to.</param>
+/// <param name="genericType">The generic repository interface type (e.g., IRepository&lt;,&gt;).</param>
+/// <param name="entityType">The entity type to use for the generic argument.</param>
+/// <param name="keyType">The key type to use for the generic argument.</param>
+/// <param name="repositoryType">The repository type to check.</param>
+/// <returns>True if the type was registered; otherwise, false.</returns>
+private static bool RegisterIfAssignable(IList<Type> types, Type genericType, Type entityType, Type keyType, Type repositoryType) {
 			var serviceType = genericType.MakeGenericType(entityType, keyType);
 			if (serviceType.IsAssignableFrom(repositoryType)) {
 				if (!types.Contains(serviceType))
@@ -112,6 +153,11 @@ namespace Deveel.Data {
 		}
 
 
+		/// <summary>
+		/// Gets all the service types that a repository type should be registered as.
+		/// </summary>
+		/// <param name="repositoryType">The repository type to analyze.</param>
+		/// <returns>A read-only list of service types the repository implements.</returns>
 		public static IReadOnlyList<Type> GetRepositoryServiceTypes(Type repositoryType) {
 			if (!Implements(typeof(IRepository<>), repositoryType) &&
 				!Implements(typeof(IRepository<,>), repositoryType))
@@ -120,47 +166,52 @@ namespace Deveel.Data {
 			var types = new List<Type>();
 
 			foreach (var iface in repositoryType.GetInterfaces()) {
-				var entityType = GetEntityType(iface);
-
-				if (entityType == null)
-					// skip the type if we cannot determine the entity
-					continue;
-
-				if (RegisterIfAssignable(types, typeof(IRepository<>), entityType, repositoryType)) {
-					RegisterIfAssignable(types, typeof(IQueryableRepository<>), entityType, repositoryType);
-					RegisterIfAssignable(types, typeof(IFilterableRepository<>), entityType, repositoryType);
-					RegisterIfAssignable(types, typeof(IPageableRepository<>), entityType, repositoryType);
-
-					if (!types.Contains(iface))
-						types.Add(iface);
-				}
-
-				var keyType = GetKeyType(iface);
-				if (keyType != null) {
-					if (RegisterIfAssignable(types, typeof(IRepository<,>), entityType, keyType, repositoryType)) {
-						RegisterIfAssignable(types, typeof(IQueryableRepository<,>), entityType, keyType, repositoryType);
-						RegisterIfAssignable(types, typeof(IFilterableRepository<,>), entityType, keyType, repositoryType);
-						RegisterIfAssignable(types, typeof(IPageableRepository<,>), entityType, keyType, repositoryType);
-
-						if (!types.Contains(iface))
-							types.Add(iface);
-					}
-				}
+				RegisterSingleTypeInterfaces(types, iface, repositoryType);
 			}
 
-			var baseType = repositoryType.BaseType;
-			while (baseType != null) {
-				if (Implements(typeof(IRepository<>), baseType) && 
-					!types.Contains(baseType))
-					types.Add(baseType);
-				if (Implements(typeof(IRepository<,>), baseType) &&
-					!types.Contains(baseType))
-					types.Add(baseType);
-
-				baseType = baseType.BaseType;
-			}
+			RegisterBaseTypes(types, repositoryType);
 
 			return types.AsReadOnly();
+		}
+
+		private static void RegisterSingleTypeInterfaces(IList<Type> types, Type iface, Type repositoryType) {
+			var entityType = GetEntityType(iface);
+			if (entityType == null)
+				return;
+
+			if (RegisterIfAssignable(types, typeof(IRepository<>), entityType, repositoryType)) {
+				RegisterIfAssignable(types, typeof(IQueryableRepository<>), entityType, repositoryType);
+				RegisterIfAssignable(types, typeof(IFilterableRepository<>), entityType, repositoryType);
+				RegisterIfAssignable(types, typeof(IPageableRepository<>), entityType, repositoryType);
+				AddIfMissing(types, iface);
+			}
+
+			var keyType = GetKeyType(iface);
+			if (keyType == null)
+				return;
+
+			if (RegisterIfAssignable(types, typeof(IRepository<,>), entityType, keyType, repositoryType)) {
+				RegisterIfAssignable(types, typeof(IQueryableRepository<,>), entityType, keyType, repositoryType);
+				RegisterIfAssignable(types, typeof(IFilterableRepository<,>), entityType, keyType, repositoryType);
+				RegisterIfAssignable(types, typeof(IPageableRepository<,>), entityType, keyType, repositoryType);
+				AddIfMissing(types, iface);
+			}
+		}
+
+		private static void RegisterBaseTypes(IList<Type> types, Type repositoryType) {
+			var baseType = repositoryType.BaseType;
+			while (baseType != null) {
+				if (Implements(typeof(IRepository<>), baseType))
+					AddIfMissing(types, baseType);
+				if (Implements(typeof(IRepository<,>), baseType))
+					AddIfMissing(types, baseType);
+				baseType = baseType.BaseType;
+			}
+		}
+
+		private static void AddIfMissing(IList<Type> types, Type type) {
+			if (!types.Contains(type))
+				types.Add(type);
 		}
 	}
 }

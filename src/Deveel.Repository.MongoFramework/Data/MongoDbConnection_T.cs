@@ -92,6 +92,7 @@ namespace Deveel.Data {
 				client = null;
 				disposed = true;
 			}
+			GC.SuppressFinalize(this);
 		}
 	}
 }

@@ -60,8 +60,6 @@ namespace Deveel.Data {
 			await dbContext.SaveChangesAsync(true, TestContext.Current.CancellationToken);
 
 			await dbContext.Database.EnsureDeletedAsync(TestContext.Current.CancellationToken);
-            
-			// await base.DisposeAsync();
 		}
 	}
 }

@@ -46,6 +46,8 @@ builder.Services.AddRepositoryContext()
 | ------ | ----------- |
 | `ConfigureDbContext(Action<DbContextOptionsBuilder>)` | Configures the `DbContext` options (provider, connection string, etc.) |
 | `WithLifetime(ServiceLifetime)` | Sets the service lifetime for the `DbContext` and repositories (default: `Scoped`) |
+| `WithLifecycle()` | Enables lifecycle support (default: enabled) |
+| `WithoutLifecycle()` | Disables lifecycle support |
 
 ## Multi-tenant Support
 
@@ -131,6 +133,70 @@ public class AppDbContext : MultiTenantDbContext
         modelBuilder.Entity<Order>().IsMultiTenant();
     }
 }
+```
+
+## Lifecycle Support
+
+The EF Core driver provides `EntityFrameworkRepositoryLifecycleHandler<TEntity>` for lifecycle orchestration. It is **enabled by default** and can be disabled via `.WithoutLifecycle()`.
+
+### Handler Behavior
+
+| Operation | Behavior |
+| --------- | -------- |
+| `ExistsAsync` | Checks `DbContext.Database.CanConnect()`. |
+| `CreateAsync` | Calls `DbContext.Database.EnsureCreatedAsync()`. |
+| `DropAsync` | Calls `DbContext.Database.EnsureDeletedAsync()`. |
+| `SeedAsync` | Uses `DbSet<TEntity>.AddRange` / `Add` + `SaveChangesAsync`. Supports `IEnumerable<TEntity>`, `IEnumerable<object>`, and single entities. |
+
+### Seeding Examples
+
+**Using a provider class:**
+
+```csharp
+public class ProductSeedProvider : IRepositorySeedDataProvider<Product> {
+    public IEnumerable<Product> GetSeedData() {
+        yield return new Product { Name = "Widget", Price = 9.99m };
+        yield return new Product { Name = "Gadget", Price = 24.99m };
+    }
+
+    IEnumerable<object> IRepositorySeedDataProvider.GetSeedData()
+        => GetSeedData().Cast<object>();
+}
+
+// Program.cs
+builder.Services.AddRepositoryContext()
+    .UseEntityFramework<AppDbContext>(b => b
+        .ConfigureDbContext(opts => opts.UseSqlServer("...")))
+    .ConfigureLifecycle(options => {
+        options.SeedStrategy = SeedStrategy.Always;
+    })
+    .WithSeedData<Product, ProductSeedProvider>();
+```
+
+**Using inline data (no provider class needed):**
+
+```csharp
+builder.Services.AddRepositoryContext()
+    .UseEntityFramework<AppDbContext>(b => b
+        .ConfigureDbContext(opts => opts.UseSqlServer("...")))
+    .ConfigureLifecycle(options => {
+        options.SeedStrategy = SeedStrategy.Always;
+    })
+    .WithSeedData<Product>(new[] {
+        new Product { Name = "Widget", Price = 9.99m },
+        new Product { Name = "Gadget", Price = 24.99m }
+    });
+```
+
+The handler inserts the seed entities into the `DbSet<Product>` and calls `SaveChangesAsync`.
+
+### Disabling Lifecycle
+
+```csharp
+builder.Services.AddRepositoryContext()
+    .UseEntityFramework<MyDbContext>(b => b
+        .ConfigureDbContext(opts => opts.UseSqlServer("..."))
+        .WithoutLifecycle());
 ```
 
 ## Querying

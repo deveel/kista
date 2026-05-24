@@ -1,5 +1,10 @@
 namespace Deveel.Data;
 
+/// <summary>
+/// Tests for <see cref="PageableRepositoryExtensions"/> methods that provide
+/// <see cref="IPageableRepository{TEntity, TKey}"/> pagination via
+/// <see cref="PageQuery{T}"/> and page/size parameters.
+/// </summary>
 [Trait("Category", "Unit")]
 [Trait("Layer", "Core")]
 [Trait("Feature", "PageableRepository")]
@@ -57,6 +62,10 @@ public class PageableRepositoryExtensionsTests
 		Assert.Equal(2, result.Items!.Count);
 	}
 
+	/// <summary>
+	/// An in-memory <see cref="IPageableRepository{Person, string}"/> backed by a <see cref="List{Person}"/>,
+	/// used to test synchronous and asynchronous pagination extension methods.
+	/// </summary>
 	private class TestPageableRepository : IPageableRepository<Person, string>
 	{
 		private readonly List<Person> _entities = new();

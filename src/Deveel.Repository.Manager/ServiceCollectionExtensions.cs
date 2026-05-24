@@ -111,12 +111,15 @@ namespace Deveel {
 				this.errorFactory = errorFactory;
 			}
 
+			/// <inheritdoc/>
 			public IOperationError CreateError(string errorCode, string domain, string? message = null) 
 				=> errorFactory.CreateError(errorCode, domain, message);
 
+			/// <inheritdoc/>
 			public IOperationError CreateError(Exception exception) 
 				=> errorFactory.CreateError(exception);
 
+			/// <inheritdoc/>
 			public IValidationError CreateValidationError(string errorCode, string domain, IReadOnlyList<ValidationResult> validationResults) 
 				=> errorFactory.CreateValidationError(errorCode, domain, validationResults);
 		}

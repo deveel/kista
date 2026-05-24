@@ -21,6 +21,7 @@ namespace Deveel.Data {
 	/// <summary>
 	/// A default implementation of the <see cref="IRepositoryController"/> interface
 	/// </summary>
+    [Obsolete("Use RepositoryLifecycleService (via IRepositoryLifecycleService) instead")]
     public class DefaultRepositoryController : IRepositoryController {
 		private readonly RepositoryControllerOptions options;
 		private readonly IServiceProvider serviceProvider;

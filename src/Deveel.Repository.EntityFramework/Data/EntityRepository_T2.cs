@@ -67,9 +67,6 @@ namespace Deveel.Data
 			if (entityKey.Properties.Count > 1)
 				throw new NotSupportedException("The repository does not support entities with composite primary keys");
 
-			//if (entityKey.Properties[0].ClrType != typeof(TKey))
-			//	throw new RepositoryException($"The primary key of the entity '{typeof(TEntity)}' is not of type '{typeof(TKey)}'");
-
 			PrimaryKey = entityKey;
 		}
 

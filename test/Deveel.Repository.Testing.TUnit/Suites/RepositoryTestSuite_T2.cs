@@ -262,7 +262,7 @@ public abstract class RepositoryTestSuite<TPerson, TRelationship> : IAsyncInitia
 		var key = Repository.GetEntityKey(People!.Random()!);
 		await Assert.That(key).IsNotNull();
 
-		var result = Repository.RemoveByKey(key!);
+		var result = await Repository.RemoveByKeyAsync(key!);
 
 		await Assert.That(result).IsTrue();
 	}
@@ -325,9 +325,9 @@ public abstract class RepositoryTestSuite<TPerson, TRelationship> : IAsyncInitia
 
 	[Test]
 	[Category("Integration")]
-	public async Task Should_ReturnTotalCount_When_CountAllSync()
+	public async Task Should_ReturnTotalCount_When_CountAllAsync()
 	{
-		var result = Repository.CountAll();
+		var result = await Repository.CountAllAsync();
 
 		await Assert.That(result).IsNotEqualTo(0);
 		await Assert.That(result).IsEqualTo(PeopleCount);
@@ -354,7 +354,7 @@ public abstract class RepositoryTestSuite<TPerson, TRelationship> : IAsyncInitia
 		var firstName = person.FirstName;
 		var peopleCount = People?.Count(x => x.FirstName == firstName) ?? 0;
 
-		var count = Repository.Count(p => p.FirstName == firstName);
+		var count = await Repository.CountAsync(p => p.FirstName == firstName);
 
 		await Assert.That(count).IsEqualTo(peopleCount);
 	}
@@ -412,9 +412,9 @@ public abstract class RepositoryTestSuite<TPerson, TRelationship> : IAsyncInitia
 
 	[Test]
 	[Category("Integration")]
-	public async Task Should_ReturnFirstPerson_When_FindFirstSync()
+	public async Task Should_ReturnFirstPerson_When_FindFirstAsync()
 	{
-		var result = Repository.FindFirst();
+		var result = await Repository.FindFirstAsync();
 
 		await Assert.That(result).IsNotNull();
 		await Assert.That(result!.Id).IsNotNull();
@@ -439,7 +439,7 @@ public abstract class RepositoryTestSuite<TPerson, TRelationship> : IAsyncInitia
 		var person = await RandomPersonAsync();
 		var firstName = person.FirstName;
 
-		var result = Repository.Exists(x => x.FirstName == firstName);
+		var result = await Repository.ExistsAsync(x => x.FirstName == firstName);
 
 		await Assert.That(result).IsTrue();
 	}
@@ -513,7 +513,7 @@ public abstract class RepositoryTestSuite<TPerson, TRelationship> : IAsyncInitia
 		var person = await RandomPersonAsync(x => x.FirstName != null);
 		var ordered = NaturalOrder(People!.Where(x => x.FirstName == person.FirstName)).ToList();
 
-		var result = Repository.FindFirst(QueryFilter.Where<TPerson>(x => x.FirstName == person.FirstName));
+		var result = await Repository.FindFirstAsync(QueryFilter.Where<TPerson>(x => x.FirstName == person.FirstName));
 
 		await Assert.That(result).IsNotNull();
 		await Assert.That(result!.Id).IsEqualTo(ordered[0].Id);
@@ -533,9 +533,9 @@ public abstract class RepositoryTestSuite<TPerson, TRelationship> : IAsyncInitia
 
 	[Test]
 	[Category("Integration")]
-	public async Task Should_ReturnAllPeople_When_FindAllSync()
+	public async Task Should_ReturnAllPeople_When_FindAllAsync()
 	{
-		var result = Repository.FindAll();
+		var result = await Repository.FindAllAsync();
 
 		await Assert.That(result).IsNotNull();
 		await Assert.That(result.Any()).IsTrue();
@@ -650,7 +650,7 @@ public abstract class RepositoryTestSuite<TPerson, TRelationship> : IAsyncInitia
 		var totalPages = (int)Math.Ceiling((double)PeopleCount / 10);
 		var request = new PageQuery<TPerson>(1, 10);
 
-		var result = Repository.GetPage(request);
+		var result = await Repository.GetPageAsync(request);
 
 		await Assert.That(result).IsNotNull();
 		await Assert.That(result.TotalPages).IsEqualTo(totalPages);
@@ -718,7 +718,7 @@ public abstract class RepositoryTestSuite<TPerson, TRelationship> : IAsyncInitia
 	{
 		var person = await RandomPersonAsync();
 		using var cts = new CancellationTokenSource();
-		cts.Cancel();
+	await cts.CancelAsync();
 
 		await Assert.That(async () => await Repository.UpdateAsync(person, cts.Token))
 			.Throws<OperationCanceledException>();

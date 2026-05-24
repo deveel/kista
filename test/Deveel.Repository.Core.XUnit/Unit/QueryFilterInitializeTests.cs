@@ -2,6 +2,11 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Deveel.Data;
 
+/// <summary>
+/// Tests for the <see cref="IQueryFilter.Initialize(IFilterContext)"/> contract,
+/// covering default no-op behavior, custom filter resolution, and
+/// <see cref="CombinedQueryFilter"/> propagation to child filters.
+/// </summary>
 [Trait("Category", "Unit")]
 [Trait("Layer", "Core")]
 [Trait("Feature", "QueryFilter")]
@@ -130,9 +135,23 @@ public class QueryFilterInitializeTests {
 
 	// Test helpers
 
+	/// <summary>
+	/// A marker interface used to verify that <see cref="IQueryFilter.Initialize(IFilterContext)"/>
+	/// can resolve custom services from the <see cref="IFilterContext.Services"/> provider.
+	/// </summary>
 	private interface IMyCache { }
+
+	/// <summary>
+	/// Default implementation of <see cref="IMyCache"/> for filter initialization tests.
+	/// </summary>
 	private class MyCache : IMyCache { }
 
+	/// <summary>
+	/// A custom <see cref="IQueryFilter"/> that resolves an <see cref="IMyCache"/>
+	/// service from the filter context during <see cref="Initialize"/>.
+	/// Used to verify that <see cref="CombinedQueryFilter"/> propagates
+	/// initialization to all children.
+	/// </summary>
 	private class CacheResolvingFilter : IQueryFilter {
 		public IMyCache? ResolvedCache { get; private set; }
 

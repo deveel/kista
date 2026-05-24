@@ -1,5 +1,10 @@
 ﻿namespace Deveel.Data;
 
+/// <summary>
+/// Tests for the <see cref="Query"/> class and <see cref="QueryBuilder{T}"/>,
+/// verifying construction from filters, chaining of <c>Where</c>/<c>OrderBy</c>
+/// clauses, and <see cref="Query.Apply{T}"/> behavior on <see cref="IQueryable{T}"/>.
+/// </summary>
 [Trait("Category", "Unit")]
 [Trait("Layer", "Core")]
 [Trait("Feature", "Query")]

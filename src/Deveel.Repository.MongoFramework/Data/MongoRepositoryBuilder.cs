@@ -14,6 +14,7 @@ namespace Deveel.Data
         private Action<MongoConnectionBuilder>? _connectionConfig;
         private string? _connectionString;
         private ServiceLifetime _lifetime = ServiceLifetime.Scoped;
+        private bool _enableLifecycle = true;
 
         internal MongoRepositoryBuilder(RepositoryContextBuilder parent, Type contextType) {
             _parent = parent;
@@ -24,11 +25,6 @@ namespace Deveel.Data
         /// Gets the underlying service collection.
         /// </summary>
         public IServiceCollection Services => _parent.Services;
-
-        /// <summary>
-        /// Returns to the parent <see cref="RepositoryContextBuilder"/>.
-        /// </summary>
-        public RepositoryContextBuilder ToParent() => _parent;
 
         /// <summary>
         /// Sets the connection string for the MongoDB connection.
@@ -55,15 +51,20 @@ namespace Deveel.Data
         }
 
         /// <summary>
-        /// Configures tenant-specific MongoDB connections.
-        /// Requires the Deveel.Repository.MongoFramework.MultiTenant package and
-        /// Finbuckle.MultiTenant to be configured separately.
+        /// Enables lifecycle support for the MongoDB repositories,
+        /// registering a <see cref="MongoRepositoryLifecycleHandler{TEntity}"/>
+        /// for each entity type.
         /// </summary>
-        /// <remarks>
-        /// This method is a placeholder. Use <c>WithMongoMultiTenancy</c> from the
-        /// <c>Deveel.Repository.MongoFramework.MultiTenant</c> package for full support.
-        /// </remarks>
-        public MongoRepositoryBuilder WithTenantConnection(string? defaultConnection = null) {
+        public MongoRepositoryBuilder WithLifecycle() {
+            _enableLifecycle = true;
+            return this;
+        }
+
+        /// <summary>
+        /// Disables lifecycle support for the MongoDB repositories.
+        /// </summary>
+        public MongoRepositoryBuilder WithoutLifecycle() {
+            _enableLifecycle = false;
             return this;
         }
 
@@ -79,6 +80,10 @@ namespace Deveel.Data
 
             _parent.AddRepository(typeof(MongoRepository<>), _lifetime);
             _parent.AddRepository(typeof(MongoRepository<,>), _lifetime);
+
+            if (_enableLifecycle) {
+                _parent.Services.TryAddTransient(typeof(IRepositoryLifecycleHandler<>), typeof(MongoRepositoryLifecycleHandler<>));
+            }
         }
 
         private void RegisterMongoContext(string connectionString) {

@@ -58,6 +58,69 @@ var seeded = new List<MyEntity> { /* ... */ };
 builder.Services.AddSingleton(new InMemoryRepository<MyEntity>(seeded));
 ```
 
+## Lifecycle Support
+
+The In-Memory driver provides `InMemoryRepositoryLifecycleHandler<TEntity>` for lifecycle orchestration (create, drop, seed). It is **disabled by default** and must be explicitly enabled.
+
+### Enabling Lifecycle
+
+```csharp
+builder.Services.AddRepositoryContext()
+    .UseInMemory(b => b.WithLifecycle())
+    .ConfigureLifecycle(options => {
+        options.SeedStrategy = SeedStrategy.Always;
+    });
+```
+
+### Handler Behavior
+
+| Operation | Behavior |
+| --------- | -------- |
+| `ExistsAsync` | Always returns `false` (in-memory storage is transient). |
+| `CreateAsync` | No-op (no physical resource to create). |
+| `DropAsync` | No-op (no physical resource to drop). |
+| `SeedAsync` | Resolves the `IRepository<TEntity>` from DI and inserts data via `AddRangeAsync` / `AddAsync`. Supports `IEnumerable<TEntity>`, `IEnumerable<object>`, and single entities. |
+
+### Seeding Examples
+
+**Using a provider class:**
+
+```csharp
+public class ProductSeedProvider : IRepositorySeedDataProvider<Product> {
+    public IEnumerable<Product> GetSeedData() {
+        yield return new Product { Name = "Widget", Price = 9.99m };
+        yield return new Product { Name = "Gadget", Price = 24.99m };
+    }
+
+    IEnumerable<object> IRepositorySeedDataProvider.GetSeedData()
+        => GetSeedData().Cast<object>();
+}
+
+// Program.cs
+builder.Services.AddRepositoryContext()
+    .UseInMemory(b => b.WithLifecycle())
+    .ConfigureLifecycle(options => {
+        options.SeedStrategy = SeedStrategy.Always;
+    })
+    .WithSeedData<Product, ProductSeedProvider>();
+```
+
+**Using inline data (no provider class needed):**
+
+```csharp
+builder.Services.AddRepositoryContext()
+    .UseInMemory(b => b.WithLifecycle())
+    .ConfigureLifecycle(options => {
+        options.SeedStrategy = SeedStrategy.Always;
+    })
+    .WithSeedData<Product>(new[] {
+        new Product { Name = "Widget", Price = 9.99m },
+        new Product { Name = "Gadget", Price = 24.99m }
+    });
+```
+
+The handler resolves the provider during seeding and inserts the entities through `IRepository<Product>.AddRangeAsync`.
+
 ## Querying
 
 `InMemoryRepository<TEntity>` implements both `IQueryableRepository<TEntity>` and `IFilterableRepository<TEntity>`.

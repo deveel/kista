@@ -8,6 +8,7 @@ namespace Deveel.Data
     /// </summary>
     public class InMemoryRepositoryBuilder {
         private readonly RepositoryContextBuilder _parent;
+        private bool _enableLifecycle = false;
 
         internal InMemoryRepositoryBuilder(RepositoryContextBuilder parent) {
             _parent = parent;
@@ -19,14 +20,27 @@ namespace Deveel.Data
         /// </summary>
         public IServiceCollection Services => _parent.Services;
 
-        /// <summary>
-        /// Returns to the parent <see cref="RepositoryContextBuilder"/>.
-        /// </summary>
-        public RepositoryContextBuilder ToParent() => _parent;
-
         private void RegisterOpenGenerics() {
             _parent.AddRepository(typeof(InMemoryRepository<>), ServiceLifetime.Singleton);
             _parent.AddRepository(typeof(InMemoryRepository<,>), ServiceLifetime.Singleton);
+            UpdateLifecycleRegistration();
+        }
+
+        private void UpdateLifecycleRegistration() {
+            if (_enableLifecycle) {
+                _parent.Services.TryAddTransient(typeof(IRepositoryLifecycleHandler<>), typeof(InMemoryRepositoryLifecycleHandler<>));
+            }
+        }
+
+        /// <summary>
+        /// Enables lifecycle support for the In-Memory repositories,
+        /// registering a <see cref="InMemoryRepositoryLifecycleHandler{TEntity}"/>
+        /// for each entity type.
+        /// </summary>
+        public InMemoryRepositoryBuilder WithLifecycle() {
+            _enableLifecycle = true;
+            UpdateLifecycleRegistration();
+            return this;
         }
 
         /// <summary>
@@ -36,14 +50,6 @@ namespace Deveel.Data
             where TEntity : class
             where TMapper : class, IFieldMapper<TEntity> {
             Services.TryAdd(ServiceDescriptor.Singleton(typeof(IFieldMapper<TEntity>), typeof(TMapper)));
-            return this;
-        }
-
-        /// <summary>
-        /// Registers initial data for a specific entity type.
-        /// </summary>
-        public InMemoryRepositoryBuilder WithInitialData<TEntity>(IEnumerable<TEntity> data) where TEntity : class {
-            Services.AddSingleton<IEnumerable<TEntity>>(data);
             return this;
         }
 

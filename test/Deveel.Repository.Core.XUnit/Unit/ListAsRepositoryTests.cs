@@ -1,5 +1,10 @@
 ﻿namespace Deveel.Data;
 
+/// <summary>
+/// Integration-style tests for <see cref="RepositoryExtensions.AsRepository{T}(List{T})"/> and
+/// the resulting <see cref="RepositoryWrapper{TEntity}"/> behavior, covering add, remove, update,
+/// filter, and pagination operations against a list-backed repository.
+/// </summary>
 [Trait("Category", "Unit")]
 [Trait("Layer", "Core")]
 [Trait("Feature", "Repository")]

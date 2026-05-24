@@ -1,5 +1,11 @@
 ﻿namespace Deveel.Data;
 
+/// <summary>
+/// Tests for <see cref="PageResult{T}"/> construction and pagination state,
+/// verifying <see cref="PageResult{T}.TotalItems"/>, <see cref="PageResult{T}.TotalPages"/>,
+/// <see cref="PageResult{T}.IsFirstPage"/>, <see cref="PageResult{T}.IsLastPage"/>,
+/// and edge cases such as null request or negative total items.
+/// </summary>
 [Trait("Category", "Unit")]
 [Trait("Layer", "Core")]
 [Trait("Feature", "PageResult")]

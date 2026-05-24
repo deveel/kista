@@ -8,6 +8,11 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Deveel.Data;
 
+/// <summary>
+/// Tests for automatic repository registration via <see cref="ServiceCollectionExtensions"/>,
+/// verifying that custom repository interfaces and their implementations are resolved
+/// correctly from the dependency injection container.
+/// </summary>
 [Trait("Category", "Unit")]
 [Trait("Layer", "Core")]
 [Trait("Feature", "DependencyInjection")]
@@ -35,11 +40,20 @@ public class DependencyInjectionTests
     #endregion
 }
 
+/// <summary>
+/// A custom repository interface that extends <see cref="IRepository{Person}"/>
+/// with a name-based lookup method, used to verify multi-contract resolution.
+/// </summary>
 interface IPersonRepository : IRepository<Person>
 {
     ValueTask<Person?> FindByNameAsync(string name, CancellationToken cancellationToken = default);
 }
 
+/// <summary>
+/// A base repository implementation that delegates all
+/// <see cref="IRepository{TEntity}"/> operations to an in-memory list,
+/// used to test generic repository registration.
+/// </summary>
 class MyRepository<TEntity> : IRepository<TEntity>
     where TEntity : class
 {
@@ -72,6 +86,11 @@ class MyRepository<TEntity> : IRepository<TEntity>
         Repository.UpdateAsync(entity, cancellationToken);
 }
 
+/// <summary>
+/// A concrete repository for <see cref="Person"/> that implements both
+/// <see cref="MyRepository{Person}"/> and <see cref="IPersonRepository"/>,
+/// used to verify that the scanner registers all implemented interfaces.
+/// </summary>
 class MyPersonRepository : MyRepository<Person>, IPersonRepository
 {
     public ValueTask<Person?> FindByNameAsync(string name, CancellationToken cancellationToken = default) =>

@@ -2,6 +2,10 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Deveel.Data;
 
+/// <summary>
+/// Tests for the <c>AddSystemTime</c> extension methods on <see cref="IServiceCollection"/>,
+/// verifying registration of default, typed, and instance-based <see cref="ISystemTime"/> services.
+/// </summary>
 [Trait("Category", "Unit")]
 [Trait("Layer", "Core")]
 [Trait("Feature", "DependencyInjection")]
@@ -71,6 +75,10 @@ public class ServiceCollectionExtensionsTests
 		Assert.Same(testTime, systemTime);
 	}
 
+	/// <summary>
+	/// A stub implementation of <see cref="ISystemTime"/> that delegates to the real system clock,
+	/// used to verify custom <see cref="ISystemTime"/> registration overloads.
+	/// </summary>
 	private class TestTime : ISystemTime
 	{
 		public DateTimeOffset UtcNow => DateTimeOffset.UtcNow;

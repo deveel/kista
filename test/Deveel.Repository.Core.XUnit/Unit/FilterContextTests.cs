@@ -2,6 +2,10 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Deveel.Data;
 
+/// <summary>
+/// Tests for <see cref="DefaultFilterContext"/> and the <see cref="IFilterContext"/> contract,
+/// verifying service provider exposure and null-guard behavior.
+/// </summary>
 [Trait("Category", "Unit")]
 [Trait("Layer", "Core")]
 [Trait("Feature", "FilterContext")]
@@ -47,6 +51,14 @@ public class FilterContextTests {
 
 	#endregion
 
+	/// <summary>
+	/// A marker interface used to verify service resolution through
+	/// <see cref="DefaultFilterContext.Services"/>.
+	/// </summary>
 	private interface IMyService { }
+
+	/// <summary>
+	/// Default implementation of <see cref="IMyService"/> for filter context tests.
+	/// </summary>
 	private class MyService : IMyService { }
 }

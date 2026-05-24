@@ -45,6 +45,8 @@ The following configuration methods are available on the MongoDB driver builder:
 | `WithConnectionString(string)` | Sets the MongoDB connection string. |
 | `WithConnection(Action<MongoConnectionBuilder>)` | Configures the connection using a builder delegate. |
 | `WithLifetime(ServiceLifetime)` | Sets the service lifetime (default: `Scoped`). |
+| `WithLifecycle()` | Enables lifecycle support (default: enabled) |
+| `WithoutLifecycle()` | Disables lifecycle support |
 
 ### Custom Context Type
 
@@ -76,6 +78,70 @@ builder.Services.AddRepositoryContext()
 ```
 
 The tenant context resolves the correct database connection for each tenant automatically.
+
+## Lifecycle Support
+
+The MongoDB driver provides `MongoRepositoryLifecycleHandler<TEntity>` for lifecycle orchestration. It is **enabled by default** and can be disabled via `.WithoutLifecycle()`.
+
+### Handler Behavior
+
+| Operation | Behavior |
+| --------- | -------- |
+| `ExistsAsync` | Lists collection names on the database to check whether the entity's collection exists. |
+| `CreateAsync` | Creates the collection via `CreateCollectionAsync`, then builds all entity indexes defined in the MongoFramework entity mapping. |
+| `DropAsync` | Drops all indexes, then drops the collection. |
+| `SeedAsync` | Inserts data directly into the raw MongoDB collection via `InsertManyAsync` / `InsertOneAsync`. Supports `IEnumerable<TEntity>`, `IEnumerable<object>`, and single entities. |
+
+### Seeding Examples
+
+**Using a provider class:**
+
+```csharp
+public class ProductSeedProvider : IRepositorySeedDataProvider<Product> {
+    public IEnumerable<Product> GetSeedData() {
+        yield return new Product { Name = "Widget", Price = 9.99m };
+        yield return new Product { Name = "Gadget", Price = 24.99m };
+    }
+
+    IEnumerable<object> IRepositorySeedDataProvider.GetSeedData()
+        => GetSeedData().Cast<object>();
+}
+
+// Program.cs
+builder.Services.AddRepositoryContext()
+    .UseMongoDB<MyMongoContext>(b => b
+        .WithConnectionString("mongodb://..."))
+    .ConfigureLifecycle(options => {
+        options.SeedStrategy = SeedStrategy.Always;
+    })
+    .WithSeedData<Product, ProductSeedProvider>();
+```
+
+**Using inline data (no provider class needed):**
+
+```csharp
+builder.Services.AddRepositoryContext()
+    .UseMongoDB<MyMongoContext>(b => b
+        .WithConnectionString("mongodb://..."))
+    .ConfigureLifecycle(options => {
+        options.SeedStrategy = SeedStrategy.Always;
+    })
+    .WithSeedData<Product>(new[] {
+        new Product { Name = "Widget", Price = 9.99m },
+        new Product { Name = "Gadget", Price = 24.99m }
+    });
+```
+
+The handler inserts the seed documents directly into the MongoDB collection via `InsertManyAsync`.
+
+### Disabling Lifecycle
+
+```csharp
+builder.Services.AddRepositoryContext()
+    .UseMongoDB<MyMongoContext>(b => b
+        .WithConnectionString("mongodb://...")
+        .WithoutLifecycle());
+```
 
 ## Querying
 

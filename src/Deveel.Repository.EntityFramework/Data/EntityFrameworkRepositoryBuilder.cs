@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Deveel.Data
 {
@@ -11,6 +12,7 @@ namespace Deveel.Data
         private readonly Type _dbContextType;
         private Action<DbContextOptionsBuilder>? _dbContextConfig;
         private ServiceLifetime _lifetime = ServiceLifetime.Scoped;
+        private bool _enableLifecycle = true;
 
         internal EntityFrameworkRepositoryBuilder(RepositoryContextBuilder parent, Type dbContextType) {
             _parent = parent;
@@ -43,6 +45,24 @@ namespace Deveel.Data
             return this;
         }
 
+        /// <summary>
+        /// Enables lifecycle support for the Entity Framework repositories,
+        /// registering a <see cref="EntityFrameworkRepositoryLifecycleHandler{TEntity}"/>
+        /// for each entity type.
+        /// </summary>
+        public EntityFrameworkRepositoryBuilder WithLifecycle() {
+            _enableLifecycle = true;
+            return this;
+        }
+
+        /// <summary>
+        /// Disables lifecycle support for the Entity Framework repositories.
+        /// </summary>
+        public EntityFrameworkRepositoryBuilder WithoutLifecycle() {
+            _enableLifecycle = false;
+            return this;
+        }
+
         internal void FinalizeRegistration() {
             if (_dbContextConfig != null) {
                 RegisterDbContext(_parent.Services, _dbContextConfig, _lifetime);
@@ -52,6 +72,10 @@ namespace Deveel.Data
 
             _parent.AddRepository(typeof(EntityRepository<>), _lifetime);
             _parent.AddRepository(typeof(EntityRepository<,>), _lifetime);
+
+            if (_enableLifecycle) {
+                _parent.Services.TryAddTransient(typeof(IRepositoryLifecycleHandler<>), typeof(EntityFrameworkRepositoryLifecycleHandler<>));
+            }
         }
 
         private void RegisterDbContext(IServiceCollection services, Action<DbContextOptionsBuilder> configure, ServiceLifetime lifetime) {

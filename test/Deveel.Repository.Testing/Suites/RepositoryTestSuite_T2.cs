@@ -103,6 +103,9 @@ public abstract class RepositoryTestSuite<TPerson, TRelationship> : IAsyncLifeti
 
 	protected abstract Task RemoveRelationshipAsync(TPerson person, TRelationship relationship);
 
+	protected virtual void ClearRelationships(TPerson person) {
+	}
+
 	protected virtual Task<TPerson?> FindPersonAsync(object id) {
 		var entity = People?.FirstOrDefault(x => Repository.GetEntityKey(x)?.Equals(id) ?? false);
 		return Task.FromResult(entity);
@@ -1009,6 +1012,7 @@ public abstract class RepositoryTestSuite<TPerson, TRelationship> : IAsyncLifeti
 		// Arrange
 		var person = GeneratePerson();
 		person.Id = GeneratePersonId();
+		ClearRelationships(person);
 
 		// Act
 		var result = await Repository.UpdateAsync(person, TestContext.Current.CancellationToken);

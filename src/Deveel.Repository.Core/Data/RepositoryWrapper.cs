@@ -17,6 +17,10 @@ using System.Linq.Expressions;
 using System.Reflection;
 
 namespace Deveel.Data {
+	/// <summary>
+	/// Wraps an enumerable of entities as a repository implementation.
+	/// </summary>
+	/// <typeparam name="TEntity">The type of entity handled by the repository.</typeparam>
 	class RepositoryWrapper<TEntity> : 
 		IRepository<TEntity>,
 		IFilterableRepository<TEntity>,
@@ -47,6 +51,7 @@ namespace Deveel.Data {
 			}
 		}
 
+		/// <inheritdoc/>
 		public IQueryable<TEntity> AsQueryable() => entities.AsQueryable();
 
 		private MemberInfo DiscoverKeyMember() {
@@ -68,6 +73,7 @@ namespace Deveel.Data {
 			return idMember;
 		}
 
+		/// <inheritdoc/>
 		public object? GetEntityKey(TEntity entity) {
 			var member = DiscoverKeyMember();
 
@@ -80,6 +86,7 @@ namespace Deveel.Data {
 			}
 		}
 
+		/// <inheritdoc/>
 		public ValueTask AddAsync(TEntity entity, CancellationToken cancellationToken = default) {
 			AssertMutable();
 
@@ -105,6 +112,7 @@ namespace Deveel.Data {
 			return entityId;
 		}
 
+		/// <inheritdoc/>
 		public ValueTask AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) {
 			AssertMutable();
 
@@ -116,11 +124,13 @@ namespace Deveel.Data {
 			return ValueTask.CompletedTask;
 		}
 
+		/// <inheritdoc/>
 		public ValueTask<TEntity?> FindAsync(object key, CancellationToken cancellationToken = default) {
 			var entity = entities.FirstOrDefault(x => GetEntityKey(x) == key);
 			return new ValueTask<TEntity?>(entity);
 		}
 
+		/// <inheritdoc/>
 		public ValueTask<bool> RemoveAsync(TEntity entity, CancellationToken cancellationToken = default) {
 			AssertMutable();
 
@@ -143,6 +153,7 @@ namespace Deveel.Data {
 			return new ValueTask<bool>(true);
 		}
 
+		/// <inheritdoc/>
 		public ValueTask RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) {
 			AssertMutable();
 
@@ -167,6 +178,7 @@ namespace Deveel.Data {
 			return ValueTask.CompletedTask;
 		}
 
+		/// <inheritdoc/>
 		public ValueTask<bool> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default) {
 			AssertMutable();
 
@@ -191,6 +203,7 @@ namespace Deveel.Data {
 			return new ValueTask<bool>(true);
 		}
 
+		/// <inheritdoc/>
 		public ValueTask<TEntity?> FindFirstAsync(IQuery query, CancellationToken cancellationToken = default) {
 			TEntity? result;
 
@@ -207,6 +220,7 @@ namespace Deveel.Data {
 			return new ValueTask<TEntity?>(result);
 		}
 
+		/// <inheritdoc/>
 		public ValueTask<IList<TEntity>> FindAllAsync(IQuery query, CancellationToken cancellationToken = default) {
 			IEnumerable<TEntity> result;
 
@@ -227,6 +241,7 @@ namespace Deveel.Data {
 			return new ValueTask<IList<TEntity>>(result.ToList());
 		}
 
+		/// <inheritdoc/>
 		public ValueTask<bool> ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken = default) {
 			bool result;
 
@@ -239,6 +254,7 @@ namespace Deveel.Data {
 			return new ValueTask<bool>(result);
 		}
 
+		/// <inheritdoc/>
 		public ValueTask<long> CountAsync(IQueryFilter filter, CancellationToken cancellationToken = default) {
 			long result;
 

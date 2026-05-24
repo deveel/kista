@@ -72,8 +72,10 @@ namespace Deveel.Data {
 
 
 		readonly struct EmptyQuery : IQuery {
+			/// <inheritdoc/>
 			public IQueryFilter? Filter => QueryFilter.Empty;
 
+			/// <inheritdoc/>
 			public IQueryOrder? Order => null;
 		}
 	}

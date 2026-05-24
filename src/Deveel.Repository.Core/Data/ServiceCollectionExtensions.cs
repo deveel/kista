@@ -121,6 +121,18 @@ namespace Deveel.Data {
             return services;
         }
 
+        /// <summary>
+        /// Registers the default repository controller in the service collection.
+        /// </summary>
+        /// <param name="services">
+        /// The service collection to register the controller.
+        /// </param>
+        /// <param name="configure">
+        /// An optional action to configure the repository controller options.
+        /// </param>
+        /// <returns>
+        /// Returns the same <see cref="IServiceCollection"/> to allow chaining.
+        /// </returns>
         [Obsolete("Use AddRepositoryContext().ConfigureLifecycle() instead.", false)]
         public static IServiceCollection AddRepositoryController(this IServiceCollection services, Action<RepositoryControllerOptions>? configure = null)
             => services.AddRepositoryController<DefaultRepositoryController>(configure);

@@ -333,15 +333,19 @@ namespace Deveel.Data {
 				this.repository = repository;
 			}
 
+			/// <inheritdoc/>
 			public ValueTask<bool> ExistsAsync(CancellationToken cancellationToken)
 				=> repository.ExistsAsync(cancellationToken);
 
+			/// <inheritdoc/>
 			public ValueTask CreateAsync(CancellationToken cancellationToken)
 				=> repository.CreateAsync(cancellationToken);
 
+			/// <inheritdoc/>
 			public ValueTask DropAsync(CancellationToken cancellationToken)
 				=> repository.DropAsync(cancellationToken);
 
+			/// <inheritdoc/>
 			public ValueTask SeedAsync(object? seedData = null, CancellationToken cancellationToken = default)
 				=> ValueTask.CompletedTask;
 		}

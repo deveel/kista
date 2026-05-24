@@ -30,6 +30,10 @@ namespace Deveel.Data {
 		private bool _entityTypesResolved;
 		private bool _seedProvidersScanned;
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="RepositoryContextBuilder"/> class.
+		/// </summary>
+		/// <param name="services">The service collection to configure.</param>
 		public RepositoryContextBuilder(IServiceCollection services) {
 			_services = services;
 		}
@@ -55,6 +59,9 @@ namespace Deveel.Data {
 			}
 		}
 
+		/// <summary>
+		/// Resolves entity types from the service collection by scanning registered repository types.
+		/// </summary>
 		private void ResolveEntityTypes() {
 			if (_entityTypesResolved) return;
 
@@ -73,6 +80,10 @@ namespace Deveel.Data {
 			_entityTypesResolved = true;
 		}
 
+		/// <summary>
+		/// Tracks a repository type in the builder's internal collections.
+		/// </summary>
+		/// <param name="repositoryType">The repository type to track.</param>
 		internal void TrackRepositoryType(Type repositoryType) {
 			if (_registeredRepositoryTypes.Add(repositoryType)) {
 				var entityType = RepositoryRegistrationUtil.GetEntityType(repositoryType);
@@ -103,6 +114,11 @@ namespace Deveel.Data {
 			return this;
 		}
 
+		/// <summary>
+		/// Registers an open generic repository type with the service collection.
+		/// </summary>
+		/// <param name="repositoryType">The open generic repository type to register.</param>
+		/// <param name="lifetime">The service lifetime for the registration.</param>
 		private void RegisterOpenGenericRepository(Type repositoryType, ServiceLifetime lifetime) {
 			var serviceTypes = RepositoryScanner.GetServiceTypes(repositoryType);
 			foreach (var serviceType in serviceTypes) {
@@ -218,6 +234,7 @@ namespace Deveel.Data {
 				this.data = data;
 			}
 
+			/// <inheritdoc/>
 			public IEnumerable<TEntity> GetSeedData() => data;
 
 			IEnumerable<object> IRepositorySeedDataProvider.GetSeedData()

@@ -95,6 +95,7 @@ namespace Deveel.Data {
 				this.validator = validator;
 			}
 
+			/// <inheritdoc/>
 			public IAsyncEnumerable<ValidationResult> ValidateAsync(EntityManager<TEntity, object> manager, TEntity entity, CancellationToken cancellationToken = default) 
 				=> validator.ValidateAsync((EntityManager<TEntity>) manager, entity, cancellationToken);
 		}

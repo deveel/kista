@@ -121,11 +121,16 @@ namespace Deveel.Data {
 		private sealed record CacheEntry(string Key, LambdaExpression Expression);
 
 		private sealed class InternalStatistics(BoundedExpressionCache cache) : IFilterCacheStatistics {
+			/// <inheritdoc/>
 			public long Hits => Volatile.Read(ref cache._hits);
+			/// <inheritdoc/>
 			public long Misses => Volatile.Read(ref cache._misses);
+			/// <inheritdoc/>
 			public int CurrentSize => cache._map.Count;
+			/// <inheritdoc/>
 			public int MaxCapacity => cache._maxCapacity;
 
+			/// <inheritdoc/>
 			public double HitRate {
 				get {
 					var total = Hits + Misses;
@@ -133,6 +138,7 @@ namespace Deveel.Data {
 				}
 			}
 
+			/// <inheritdoc/>
 			public void Reset() {
 				Volatile.Write(ref cache._hits, 0);
 				Volatile.Write(ref cache._misses, 0);

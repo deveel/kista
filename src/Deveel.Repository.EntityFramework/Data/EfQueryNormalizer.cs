@@ -62,6 +62,9 @@ namespace Deveel.Data {
 				.GetMethod(nameof(string.Concat), new[] { typeof(string), typeof(string) })
 				?? throw new InvalidOperationException("Cannot resolve string.Concat(string, string).");
 
+			/// <summary>
+			/// Gets the singleton instance of the visitor.
+			/// </summary>
 			public static StartsWithToLikeVisitor Instance { get; } = new StartsWithToLikeVisitor();
 
 			protected override Expression VisitMethodCall(MethodCallExpression node) {

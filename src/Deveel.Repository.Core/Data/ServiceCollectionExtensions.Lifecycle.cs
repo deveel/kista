@@ -2,7 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Deveel.Data {
-	// Partial class: XML docs are on the main declaration in ServiceCollectionExtensions.cs
+	/// <inheritdoc cref="ServiceCollectionExtensions"/>
 	public static partial class ServiceCollectionExtensions {
 		/// <summary>
 		/// Registers the repository lifecycle orchestrator (<see cref="IRepositoryLifecycleOrchestrator"/>)

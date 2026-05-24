@@ -30,6 +30,13 @@ Features: Package Namespace Correction, Thread-Safe In-Memory Repository, Expres
 
 Features: Unified Repository Setup Builder, QueryBuilder Execution Extensions, Pluggable Cache Provider Abstraction, Automatic Timestamp and Ownership Management, Repository Health Checks, Repository Controller Lifecycle Redesign.
 
+### Completed in v1.6.0
+
+- **Lifecycle Service Renamed**: `IRepositoryLifecycleOrchestrator` → `IRepositoryLifecycleService` (clearer naming)
+- **Builder Extensions**: `WithLifecycleHandler<TEntity, THandler>()` and `WithLifecycleProfile<TProfile>()` for fluent registration
+- **Default Lifecycle Profile**: `ConfigureLifecycle()` now auto-registers `DefaultRepositoryLifecycleProfile`
+- **Sample Application**: `Deveel.Repository.SampleApp` with full lifecycle management and CRUD endpoints
+
 ## Milestone 3: v1.7.0 — "Entity Lifecycle"
 
 **Release Target:** Q4 2026 (early)  

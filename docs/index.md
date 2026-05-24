@@ -18,6 +18,7 @@ To learn about the specific usage of the framework, you can read the following d
 | [_Extending the Repository_](custom-repository.md) | Learn how to create a custom repository to access your data source, according to your specific data logic |
 | [_Multi-Tenancy_](multi-tenancy.md) | Learn how to use the framework in a multi-tenant application |
 | [_User Entities_](user-entities.md) | Learn how to define and query entities that are scoped to a specific user |
+| [_Sample Application_](sample-app.md) | A complete ASP.NET Core reference app with lifecycle management and CRUD endpoints |
 
 ## Installation
 

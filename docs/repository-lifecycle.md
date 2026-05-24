@@ -4,7 +4,7 @@ The repository lifecycle feature provides a formalized mechanism to **create**, 
 
 ## Overview
 
-The lifecycle is orchestrated by `IRepositoryLifecycleOrchestrator` (default implementation: `DefaultRepositoryLifecycleOrchestrator`). On startup you call one or more of its methods:
+The lifecycle is orchestrated by `IRepositoryLifecycleService` (default implementation: `RepositoryLifecycleService`). On startup you call one or more of its methods:
 
 | Method | Description |
 | ------ | ----------- |
@@ -12,7 +12,7 @@ The lifecycle is orchestrated by `IRepositoryLifecycleOrchestrator` (default imp
 | `DropRepositoryAsync<TEntity>` / `<TEntity, TKey>` | Drops the repository |
 | `SeedRepositoryAsync<TEntity>` / `<TEntity, TKey>` | Seeds initial data |
 
-Each operation is delegated to a registered `IRepositoryLifecycleHandler<TEntity>`. If no handler is found, the orchestrator falls back to an `IControllableRepository` (a repository that can manage its own storage).
+Each operation is delegated to a registered `IRepositoryLifecycleHandler<TEntity>`. If no handler is found, the service falls back to an `IControllableRepository` (a repository that can manage its own storage).
 
 ## Registration
 
@@ -27,13 +27,52 @@ builder.Services.AddRepositoryContext()
     });
 ```
 
-Or register the orchestrator directly:
+Or register the lifecycle service directly:
 
 ```csharp
 builder.Services.AddRepositoryLifecycleOrchestrator(options => {
     options.FailFast = true;
 });
 ```
+
+### Registering Lifecycle Handlers
+
+Use the `WithLifecycleHandler()` extensions on `RepositoryContextBuilder`:
+
+```csharp
+// By type
+builder.Services.AddRepositoryContext()
+    .UseEntityFramework<AppDbContext>(...)
+    .WithLifecycleHandler<MyEntity, MyEntityLifecycleHandler>();
+
+// By factory delegate
+builder.Services.AddRepositoryContext()
+    .UseEntityFramework<AppDbContext>(...)
+    .WithLifecycleHandler<MyEntity>(sp => new MyEntityLifecycleHandler(sp.GetRequiredService<ILogger>()));
+
+// By instance
+builder.Services.AddRepositoryContext()
+    .UseEntityFramework<AppDbContext>(...)
+    .WithLifecycleHandler(new MyEntityLifecycleHandler());
+```
+
+### Registering Lifecycle Profiles
+
+Use the `WithLifecycleProfile()` extensions:
+
+```csharp
+// By type
+builder.Services.AddRepositoryContext()
+    .UseEntityFramework<AppDbContext>(...)
+    .WithLifecycleProfile<StagingLifecycleProfile>();
+
+// By instance
+builder.Services.AddRepositoryContext()
+    .UseEntityFramework<AppDbContext>(...)
+    .WithLifecycleProfile(new StagingLifecycleProfile());
+```
+
+> `ConfigureLifecycle()` automatically registers a `DefaultRepositoryLifecycleProfile` if no profile is already registered.
 
 ## Configuration
 
@@ -65,7 +104,7 @@ The `SeedStrategy` enum controls when seed data is applied:
 
 ### Environment-Aware Seeding
 
-When `SeedStrategy` is `ByEnvironment`, the orchestrator:
+When `SeedStrategy` is `ByEnvironment`, the service:
 
 1. Reads `EnvironmentName` from options (or resolves it from `IHostEnvironment`).
 2. Queries the registered `IRepositoryLifecycleProfile` for the effective strategy.
@@ -155,7 +194,7 @@ builder.Services.AddRepositoryContext()
     });
 ```
 
-All overloads register an `IRepositorySeedDataProvider<TEntity>` in DI behind the scenes. The orchestrator resolves it during `SeedRepositoryAsync<TEntity>` and the driver's lifecycle handler inserts the data.
+All overloads register an `IRepositorySeedDataProvider<TEntity>` in DI behind the scenes. The service resolves it during `SeedRepositoryAsync<TEntity>` and the driver's lifecycle handler inserts the data.
 
 > Explicit `WithSeedData` calls use `Add` (always registers). Auto-discovered providers use `TryAdd` — so explicit wins if both are present.
 
@@ -182,19 +221,19 @@ The `SeedAction` receives the service provider, the entity type being seeded, an
 
 #### Via Explicit Call
 
-Trigger seeding explicitly from your application startup:
+Trigger lifecycle operations explicitly from your application:
 
 ```csharp
-var orchestrator = app.Services.GetRequiredService<IRepositoryLifecycleOrchestrator>();
+var lifecycleService = app.Services.GetRequiredService<IRepositoryLifecycleService>();
 
 // Create the repository and seed in one flow
-await orchestrator.CreateRepositoryAsync<MyEntity>();
-await orchestrator.SeedRepositoryAsync<MyEntity>(new[] {
+await lifecycleService.CreateRepositoryAsync<MyEntity>();
+await lifecycleService.SeedRepositoryAsync<MyEntity>(new[] {
     new MyEntity { Name = "Startup Item" }
 });
 
 // Or use the combined lifecycle flow (create + seed)
-await orchestrator.SeedRepositoryAsync<MyEntity>(new[] {
+await lifecycleService.SeedRepositoryAsync<MyEntity>(new[] {
     new MyEntity { Name = "Startup Item" }
 });
 ```
@@ -214,15 +253,21 @@ public class MyEntityHandler : IRepositoryLifecycleHandler<MyEntity> {
 }
 ```
 
-Register the handler in DI:
+Register the handler via `WithLifecycleHandler()` on the builder or directly in DI:
 
 ```csharp
+// Via builder (recommended)
+builder.Services.AddRepositoryContext()
+    .UseEntityFramework<AppDbContext>(...)
+    .WithLifecycleHandler<MyEntity, MyEntityHandler>();
+
+// Or directly
 builder.Services.AddSingleton<IRepositoryLifecycleHandler<MyEntity>, MyEntityHandler>();
 ```
 
 ### Controllable Repository Fallback
 
-If no `IRepositoryLifecycleHandler<TEntity>` is registered for an entity type, the orchestrator falls back to checking whether the registered repository itself implements `IControllableRepository` — meaning the repository **self-manages its own storage lifecycle**.
+If no `IRepositoryLifecycleHandler<TEntity>` is registered for an entity type, the service falls back to checking whether the registered repository itself implements `IControllableRepository` — meaning the repository **self-manages its own storage lifecycle**.
 
 ```csharp
 public interface IControllableRepository {
@@ -234,7 +279,7 @@ public interface IControllableRepository {
 
 #### How the Fallback Works
 
-Inside `ResolveHandler<TEntity>()` (and its `TEntity, TKey` variant), the orchestrator:
+Inside `ResolveHandler<TEntity>()` (and its `TEntity, TKey` variant), the service:
 
 1. Checks the service container for an `IRepositoryLifecycleHandler<TEntity>`.
 2. If not found, resolves `IRepository<TEntity>` and tests it for `IControllableRepository`.
@@ -260,7 +305,7 @@ if (repository is IControllableRepository controllable)
 - Via a `SeedAction` callback in `RepositoryLifecycleOptions`
 - By passing explicit data to `SeedRepositoryAsync(data)`
 
-The orchestrator's `SeedRepository` method itself handles data resolution (provider → service → explicit), so seed data flows normally even though the handler's `SeedAsync` is a no-op.
+The service's `SeedRepository` method itself handles data resolution (provider → service → explicit), so seed data flows normally even though the handler's `SeedAsync` is a no-op.
 
 #### Handler vs Controllable
 
@@ -300,3 +345,44 @@ public class StagingProfile : IRepositoryLifecycleProfile {
 - Any other exception is wrapped in a `RepositoryException`.
 
 When `FailFast` is `true` and no handler or controllable repository is found, a `RepositoryException` is thrown immediately.
+
+## Sample Project
+
+The `Deveel.Repository.SampleApp` demonstrates a complete ASP.NET Core application using lifecycle management and CRUD endpoints. It includes:
+
+- **Model**: `Contact` entity with `GuidId`
+- **Custom Repository**: `ContactRepository` extending `IRepository<Contact, Guid>`
+- **Lifecycle Handler**: `ContactLifecycleHandler` for create/drop/seed operations
+- **Lifecycle Profile**: `SampleLifecycleProfile` for environment-aware seeding
+- **Seed Data**: `DefaultContactSeedData` implementing `IRepositorySeedDataProvider<Contact>`
+- **Endpoints**: 
+  - `/api/lifecycle/create` — Create the repository
+  - `/api/lifecycle/drop` — Drop the repository
+  - `/api/lifecycle/seed` — Seed the repository
+  - `/api/lifecycle/initialize` — Drop, create, and seed in one call
+  - `/api/contacts` — Full CRUD for contacts
+
+### Registration
+
+```csharp
+// Extension method (see sample for full implementation)
+builder.Services.AddContactRepository(builder.Configuration);
+```
+
+### Lifecycle Endpoint Usage
+
+```csharp
+// Create
+await service.CreateRepositoryAsync<Contact, Guid>(ct);
+
+// Drop
+await service.DropRepositoryAsync<Contact, Guid>(ct);
+
+// Seed (uses registered seed data provider)
+await service.SeedRepositoryAsync<Contact, Guid>(null, ct);
+
+// Full initialization
+await service.DropRepositoryAsync<Contact, Guid>(ct);
+await service.CreateRepositoryAsync<Contact, Guid>(ct);
+await service.SeedRepositoryAsync<Contact, Guid>(null, ct);
+```

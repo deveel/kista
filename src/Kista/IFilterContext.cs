@@ -21,8 +21,7 @@ namespace Kista {
 	/// <para>
 	/// When a repository applies a filter to a query, it calls <see cref="IQueryFilter.Initialize"/>
 	/// passing an <see cref="IFilterContext"/>. Filters can use this context to resolve
-	/// services such as <see cref="IExpressionCache"/> or <see cref="IFilterCache"/>
-	/// that enable optimizations like expression caching.
+	/// services such as expression caches or filter caches that enable optimizations.
 	/// </para>
 	/// <para>
 	/// The <see cref="Services"/> property exposes the repository's service provider,
@@ -52,8 +51,8 @@ namespace Kista {
 		/// </summary>
 		/// <value>
 		/// An <see cref="IServiceProvider"/> instance that can resolve services
-		/// such as <see cref="IExpressionCache"/>, <see cref="IFilterCache"/>,
-		/// or any other registered infrastructure service.
+		/// such as expression caches, filter caches, or any other registered
+		/// infrastructure service.
 		/// </value>
 		IServiceProvider Services { get; }
 	}

@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using Microsoft.Extensions.DependencyInjection;
-
 namespace Kista {
 	/// <summary>
 /// Utility class for repository type registration and validation.
@@ -21,7 +19,7 @@ namespace Kista {
 static class RepositoryRegistrationUtil {
 /// <summary>
 /// Determines whether the specified type is a valid repository type by checking
-/// if it implements IRepository<> or IRepository<,>.
+/// if it implements <see cref="IRepository{TEntity}"/> or <see cref="IRepository{TEntity,TKey}"/>.
 /// </summary>
 /// <param name="repositoryType">The type to check.</param>
 /// <returns>True if the type is a valid repository type; otherwise, false.</returns>

@@ -14,7 +14,7 @@ namespace Kista
         /// </returns>
         public static object? GetSeedData<TEntity>(this IRepositoryLifecycleProfile profile)
             where TEntity : class {
-            ArgumentNullException.ThrowIfNull(nameof(profile));
+            ArgumentNullException.ThrowIfNull(profile);
 
             return profile.GetSeedData(typeof(TEntity));
         }

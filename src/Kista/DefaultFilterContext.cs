@@ -20,7 +20,7 @@ namespace Kista {
 	/// <remarks>
 	/// This class is used by repository implementations to provide filters
 	/// with access to the dependency injection container. Filters can resolve
-	/// services such as <see cref="IExpressionCache"/> through the context.
+	/// services such as expression caches through the context.
 	/// </remarks>
 	/// <seealso cref="IFilterContext"/>
 	public sealed class DefaultFilterContext : IFilterContext {

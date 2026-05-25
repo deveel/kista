@@ -47,8 +47,8 @@ namespace Kista {
 		/// <para>
 		/// This method is called by repository implementations immediately
 		/// before applying the filter to a query. Filters can use this opportunity
-		/// to resolve services such as <see cref="IExpressionCache"/> or
-		/// <see cref="IFilterCache"/> that enable optimizations like expression caching.
+		/// to resolve services such as expression caches or filter cached
+		/// that enable optimizations like expression caching.
 		/// </para>
 		/// <para>
 		/// The default implementation does nothing. Override this method only

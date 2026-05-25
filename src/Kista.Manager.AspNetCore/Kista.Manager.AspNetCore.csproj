@@ -1,0 +1,12 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <PackageTags>repository;manager;business;httpcontext;aspnetcore;aspnet;http</PackageTags>
+        <Description>Extends the Entity Manager model adding functions for ASP.NET Applications, like cancellations on HTTP connections</Description>
+    </PropertyGroup>
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\Kista.Manager\Kista.Manager.csproj" />
+    </ItemGroup>
+</Project>

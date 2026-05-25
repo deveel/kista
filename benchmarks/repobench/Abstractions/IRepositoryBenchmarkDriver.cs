@@ -1,6 +1,6 @@
-using Deveel.Data;
+using Kista;
 
-namespace Deveel.Repository.Benchmarks.Abstractions;
+namespace Kista.Benchmarks.Abstractions;
 
 public interface IRepositoryBenchmarkDriver<TEntity, TKey> : IDisposable
 	where TEntity : class {

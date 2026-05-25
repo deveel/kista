@@ -1,4 +1,5 @@
-# Deveel.Repository.Benchmarks
+# Kista.Benchmarks
+> **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project purpose as a data access framework.
 
 Unified BenchmarkDotNet runner for the repository implementations in this solution.
 

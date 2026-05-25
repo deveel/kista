@@ -1,12 +1,13 @@
 # Sample Application
+> **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project purpose as a data access framework.
 
-The `Deveel.Repository.SampleApp` is a reference ASP.NET Core application that demonstrates how to use the Deveel Repository framework with lifecycle management, custom repositories, and minimal API endpoints.
+The `Kista.SampleApp` is a reference ASP.NET Core application that demonstrates how to use the Kista framework with lifecycle management, custom repositories, and minimal API endpoints.
 
 ## Project Structure
 
 ```
-samples/Deveel.Repository.SampleApp/
-└── src/Deveel.Repository.SampleApp/
+samples/Kista.SampleApp/
+└── src/Kista.SampleApp/
     ├── Models/
     │   └── Contact.cs                 # Entity with Guid key
     ├── DTOs/
@@ -30,7 +31,7 @@ samples/Deveel.Repository.SampleApp/
 ## Running the Sample
 
 ```bash
-cd samples/Deveel.Repository.SampleApp/src/Deveel.Repository.SampleApp
+cd samples/Kista.SampleApp/src/Kista.SampleApp
 dotnet run
 ```
 

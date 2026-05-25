@@ -1,4 +1,4 @@
-namespace Deveel.Repository.Options;
+namespace Kista.Benchmarks.Options;
 
 internal enum BenchmarkExportFormat {
 	Markdown,

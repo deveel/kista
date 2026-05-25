@@ -1,6 +1,6 @@
-# Deveel Repository — Product Roadmap
+# Kista — Product Roadmap
 
-The Deveel Repository framework provides a pragmatic, DDD-aligned abstraction for multi-source data access in .NET. At v1.4.3 the framework delivers solid CRUD interfaces, a composable `QueryBuilder`, multi-driver support (EF Core, MongoDB, In-Memory, DynamicLinq), and an `EntityManager` that layers validation and caching on top.
+The Kista framework provides a pragmatic, DDD-aligned abstraction for multi-source data access in .NET. At v1.4.3 the framework delivers solid CRUD interfaces, a composable `QueryBuilder`, multi-driver support (EF Core, MongoDB, In-Memory, DynamicLinq), and an `EntityManager` that layers validation and caching on top.
 
 The roadmap below takes the framework from *useful primitives* to a *complete developer toolkit*: sharper setup ergonomics, richer entity lifecycle management, first-class observability, and new database drivers — all while preserving the pragmatic, low-ambition philosophy of the project.
 
@@ -31,7 +31,7 @@ The framework is in production use, but carries visible rough edges: a misspelle
 
 ### Feature — Package Namespace Correction
 
-**Title:** Rename `Deveel.Repsotiory.MongoFramework` to `Deveel.Repository.MongoFramework`
+**Title:** Rename `Deveel.Repsotiory.MongoFramework` to `Kista.MongoFramework`
 
 **Intent**  
 > "Remove a visible typo that undermines confidence in the framework's quality and makes the MongoDB package harder to find on disk and in NuGet."
@@ -109,7 +109,7 @@ The DynamicLinq driver recompiles filter expressions on every query invocation. 
 **Title:** .NET 10 Runtime Validation with Per-Target Performance Baselines
 
 **Intent**  
-> "Allow teams already on .NET 10 to adopt Deveel Repository without surprises, and give everyone a reliable benchmark record for detecting future regressions."
+> "Allow teams already on .NET 10 to adopt Kista without surprises, and give everyone a reliable benchmark record for detecting future regressions."
 
 **The Problem Today**  
 The framework lists .NET 10 as a target framework but has not been thoroughly validated — the CI matrix does not cover it end-to-end, and no benchmarks quantify what the new runtime's LINQ optimization gains mean in practice. Teams adopting .NET 10 hit undiscovered edge cases and miss out on runtime improvements that require nothing more than an updated dependency.
@@ -183,7 +183,7 @@ Repository methods that complete synchronously (e.g., In-Memory finds that hit a
 **Title:** Systematic Analysis and Optimization of Hot Paths
 
 **Intent**  
-> "Profile the framework in realistic workloads and systematically eliminate unnecessary allocations, boxing, and inefficiencies so Deveel Repository never becomes a performance bottleneck."
+> "Profile the framework in realistic workloads and systematically eliminate unnecessary allocations, boxing, and inefficiencies so Kista never becomes a performance bottleneck."
 
 **The Problem Today**  
 The framework has not undergone systematic performance profiling under realistic load. Opportunities for optimization may exist in filter expression parsing, property mapping, and query translation that we have not yet measured or addressed. Teams adopting the framework need confidence that it will not become a scaling bottleneck.
@@ -198,7 +198,7 @@ The framework has not undergone systematic performance profiling under realistic
 
 **Benefits**
 - The framework never becomes a performance liability as applications scale
-- Teams adopting Deveel Repository can do so without performance anxiety
+- Teams adopting Kista can do so without performance anxiety
 - Regression-detection baselines prevent future changes from eroding throughput
 - Open-source community gains visibility into the framework's performance characteristics and can contribute optimizations
 
@@ -209,7 +209,7 @@ The framework has not undergone systematic performance profiling under realistic
 **Release Target:** Q3 2026  
 **Theme:** Unified setup, executable queries, seamless DI
 
-Today, wiring up Deveel Repository requires knowing the specific setup pattern for each driver, composing multiple `AddRepository*` calls correctly, and discovering which interfaces a repository exposes through trial and error. The `QueryBuilder<TEntity>` composes a query but does not execute it — there is always a boilerplate bridging step. v1.6.0 collapses that friction into a single discoverable setup API and closes the gap between composing a query and running it.
+Today, wiring up Kista requires knowing the specific setup pattern for each driver, composing multiple `AddRepository*` calls correctly, and discovering which interfaces a repository exposes through trial and error. The `QueryBuilder<TEntity>` composes a query but does not execute it — there is always a boilerplate bridging step. v1.6.0 collapses that friction into a single discoverable setup API and closes the gap between composing a query and running it.
 
 ---
 
@@ -270,7 +270,7 @@ Each driver ships its own `AddRepository*` extension overloads with driver-speci
 > "Allow teams to plug in any caching infrastructure they already own — in-process, Redis, or custom — without adding EasyCaching as an extra dependency."
 
 **The Problem Today**  
-`EntityManager` caching is wired exclusively to EasyCaching via `Deveel.Repository.Manager.EasyCaching`. Teams using StackExchange.Redis directly, `Microsoft.Extensions.Caching.Memory`, or a corporate distributed cache cannot use the entity caching pipeline without pulling in EasyCaching as an intermediate layer — a dependency they did not choose and do not want.
+`EntityManager` caching is wired exclusively to EasyCaching via `Kista.Manager.EasyCaching`. Teams using StackExchange.Redis directly, `Microsoft.Extensions.Caching.Memory`, or a corporate distributed cache cannot use the entity caching pipeline without pulling in EasyCaching as an intermediate layer — a dependency they did not choose and do not want.
 
 **What We Are Building**  
 - A formalized, stable `IEntityCache<TEntity>` contract (the interface exists today but is underspecified)
@@ -406,7 +406,7 @@ Regulatory, operational, and undo requirements push many teams toward logical de
 > "Give entities a governed state lifecycle — with declared transitions, transition history, and guard conditions — without making every team implement their own state machine from scratch."
 
 **The Problem Today**  
-`Deveel.Repository.States.Core` contains two synchronous extension wrappers and a handful of empty interfaces (`IStateRepository`, `IEntity`, `StateInfo`). It is essentially a stub. Applications modeling workflow states (order status, subscription lifecycle, document approval) must build their own state management atop the raw repository layer, duplicating the same pattern across every project.
+`Kista.States.Core` contains two synchronous extension wrappers and a handful of empty interfaces (`IStateRepository`, `IEntity`, `StateInfo`). It is essentially a stub. Applications modeling workflow states (order status, subscription lifecycle, document approval) must build their own state management atop the raw repository layer, duplicating the same pattern across every project.
 
 **What We Are Building**  
 - A complete `IStateRepository<TEntity, TStatus>` backed by EF Core and MongoDB drivers
@@ -547,7 +547,7 @@ Enterprise deployments need to *see* what data is doing: who changed it, which t
 **Title:** Distributed Tracing and Metrics for Every Repository Operation
 
 **Intent**  
-> "Make Deveel Repository a first-class citizen in distributed traces — so teams can see data-layer performance, correlate slowdowns with application spans, and alert on repository-level anomalies."
+> "Make Kista a first-class citizen in distributed traces — so teams can see data-layer performance, correlate slowdowns with application spans, and alert on repository-level anomalies."
 
 **The Problem Today**  
 Repository operations are completely invisible to distributed tracing systems today. A slow query shows up in application metrics only as a slow HTTP response; there is no span distinguishing "EF Core `GetPageAsync` took 450ms" from "business logic took 10ms." Teams running on Kubernetes with Datadog, Grafana, or Azure Monitor have no repository-level drill-down capability.
@@ -601,7 +601,7 @@ Repository operations are completely invisible to distributed tracing systems to
 > "Give teams building multi-tenant applications on relational databases the same one-API, zero-leakage tenancy experience that MongoDB users have today."
 
 **The Problem Today**  
-`Deveel.Repository.MongoFramework.MultiTenant` provides a robust connection-per-tenant isolation model. The EF Core driver has no equivalent: teams building multi-tenant applications on SQL Server or PostgreSQL must implement tenant filtering manually through EF Core global query filters or per-query predicates — with no repository-level convention, tooling, or isolation guarantees from the framework.
+`Kista.MongoFramework.MultiTenant` provides a robust connection-per-tenant isolation model. The EF Core driver has no equivalent: teams building multi-tenant applications on SQL Server or PostgreSQL must implement tenant filtering manually through EF Core global query filters or per-query predicates — with no repository-level convention, tooling, or isolation guarantees from the framework.
 
 **What We Are Building**  
 - An `IEntityFrameworkTenantContext` service that provides the current tenant identifier to the EF Core driver
@@ -711,16 +711,16 @@ v2.0 laid the architectural foundation with interface simplification and source 
 
 ### Feature — PostgreSQL Native Driver
 
-**Title:** `Deveel.Repository.PostgreSQL` — A JSONB-Backed Repository Driver
+**Title:** `Kista.PostgreSQL` — A JSONB-Backed Repository Driver
 
 **Intent**  
 > "Give the large and growing PostgreSQL community a first-party driver that exploits JSONB storage, native full-text search, and array operators — capabilities the generic EF Core driver cannot express."
 
 **The Problem Today**  
-PostgreSQL is the dominant open-source relational database, and many .NET teams choose it for JSONB storage, rich indexing, and built-in full-text search. Using it through the EF Core driver works but leaves its most powerful features unexploited. A dedicated driver can map Deveel Repository filter and query abstractions directly to PostgreSQL's native operators instead of going through LINQ's lowest-common-denominator translation.
+PostgreSQL is the dominant open-source relational database, and many .NET teams choose it for JSONB storage, rich indexing, and built-in full-text search. Using it through the EF Core driver works but leaves its most powerful features unexploited. A dedicated driver can map Kista filter and query abstractions directly to PostgreSQL's native operators instead of going through LINQ's lowest-common-denominator translation.
 
 **What We Are Building**  
-- A `Deveel.Repository.PostgreSQL` package built on Npgsql
+- A `Kista.PostgreSQL` package built on Npgsql
 - `IRepository<TEntity, TKey>` backed by a JSONB entity column with a typed primary key column
 - Native mapping of `IQueryFilter` expressions to PostgreSQL JSONB path operators and index-aware queries
 - Built-in full-text search support using `tsvector`/`tsquery` operators, implementing the `IFullTextSearchRepository` contract
@@ -737,7 +737,7 @@ PostgreSQL is the dominant open-source relational database, and many .NET teams 
 
 ### Feature — Azure Cosmos DB Driver
 
-**Title:** `Deveel.Repository.CosmosDB` — Cloud-Native Driver for Azure Cosmos DB
+**Title:** `Kista.CosmosDB` — Cloud-Native Driver for Azure Cosmos DB
 
 **Intent**  
 > "Give Azure-native teams a first-party Cosmos DB driver that handles partition key management, change feed processing, and multi-region failover transparently within the repository abstraction."
@@ -746,7 +746,7 @@ PostgreSQL is the dominant open-source relational database, and many .NET teams 
 Azure Cosmos DB is the leading serverless, globally-distributed document database for Azure workloads. Teams using it today access it through the raw .NET SDK, losing all repository abstraction benefits. Partition key management, continuation tokens, and change feed processing are sharp edges that are well worth encapsulating.
 
 **What We Are Building**  
-- A `Deveel.Repository.CosmosDB` package built on the `Microsoft.Azure.Cosmos` SDK v4
+- A `Kista.CosmosDB` package built on the `Microsoft.Azure.Cosmos` SDK v4
 - Automatic partition key resolution from entity properties or a pluggable strategy
 - Transparent continuation-token pagination mapped to the framework's `PageResult<TEntity>` API
 - Change feed subscription mapped to the `IEntityEventPublisher` interface introduced in v1.7
@@ -763,16 +763,16 @@ Azure Cosmos DB is the leading serverless, globally-distributed document databas
 
 ### Feature — Dapper Repository Driver
 
-**Title:** `Deveel.Repository.Dapper` — Lightweight Dapper-Backed Repository Implementation
+**Title:** `Kista.Dapper` — Lightweight Dapper-Backed Repository Implementation
 
 **Intent**  
-> "Give teams using Dapper as their data-access strategy a first-party driver that maps Deveel Repository abstractions directly to raw SQL and stored procedures — without forcing them into a full ORM."
+> "Give teams using Dapper as their data-access strategy a first-party driver that maps Kista abstractions directly to raw SQL and stored procedures — without forcing them into a full ORM."
 
 **The Problem Today**  
 Dapper is the most widely adopted micro-ORM in the .NET ecosystem: lightweight, fast, and SQL-first. Teams using it today must either hand-roll repository wrappers around every query (losing the framework's pluggable caching, validation, event emission, and health-check benefits) or adopt EF Core just to use the framework — a non-starter for SQL-optimization-conscious teams and legacy database migrations.
 
 **What We Are Building**  
-- A `Deveel.Repository.Dapper` package built on `Dapper` and `Microsoft.Data.SqlClient` / Npgsql / generic `DbConnection`
+- A `Kista.Dapper` package built on `Dapper` and `Microsoft.Data.SqlClient` / Npgsql / generic `DbConnection`
 - `IRepository<TEntity, TKey>` backed by convention-over-configuration SQL generation (or overridable per-operation SQL templates)
 - Native stored procedure and batch-operation execution mapped to the batch and streaming APIs from v1.8
 - Flexible entity-to-SQL mapping: table name, column mapping, key strategy configurable per entity
@@ -780,7 +780,7 @@ Dapper is the most widely adopted micro-ORM in the .NET ecosystem: lightweight, 
 - Full driver parity: filtering from `IQueryFilter` → parameterized `WHERE` clauses, pagination → `OFFSET`/`FETCH`, soft-delete filtering, and health checks
 
 **Benefits**
-- The most .NET-native ORM becomes a first-class Deveel Repository driver — no boilerplate wrappers, no vendor lock-in
+- The most .NET-native ORM becomes a first-class Kista driver — no boilerplate wrappers, no vendor lock-in
 - Teams keep their existing Dapper investment (raw SQL, existing procedures, performance-tuned queries) while gaining the full framework feature set
 - The driver works against any ADO.NET provider: SQL Server, PostgreSQL, MySQL, SQLite — a single abstraction across heterogeneous databases
 - A smooth migration path from hand-rolled Dapper repositories to a consistent, observable, and cache-aware pattern
@@ -789,7 +789,7 @@ Dapper is the most widely adopted micro-ORM in the .NET ecosystem: lightweight, 
 
 ### Feature — Service-Based Repository Driver
 
-**Title:** `Deveel.Repository.Services` — RESTful and gRPC Service-Backed Repository Implementation
+**Title:** `Kista.Services` — RESTful and gRPC Service-Backed Repository Implementation
 
 **Intent**  
 > "Allow distributed architectures where repositories delegate to remote services — enabling event-driven microservices, federation scenarios, and API aggregation patterns without abandoning type-safe repository abstractions."
@@ -798,7 +798,7 @@ Dapper is the most widely adopted micro-ORM in the .NET ecosystem: lightweight, 
 Microservice architectures often require aggregating data from multiple remote services — an API gateway, a data service, a business logic service. Teams today reach for the HTTP client directly or custom REST wrappers, losing the repository abstraction and the consistency it provides. There is no natural way to express "this repository's data lives on a remote gRPC endpoint" within the framework.
 
 **What We Are Building**  
-- A `Deveel.Repository.Services` package providing base implementations for remote repositories
+- A `Kista.Services` package providing base implementations for remote repositories
 - A RESTful channel builder and HTTP-based repository backend — maps `IRepository<TEntity>` CRUD and query operations to HTTP endpoints following REST conventions
 - A gRPC channel builder and gRPC-based repository backend — maps repository operations to typed gRPC service calls
 - Pluggable serialization and deserialization so teams can use their preferred serializer
@@ -816,16 +816,16 @@ Microservice architectures often require aggregating data from multiple remote s
 
 ### Feature — Neo4j Repository Driver
 
-**Title:** `Deveel.Repository.Neo4j` — A Graph Database Repository Driver
+**Title:** `Kista.Neo4j` — A Graph Database Repository Driver
 
 **Intent**  
-> "Give teams using Neo4j as their graph database a first-party driver that maps Deveel Repository abstractions directly to Cypher queries — enabling graph-traversal queries within the familiar repository abstraction."
+> "Give teams using Neo4j as their graph database a first-party driver that maps Kista abstractions directly to Cypher queries — enabling graph-traversal queries within the familiar repository abstraction."
 
 **The Problem Today**  
 Neo4j is the leading graph database in the .NET ecosystem, used for recommendation engines, fraud detection, identity graphs, and knowledge management. Teams using it today must either use the raw Neo4j .NET driver or the Neo4jClient library directly, losing all repository abstraction benefits. There is no framework-native way to express graph relationships, traversal queries, or property-graph operations within the repository pattern.
 
 **What We Are Building**  
-- A `Deveel.Repository.Neo4j` package built on the official Neo4j .NET driver
+- A `Kista.Neo4j` package built on the official Neo4j .NET driver
 - `IRepository<TEntity, TKey>` backed by Cypher queries against labeled nodes
 - Native relationship mapping — entity properties mapped to node attributes, relationships mapped to navigation properties
 - Graph-traversal query support via extension methods on `QueryBuilder<TEntity>` (shortest-path, variable-length patterns, neighborhood queries)
@@ -845,7 +845,7 @@ The following items are not committed to any specific release but are tracked fo
 
 | Feature | Description | Priority |
 |---------|-------------|----------|
-| ElasticSearch Driver | `Deveel.Repository.ElasticSearch` — first-party Elastic driver with native query DSL mapping | Medium |
+| ElasticSearch Driver | `Kista.ElasticSearch` — first-party Elastic driver with native query DSL mapping | Medium |
 | GraphQL Integration | Hot Chocolate / Strawberry Shake binding to expose repositories as a typed GraphQL API | Medium |
 | Reactive Change Streams | `IAsyncObservable<TEntity>` + SignalR push delivery of entity change notifications | Low |
 | Message Bus Adapters | Outbox pattern with Kafka, Azure Service Bus, and RabbitMQ adapters for `IEntityEventPublisher` | Medium |

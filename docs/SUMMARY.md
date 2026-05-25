@@ -1,6 +1,7 @@
 # Table of contents
+> **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project purpose as a data access framework.
 
-* [Why Deveel Repository?](README.md)
+* [Why Kista?](README.md)
 * [The Repository Pattern](repository-pattern.md)
 * [Getting Started](index.md)
 * [Customize the Repository](custom-repository.md)

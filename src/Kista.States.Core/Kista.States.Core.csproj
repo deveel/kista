@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <VersionPrefix>1.0.1</VersionPrefix>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <Authors>Antonello Provenzano</Authors>
+    <Company>Deveel AS</Company>
+    <Copyright>(C) 2022 Deveel</Copyright>
+    <PackageProjectUrl>https://kista.deveel.org</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/deveel/kista</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>data core framework repository</PackageTags>
+    <Description>Abstractions for the definition of repositories that handle states for the entities</Description>
+    <PackageLicenseFile>EULA.md</PackageLicenseFile>
+    <PackageIcon>kista-logo.png</PackageIcon>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Kista\Kista.csproj" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <None Include="..\..\kista-logo.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+    <None Include="..\..\EULA.md">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Folder Include="Data\" />
+  </ItemGroup>
+
+</Project>

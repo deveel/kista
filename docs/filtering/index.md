@@ -1,6 +1,7 @@
 # Filtering
+> **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project purpose as a data access framework.
 
-The _Deveel Repository_ framework provides a flexible filtering system that allows you to query repositories using a variety of filter types, from strongly-typed lambda expressions to runtime string-based Dynamic LINQ predicates.
+The _Kista_ framework provides a flexible filtering system that allows you to query repositories using a variety of filter types, from strongly-typed lambda expressions to runtime string-based Dynamic LINQ predicates.
 
 ## Filter Types
 
@@ -22,10 +23,10 @@ var results = await repository.FindAllAsync(query);
 
 ### Dynamic LINQ Filters
 
-The `Deveel.Repository.DynamicLinq` package adds support for string-based filter expressions using [System.Linq.Dynamic.Core](https://github.com/zzzprojects/System.Linq.Dynamic.Core):
+The `Kista.DynamicLinq` package adds support for string-based filter expressions using [System.Linq.Dynamic.Core](https://github.com/zzzprojects/System.Linq.Dynamic.Core):
 
 ```bash
-dotnet add package Deveel.Repository.DynamicLinq
+dotnet add package Kista.DynamicLinq
 ```
 
 Once installed, repositories accept `DynamicLinqFilter` instances:

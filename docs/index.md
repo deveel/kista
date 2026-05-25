@@ -1,6 +1,18 @@
 # Getting Started
 
-The _Deveel Repository_ is a framework that provides a set of abstractions and implementations of the [_Repository Pattern_](https://en.wikipedia.org/wiki/Repository_pattern), to simplify the access to data sources in your application while keeping your domain model decoupled from any specific persistence technology.
+![GitHub release](https://img.shields.io/github/v/release/deveel/kista)
+![GitHub license](https://img.shields.io/github/license/deveel/kista?color=blue)
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/deveel/kista/ci.yml?logo=github)
+[![codecov](https://codecov.io/gh/deveel/kista/graph/badge.svg?token=5US7L3C7ES)](https://codecov.io/gh/deveel/kista)
+[![Documentation](https://img.shields.io/badge/gitbook-docs?logo=gitbook&label=docs&color=blue)](https://deveel.gitbook.io/kista/)
+
+<p align="center">
+  <img src="kista-full-logo.png" alt="Kista logo">
+</p>
+
+> **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project's purpose as a data access framework.
+
+Kista is a framework that provides a set of abstractions and implementations of the [_Repository Pattern_](https://en.wikipedia.org/wiki/Repository_pattern), to simplify the access to data sources in your application while keeping your domain model decoupled from any specific persistence technology.
 
 Below you will find a quick and generic guide to start using the framework in your application.
 
@@ -22,7 +34,7 @@ To learn about the specific usage of the framework, you can read the following d
 
 ## Installation
 
-The framework is organized into a _kernel_ package (`Deveel.Repository.Core`) that provides the basic interfaces and abstractions, and a set of _driver_ packages that implement those abstractions for specific data sources.
+The framework is organized into a _kernel_ package (`Kista`) that provides the basic interfaces and abstractions, and a set of _driver_ packages that implement those abstractions for specific data sources.
 
 When you install any driver package, the kernel package is automatically pulled in as a transitive dependency — you do not need to install it explicitly.
 
@@ -40,26 +52,26 @@ The library targets the following .NET runtimes:
 
 ### The Kernel Package
 
-All driver packages are built on top of the _kernel_ package that provides the core interfaces and abstractions. If you want to develop your own driver for a specific data source, depend only on `Deveel.Repository.Core` and implement the `IRepository<TEntity>` interface.
+All driver packages are built on top of the _kernel_ package that provides the core interfaces and abstractions. If you want to develop your own driver for a specific data source, depend only on `Kista` and implement the `IRepository<TEntity>` interface.
 
 ```bash
-dotnet add package Deveel.Repository.Core
+dotnet add package Kista
 ```
 
 ### The Drivers
 
 | Driver | Package | Description |
 | ------ | ------- | ----------- |
-| [_In-Memory_](repository-implementations/in-memory.md) | `Deveel.Repository.InMemory` | A volatile, in-process repository — ideal for testing and prototyping. |
-| [_MongoDB_](repository-implementations/mongodb.md) | `Deveel.Repository.MongoFramework` | Stores entities in a MongoDB database via [MongoFramework](https://github.com/turnersoftware/mongoframework). |
-| [_MongoDB Multi-Tenant_](multi-tenancy.md) | `Deveel.Repository.MongoFramework.MultiTenant` | Multi-tenant MongoDB connection management via [Finbuckle.MultiTenant](https://github.com/Finbuckle/Finbuckle.MultiTenant). |
-| [_Entity Framework Core_](repository-implementations/ef-core.md) | `Deveel.Repository.EntityFramework` | Stores entities in any relational database supported by [Entity Framework Core](https://github.com/dotnet/efcore). |
-| [_EF Core Multi-Tenant_](repository-implementations/ef-core.md#multi-tenant-support) | `Deveel.Repository.EntityFramework.MultiTenant` | Multi-tenant EF Core with database-per-tenant or shared-database strategies. |
-| [_Dynamic LINQ_](repository-implementations/README.md#dynamic-linq-support) | `Deveel.Repository.DynamicLinq` | Runtime string-based filter expressions via [System.Linq.Dynamic.Core](https://github.com/zzzprojects/System.Linq.Dynamic.Core). |
-| [_Entity Manager_](entity-manager/) | `Deveel.Repository.Manager` | Business layer with validation, normalization, caching, and event sourcing. |
-| [_Entity Manager EasyCaching_](entity-manager/caching-entities.md) | `Deveel.Repository.Manager.EasyCaching` | Second-level caching for EntityManager via [EasyCaching](https://github.com/dotnetcore/EasyCaching). |
-| [_Entity Manager ASP.NET Core_](entity-manager/http-request-cancellation.md) | `Deveel.Repository.Manager.AspNetCore` | ASP.NET Core integration for automatic HTTP request cancellation. |
-| [_Entity States_](#) | `Deveel.Repository.States.Core` | Entity state management abstractions (experimental). |
+| [_In-Memory_](repository-implementations/in-memory.md) | `Kista.InMemory` | A volatile, in-process repository — ideal for testing and prototyping. |
+| [_MongoDB_](repository-implementations/mongodb.md) | `Kista.MongoFramework` | Stores entities in a MongoDB database via [MongoFramework](https://github.com/turnersoftware/mongoframework). |
+| [_MongoDB Multi-Tenant_](multi-tenancy.md) | `Kista.MongoFramework.MultiTenant` | Multi-tenant MongoDB connection management via [Finbuckle.MultiTenant](https://github.com/Finbuckle/Finbuckle.MultiTenant). |
+| [_Entity Framework Core_](repository-implementations/ef-core.md) | `Kista.EntityFramework` | Stores entities in any relational database supported by [Entity Framework Core](https://github.com/dotnet/efcore). |
+| [_EF Core Multi-Tenant_](repository-implementations/ef-core.md#multi-tenant-support) | `Kista.EntityFramework.MultiTenant` | Multi-tenant EF Core with database-per-tenant or shared-database strategies. |
+| [_Dynamic LINQ_](repository-implementations/README.md#dynamic-linq-support) | `Kista.DynamicLinq` | Runtime string-based filter expressions via [System.Linq.Dynamic.Core](https://github.com/zzzprojects/System.Linq.Dynamic.Core). |
+| [_Entity Manager_](entity-manager/) | `Kista.Manager` | Business layer with validation, normalization, caching, and event sourcing. |
+| [_Entity Manager EasyCaching_](entity-manager/caching-entities.md) | `Kista.Manager.EasyCaching` | Second-level caching for EntityManager via [EasyCaching](https://github.com/dotnetcore/EasyCaching). |
+| [_Entity Manager ASP.NET Core_](entity-manager/http-request-cancellation.md) | `Kista.Manager.AspNetCore` | ASP.NET Core integration for automatic HTTP request cancellation. |
+| [_Entity States_](#) | `Kista.States.Core` | Entity state management abstractions (experimental). |
 
 ## Instrumentation
 

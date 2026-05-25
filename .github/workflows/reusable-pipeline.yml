@@ -125,7 +125,7 @@ jobs:
         if: ${{ inputs.publish-github-packages }}
         env: 
           GITHUB_API_TOKEN: ${{ secrets.GITHUB_API_TOKEN }}
-        run: dotnet nuget push ./nupkgs/*.nupkg --skip-duplicate --api-key $GITHUB_API_TOKEN --source https://nuget.pkg.github.com/deveel/index.json
+        run: dotnet nuget push ./nupkgs/*.nupkg --skip-duplicate --api-key $GITHUB_API_TOKEN --source https://nuget.pkg.github.com/kista/index.json
 
       - name: Publish packages to NuGet.org
         if: ${{ inputs.publish-nuget-org }}

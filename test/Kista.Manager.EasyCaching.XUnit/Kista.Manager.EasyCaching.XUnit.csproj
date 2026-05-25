@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="EasyCaching.InMemory" Version="1.9.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Kista.Manager.EasyCaching\Kista.Manager.EasyCaching.csproj" />
+    <ProjectReference Include="..\Kista.Manager.XUnit\Kista.Manager.XUnit.csproj" />
+  </ItemGroup>
+
+</Project>

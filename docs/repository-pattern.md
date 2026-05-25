@@ -1,4 +1,5 @@
 # The Repository Pattern
+> **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project purpose as a data access framework.
 
 The `IRepository<TEntity>` interface is the core contract of the framework. All repositories — whether provided by a driver or implemented by you — implement this interface.
 
@@ -56,7 +57,7 @@ The library provides helper types to construct queries:
 | `CombinedQueryFilter` | Combines two or more filters with a logical AND. |
 | `QueryFilter.Empty` | A no-op filter (returns all items). Useful for composition or coalescing. |
 
-Driver packages may provide their own filter types — for example, `Deveel.Repository.MongoFramework` provides a `MongoGeoDistanceFilter`.
+Driver packages may provide their own filter types — for example, `Kista.MongoFramework` provides a `MongoGeoDistanceFilter`.
 
 ### The `IQueryOrder` Interface
 

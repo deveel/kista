@@ -1,4 +1,5 @@
 # Repository Lifecycle
+> **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project purpose as a data access framework.
 
 The repository lifecycle feature provides a formalized mechanism to **create**, **drop**, and **seed** repositories during application startup. It replaces the obsolete `IRepositoryController` / `RepositoryControllerAdapter` model with a cleaner handler-based abstraction.
 
@@ -348,7 +349,7 @@ When `FailFast` is `true` and no handler or controllable repository is found, a 
 
 ## Sample Project
 
-The `Deveel.Repository.SampleApp` demonstrates a complete ASP.NET Core application using lifecycle management and CRUD endpoints. It includes:
+The `Kista.SampleApp` demonstrates a complete ASP.NET Core application using lifecycle management and CRUD endpoints. It includes:
 
 - **Model**: `Contact` entity with `GuidId`
 - **Custom Repository**: `ContactRepository` extending `IRepository<Contact, Guid>`

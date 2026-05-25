@@ -1,9 +1,9 @@
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
 
-using Deveel.Data;
+using Kista;
 
-namespace Deveel.Repository.Benchmarks;
+namespace Kista.Benchmarks;
 
 [MemoryDiagnoser]
 [SimpleJob(RuntimeMoniker.Net80, baseline: true)]

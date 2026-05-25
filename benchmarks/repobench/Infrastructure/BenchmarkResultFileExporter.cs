@@ -1,8 +1,8 @@
 using BenchmarkDotNet.Reports;
 
-using Deveel.Repository.Options;
+using Kista.Benchmarks.Options;
 
-namespace Deveel.Repository.Benchmarks.Infrastructure;
+namespace Kista.Benchmarks.Infrastructure;
 
 internal static class BenchmarkResultFileExporter {
 	public static void WriteSingleOutputFileIfRequested(

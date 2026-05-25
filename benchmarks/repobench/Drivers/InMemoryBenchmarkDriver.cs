@@ -1,8 +1,8 @@
-using Deveel.Data;
-using Deveel.Repository.Benchmarks.Abstractions;
-using Deveel.Repository.Benchmarks.Models;
+using Kista;
+using Kista.Benchmarks.Abstractions;
+using Kista.Benchmarks.Models;
 
-namespace Deveel.Repository.Benchmarks.Drivers;
+namespace Kista.Benchmarks.Drivers;
 
 internal sealed class InMemoryBenchmarkDriver : IRepositoryBenchmarkDriver<InMemoryBenchPerson, string> {
 	private InMemoryRepository<InMemoryBenchPerson, string>? _repository;

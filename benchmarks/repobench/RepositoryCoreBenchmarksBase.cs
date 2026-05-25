@@ -1,12 +1,12 @@
 using BenchmarkDotNet.Attributes;
 
-using Deveel.Data;
+using Kista;
 
 using System.Linq.Expressions;
 
-using Deveel.Repository.Benchmarks.Abstractions;
+using Kista.Benchmarks.Abstractions;
 
-namespace Deveel.Repository.Benchmarks;
+namespace Kista.Benchmarks;
 
 public abstract class RepositoryCoreBenchmarksBase<TEntity, TKey>
 	where TEntity : class {

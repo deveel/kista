@@ -1,6 +1,7 @@
 # HTTP Request Cancellation
+> **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project purpose as a data access framework.
 
-The `Deveel.Repository.Manager.AspNetCore` package extends the Entity Manager model with an `IOperationCancellationSource` implementation that forwards the ASP.NET Core **request-aborted** cancellation token to every manager operation.
+The `Kista.Manager.AspNetCore` package extends the Entity Manager model with an `IOperationCancellationSource` implementation that forwards the ASP.NET Core **request-aborted** cancellation token to every manager operation.
 
 When the HTTP client disconnects or the network layer aborts the request, the `HttpContext.RequestAborted` token transitions to a cancelled state. With this integration in place, all in-flight repository operations are automatically cancelled — **without any extra code in your manager or your controllers**.
 
@@ -28,7 +29,7 @@ HttpContext.RequestAborted  ──►  HttpRequestCancellationSource.Token
 Add the NuGet package to your ASP.NET Core project:
 
 ```bash
-dotnet add package Deveel.Repository.Manager.AspNetCore
+dotnet add package Kista.Manager.AspNetCore
 ```
 
 ## Registration
@@ -93,7 +94,7 @@ var order = await _manager.FindAsync(id, HttpContext.RequestAborted);
 
 ## Custom Cancellation Sources
 
-`AddHttpRequestTokenSource` is a convenience wrapper around the generic `AddOperationTokenSource<TSource>` method available in the base `Deveel.Repository.Manager` package:
+`AddHttpRequestTokenSource` is a convenience wrapper around the generic `AddOperationTokenSource<TSource>` method available in the base `Kista.Manager` package:
 
 ```csharp
 // Equivalent manual registration

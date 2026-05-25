@@ -1,4 +1,5 @@
 # Caching Entities
+> **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project purpose as a data access framework.
 
 The `EntityManager<TEntity>` supports an optional second-level cache via the `IEntityCache<TEntity>` service. When registered, the manager transparently caches entities on write and serves them from the cache on subsequent reads, reducing the number of calls to the underlying repository.
 
@@ -7,7 +8,7 @@ The `EntityManager<TEntity>` supports an optional second-level cache via the `IE
 Install the EasyCaching integration package:
 
 ```bash
-dotnet add package Deveel.Repository.Manager.EasyCaching
+dotnet add package Kista.Manager.EasyCaching
 ```
 
 ## Registration

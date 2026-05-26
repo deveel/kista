@@ -5,7 +5,7 @@
 [![Documentation](https://img.shields.io/badge/gitbook-docs?logo=gitbook&label=docs&color=blue)](https://deveel.gitbook.io/kista/)
 
 <p align="center">
-  <img src="kista-full-logo.png" alt="Kista logo">
+  <img src="kista-full-logo.png" alt="Kista logo" width="500">
 </p>
 
 # Kista
@@ -56,19 +56,19 @@ The framework is organized into a _kernel_ package (providing interfaces and abs
 - **Stable releases** are published to [**NuGet.org**](https://www.nuget.org/profiles/deveel).
 - **Pre-release / unstable builds** are available from the [**GitHub Packages**](https://github.com/deveel/kista/packages) feed (`https://nuget.pkg.github.com/kista/index.json`).
 
-| Package                                | Description                                                                                                   | NuGet (stable) |                                                                        Downloads (NuGet)                                                                         |
-|----------------------------------------|---------------------------------------------------------------------------------------------------------------| :------------: |:----------------------------------------------------------------------------------------------------------------------------------------------------------------:|
-| `Kista`               | Kernel abstractions: interfaces, base types, and DI extensions                                                | [![NuGet](https://img.shields.io/nuget/v/Kista.svg)](https://www.nuget.org/packages/Kista/) |                [![Downloads](https://img.shields.io/nuget/dt/Kista.svg)](https://www.nuget.org/packages/Kista/)                |
-| `Kista.InMemory`           | Volatile, in-process repository — ideal for testing and prototyping                                           | [![NuGet](https://img.shields.io/nuget/v/Kista.InMemory.svg)](https://www.nuget.org/packages/Kista.InMemory/) |            [![Downloads](https://img.shields.io/nuget/dt/Kista.InMemory.svg)](https://www.nuget.org/packages/Kista.InMemory/)            |
-| `Kista.EntityFramework`    | Repository driver backed by [Entity Framework Core](https://github.com/dotnet/efcore)                         | [![NuGet](https://img.shields.io/nuget/v/Kista.EntityFramework.svg)](https://www.nuget.org/packages/Kista.EntityFramework/) |     [![Downloads](https://img.shields.io/nuget/dt/Kista.EntityFramework.svg)](https://www.nuget.org/packages/Kista.EntityFramework/)     |
-| `Kista.MongoFramework`     | Repository driver backed by [MongoFramework](https://github.com/turnersoftware/mongoframework) / MongoDB      | [![NuGet](https://img.shields.io/nuget/v/Kista.MongoFramework.svg)](https://www.nuget.org/packages/Kista.MongoFramework/) |      [![Downloads](https://img.shields.io/nuget/dt/Kista.MongoFramework.svg)](https://www.nuget.org/packages/Kista.MongoFramework/)      |
-| `Kista.MongoFramework.MultiTenant` | Multi-tenant MongoDB connection management via [Finbuckle.MultiTenant](https://github.com/Finbuckle/Finbuckle.MultiTenant) | [![NuGet](https://img.shields.io/nuget/v/Kista.MongoFramework.MultiTenant.svg)](https://www.nuget.org/packages/Kista.MongoFramework.MultiTenant/) |      [![Downloads](https://img.shields.io/nuget/dt/Kista.MongoFramework.MultiTenant.svg)](https://www.nuget.org/packages/Kista.MongoFramework.MultiTenant/)      |
-| `Kista.DynamicLinq`        | Filter / query support via [System.Linq.Dynamic.Core](https://github.com/zzzprojects/System.Linq.Dynamic.Core) | [![NuGet](https://img.shields.io/nuget/v/Kista.DynamicLinq.svg)](https://www.nuget.org/packages/Kista.DynamicLinq/) |         [![Downloads](https://img.shields.io/nuget/dt/Kista.DynamicLinq.svg)](https://www.nuget.org/packages/Kista.DynamicLinq/)         |
-| `Kista.Manager`            | Business layer (_EntityManager_) with validation, normalization, event sourcing, and logging                  | [![NuGet](https://img.shields.io/nuget/v/Kista.Manager.svg)](https://www.nuget.org/packages/Kista.Manager/) |             [![Downloads](https://img.shields.io/nuget/dt/Kista.Manager.svg)](https://www.nuget.org/packages/Kista.Manager/)             |
-| `Kista.Manager.DynamicLinq` | Dynamic LINQ query extensions for the Entity Manager                                                          | [![NuGet](https://img.shields.io/nuget/v/Kista.Manager.DynamicLinq.svg)](https://www.nuget.org/packages/Kista.Manager.DynamicLinq/) | [![Downloads](https://img.shields.io/nuget/dt/Kista.Manager.DynamicLinq.svg)](https://www.nuget.org/packages/Kista.Manager.DynamicLinq/) |
-| `Kista.Manager.EasyCaching` | Second-level caching for the Entity Manager via [EasyCaching](https://github.com/dotnetcore/EasyCaching)      | [![NuGet](https://img.shields.io/nuget/v/Kista.Manager.EasyCaching.svg)](https://www.nuget.org/packages/Kista.Manager.EasyCaching/) | [![Downloads](https://img.shields.io/nuget/dt/Kista.Manager.EasyCaching.svg)](https://www.nuget.org/packages/Kista.Manager.EasyCaching/) |
-| `Kista.Manager.AspNetCore` | ASP.NET Core integration for automatic HTTP request cancellation                                              | [![NuGet](https://img.shields.io/nuget/v/Kista.Manager.AspNetCore.svg)](https://www.nuget.org/packages/Kista.Manager.AspNetCore/) | [![Downloads](https://img.shields.io/nuget/dt/Kista.Manager.AspNetCore.svg)](https://www.nuget.org/packages/Kista.Manager.AspNetCore/) |
-| `Kista.States.Core`        | Entity state management abstractions (experimental)                                                           | [![NuGet](https://img.shields.io/nuget/v/Kista.States.Core.svg)](https://www.nuget.org/packages/Kista.States.Core/) | [![Downloads](https://img.shields.io/nuget/dt/Kista.States.Core.svg)](https://www.nuget.org/packages/Kista.States.Core/) |
+| Package                                | Description                                                                                                   | NuGet (stable) | Pre-Release (GitHub) |
+|----------------------------------------|---------------------------------------------------------------------------------------------------------------| :------------: | :------------------: |
+| `Kista`               | Kernel abstractions: interfaces, base types, and DI extensions                                                | [![NuGet](https://img.shields.io/nuget/v/Kista.svg)](https://www.nuget.org/packages/Kista/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista) |
+| `Kista.InMemory`           | Volatile, in-process repository — ideal for testing and prototyping                                           | [![NuGet](https://img.shields.io/nuget/v/Kista.InMemory.svg)](https://www.nuget.org/packages/Kista.InMemory/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.InMemory.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.InMemory) |
+| `Kista.EntityFramework`    | Repository driver backed by [Entity Framework Core](https://github.com/dotnet/efcore)                         | [![NuGet](https://img.shields.io/nuget/v/Kista.EntityFramework.svg)](https://www.nuget.org/packages/Kista.EntityFramework/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.EntityFramework.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.EntityFramework) |
+| `Kista.MongoFramework`     | Repository driver backed by [MongoFramework](https://github.com/turnersoftware/mongoframework) / MongoDB      | [![NuGet](https://img.shields.io/nuget/v/Kista.MongoFramework.svg)](https://www.nuget.org/packages/Kista.MongoFramework/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.MongoFramework.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.MongoFramework) |
+| `Kista.MongoFramework.MultiTenant` | Multi-tenant MongoDB connection management via [Finbuckle.MultiTenant](https://github.com/Finbuckle/Finbuckle.MultiTenant) | [![NuGet](https://img.shields.io/nuget/v/Kista.MongoFramework.MultiTenant.svg)](https://www.nuget.org/packages/Kista.MongoFramework.MultiTenant/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.MongoFramework.MultiTenant.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.MongoFramework.MultiTenant) |
+| `Kista.DynamicLinq`        | Filter / query support via [System.Linq.Dynamic.Core](https://github.com/zzzprojects/System.Linq.Dynamic.Core) | [![NuGet](https://img.shields.io/nuget/v/Kista.DynamicLinq.svg)](https://www.nuget.org/packages/Kista.DynamicLinq/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.DynamicLinq.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.DynamicLinq) |
+| `Kista.Manager`            | Business layer (_EntityManager_) with validation, normalization, event sourcing, and logging                  | [![NuGet](https://img.shields.io/nuget/v/Kista.Manager.svg)](https://www.nuget.org/packages/Kista.Manager/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.Manager.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.Manager) |
+| `Kista.Manager.DynamicLinq` | Dynamic LINQ query extensions for the Entity Manager                                                          | [![NuGet](https://img.shields.io/nuget/v/Kista.Manager.DynamicLinq.svg)](https://www.nuget.org/packages/Kista.Manager.DynamicLinq/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.Manager.DynamicLinq.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.Manager.DynamicLinq) |
+| `Kista.Manager.EasyCaching` | Second-level caching for the Entity Manager via [EasyCaching](https://github.com/dotnetcore/EasyCaching)      | [![NuGet](https://img.shields.io/nuget/v/Kista.Manager.EasyCaching.svg)](https://www.nuget.org/packages/Kista.Manager.EasyCaching/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.Manager.EasyCaching.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.Manager.EasyCaching) |
+| `Kista.Manager.AspNetCore` | ASP.NET Core integration for automatic HTTP request cancellation                                              | [![NuGet](https://img.shields.io/nuget/v/Kista.Manager.AspNetCore.svg)](https://www.nuget.org/packages/Kista.Manager.AspNetCore/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.Manager.AspNetCore.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.Manager.AspNetCore) |
+| `Kista.States.Core`        | Entity state management abstractions (experimental)                                                           | [![NuGet](https://img.shields.io/nuget/v/Kista.States.Core.svg)](https://www.nuget.org/packages/Kista.States.Core/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.States.Core.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.States.Core) |
 
 ---
 
@@ -98,11 +98,24 @@ dotnet nuget add source https://nuget.pkg.github.com/kista/index.json \
 
 ### 2. Register the repository
 
-Use the `AddRepository<T>` extension on `IServiceCollection`:
+Use the `AddRepositoryContext()` builder to configure your driver:
 
 ```csharp
-// Program.cs / Startup.cs
-builder.Services.AddRepository<InMemoryRepository<Order>>();
+// Program.cs
+builder.Services.AddRepositoryContext()
+    .UseInMemory();
+```
+
+For Entity Framework Core or MongoDB, replace `.UseInMemory()` with the appropriate driver:
+
+```csharp
+// Entity Framework Core
+builder.Services.AddRepositoryContext()
+    .UseEntityFramework<MyDbContext>();
+
+// MongoDB
+builder.Services.AddRepositoryContext()
+    .UseMongoDB<MyMongoContext>();
 ```
 
 After registration the following services are resolvable from the DI container (availability depends on the concrete repository's capabilities):
@@ -112,7 +125,8 @@ After registration the following services are resolvable from the DI container (
 | `IRepository<TEntity>` | Core CRUD and single-entity look-ups |
 | `IQueryableRepository<TEntity>` | LINQ-based queries |
 | `IPageableRepository<TEntity>` | Paginated result sets |
-| `IFilterableRepository<TEntity>` | Filter-expression–based queries |
+| `IFilterableRepository<TEntity>` | Filter-based queries |
+| `ITrackingRepository<TEntity>` | Change tracking and original value look-ups |
 
 ### 3. Consume the repository in your services
 
@@ -120,7 +134,7 @@ After registration the following services are resolvable from the DI container (
 public class OrderService(IRepository<Order> orders)
 {
     public Task<Order?> GetAsync(string id, CancellationToken ct)
-        => orders.FindByIdAsync(id, ct);
+        => orders.FindAsync(id, ct);
 
     public Task PlaceAsync(Order order, CancellationToken ct)
         => orders.AddAsync(order, ct);

@@ -1,17 +1,5 @@
 # Getting Started
 
-![GitHub release](https://img.shields.io/github/v/release/deveel/kista)
-![GitHub license](https://img.shields.io/github/license/deveel/kista?color=blue)
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/deveel/kista/ci.yml?logo=github)
-[![codecov](https://codecov.io/gh/deveel/kista/graph/badge.svg?token=5US7L3C7ES)](https://codecov.io/gh/deveel/kista)
-[![Documentation](https://img.shields.io/badge/gitbook-docs?logo=gitbook&label=docs&color=blue)](https://deveel.gitbook.io/kista/)
-
-<p align="center">
-  <img src="kista-full-logo.png" alt="Kista logo">
-</p>
-
-> **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project's purpose as a data access framework.
-
 Kista is a framework that provides a set of abstractions and implementations of the [_Repository Pattern_](https://en.wikipedia.org/wiki/Repository_pattern), to simplify the access to data sources in your application while keeping your domain model decoupled from any specific persistence technology.
 
 Below you will find a quick and generic guide to start using the framework in your application.

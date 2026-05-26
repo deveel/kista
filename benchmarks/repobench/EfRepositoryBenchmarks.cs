@@ -3,11 +3,11 @@ using BenchmarkDotNet.Jobs;
 
 using System.Linq.Expressions;
 
-using Deveel.Repository.Benchmarks.Abstractions;
-using Deveel.Repository.Benchmarks.Drivers;
-using Deveel.Repository.Benchmarks.Models;
+using Kista.Benchmarks.Abstractions;
+using Kista.Benchmarks.Drivers;
+using Kista.Benchmarks.Models;
 
-namespace Deveel.Repository.Benchmarks;
+namespace Kista.Benchmarks;
 
 [MemoryDiagnoser]
 [SimpleJob(RuntimeMoniker.Net80, baseline: true)]

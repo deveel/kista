@@ -1,4 +1,4 @@
-name: Repository PR Build
+name: Kista PR Build
 
 on:
   pull_request:

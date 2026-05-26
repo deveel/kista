@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageTags>data;framework;repository;filter;dynamic;linq;filters</PackageTags>
+    <Description>Extenrions to the of repository model to provide filtering capabilities using Dynamic LINQ</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Kista\Kista.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Linq.Dynamic.Core" Version="1.7.2" />
+  </ItemGroup>
+</Project>

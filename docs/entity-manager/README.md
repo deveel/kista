@@ -1,4 +1,5 @@
 # The Entity Manager
+> **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project purpose as a data access framework.
 
 The `EntityManager<TEntity>` class is an optional application-layer service that wraps an `IRepository<TEntity>` and enriches every operation with cross-cutting concerns:
 
@@ -81,7 +82,7 @@ This is useful for tying operation lifetime to an HTTP request:
 
 ```csharp
 // Register the ASP.NET Core HTTP cancellation source
-// (provided by Deveel.Repository.Manager.AspNetCore)
+// (provided by Kista.Manager.AspNetCore)
 builder.Services.AddHttpRequestTokenSource();
 ```
 

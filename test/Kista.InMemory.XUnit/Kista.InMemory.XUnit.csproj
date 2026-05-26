@@ -1,0 +1,9 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Kista.InMemory\Kista.InMemory.csproj" />
+    <ProjectReference Include="..\..\src\Kista.DynamicLinq\Kista.DynamicLinq.csproj" />
+    <ProjectReference Include="..\Kista.Testing\Kista.Testing.csproj" />
+  </ItemGroup>
+
+</Project>

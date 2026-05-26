@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Kista.InMemory\Kista.InMemory.csproj" />
+    <ProjectReference Include="..\..\src\Kista.Manager.AspNetCore\Kista.Manager.AspNetCore.csproj" />
+    <ProjectReference Include="..\Kista.Management.Testing\Kista.Management.Testing.csproj" />
+    <ProjectReference Include="..\Kista.Testing.Utils\Kista.Testing.Utils.csproj" />
+  </ItemGroup>
+
+</Project>

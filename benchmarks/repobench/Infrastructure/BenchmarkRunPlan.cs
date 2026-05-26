@@ -1,8 +1,8 @@
 using BenchmarkDotNet.Configs;
 
-using Deveel.Repository.Options;
+using Kista.Benchmarks.Options;
 
-namespace Deveel.Repository.Benchmarks.Infrastructure;
+namespace Kista.Benchmarks.Infrastructure;
 
 internal sealed record BenchmarkRunPlan(
 	IConfig Config,

@@ -1,4 +1,5 @@
 # Entity Framework Core Repository
+> **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project purpose as a data access framework.
 
 | Feature | Status | Notes |
 | ------- | :----: | ----- |
@@ -7,16 +8,16 @@
 | Queryable | ✅ | Native EF Core `IQueryable` |
 | Pageable | ✅ | |
 | Tracking | ✅ | EF Core change tracking |
-| Multi-tenant | ✅ | Via `Deveel.Repository.EntityFramework.MultiTenant` |
+| Multi-tenant | ✅ | Via `Kista.EntityFramework.MultiTenant` |
 
-The _Deveel Repository_ `Deveel.Repository.EntityFramework` package provides an implementation of the repository pattern that uses [Entity Framework Core](https://github.com/dotnet/efcore), enabling access to any relational database that EF Core supports (SQL Server, PostgreSQL, SQLite, MySQL, and others).
+The _Kista_ `Kista.EntityFramework` package provides an implementation of the repository pattern that uses [Entity Framework Core](https://github.com/dotnet/efcore), enabling access to any relational database that EF Core supports (SQL Server, PostgreSQL, SQLite, MySQL, and others).
 
 The `EntityRepository<TEntity>` class wraps a `DbContext` and exposes the full `IRepository<TEntity>` interface, including filterable, queryable, pageable, and tracking capabilities.
 
 ## Installation
 
 ```bash
-dotnet add package Deveel.Repository.EntityFramework
+dotnet add package Kista.EntityFramework
 ```
 
 ## Registration
@@ -51,10 +52,10 @@ builder.Services.AddRepositoryContext()
 
 ## Multi-tenant Support
 
-Install the `Deveel.Repository.EntityFramework.MultiTenant` package:
+Install the `Kista.EntityFramework.MultiTenant` package:
 
 ```bash
-dotnet add package Deveel.Repository.EntityFramework.MultiTenant
+dotnet add package Kista.EntityFramework.MultiTenant
 ```
 
 Two multi-tenancy strategies are supported, both built on [Finbuckle.MultiTenant](https://www.finbuckle.com/MultiTenant):

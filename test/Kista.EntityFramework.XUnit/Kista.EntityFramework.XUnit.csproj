@@ -1,0 +1,59 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <ItemGroup>
+        <PackageReference Include="Testcontainers" Version="3.5.0" />
+        <PackageReference Include="Testcontainers.PostgreSql" Version="3.5.0" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="8.0.26" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.NetTopologySuite" Version="8.0.26" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite" Version="8.0.11" />
+        <PackageReference Include="Finbuckle.MultiTenant.EntityFrameworkCore" Version="8.0.0" />
+    </ItemGroup>
+    <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="9.0.15" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.NetTopologySuite" Version="9.0.15" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite" Version="9.0.4" />
+        <PackageReference Include="Finbuckle.MultiTenant.EntityFrameworkCore" Version="9.4.7" />
+    </ItemGroup>
+    <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+        <PackageReference Include="Finbuckle.MultiTenant" Version="10.0.4" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="10.0.5" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.NetTopologySuite" Version="10.0.5" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite" Version="10.0.1" />
+        <PackageReference Include="Finbuckle.MultiTenant.EntityFrameworkCore" Version="10.0.4" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!--
+          SQLitePCLRaw bundle selection — each platform needs a different bundle:
+
+          • Linux   → bundle_sqlite3  uses the OS-provided libsqlite3.so.
+                      The apt package libsqlite3-mod-spatialite is compiled against that
+                      same library, so extension loading is ABI-compatible.
+                      The Ubuntu system SQLite is built with SQLITE_ENABLE_LOAD_EXTENSION,
+                      so EnableExtensions() works correctly.
+
+          • macOS   → bundle_e_sqlite3  the macOS system libsqlite3.dylib does NOT export
+                      sqlite3_enable_load_extension, so we must use the bundled SQLite
+                      that has the symbol.  SpatiaLite may or may not be installed locally;
+                      our SqlTestConnection handles that gracefully.
+
+          • Windows → bundle_e_sqlite3  no system SQLite; the bundled version is always used.
+        -->
+        <PackageReference Include="SQLitePCLRaw.bundle_sqlite3" Version="2.1.11" Condition="$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))" />
+        <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.11" Condition="!$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\Kista.EntityFramework\Kista.EntityFramework.csproj" />
+        <ProjectReference Include="..\..\src\Kista.EntityFramework.MultiTenant\Kista.EntityFramework.MultiTenant.csproj" />
+        <ProjectReference Include="..\Kista.Management.Testing\Kista.Management.Testing.csproj" />
+        <ProjectReference Include="..\Kista.Testing\Kista.Testing.csproj" />
+    </ItemGroup>
+
+</Project>

@@ -1,4 +1,5 @@
 # MongoDB Repository
+> **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project purpose as a data access framework.
 
 | Feature | Status | Notes |
 | ------- | :----: | ----- |
@@ -7,7 +8,7 @@
 | Queryable | ✅ | Via MongoFramework `IQueryable` |
 | Pageable | ✅ | |
 | Tracking | ✅ | MongoFramework change tracking |
-| Multi-tenant | ✅ | Via `Deveel.Repository.MongoFramework.MultiTenant` |
+| Multi-tenant | ✅ | Via `Kista.MongoFramework.MultiTenant` |
 
 The `MongoRepository<TEntity>` class is an implementation of the repository pattern that stores entities in a [MongoDB](https://www.mongodb.com) database, built on top of [MongoFramework](https://github.com/TurnerSoftware/MongoFramework).
 
@@ -16,7 +17,7 @@ MongoFramework is a lightweight library that maps .NET objects to MongoDB docume
 ## Installation
 
 ```bash
-dotnet add package Deveel.Repository.MongoFramework
+dotnet add package Kista.MongoFramework
 ```
 
 ## Registration

@@ -1,4 +1,4 @@
-name: Repository Release
+name: Kista Release
 
 permissions:
   contents: read

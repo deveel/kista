@@ -1,4 +1,5 @@
 # User Entities
+> **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project purpose as a data access framework.
 
 The framework provides first-class support for _user-scoped_ entities — entities that belong to a specific user within the application, such as per-user preferences, configurations, or private records.
 
@@ -94,7 +95,7 @@ builder.Services.AddSingleton<IUserAccessor<string>, HttpUserAccessor>();
 
 ## Entity Framework Core User Repository
 
-For EF Core, the package `Deveel.Repository.EntityFramework` provides `EntityUserRepository<TEntity, TKey, TOwnerKey>` as a base class for user-scoped repositories:
+For EF Core, the package `Kista.EntityFramework` provides `EntityUserRepository<TEntity, TKey, TOwnerKey>` as a base class for user-scoped repositories:
 
 ```csharp
 public class UserConfigurationRepository

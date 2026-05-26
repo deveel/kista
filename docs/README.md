@@ -1,4 +1,5 @@
-# Why Deveel Repository?
+# Why Kista?
+> **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project purpose as a data access framework.
 
 ## Motivation and Drivers
 
@@ -16,11 +17,11 @@ Although the Repository Pattern is not universally applicable (for example, in p
 
 Object-Relational Mappers (and document-mapper equivalents) such as [Entity Framework Core](https://github.com/dotnet/efcore), [Dapper](https://github.com/DapperLib/Dapper), or [MongoFramework](https://github.com/TurnerSoftware/MongoFramework) are excellent tools for mapping .NET objects to database tables or documents. They solve a real and complex problem at the infrastructure level.
 
-Deveel Repository does not try to replace them. Instead, it provides a domain-oriented abstraction **on top of** them.
+Kista does not try to replace them. Instead, it provides a domain-oriented abstraction **on top of** them.
 
-### How ORMs and Deveel Repository Coexist
+### How ORMs and Kista Coexist
 
-| Concern | ORM (EF Core, Dapper, …) | Deveel Repository |
+| Concern | ORM (EF Core, Dapper, …) | Kista |
 |---|---|---|
 | **Responsibility** | Map objects ↔ storage (tables, documents) | Provide a domain-oriented access interface |
 | **Speaks the language of** | Database schema, SQL, drivers | Domain model (entities, aggregates) |
@@ -28,9 +29,9 @@ Deveel Repository does not try to replace them. Instead, it provides a domain-or
 | **Lives in layer** | Infrastructure | Domain / Application boundary |
 | **Used by** | Repository implementations | Application services, domain services |
 
-In concrete terms: you build a repository _on top of_ an ORM. The ORM handles the low-level persistence mechanics; Deveel Repository defines the stable contract your application code depends on. When the database engine changes, or when you upgrade EF Core, only the repository implementation changes — your domain and application layers remain untouched.
+In concrete terms: you build a repository _on top of_ an ORM. The ORM handles the low-level persistence mechanics; Kista defines the stable contract your application code depends on. When the database engine changes, or when you upgrade EF Core, only the repository implementation changes — your domain and application layers remain untouched.
 
-The drivers shipped with this library (`Deveel.Repository.EntityFramework`, `Deveel.Repository.MongoFramework`) are precisely this: thin adapters that wrap an ORM behind the `IRepository<TEntity>` interface.
+The drivers shipped with this library (`Kista.EntityFramework`, `Kista.MongoFramework`) are precisely this: thin adapters that wrap an ORM behind the `IRepository<TEntity>` interface.
 
 ### Why Not Just Use Entity Framework Core Directly?
 

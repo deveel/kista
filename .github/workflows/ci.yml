@@ -1,4 +1,4 @@
-name: Repository CI/CD
+name: Kista CI/CD
 
 permissions:
   contents: read

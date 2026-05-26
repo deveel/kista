@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Shared test support library: opt out of xUnit runner injection -->
+    <IsTestProject>false</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- xunit.v3 extensibility and assert for abstract test suite base classes -->
+    <PackageReference Include="xunit.v3.extensibility.core" Version="3.*" />
+    <PackageReference Include="xunit.v3.assert" Version="3.*" />
+    <PackageReference Include="MartinCostello.Logging.XUnit.v3" Version="0.7.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Kista\Kista.csproj" />
+    <ProjectReference Include="..\Kista.MultiTenant.Testing\Kista.MultiTenant.Testing.csproj" />
+    <ProjectReference Include="..\Kista.Testing.Utils\Kista.Testing.Utils.csproj" />
+  </ItemGroup>
+
+</Project>

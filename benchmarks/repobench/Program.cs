@@ -1,7 +1,7 @@
 using BenchmarkDotNet.Running;
 
-using Deveel.Repository.Benchmarks.Infrastructure;
-using Deveel.Repository.Options;
+using Kista.Benchmarks.Infrastructure;
+using Kista.Benchmarks.Options;
 
 BenchmarkRunPlan? runPlan = null;
 

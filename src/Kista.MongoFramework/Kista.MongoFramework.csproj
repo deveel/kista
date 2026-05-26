@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<Description>Provides an implementation of the repository pattern that is backed by the MongoFramework library</Description>
+    <PackageTags>repository;mongo;mongodb;client;nosql</PackageTags>
+	</PropertyGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
+  </ItemGroup>
+    <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.14" />
+    </ItemGroup>
+    <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.5" />
+    </ItemGroup>
+  <ItemGroup>
+		<PackageReference Include="MongoFramework" Version="0.29.0" />
+      <PackageReference Include="Snappier" Version="1.3.1"/>
+      <PackageReference Include="SharpCompress" Version="0.48.1"/>
+	</ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Kista\Kista.csproj" />
+  </ItemGroup>
+</Project>

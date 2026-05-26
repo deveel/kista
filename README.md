@@ -1,20 +1,26 @@
-![GitHub release](https://img.shields.io/github/v/release/deveel/deveel.repository)
-![GitHub license](https://img.shields.io/github/license/deveel/deveel.repository?color=blue)
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/deveel/deveel.repository/ci.yml?logo=github)
-[![codecov](https://codecov.io/gh/deveel/deveel.repository/graph/badge.svg?token=5US7L3C7ES)](https://codecov.io/gh/deveel/deveel.repository)
-[![Documentation](https://img.shields.io/badge/gitbook-docs?logo=gitbook&label=docs&color=blue)](https://deveel.gitbook.io/repository/)
+![GitHub release](https://img.shields.io/github/v/release/deveel/kista)
+![GitHub license](https://img.shields.io/github/license/deveel/kista?color=blue)
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/deveel/kista/ci.yml?logo=github)
+[![codecov](https://codecov.io/gh/deveel/kista/graph/badge.svg?token=5US7L3C7ES)](https://codecov.io/gh/deveel/kista)
+[![Documentation](https://img.shields.io/badge/gitbook-docs?logo=gitbook&label=docs&color=blue)](https://deveel.gitbook.io/kista/)
 
-# Deveel Repository
+<p align="center">
+  <img src="kista-full-logo.png" alt="Kista logo" width="500">
+</p>
 
-**Deveel Repository** is a lightweight .NET framework that provides a principled implementation of the [_Repository Pattern_](https://martinfowler.com/eaaCatalog/repository.html), designed to help developers build applications grounded in [_Domain-Driven Design (DDD)_](https://en.wikipedia.org/wiki/Domain-driven_design) and [_SOLID_](https://en.wikipedia.org/wiki/SOLID) principles.
+# Kista
+
+> **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project's purpose as a data access framework.
+
+**Kista** is a lightweight .NET framework that provides a principled implementation of the [_Repository Pattern_](https://martinfowler.com/eaaCatalog/repository.html), designed to help developers build applications grounded in [_Domain-Driven Design (DDD)_](https://en.wikipedia.org/wiki/Domain-driven_design) and [_SOLID_](https://en.wikipedia.org/wiki/SOLID) principles.
 
 The framework abstracts data access behind a clean, stable interface — keeping your domain model independent of any specific persistence technology — while integrating seamlessly with popular data-access libraries as the underlying backing store.
 
 ---
 
-## Why Deveel Repository?
+## Why Kista?
 
-At its core, **Deveel Repository** is about _keeping your domain clean_.
+At its core, **Kista** is about _keeping your domain clean_.
 
 In Domain-Driven Design the repository is not merely a data-access helper: it is the **boundary between the domain model and the infrastructure layer**. It speaks the language of the domain (entities, aggregates, identities) while hiding every detail of how data is fetched or persisted.
 
@@ -23,13 +29,13 @@ This library was born from the need to have a consistent, framework-agnostic abs
 - couple their domain logic to a specific ORM or database driver, or
 - re-implement the same boilerplate repository scaffolding in every project.
 
-> **It was never the intention to build another ORM.** Object-Relational Mappers (and document-mapper equivalents) such as Entity Framework Core, Dapper, or MongoFramework are excellent tools for mapping objects to storage. Deveel Repository _uses_ them — it does not replace them.
+> **It was never the intention to build another ORM.** Object-Relational Mappers (and document-mapper equivalents) such as Entity Framework Core, Dapper, or MongoFramework are excellent tools for mapping objects to storage. Kista _uses_ them — it does not replace them.
 
-### Deveel Repository vs. ORMs
+### Kista vs. ORMs
 
 The table below highlights the key differences and shows how both layers coexist:
 
-| Concern | ORM (EF Core, Dapper, …) | Deveel Repository |
+| Concern | ORM (EF Core, Dapper, …) | Kista |
 |---|---|---|
 | **Responsibility** | Map objects ↔ database tables / documents | Provide a domain-oriented access interface |
 | **Speaks the language of** | Database schema, SQL, drivers | Domain model (entities, aggregates) |
@@ -37,7 +43,7 @@ The table below highlights the key differences and shows how both layers coexist
 | **Lives in layer** | Infrastructure | Domain / Application boundary |
 | **Used by** | Repositories and infrastructure code | Application services and domain services |
 
-In practice, **you create a repository _on top of_ an ORM** — the ORM handles low-level persistence while Deveel Repository defines _what_ the application can ask for. For example, `Deveel.Repository.EntityFramework` wraps Entity Framework Core's `DbContext` behind the `IRepository<TEntity>` interface, giving the domain a stable contract that survives database migrations and EF Core upgrades. The same principle applies to `Deveel.Repository.MongoFramework` (backed by MongoFramework / MongoDB) and any custom driver you care to write.
+In practice, **you create a repository _on top of_ an ORM** — the ORM handles low-level persistence while Kista defines _what_ the application can ask for. For example, `Kista.EntityFramework` wraps Entity Framework Core's `DbContext` behind the `IRepository<TEntity>` interface, giving the domain a stable contract that survives database migrations and EF Core upgrades. The same principle applies to `Kista.MongoFramework` (backed by MongoFramework / MongoDB) and any custom driver you care to write.
 
 This is not a limitation — it is by design. Decoupling ORMs from domain logic is one of the most impactful architectural decisions you can make for long-term maintainability.
 
@@ -48,21 +54,21 @@ This is not a limitation — it is by design. Decoupling ORMs from domain logic 
 The framework is organized into a _kernel_ package (providing interfaces and abstractions) and a set of _driver_ packages that wire those abstractions to concrete data sources.
 
 - **Stable releases** are published to [**NuGet.org**](https://www.nuget.org/profiles/deveel).
-- **Pre-release / unstable builds** are available from the [**GitHub Packages**](https://github.com/deveel/deveel.repository/packages) feed (`https://nuget.pkg.github.com/deveel/index.json`).
+- **Pre-release / unstable builds** are available from the [**GitHub Packages**](https://github.com/deveel/kista/packages) feed (`https://nuget.pkg.github.com/kista/index.json`).
 
-| Package                                | Description                                                                                                   | NuGet (stable) |                                                                        Downloads (NuGet)                                                                         |
-|----------------------------------------|---------------------------------------------------------------------------------------------------------------| :------------: |:----------------------------------------------------------------------------------------------------------------------------------------------------------------:|
-| `Deveel.Repository.Core`               | Kernel abstractions: interfaces, base types, and DI extensions                                                | [![NuGet](https://img.shields.io/nuget/v/Deveel.Repository.Core.svg)](https://www.nuget.org/packages/Deveel.Repository.Core/) |                [![Downloads](https://img.shields.io/nuget/dt/Deveel.Repository.Core.svg)](https://www.nuget.org/packages/Deveel.Repository.Core/)                |
-| `Deveel.Repository.InMemory`           | Volatile, in-process repository — ideal for testing and prototyping                                           | [![NuGet](https://img.shields.io/nuget/v/Deveel.Repository.InMemory.svg)](https://www.nuget.org/packages/Deveel.Repository.InMemory/) |            [![Downloads](https://img.shields.io/nuget/dt/Deveel.Repository.InMemory.svg)](https://www.nuget.org/packages/Deveel.Repository.InMemory/)            |
-| `Deveel.Repository.EntityFramework`    | Repository driver backed by [Entity Framework Core](https://github.com/dotnet/efcore)                         | [![NuGet](https://img.shields.io/nuget/v/Deveel.Repository.EntityFramework.svg)](https://www.nuget.org/packages/Deveel.Repository.EntityFramework/) |     [![Downloads](https://img.shields.io/nuget/dt/Deveel.Repository.EntityFramework.svg)](https://www.nuget.org/packages/Deveel.Repository.EntityFramework/)     |
-| `Deveel.Repository.MongoFramework`     | Repository driver backed by [MongoFramework](https://github.com/turnersoftware/mongoframework) / MongoDB      | [![NuGet](https://img.shields.io/nuget/v/Deveel.Repository.MongoFramework.svg)](https://www.nuget.org/packages/Deveel.Repository.MongoFramework/) |      [![Downloads](https://img.shields.io/nuget/dt/Deveel.Repository.MongoFramework.svg)](https://www.nuget.org/packages/Deveel.Repository.MongoFramework/)      |
-| `Deveel.Repository.MongoFramework.MultiTenant` | Multi-tenant MongoDB connection management via [Finbuckle.MultiTenant](https://github.com/Finbuckle/Finbuckle.MultiTenant) | [![NuGet](https://img.shields.io/nuget/v/Deveel.Repository.MongoFramework.MultiTenant.svg)](https://www.nuget.org/packages/Deveel.Repository.MongoFramework.MultiTenant/) |      [![Downloads](https://img.shields.io/nuget/dt/Deveel.Repository.MongoFramework.MultiTenant.svg)](https://www.nuget.org/packages/Deveel.Repository.MongoFramework.MultiTenant/)      |
-| `Deveel.Repository.DynamicLinq`        | Filter / query support via [System.Linq.Dynamic.Core](https://github.com/zzzprojects/System.Linq.Dynamic.Core) | [![NuGet](https://img.shields.io/nuget/v/Deveel.Repository.DynamicLinq.svg)](https://www.nuget.org/packages/Deveel.Repository.DynamicLinq/) |         [![Downloads](https://img.shields.io/nuget/dt/Deveel.Repository.DynamicLinq.svg)](https://www.nuget.org/packages/Deveel.Repository.DynamicLinq/)         |
-| `Deveel.Repository.Manager`            | Business layer (_EntityManager_) with validation, normalization, event sourcing, and logging                  | [![NuGet](https://img.shields.io/nuget/v/Deveel.Repository.Manager.svg)](https://www.nuget.org/packages/Deveel.Repository.Manager/) |             [![Downloads](https://img.shields.io/nuget/dt/Deveel.Repository.Manager.svg)](https://www.nuget.org/packages/Deveel.Repository.Manager/)             |
-| `Deveel.Repository.Manager.DynamicLinq` | Dynamic LINQ query extensions for the Entity Manager                                                          | [![NuGet](https://img.shields.io/nuget/v/Deveel.Repository.Manager.DynamicLinq.svg)](https://www.nuget.org/packages/Deveel.Repository.Manager.DynamicLinq/) | [![Downloads](https://img.shields.io/nuget/dt/Deveel.Repository.Manager.DynamicLinq.svg)](https://www.nuget.org/packages/Deveel.Repository.Manager.DynamicLinq/) |
-| `Deveel.Repository.Manager.EasyCaching` | Second-level caching for the Entity Manager via [EasyCaching](https://github.com/dotnetcore/EasyCaching)      | [![NuGet](https://img.shields.io/nuget/v/Deveel.Repository.Manager.EasyCaching.svg)](https://www.nuget.org/packages/Deveel.Repository.Manager.EasyCaching/) | [![Downloads](https://img.shields.io/nuget/dt/Deveel.Repository.Manager.EasyCaching.svg)](https://www.nuget.org/packages/Deveel.Repository.Manager.EasyCaching/) |
-| `Deveel.Repository.Manager.AspNetCore` | ASP.NET Core integration for automatic HTTP request cancellation                                              | [![NuGet](https://img.shields.io/nuget/v/Deveel.Repository.Manager.AspNetCore.svg)](https://www.nuget.org/packages/Deveel.Repository.Manager.AspNetCore/) | [![Downloads](https://img.shields.io/nuget/dt/Deveel.Repository.Manager.AspNetCore.svg)](https://www.nuget.org/packages/Deveel.Repository.Manager.AspNetCore/) |
-| `Deveel.Repository.States.Core`        | Entity state management abstractions (experimental)                                                           | [![NuGet](https://img.shields.io/nuget/v/Deveel.Repository.States.Core.svg)](https://www.nuget.org/packages/Deveel.Repository.States.Core/) | [![Downloads](https://img.shields.io/nuget/dt/Deveel.Repository.States.Core.svg)](https://www.nuget.org/packages/Deveel.Repository.States.Core/) |
+| Package                                | Description                                                                                                   | NuGet (stable) | Pre-Release (GitHub) |
+|----------------------------------------|---------------------------------------------------------------------------------------------------------------| :------------: | :------------------: |
+| `Kista`               | Kernel abstractions: interfaces, base types, and DI extensions                                                | [![NuGet](https://img.shields.io/nuget/v/Kista.svg)](https://www.nuget.org/packages/Kista/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista) |
+| `Kista.InMemory`           | Volatile, in-process repository — ideal for testing and prototyping                                           | [![NuGet](https://img.shields.io/nuget/v/Kista.InMemory.svg)](https://www.nuget.org/packages/Kista.InMemory/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.InMemory.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.InMemory) |
+| `Kista.EntityFramework`    | Repository driver backed by [Entity Framework Core](https://github.com/dotnet/efcore)                         | [![NuGet](https://img.shields.io/nuget/v/Kista.EntityFramework.svg)](https://www.nuget.org/packages/Kista.EntityFramework/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.EntityFramework.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.EntityFramework) |
+| `Kista.MongoFramework`     | Repository driver backed by [MongoFramework](https://github.com/turnersoftware/mongoframework) / MongoDB      | [![NuGet](https://img.shields.io/nuget/v/Kista.MongoFramework.svg)](https://www.nuget.org/packages/Kista.MongoFramework/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.MongoFramework.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.MongoFramework) |
+| `Kista.MongoFramework.MultiTenant` | Multi-tenant MongoDB connection management via [Finbuckle.MultiTenant](https://github.com/Finbuckle/Finbuckle.MultiTenant) | [![NuGet](https://img.shields.io/nuget/v/Kista.MongoFramework.MultiTenant.svg)](https://www.nuget.org/packages/Kista.MongoFramework.MultiTenant/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.MongoFramework.MultiTenant.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.MongoFramework.MultiTenant) |
+| `Kista.DynamicLinq`        | Filter / query support via [System.Linq.Dynamic.Core](https://github.com/zzzprojects/System.Linq.Dynamic.Core) | [![NuGet](https://img.shields.io/nuget/v/Kista.DynamicLinq.svg)](https://www.nuget.org/packages/Kista.DynamicLinq/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.DynamicLinq.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.DynamicLinq) |
+| `Kista.Manager`            | Business layer (_EntityManager_) with validation, normalization, event sourcing, and logging                  | [![NuGet](https://img.shields.io/nuget/v/Kista.Manager.svg)](https://www.nuget.org/packages/Kista.Manager/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.Manager.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.Manager) |
+| `Kista.Manager.DynamicLinq` | Dynamic LINQ query extensions for the Entity Manager                                                          | [![NuGet](https://img.shields.io/nuget/v/Kista.Manager.DynamicLinq.svg)](https://www.nuget.org/packages/Kista.Manager.DynamicLinq/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.Manager.DynamicLinq.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.Manager.DynamicLinq) |
+| `Kista.Manager.EasyCaching` | Second-level caching for the Entity Manager via [EasyCaching](https://github.com/dotnetcore/EasyCaching)      | [![NuGet](https://img.shields.io/nuget/v/Kista.Manager.EasyCaching.svg)](https://www.nuget.org/packages/Kista.Manager.EasyCaching/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.Manager.EasyCaching.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.Manager.EasyCaching) |
+| `Kista.Manager.AspNetCore` | ASP.NET Core integration for automatic HTTP request cancellation                                              | [![NuGet](https://img.shields.io/nuget/v/Kista.Manager.AspNetCore.svg)](https://www.nuget.org/packages/Kista.Manager.AspNetCore/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.Manager.AspNetCore.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.Manager.AspNetCore) |
+| `Kista.States.Core`        | Entity state management abstractions (experimental)                                                           | [![NuGet](https://img.shields.io/nuget/v/Kista.States.Core.svg)](https://www.nuget.org/packages/Kista.States.Core/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.States.Core.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.States.Core) |
 
 ---
 
@@ -74,29 +80,42 @@ Pick the driver that matches your data source. The `Core` kernel package is pull
 
 ```bash
 # Entity Framework Core
-dotnet add package Deveel.Repository.EntityFramework
+dotnet add package Kista.EntityFramework
 
 # MongoDB
-dotnet add package Deveel.Repository.MongoFramework
+dotnet add package Kista.MongoFramework
 
 # In-Memory (testing / prototyping)
-dotnet add package Deveel.Repository.InMemory
+dotnet add package Kista.InMemory
 ```
 
 To consume an unstable pre-release build, add the GitHub Packages feed first:
 
 ```bash
-dotnet nuget add source https://nuget.pkg.github.com/deveel/index.json \
-  --name deveel-github --username <your-github-username> --password <your-pat>
+dotnet nuget add source https://nuget.pkg.github.com/kista/index.json \
+  --name kista-github --username <your-github-username> --password <your-pat>
 ```
 
 ### 2. Register the repository
 
-Use the `AddRepository<T>` extension on `IServiceCollection`:
+Use the `AddRepositoryContext()` builder to configure your driver:
 
 ```csharp
-// Program.cs / Startup.cs
-builder.Services.AddRepository<InMemoryRepository<Order>>();
+// Program.cs
+builder.Services.AddRepositoryContext()
+    .UseInMemory();
+```
+
+For Entity Framework Core or MongoDB, replace `.UseInMemory()` with the appropriate driver:
+
+```csharp
+// Entity Framework Core
+builder.Services.AddRepositoryContext()
+    .UseEntityFramework<MyDbContext>();
+
+// MongoDB
+builder.Services.AddRepositoryContext()
+    .UseMongoDB<MyMongoContext>();
 ```
 
 After registration the following services are resolvable from the DI container (availability depends on the concrete repository's capabilities):
@@ -106,7 +125,8 @@ After registration the following services are resolvable from the DI container (
 | `IRepository<TEntity>` | Core CRUD and single-entity look-ups |
 | `IQueryableRepository<TEntity>` | LINQ-based queries |
 | `IPageableRepository<TEntity>` | Paginated result sets |
-| `IFilterableRepository<TEntity>` | Filter-expression–based queries |
+| `IFilterableRepository<TEntity>` | Filter-based queries |
+| `ITrackingRepository<TEntity>` | Change tracking and original value look-ups |
 
 ### 3. Consume the repository in your services
 
@@ -114,14 +134,14 @@ After registration the following services are resolvable from the DI container (
 public class OrderService(IRepository<Order> orders)
 {
     public Task<Order?> GetAsync(string id, CancellationToken ct)
-        => orders.FindByIdAsync(id, ct);
+        => orders.FindAsync(id, ct);
 
     public Task PlaceAsync(Order order, CancellationToken ct)
         => orders.AddAsync(order, ct);
 }
 ```
 
-For driver-specific configuration, multi-tenancy, and guidance on writing a custom repository, refer to the [full documentation](docs/index.md) or browse it online at [GitBook](https://deveel.gitbook.io/repository/).
+For driver-specific configuration, multi-tenancy, and guidance on writing a custom repository, refer to the [full documentation](docs/index.md) or browse it online at [GitBook](https://deveel.gitbook.io/kista/).
 
 ---
 
@@ -137,13 +157,13 @@ For driver-specific configuration, multi-tenancy, and guidance on writing a cust
 | [Custom repositories](docs/custom-repository.md) | Write your own driver |
 | [Multi-Tenancy](docs/multi-tenancy.md) | Tenant-isolated repositories |
 
-Full documentation is also available on [GitBook](https://deveel.gitbook.io/repository/).
+Full documentation is also available on [GitBook](https://deveel.gitbook.io/kista/).
 
 ---
 
 ## Roadmap
 
-We are actively building Deveel Repository toward a comprehensive, production-ready framework. See the [complete roadmap](ROADMAP.md) for detailed feature descriptions, timelines, and architectural decisions.
+We are actively building Kista toward a comprehensive, production-ready framework. See the [complete roadmap](ROADMAP.md) for detailed feature descriptions, timelines, and architectural decisions.
 
 ### Release Timeline
 
@@ -207,6 +227,6 @@ The project is open to contributions. Please read the [contributing guidelines](
 
 A huge thank-you to everyone who has contributed code, documentation, bug reports, and ideas:
 
-[![Contributors](https://contrib.rocks/image?repo=deveel/deveel.repository)](https://github.com/deveel/deveel.repository/graphs/contributors)
+[![Contributors](https://contrib.rocks/image?repo=deveel/kista)](https://github.com/deveel/kista/graphs/contributors)
 
 _Contributions of all kinds are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) to get started._

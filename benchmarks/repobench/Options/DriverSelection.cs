@@ -1,6 +1,6 @@
-using Deveel.Repository.Benchmarks;
+using Kista.Benchmarks;
 
-namespace Deveel.Repository.Options;
+namespace Kista.Benchmarks.Options;
 
 internal sealed record DriverSelection(
 	BenchmarkDriver Driver,

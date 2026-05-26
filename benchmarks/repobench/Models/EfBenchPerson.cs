@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Deveel.Repository.Benchmarks.Models;
+namespace Kista.Benchmarks.Models;
 
 public sealed class EfBenchPerson {
     [Key]

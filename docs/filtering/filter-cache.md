@@ -1,6 +1,7 @@
 # Dynamic LINQ Filter Cache
+> **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project purpose as a data access framework.
 
-The `Deveel.Repository.DynamicLinq` package includes a bounded, thread-safe expression cache that eliminates redundant parsing and compilation of Dynamic LINQ filter expressions. This feature is designed for production workloads where the same filter shapes are executed thousands of times per minute.
+The `Kista.DynamicLinq` package includes a bounded, thread-safe expression cache that eliminates redundant parsing and compilation of Dynamic LINQ filter expressions. This feature is designed for production workloads where the same filter shapes are executed thousands of times per minute.
 
 ## The Problem
 

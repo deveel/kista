@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 using MongoDB.Bson;
 
-namespace Deveel.Repository.Benchmarks.Models;
+namespace Kista.Benchmarks.Models;
 
 [Table("bench_people")]
 public sealed class MongoBenchPerson {

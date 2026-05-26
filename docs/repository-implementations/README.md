@@ -1,14 +1,15 @@
 # Repository Implementations
+> **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project purpose as a data access framework.
 
-The _Deveel Repository_ framework ships with a set of ready-to-use repository implementations for the most common data sources.
+The _Kista_ framework ships with a set of ready-to-use repository implementations for the most common data sources.
 
 | Data Source | Package | Version |
 | ----------- | ------- | ------- |
-| [In-Memory](in-memory.md) | `Deveel.Repository.InMemory` | [![NuGet](https://img.shields.io/nuget/v/Deveel.Repository.InMemory.svg)](https://www.nuget.org/packages/Deveel.Repository.InMemory/) |
-| [Entity Framework Core](ef-core.md) | `Deveel.Repository.EntityFramework` | [![NuGet](https://img.shields.io/nuget/v/Deveel.Repository.EntityFramework.svg)](https://www.nuget.org/packages/Deveel.Repository.EntityFramework/) |
-| [EF Core Multi-Tenant](ef-core.md#multi-tenant-support) | `Deveel.Repository.EntityFramework.MultiTenant` | [![NuGet](https://img.shields.io/nuget/v/Deveel.Repository.EntityFramework.MultiTenant.svg)](https://www.nuget.org/packages/Deveel.Repository.EntityFramework.MultiTenant/) |
-| [MongoDB](mongodb.md) | `Deveel.Repository.MongoFramework` | [![NuGet](https://img.shields.io/nuget/v/Deveel.Repository.MongoFramework.svg)](https://www.nuget.org/packages/Deveel.Repository.MongoFramework/) |
-| [MongoDB Multi-Tenant](../multi-tenancy.md) | `Deveel.Repository.MongoFramework.MultiTenant` | [![NuGet](https://img.shields.io/nuget/v/Deveel.Repository.MongoFramework.MultiTenant.svg)](https://www.nuget.org/packages/Deveel.Repository.MongoFramework.MultiTenant/) |
+| [In-Memory](in-memory.md) | `Kista.InMemory` | [![NuGet](https://img.shields.io/nuget/v/Kista.InMemory.svg)](https://www.nuget.org/packages/Kista.InMemory/) |
+| [Entity Framework Core](ef-core.md) | `Kista.EntityFramework` | [![NuGet](https://img.shields.io/nuget/v/Kista.EntityFramework.svg)](https://www.nuget.org/packages/Kista.EntityFramework/) |
+| [EF Core Multi-Tenant](ef-core.md#multi-tenant-support) | `Kista.EntityFramework.MultiTenant` | [![NuGet](https://img.shields.io/nuget/v/Kista.EntityFramework.MultiTenant.svg)](https://www.nuget.org/packages/Kista.EntityFramework.MultiTenant/) |
+| [MongoDB](mongodb.md) | `Kista.MongoFramework` | [![NuGet](https://img.shields.io/nuget/v/Kista.MongoFramework.svg)](https://www.nuget.org/packages/Kista.MongoFramework/) |
+| [MongoDB Multi-Tenant](../multi-tenancy.md) | `Kista.MongoFramework.MultiTenant` | [![NuGet](https://img.shields.io/nuget/v/Kista.MongoFramework.MultiTenant.svg)](https://www.nuget.org/packages/Kista.MongoFramework.MultiTenant/) |
 
 ## Capability Matrix
 
@@ -24,10 +25,10 @@ The _Deveel Repository_ framework ships with a set of ready-to-use repository im
 
 ## Dynamic LINQ Support
 
-The `Deveel.Repository.DynamicLinq` package adds filter and sort support via [System.Linq.Dynamic.Core](https://github.com/zzzprojects/System.Linq.Dynamic.Core). This allows you to build queries using string-based expressions, which is useful for dynamic query builders, search APIs, and other scenarios where the filter predicate is not known at compile time.
+The `Kista.DynamicLinq` package adds filter and sort support via [System.Linq.Dynamic.Core](https://github.com/zzzprojects/System.Linq.Dynamic.Core). This allows you to build queries using string-based expressions, which is useful for dynamic query builders, search APIs, and other scenarios where the filter predicate is not known at compile time.
 
 ```bash
-dotnet add package Deveel.Repository.DynamicLinq
+dotnet add package Kista.DynamicLinq
 ```
 
 Once installed, filterable and queryable repositories automatically accept string-based filter expressions in addition to the usual lambda-based ones.

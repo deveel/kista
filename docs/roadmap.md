@@ -1,6 +1,7 @@
 # Roadmap
+> **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project purpose as a data access framework.
 
-The Deveel Repository framework provides a pragmatic, DDD-aligned abstraction for multi-source data access in .NET. Below is the planned roadmap of future releases.
+The Kista framework provides a pragmatic, DDD-aligned abstraction for multi-source data access in .NET. Below is the planned roadmap of future releases.
 
 See the [full roadmap](../ROADMAP.md) for detailed feature descriptions, timelines, and architectural decisions.
 
@@ -35,7 +36,7 @@ Features: Unified Repository Setup Builder, QueryBuilder Execution Extensions, P
 - **Lifecycle Service Renamed**: `IRepositoryLifecycleOrchestrator` → `IRepositoryLifecycleService` (clearer naming)
 - **Builder Extensions**: `WithLifecycleHandler<TEntity, THandler>()` and `WithLifecycleProfile<TProfile>()` for fluent registration
 - **Default Lifecycle Profile**: `ConfigureLifecycle()` now auto-registers `DefaultRepositoryLifecycleProfile`
-- **Sample Application**: `Deveel.Repository.SampleApp` with full lifecycle management and CRUD endpoints
+- **Sample Application**: `Kista.SampleApp` with full lifecycle management and CRUD endpoints
 
 ## Milestone 3: v1.7.0 — "Entity Lifecycle"
 

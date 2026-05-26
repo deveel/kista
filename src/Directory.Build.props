@@ -1,18 +1,18 @@
 <Project>
   <PropertyGroup>
     <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
-    <RootNamespace>Deveel</RootNamespace>
+    <RootNamespace>Kista</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 
     <!-- NuGet Metadata and Commands -->
     <Authors>Antonello Provenzano</Authors>
-    <Company>Deveel AS</Company>
+    <Company>Deveel</Company>
     <Copyright>(C) 2022-2026 Antonello Provenzano</Copyright>
-    <PackageProjectUrl>https://github.com/deveel/deveel.repository</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/deveel/deveel.repository</RepositoryUrl>
+    <PackageProjectUrl>https://kista.deveel.org</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/deveel/kista</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageIcon>deveel-logo.png</PackageIcon>
+    <PackageIcon>kista-logo.png</PackageIcon>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
@@ -34,13 +34,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\..\deveel-logo.png">
+    <None Include="..\..\kista-logo.png">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
       <None Include="..\..\README.md" Pack="True" PackagePath=""/>
-    <None Include="..\..\Deveel.Repository.licenseheader">
-      <Pack>False</Pack>
-    </None>
   </ItemGroup>
 </Project>

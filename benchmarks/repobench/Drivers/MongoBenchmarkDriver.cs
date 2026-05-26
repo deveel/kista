@@ -1,6 +1,6 @@
-using Deveel.Data;
-using Deveel.Repository.Benchmarks.Abstractions;
-using Deveel.Repository.Benchmarks.Models;
+using Kista;
+using Kista.Benchmarks.Abstractions;
+using Kista.Benchmarks.Models;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -11,7 +11,7 @@ using MongoFramework;
 
 using Testcontainers.MongoDb;
 
-namespace Deveel.Repository.Benchmarks.Drivers;
+namespace Kista.Benchmarks.Drivers;
 
 internal sealed class MongoBenchmarkDriver : IRepositoryBenchmarkDriver<MongoBenchPerson, ObjectId> {
 	private readonly string _databaseName = $"benchdb_{Guid.NewGuid():N}";

@@ -11,91 +11,91 @@ jobs:
       
     steps:
 
-    - name: Remove the Old Deveel.Repository.Core Package
+    - name: Remove the Old Kista Package
       uses: actions/delete-package-versions@v4
       with:
-        package-name: 'Deveel.Repository.Core'
+        package-name: 'Kista'
         package-type: 'nuget'
         min-versions-to-keep: 10
         delete-only-pre-release-versions: "true"
 
-    - name: Remove the Old Deveel.Repository.DynamicLinq Package
+    - name: Remove the Old Kista.DynamicLinq Package
       uses: actions/delete-package-versions@v4
       with:
-        package-name: 'Deveel.Repository.DynamicLinq'
+        package-name: 'Kista.DynamicLinq'
         package-type: 'nuget'
         min-versions-to-keep: 10
         delete-only-pre-release-versions: "true"
 
-    - name: Remove the Old Deveel.Repository.InMemory Package
+    - name: Remove the Old Kista.InMemory Package
       uses: actions/delete-package-versions@v4
       with:
-        package-name: 'Deveel.Repository.InMemory'
+        package-name: 'Kista.InMemory'
         package-type: 'nuget'
         min-versions-to-keep: 10
         delete-only-pre-release-versions: "true"
 
-    - name: Remove the Old Deveel.Repository.MongoFramework Package
+    - name: Remove the Old Kista.MongoFramework Package
       uses: actions/delete-package-versions@v4
       with:
-        package-name: 'Deveel.Repository.MongoFramework'
+        package-name: 'Kista.MongoFramework'
         package-type: 'nuget'
         min-versions-to-keep: 10
         delete-only-pre-release-versions: "true"
 
-    - name: Remove the Old Deveel.Repository.MongoFramework.MultiTenant Package
+    - name: Remove the Old Kista.MongoFramework.MultiTenant Package
       uses: actions/delete-package-versions@v4
       with:
-        package-name: 'Deveel.Repository.MongoFramework.MultiTenant'
+        package-name: 'Kista.MongoFramework.MultiTenant'
         package-type: 'nuget'
         min-versions-to-keep: 10
         delete-only-pre-release-versions: "true"
 
-    - name: Remove the Old Deveel.Repository.EntityFramework Package
+    - name: Remove the Old Kista.EntityFramework Package
       uses: actions/delete-package-versions@v4
       with:
-        package-name: 'Deveel.Repository.EntityFramework'
+        package-name: 'Kista.EntityFramework'
         package-type: 'nuget'
         min-versions-to-keep: 10
         delete-only-pre-release-versions: "true"
 
 
-    - name: Remove the Old Deveel.Repository.Manager Package
+    - name: Remove the Old Kista.Manager Package
       uses: actions/delete-package-versions@v4
       with:
-        package-name: 'Deveel.Repository.Manager'
+        package-name: 'Kista.Manager'
         package-type: 'nuget'
         min-versions-to-keep: 10
         delete-only-pre-release-versions: "true"
 
-    - name: Remove the Old Deveel.Repository.Manager.AspNetCore Package
+    - name: Remove the Old Kista.Manager.AspNetCore Package
       uses: actions/delete-package-versions@v4
       with:
-        package-name: 'Deveel.Repository.Manager.AspNetCore'
+        package-name: 'Kista.Manager.AspNetCore'
         package-type: 'nuget'
         min-versions-to-keep: 10
         delete-only-pre-release-versions: "true"
 
-    - name: Remove the Old Deveel.Repository.Manager.DynamicLinq Package
+    - name: Remove the Old Kista.Manager.DynamicLinq Package
       uses: actions/delete-package-versions@v4
       with:
-        package-name: 'Deveel.Repository.Manager.DynamicLinq'
+        package-name: 'Kista.Manager.DynamicLinq'
         package-type: 'nuget'
         min-versions-to-keep: 10
         delete-only-pre-release-versions: "true"
 
-    - name: Remove the Old Deveel.Repository.Manager.EasyCaching Package
+    - name: Remove the Old Kista.Manager.EasyCaching Package
       uses: actions/delete-package-versions@v4
       with:
-        package-name: 'Deveel.Repository.Manager.EasyCaching'
+        package-name: 'Kista.Manager.EasyCaching'
         package-type: 'nuget'
         min-versions-to-keep: 10
         delete-only-pre-release-versions: "true"
 
-    - name: Remove the Old Deveel.Repository.Finbuckle.MultiTenant Package
+    - name: Remove the Old Kista.Finbuckle.MultiTenant Package
       uses: actions/delete-package-versions@v4
       with:
-        package-name: 'Deveel.Repository.Finbuckle.MultiTenant'
+        package-name: 'Kista.Finbuckle.MultiTenant'
         package-type: 'nuget'
         min-versions-to-keep: 10
         delete-only-pre-release-versions: "true"

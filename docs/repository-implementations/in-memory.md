@@ -1,4 +1,5 @@
 # In-Memory Repository
+> **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project purpose as a data access framework.
 
 | Feature | Status | Notes |
 | ------- | :----: | ----- |
@@ -19,7 +20,7 @@ The `InMemoryRepository<TEntity>` class stores entities in the memory of the run
 ## Installation
 
 ```bash
-dotnet add package Deveel.Repository.InMemory
+dotnet add package Kista.InMemory
 ```
 
 ## Registration

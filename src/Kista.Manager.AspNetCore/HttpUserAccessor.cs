@@ -63,7 +63,7 @@ public class HttpUserAccessor<TKey> : IUserAccessor<TKey> {
 			var value = ResolveFromSource(source, httpContext, opts);
 			if (value != null) {
 				var converted = ConvertValue(value);
-				if (converted != null)
+				if (!Equals(converted, default(TKey)))
 					return converted;
 			}
 		}

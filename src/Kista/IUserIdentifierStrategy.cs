@@ -12,28 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-namespace Kista;
-
-/// <summary>
-/// Defines the possible sources from which the user identifier
-/// can be resolved in an HTTP request.
-/// </summary>
-public enum HttpUserIdentifierSource {
+namespace Kista
+{
 	/// <summary>
-	/// The user identifier is resolved from a claim in the
-	/// current <see cref="System.Security.Claims.ClaimsPrincipal"/>.
+	/// Defines a strategy for resolving the current user identifier.
 	/// </summary>
-	Claim,
-
-	/// <summary>
-	/// The user identifier is resolved from a query string
-	/// parameter in the HTTP request.
-	/// </summary>
-	QueryString,
-
-	/// <summary>
-	/// The user identifier is resolved from a route value
-	/// in the HTTP request.
-	/// </summary>
-	Route
+	/// <typeparam name="TKey">The type of the user identifier key.</typeparam>
+	public interface IUserIdentifierStrategy<TKey>
+	{
+		/// <summary>
+		/// Resolves the current user identifier.
+		/// </summary>
+		/// <param name="serviceProvider">
+		/// Optional service provider for accessing scoped services.
+		/// </param>
+		/// <returns>
+		/// The resolved user identifier, or <c>null</c> if the strategy cannot resolve it.
+		/// </returns>
+		TKey? GetUserId(IServiceProvider? serviceProvider = null);
+	}
 }

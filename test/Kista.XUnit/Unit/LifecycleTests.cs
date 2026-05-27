@@ -1118,6 +1118,22 @@ public class LifecycleTests {
 		);
 	}
 
+	[Fact]
+	public void ResolveSeedStrategy_ByEnvironment_WithHostEnv() {
+		var services = new ServiceCollection();
+		services.AddRepositoryLifecycleOrchestrator();
+		var sp = services.BuildServiceProvider();
+		var orchestrator = new LifecycleEnvOrchestrator(
+			Options.Create(new RepositoryLifecycleOptions {
+				SeedStrategy = SeedStrategy.ByEnvironment,
+				EnvironmentName = null
+			}),
+			sp
+		);
+		var strategy = orchestrator.PublicResolveSeedStrategy();
+		Assert.Equal(SeedStrategy.Always, strategy);
+	}
+
 	/// <summary>
 	/// A stub <see cref="IRepositorySeedDataProvider{Person}"/> that returns a single
 	/// test <see cref="Person"/> entity.
@@ -1342,6 +1358,14 @@ public class LifecycleTests {
 
 		public ValueTask<TEntity?> FindAsync(TKey key, CancellationToken cancellationToken = default)
 			=> throw new NotSupportedException();
+	}
+
+	private class LifecycleEnvOrchestrator : RepositoryLifecycleService {
+		public LifecycleEnvOrchestrator(IOptions<RepositoryLifecycleOptions> options, IServiceProvider sp)
+			: base(options, sp, NullLogger.Instance) { }
+
+		public string PublicResolveEnvironmentName() => base.ResolveEnvironmentName();
+		public SeedStrategy PublicResolveSeedStrategy() => base.ResolveSeedStrategy();
 	}
 
 	/// <summary>

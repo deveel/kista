@@ -38,7 +38,7 @@ namespace Kista {
 		/// </returns>
 		public static IQueryable<TEntity> Apply<TEntity>(this IQuery query, IQueryable<TEntity> queryable)
 			where TEntity : class {
-			ArgumentNullException.ThrowIfNull(queryable, nameof(queryable));
+			ArgumentNullException.ThrowIfNull(queryable);
 
 			if (query.Filter != null)
 				queryable = query.Filter.Apply<TEntity>(queryable);

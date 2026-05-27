@@ -40,7 +40,7 @@ namespace Kista
 		/// <exception cref="InvalidOperationException">Thrown if no suitable constructor is found for the MongoDB connection implementation.</exception>
 		public MongoConnectionBuilder UseConnection(string connectionString)
 		{
-			ArgumentNullException.ThrowIfNull(connectionString, nameof(connectionString));
+			ArgumentNullException.ThrowIfNull(connectionString);
 			if (string.IsNullOrWhiteSpace(connectionString))
 				throw new ArgumentException("Connection string cannot be empty.", nameof(connectionString));
 

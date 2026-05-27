@@ -28,7 +28,7 @@ namespace Kista {
 
 		/// <inheritdoc/>
 		public Expression<Func<TEntity, object?>> MapField(string fieldName) {
-			ArgumentNullException.ThrowIfNull(fieldName, nameof(fieldName));
+			ArgumentNullException.ThrowIfNull(fieldName);
 
 		if (cachedExpr == null) {
 			var param = Expression.Parameter(typeof(TEntity), "x");

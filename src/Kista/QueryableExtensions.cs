@@ -37,8 +37,8 @@ namespace Kista {
 		/// Thrown if either the queryable or the filter are <c>null</c>.
 		/// </exception>
 		public static long LongCount<TEntity>(this IQueryable<TEntity> queriable, IQueryFilter filter) where TEntity : class {
-			ArgumentNullException.ThrowIfNull(queriable, nameof(queriable));
-			ArgumentNullException.ThrowIfNull(filter, nameof(filter));
+			ArgumentNullException.ThrowIfNull(queriable);
+			ArgumentNullException.ThrowIfNull(filter);
 
 			if (filter.IsEmpty())
 				return queriable.LongCount();
@@ -66,8 +66,8 @@ namespace Kista {
 		/// </exception>
 		public static IList<TEntity> ToList<TEntity>(this IQueryable<TEntity> queriable, IQueryFilter filter)
 			where TEntity : class {
-			ArgumentNullException.ThrowIfNull(queriable, nameof(queriable));
-			ArgumentNullException.ThrowIfNull(filter, nameof(filter));
+			ArgumentNullException.ThrowIfNull(queriable);
+			ArgumentNullException.ThrowIfNull(filter);
 
 			if (filter.IsEmpty())
 				return queriable.ToList();
@@ -96,8 +96,8 @@ namespace Kista {
 		/// </exception>
 		public static TEntity? FirstOrDefault<TEntity>(this IQueryable<TEntity> queryable, IQueryFilter filter)
 			where TEntity : class {
-			ArgumentNullException.ThrowIfNull(queryable, nameof(queryable));
-			ArgumentNullException.ThrowIfNull(filter, nameof(filter));
+			ArgumentNullException.ThrowIfNull(queryable);
+			ArgumentNullException.ThrowIfNull(filter);
 
 			if (filter.IsEmpty())
 				return queryable.FirstOrDefault();
@@ -126,8 +126,8 @@ namespace Kista {
 		/// </exception>
 		public static bool Any<TEntity>(this IQueryable<TEntity> queryable, IQueryFilter filter)
 			where TEntity : class {
-			ArgumentNullException.ThrowIfNull(queryable, nameof(queryable));
-			ArgumentNullException.ThrowIfNull(filter, nameof(filter));
+			ArgumentNullException.ThrowIfNull(queryable);
+			ArgumentNullException.ThrowIfNull(filter);
 
 			if (filter.IsEmpty())
 				return queryable.Any();

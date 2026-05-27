@@ -50,8 +50,9 @@ namespace Kista {
 		/// </remarks>
 		/// <typeparam name="TTenantInfo">The type of tenant info, must implement <see cref="ITenantInfo"/>.</typeparam>
 		/// <param name="builder">The Entity Framework driver builder.</param>
-		/// <param name="defaultConnection">Optional default connection string when no tenant is resolved.</param>
-		/// <returns>The same <see cref="EntityFrameworkRepositoryBuilder"/> for chaining.</returns>
+	/// <param name="defaultConnection">Optional default connection string when no tenant is resolved.</param>
+	/// <returns>The same <see cref="EntityFrameworkRepositoryBuilder"/> for chaining.</returns>
+#pragma warning disable S2326 // Type parameter used for type-safe API even though not referenced in method body
 		public static EntityFrameworkRepositoryBuilder WithDatabasePerTenant<TTenantInfo>(
 			this EntityFrameworkRepositoryBuilder builder,
 			string? defaultConnection = null)
@@ -61,6 +62,7 @@ namespace Kista {
 
 			return builder;
 		}
+#pragma warning restore S2326
 
 		/// <summary>
 		/// Configures shared-database multi-tenancy using Finbuckle.MultiTenant.

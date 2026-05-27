@@ -49,7 +49,7 @@ namespace Kista {
 		/// The minimum distance from the center point.
 		/// </param>
 		public MongoGeoDistanceFilter(Expression<Func<TEntity, object>> field, GeoPoint center, double? maxDistance = null, double? minDistance = null) {
-			ArgumentNullException.ThrowIfNull(field, nameof(field));
+			ArgumentNullException.ThrowIfNull(field);
 
 			LocationField = field;
 			Center = center;

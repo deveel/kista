@@ -196,8 +196,8 @@ namespace Kista {
 		/// Thrown when the resulting expression is not a filter or cannot be compiled.
 		/// </exception>
 		public static Delegate Compile(IFilterCache? cache, Type[] paramTypes, string[] paramNames, string expression) {
-			ArgumentNullException.ThrowIfNull(paramTypes, nameof(paramTypes));
-			ArgumentNullException.ThrowIfNull(paramNames, nameof(paramNames));
+			ArgumentNullException.ThrowIfNull(paramTypes);
+			ArgumentNullException.ThrowIfNull(paramNames);
 
 			if (string.IsNullOrWhiteSpace(expression))
 				throw new ArgumentException($"'{nameof(expression)}' cannot be null or whitespace.", nameof(expression));

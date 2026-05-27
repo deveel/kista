@@ -52,7 +52,7 @@ namespace Kista {
 		/// <seealso cref="MongoGeoDistanceFilter{TEntity}"/>
 		public static ValueTask<TEntity?> FindFirstByGeoDistanceAsync<TEntity>(this IRepository<TEntity> repository, Expression<Func<TEntity, object>> field, GeoPoint point, double? maxDistance = null)
 			where TEntity : class {
-			ArgumentNullException.ThrowIfNull(repository, nameof(repository));
+			ArgumentNullException.ThrowIfNull(repository);
 
 			if (!(repository is MongoRepository<TEntity> mongoRepository))
 				throw new ArgumentException($"The repository is not a {nameof(MongoRepository<TEntity>)}");
@@ -93,7 +93,7 @@ namespace Kista {
 		/// <seealso cref="MongoGeoDistanceFilter{TEntity}"/>
 		public static ValueTask<TEntity?> FindFirstByGeoDistanceAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, Expression<Func<TEntity, object>> field, GeoPoint point, double? maxDistance = null)
 			where TEntity : class {
-			ArgumentNullException.ThrowIfNull(repository, nameof(repository));
+			ArgumentNullException.ThrowIfNull(repository);
 
 			if (!(repository is MongoRepository<TEntity, TKey> mongoRepository))
 				throw new ArgumentException($"The repository is not a {nameof(MongoRepository<TEntity>)}");
@@ -131,7 +131,7 @@ namespace Kista {
 		/// </exception>
 		public static ValueTask<IList<TEntity>> FindAllByGeoDistanceAsync<TEntity>(this IRepository<TEntity> repository, Expression<Func<TEntity, object>> field, GeoPoint point, double? maxDistance = null)
 			where TEntity : class {
-			ArgumentNullException.ThrowIfNull(repository, nameof(repository));
+			ArgumentNullException.ThrowIfNull(repository);
 
 			if (!(repository is MongoRepository<TEntity> mongoRepository))
 				throw new ArgumentException($"The repository is not a {nameof(MongoRepository<TEntity>)}");
@@ -171,7 +171,7 @@ namespace Kista {
 		/// </exception>
 		public static ValueTask<IList<TEntity>> FindAllByGeoDistanceAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, Expression<Func<TEntity, object>> field, GeoPoint point, double? maxDistance = null)
 			where TEntity : class {
-			ArgumentNullException.ThrowIfNull(repository, nameof(repository));
+			ArgumentNullException.ThrowIfNull(repository);
 
 			if (!(repository is MongoRepository<TEntity, TKey> mongoRepository))
 				throw new ArgumentException($"The repository is not a {nameof(MongoRepository<TEntity>)}");

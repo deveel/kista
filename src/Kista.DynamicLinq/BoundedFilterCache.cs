@@ -202,7 +202,7 @@ namespace Kista {
 		/// are not evicted.
 		/// </remarks>
 		public bool TryGet(string expression, out Delegate? lambda) {
-			ArgumentNullException.ThrowIfNull(expression, nameof(expression));
+			ArgumentNullException.ThrowIfNull(expression);
 
 			_semaphore.Wait();
 			try {
@@ -229,8 +229,8 @@ namespace Kista {
 		/// and the key is new, the least recently used entry is evicted before insertion.
 		/// </remarks>
 		public void Set(string expression, Delegate lambda) {
-			ArgumentNullException.ThrowIfNull(expression, nameof(expression));
-			ArgumentNullException.ThrowIfNull(lambda, nameof(lambda));
+			ArgumentNullException.ThrowIfNull(expression);
+			ArgumentNullException.ThrowIfNull(lambda);
 
 			_semaphore.Wait();
 			try {

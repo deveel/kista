@@ -2,7 +2,7 @@
 
 public static class EnumerableExtensions {
     public static TEntity? Random<TEntity>(this IEnumerable<TEntity> source, Func<TEntity, bool>? predicate = null, int maxRetries = 100) {
-        ArgumentNullException.ThrowIfNull(source, nameof(source));
+        ArgumentNullException.ThrowIfNull(source);
 
         var count = source.Count();
         if (count == 0)

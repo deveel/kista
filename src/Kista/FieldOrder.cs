@@ -32,7 +32,7 @@ namespace Kista {
 		/// Thrown if the given <paramref name="fieldName"/> is <c>null</c>.
 		/// </exception>
 		public FieldOrder(string fieldName, SortDirection direction = SortDirection.Ascending) {
-			ArgumentNullException.ThrowIfNull(fieldName, nameof(fieldName));
+			ArgumentNullException.ThrowIfNull(fieldName);
 
 			FieldName = fieldName;
 			Direction = direction;

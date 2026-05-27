@@ -54,7 +54,7 @@ namespace Kista
 		/// </exception>
 		public EntityUserRepository(DbContext context, IUserAccessor<TUserKey> userAccessor, IServiceProvider? services = null, ILogger<EntityUserRepository<TEntity, TKey, TUserKey>>? logger = null) : base(context, services, logger)
 		{
-			ArgumentNullException.ThrowIfNull(userAccessor, nameof(userAccessor));
+			ArgumentNullException.ThrowIfNull(userAccessor);
 			UserAccessor = userAccessor;
 		}
 

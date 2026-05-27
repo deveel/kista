@@ -29,8 +29,9 @@ namespace Kista {
 		/// Configures tenant-specific MongoDB connections using Finbuckle.MultiTenant.
 		/// </summary>
 		/// <param name="builder">The MongoDB driver builder.</param>
-		/// <param name="defaultConnection">Optional default connection string when no tenant is resolved.</param>
-		/// <returns>The same <see cref="MongoRepositoryBuilder"/> for chaining.</returns>
+	/// <param name="defaultConnection">Optional default connection string when no tenant is resolved.</param>
+	/// <returns>The same <see cref="MongoRepositoryBuilder"/> for chaining.</returns>
+#pragma warning disable S2326 // Type parameter used for type-safe API even though not referenced in method body
 		public static MongoRepositoryBuilder WithMongoMultiTenancy<TTenantInfo>(
 			this MongoRepositoryBuilder builder,
 			string? defaultConnection = null)
@@ -57,5 +58,6 @@ namespace Kista {
 
 			return builder;
 		}
+#pragma warning restore S2326
 	}
 }

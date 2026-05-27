@@ -1,4 +1,6 @@
-﻿namespace Kista;
+﻿using Microsoft.Extensions.DependencyInjection;
+
+namespace Kista;
 
 /// <summary>
 /// Tests for <see cref="CombinedQueryFilter"/> and <see cref="QueryFilter.Combine"/>,
@@ -122,5 +124,32 @@ public class CombinedFilterTests
             lambda.ToString());
     }
 
-    #endregion
+	#endregion
+
+	[Fact]
+	public void CombinedQueryFilter_Apply_WithMultipleFilters_FiltersCorrectly() {
+		var people = new List<Person> {
+			new Person { FirstName = "A", LastName = "B" },
+			new Person { FirstName = "A", LastName = "C" },
+			new Person { FirstName = "B", LastName = "B" }
+		}.AsQueryable();
+		var f1 = QueryFilter.Where<Person>(x => x.FirstName == "A");
+		var f2 = QueryFilter.Where<Person>(x => x.LastName == "B");
+		var combined = QueryFilter.Combine(new[] { f1, f2 });
+
+		var result = combined.Apply(people).ToList();
+
+		Assert.Single(result);
+		Assert.Equal("A", result[0].FirstName);
+		Assert.Equal("B", result[0].LastName);
+	}
+
+	[Fact]
+	public void CombinedQueryFilter_Initialize_CallsAllFilters() {
+		var f1 = QueryFilter.Where<Person>(x => x.FirstName == "A");
+		var f2 = QueryFilter.Where<Person>(x => x.LastName == "B");
+		var combined = QueryFilter.Combine(new[] { f1, f2 });
+		var ctx = new DefaultFilterContext(new ServiceCollection().BuildServiceProvider());
+		combined.Initialize(ctx);
+	}
 }

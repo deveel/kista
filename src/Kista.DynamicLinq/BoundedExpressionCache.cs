@@ -155,7 +155,7 @@ namespace Kista {
 		/// are not evicted.
 		/// </remarks>
 		public bool TryGet(string key, out LambdaExpression? expression) {
-			ArgumentNullException.ThrowIfNull(key, nameof(key));
+			ArgumentNullException.ThrowIfNull(key);
 
 			_semaphore.Wait();
 			try {
@@ -182,8 +182,8 @@ namespace Kista {
 		/// and the key is new, the least recently used entry is evicted before insertion.
 		/// </remarks>
 		public void Set(string key, LambdaExpression expression) {
-			ArgumentNullException.ThrowIfNull(key, nameof(key));
-			ArgumentNullException.ThrowIfNull(expression, nameof(expression));
+			ArgumentNullException.ThrowIfNull(key);
+			ArgumentNullException.ThrowIfNull(expression);
 
 			_semaphore.Wait();
 			try {

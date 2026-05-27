@@ -70,7 +70,7 @@ namespace Kista {
 		/// </exception>
 		public static Expression<Func<TEntity, bool>> AsLambda<TEntity>(this IQueryFilter filter)
 			where TEntity : class {
-			ArgumentNullException.ThrowIfNull(filter, nameof(filter));
+			ArgumentNullException.ThrowIfNull(filter);
 
 			if (filter.IsEmpty())
 				return x => true;

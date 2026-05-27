@@ -1,10 +1,10 @@
 ﻿namespace Kista {
 	public class PersonRepository : InMemoryRepository<Person> {
 		public PersonRepository() 
-			: base(Enumerable.Empty<Person>()) {
+			: this(Array.Empty<Person>()) {
 		}
 
-		internal PersonRepository(IList<Person>? entities = null) 
+		internal PersonRepository(IList<Person>? entities) 
 			: base(entities) {
 		}
 	}

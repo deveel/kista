@@ -75,6 +75,22 @@ public class ServiceCollectionExtensionsTests
 		Assert.Same(testTime, systemTime);
 	}
 
+	[Fact]
+	public void ServiceCollectionExtensions_AddRepositoryController_Obsolete_StillWorks() {
+		var services = new ServiceCollection();
+		services.AddRepositoryController<TestRepositoryController>();
+		var provider = services.BuildServiceProvider();
+		Assert.NotNull(provider.GetService<IRepositoryController>());
+	}
+
+	[Fact]
+	public void ServiceCollectionExtensions_AddRepositoryController_Default_Obsolete_StillWorks() {
+		var services = new ServiceCollection();
+		services.AddRepositoryController();
+		var provider = services.BuildServiceProvider();
+		Assert.NotNull(provider.GetService<IRepositoryController>());
+	}
+
 	/// <summary>
 	/// A stub implementation of <see cref="ISystemTime"/> that delegates to the real system clock,
 	/// used to verify custom <see cref="ISystemTime"/> registration overloads.
@@ -83,5 +99,12 @@ public class ServiceCollectionExtensionsTests
 	{
 		public DateTimeOffset UtcNow => DateTimeOffset.UtcNow;
 		public DateTimeOffset Now => DateTimeOffset.Now;
+	}
+
+	private class TestRepositoryController : IRepositoryController {
+		public ValueTask CreateRepositoryAsync<TEntity>(CancellationToken ct = default) where TEntity : class => ValueTask.CompletedTask;
+		public ValueTask CreateRepositoryAsync<TEntity, TKey>(CancellationToken ct = default) where TEntity : class => ValueTask.CompletedTask;
+		public ValueTask DropRepositoryAsync<TEntity>(CancellationToken ct = default) where TEntity : class => ValueTask.CompletedTask;
+		public ValueTask DropRepositoryAsync<TEntity, TKey>(CancellationToken ct = default) where TEntity : class => ValueTask.CompletedTask;
 	}
 }

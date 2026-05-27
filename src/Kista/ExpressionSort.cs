@@ -38,7 +38,7 @@ namespace Kista {
 		/// Thrown if the given <paramref name="field"/> is <c>null</c>.
 		/// </exception>
 		public ExpressionSort(Expression<Func<TEntity, object?>> field, SortDirection direction = SortDirection.Ascending) {
-			ArgumentNullException.ThrowIfNull(field, nameof(field));
+			ArgumentNullException.ThrowIfNull(field);
 
 			Field = field;
 			Direction = direction;

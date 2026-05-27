@@ -74,7 +74,7 @@ namespace Kista {
 			IOperationErrorFactory<TEntity>? errorFactory = null,
 			IServiceProvider? services = null,
 			ILoggerFactory? loggerFactory = null) {
-			ArgumentNullException.ThrowIfNull(repository, nameof(repository));
+			ArgumentNullException.ThrowIfNull(repository);
 
 			Repository = repository;
 			Time = systemTime ?? SystemTime.Default;
@@ -407,7 +407,7 @@ namespace Kista {
 			Dispose(disposing: false);
 			GC.SuppressFinalize(this);
 
-			return default;
+			return ValueTask.CompletedTask;
 		}
 
 		/// <summary>
@@ -1105,7 +1105,7 @@ namespace Kista {
 		public virtual async ValueTask<OperationResult<TEntity>> FindAsync(TKey key, CancellationToken? cancellationToken = null) {
 			ThrowIfDisposed();
 
-			ArgumentNullException.ThrowIfNull(key, nameof(key));
+			ArgumentNullException.ThrowIfNull(key);
 
 			try {
 				Logger.LogFindingEntityByKey(typeof(TEntity), key);
@@ -1308,7 +1308,7 @@ namespace Kista {
 			if (!SupportsFilters)
 				throw new NotSupportedException("The repository does not support filters");
 
-			ArgumentNullException.ThrowIfNull(filter, nameof(filter));
+			ArgumentNullException.ThrowIfNull(filter);
 
 			try {
 				Logger.LogCountingEntities(typeof(TEntity));

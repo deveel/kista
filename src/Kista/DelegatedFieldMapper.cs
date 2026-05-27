@@ -34,7 +34,7 @@ namespace Kista {
 		/// that selects the field from the entity.
 		/// </param>
 		public DelegatedFieldMapper(Func<string, Expression<Func<TEntity, object?>>> fieldMapper) {
-			ArgumentNullException.ThrowIfNull(fieldMapper, nameof(fieldMapper));
+			ArgumentNullException.ThrowIfNull(fieldMapper);
 
 			this.fieldMapper = fieldMapper;
 		}

@@ -113,8 +113,8 @@ namespace Kista {
 		/// Thrown if either of the given sort rules is <c>null</c>.
 		/// </exception>
 		public static CombinedOrder Combine(this IQueryOrder sort, IQueryOrder other) {
-			ArgumentNullException.ThrowIfNull(sort, nameof(sort));
-			ArgumentNullException.ThrowIfNull(other, nameof(other));
+			ArgumentNullException.ThrowIfNull(sort);
+			ArgumentNullException.ThrowIfNull(other);
 
 			if (sort is CombinedOrder combinedSort)
 				return combinedSort.Combine(other);
@@ -199,8 +199,8 @@ namespace Kista {
 		/// </returns>
 		public static IQueryable<TEntity> Apply<TEntity>(this IQueryOrder sort, IQueryable<TEntity> queryable, IFieldMapper<TEntity>? fieldMapper = null) 
 			where TEntity : class {
-			ArgumentNullException.ThrowIfNull(queryable, nameof(queryable));
-			ArgumentNullException.ThrowIfNull(sort, nameof(sort));
+			ArgumentNullException.ThrowIfNull(queryable);
+			ArgumentNullException.ThrowIfNull(sort);
 
 			if (sort is CombinedOrder combinedSort) {
 				foreach (var item in combinedSort) {

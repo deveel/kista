@@ -116,5 +116,17 @@ public class QueryOrderTests
         Assert.Equal(4, result.ToList().Count);
     }
 
-    #endregion
+	#endregion
+
+	[Fact]
+	public void FieldOrder_IsDescending_ReturnsTrue() {
+		var order = new FieldOrder("FirstName", SortDirection.Descending);
+		Assert.True(order.IsDescending());
+	}
+
+	[Fact]
+	public void FieldOrder_IsAscending_ReturnsTrue() {
+		var order = new FieldOrder("FirstName", SortDirection.Ascending);
+		Assert.True(order.IsAscending());
+	}
 }

@@ -42,8 +42,8 @@ public class HttpUserAccessor<TKey> : IUserAccessor<TKey> {
 	/// The configuration options specifying the sources and parameters.
 	/// </param>
 	public HttpUserAccessor(IHttpContextAccessor httpContextAccessor, IOptions<HttpUserAccessorOptions> options) {
-		ArgumentNullException.ThrowIfNull(httpContextAccessor, nameof(httpContextAccessor));
-		ArgumentNullException.ThrowIfNull(options, nameof(options));
+		ArgumentNullException.ThrowIfNull(httpContextAccessor);
+		ArgumentNullException.ThrowIfNull(options);
 
 		this.httpContextAccessor = httpContextAccessor;
 		this.options = options;
@@ -53,11 +53,11 @@ public class HttpUserAccessor<TKey> : IUserAccessor<TKey> {
 	public TKey? GetUserId() {
 		var httpContext = httpContextAccessor.HttpContext;
 		if (httpContext == null)
-			return default;
+			return default(TKey?);
 
 		var opts = options.Value;
 		if (opts.Sources == null || opts.Sources.Count == 0)
-			return default;
+			return default(TKey?);
 
 		foreach (var source in opts.Sources) {
 			var value = ResolveFromSource(source, httpContext, opts);
@@ -68,7 +68,7 @@ public class HttpUserAccessor<TKey> : IUserAccessor<TKey> {
 			}
 		}
 
-		return default;
+		return default(TKey?);
 	}
 
 	private static string? ResolveFromSource(HttpUserIdentifierSource source, HttpContext httpContext, HttpUserAccessorOptions opts) {
@@ -88,9 +88,9 @@ public class HttpUserAccessor<TKey> : IUserAccessor<TKey> {
 			var converter = TypeDescriptor.GetConverter(typeof(TKey));
 			return (TKey?)converter.ConvertFromInvariantString(value);
 		} catch (NotSupportedException) {
-			return default;
+			return default(TKey?);
 		} catch (Exception) {
-			return default;
+			return default(TKey?);
 		}
 	}
 }

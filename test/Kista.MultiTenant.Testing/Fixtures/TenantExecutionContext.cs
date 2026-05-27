@@ -40,8 +40,8 @@ namespace Kista
 
 		public async Task<TResult> ExecuteInScopeAsync<TResult>(string tenantId, Delegate action)
 		{
-			ArgumentNullException.ThrowIfNull(tenantId, nameof(tenantId));
-			ArgumentNullException.ThrowIfNull(action, nameof(action));
+			ArgumentNullException.ThrowIfNull(tenantId);
+			ArgumentNullException.ThrowIfNull(action);
 
 			if (string.IsNullOrEmpty(tenantId))
 				throw new ArgumentException("Tenant ID cannot be null or empty.", nameof(tenantId));
@@ -69,8 +69,8 @@ namespace Kista
 
 		public async Task ExecuteInScopeAsync(string tenantId, Delegate action)
 		{
-			ArgumentNullException.ThrowIfNull(tenantId, nameof(tenantId));
-			ArgumentNullException.ThrowIfNull(action, nameof(action));
+			ArgumentNullException.ThrowIfNull(tenantId);
+			ArgumentNullException.ThrowIfNull(action);
 
 			if (string.IsNullOrEmpty(tenantId))
 				throw new ArgumentException("Tenant ID cannot be null or empty.", nameof(tenantId));

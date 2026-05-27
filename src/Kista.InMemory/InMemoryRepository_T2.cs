@@ -257,7 +257,7 @@ namespace Kista {
 
 		/// <inheritdoc/>
 		public virtual TKey? GetEntityKey(TEntity entity) {
-			ArgumentNullException.ThrowIfNull(entity, nameof(entity));
+			ArgumentNullException.ThrowIfNull(entity);
 
 			return GetEntityId(entity);
 		}
@@ -271,7 +271,7 @@ namespace Kista {
 
 		private TKey? GetEntityId(TEntity entity) {
 			var getter = _keyGetter.Value;
-			return getter == null ? default : getter(entity);
+			return getter == null ? default(TKey?) : getter(entity);
 		}
 
 		private TKey GenerateNewKey() {
@@ -311,7 +311,7 @@ namespace Kista {
 		/// </remarks>
 		/// <inheritdoc/>
 		public ValueTask AddAsync(TEntity entity, CancellationToken cancellationToken = default) {
-			ArgumentNullException.ThrowIfNull(entity, nameof(entity));
+			ArgumentNullException.ThrowIfNull(entity);
 
 			cancellationToken.ThrowIfCancellationRequested();
 
@@ -349,7 +349,7 @@ namespace Kista {
 		/// </remarks>
 		/// <inheritdoc/>
 		public ValueTask AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) {
-			ArgumentNullException.ThrowIfNull(entities, nameof(entities));
+			ArgumentNullException.ThrowIfNull(entities);
 
 			cancellationToken.ThrowIfCancellationRequested();
 
@@ -392,7 +392,7 @@ namespace Kista {
 		/// </remarks>
 		/// <inheritdoc/>
 		public ValueTask<bool> RemoveAsync(TEntity entity, CancellationToken cancellationToken = default) {
-			ArgumentNullException.ThrowIfNull(entity, nameof(entity));
+			ArgumentNullException.ThrowIfNull(entity);
 
 			cancellationToken.ThrowIfCancellationRequested();
 
@@ -427,7 +427,7 @@ namespace Kista {
 		public ValueTask RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) {
 			cancellationToken.ThrowIfCancellationRequested();
 
-			ArgumentNullException.ThrowIfNull(entities, nameof(entities));
+			ArgumentNullException.ThrowIfNull(entities);
 
 			try {
 				var toRemove = entities.ToList();
@@ -522,7 +522,7 @@ namespace Kista {
 
 		/// <inheritdoc/>
 		public ValueTask<TEntity?> FindOriginalAsync(TKey key, CancellationToken cancellationToken = default) {
-			ArgumentNullException.ThrowIfNull(key, nameof(key));
+			ArgumentNullException.ThrowIfNull(key);
 			cancellationToken.ThrowIfCancellationRequested();
 
 			try {
@@ -542,7 +542,7 @@ namespace Kista {
 
 		/// <inheritdoc/>
 		public ValueTask<TEntity?> FindAsync(TKey key, CancellationToken cancellationToken = default) {
-			ArgumentNullException.ThrowIfNull(key, nameof(key));
+			ArgumentNullException.ThrowIfNull(key);
 
 			cancellationToken.ThrowIfCancellationRequested();
 
@@ -617,7 +617,7 @@ namespace Kista {
 		public ValueTask<bool> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default) {
 			cancellationToken.ThrowIfCancellationRequested();
 
-			ArgumentNullException.ThrowIfNull(entity, nameof(entity));
+			ArgumentNullException.ThrowIfNull(entity);
 
 			try {
 				var entityId = GetEntityId(entity);

@@ -1360,7 +1360,7 @@ public class LifecycleTests {
 			=> throw new NotSupportedException();
 	}
 
-	private class LifecycleEnvOrchestrator : RepositoryLifecycleService {
+	private sealed class LifecycleEnvOrchestrator : RepositoryLifecycleService {
 		public LifecycleEnvOrchestrator(IOptions<RepositoryLifecycleOptions> options, IServiceProvider sp)
 			: base(options, sp, NullLogger.Instance) { }
 

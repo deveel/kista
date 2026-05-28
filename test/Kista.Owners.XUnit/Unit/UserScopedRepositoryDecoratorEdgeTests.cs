@@ -349,7 +349,7 @@ public class UserScopedRepositoryDecoratorEdgeTests
     // Helpers
     // ============================================================
 
-    private class StaticUserAccessor : IUserAccessor<string>
+    private sealed class StaticUserAccessor : IUserAccessor<string>
     {
         private readonly string _userId;
         public StaticUserAccessor(string userId) => _userId = userId;

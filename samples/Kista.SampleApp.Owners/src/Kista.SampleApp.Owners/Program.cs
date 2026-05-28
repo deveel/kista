@@ -38,4 +38,4 @@ app.UseMiddleware<FakeUserMiddleware>();
 app.MapNoteEndpoints();
 app.MapTaskEndpoints();
 
-app.Run();
+await app.RunAsync();

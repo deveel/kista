@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq.Expressions;
 using Kista;
@@ -370,7 +371,7 @@ public class UserScopedRepositoryDecoratorTests
 
         var strategy = new StaticUserIdentifierStrategy<TUserKey>(userId);
         var composite = new CompositeUserIdentifierStrategy<TUserKey>();
-        if (userId != null)
+        if (!EqualityComparer<TUserKey>.Default.Equals(userId, default))
             composite.Add(strategy);
         services.AddSingleton(composite);
         services.AddSingleton<IUserAccessor<TUserKey>>(

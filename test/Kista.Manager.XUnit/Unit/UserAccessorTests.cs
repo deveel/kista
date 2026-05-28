@@ -25,7 +25,7 @@ public class UserAccessorTests {
 
 		var userId = strategy.GetUserId(null);
 
-		Assert.NotEqual(default(Guid), userId);
+		Assert.NotEqual(Guid.Empty, userId);
 	}
 
 	#endregion
@@ -170,7 +170,7 @@ public class UserAccessorTests {
 
 		var userId = strategy.GetUserId(services);
 
-		Assert.Equal(default(Guid), userId);
+		Assert.Equal(Guid.Empty, userId);
 	}
 
 	#endregion
@@ -456,7 +456,7 @@ public class UserAccessorTests {
 		return services.BuildServiceProvider();
 	}
 
-	private class NullReturningStrategy<TKey> : IUserIdentifierStrategy<TKey> {
+	private sealed class NullReturningStrategy<TKey> : IUserIdentifierStrategy<TKey> {
 		public TKey? GetUserId(IServiceProvider? serviceProvider = null) => default;
 	}
 

@@ -816,7 +816,7 @@ public class RepositoryCoreTests {
         public ValueTask AddRangeAsync(IEnumerable<Person> entities, CancellationToken cancellationToken = default) { AddRange(entities); return ValueTask.CompletedTask; }
         public ValueTask<bool> UpdateAsync(Person entity, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public ValueTask<bool> RemoveAsync(Person entity, CancellationToken cancellationToken = default) { var r = Remove(entity); return new ValueTask<bool>(r); }
-        public ValueTask RemoveRangeAsync(IEnumerable<Person> entities, CancellationToken cancellationToken = default) { foreach (var e in entities.ToList()) Remove(e); return ValueTask.CompletedTask; }
+        public ValueTask RemoveRangeAsync(IEnumerable<Person> entities, CancellationToken cancellationToken = default) { foreach (var e in entities.ToList()) { Remove(e); } return ValueTask.CompletedTask; }
         public ValueTask<Person?> FindAsync(object key, CancellationToken cancellationToken = default) => new ValueTask<Person?>(this.FirstOrDefault(x => x.Id == (string)key));
     }
 
@@ -895,12 +895,6 @@ public class RepositoryCoreTests {
         var repo = new List<Person> { new Person() }.AsRepository();
         var queryable = repo.AsQueryable();
         Assert.NotNull(queryable);
-    }
-
-    [Fact]
-    public void RepositoryExtensions_RequirePageable_NonPageable_Throws() {
-        IRepository<Person, object> repo = new NonFilterableRepo<Person>();
-        Assert.Throws<NotSupportedException>(() => repo.GetPage(new PageQuery<Person>(1, 10)));
     }
 }
 

@@ -18,7 +18,7 @@ namespace Kista
 	/// Defines a strategy for resolving the current user identifier.
 	/// </summary>
 	/// <typeparam name="TKey">The type of the user identifier key.</typeparam>
-	public interface IUserIdentifierStrategy<TKey>
+	public interface IUserIdentifierStrategy<out TKey>
 	{
 		/// <summary>
 		/// Resolves the current user identifier.

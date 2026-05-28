@@ -183,11 +183,9 @@ namespace Kista {
 			if (strategy == SeedStrategy.Never)
 				return;
 
-			if (strategy == SeedStrategy.IfMissing || strategy == SeedStrategy.ByEnvironment) {
-				if (await handler.ExistsAsync(cancellationToken)) {
-					logger.WarnSkippingSeed();
-					return;
-				}
+			if ((strategy == SeedStrategy.IfMissing || strategy == SeedStrategy.ByEnvironment) && await handler.ExistsAsync(cancellationToken)) {
+				logger.WarnSkippingSeed();
+				return;
 			}
 
 			try {

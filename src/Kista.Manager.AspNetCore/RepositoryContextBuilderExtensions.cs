@@ -29,5 +29,33 @@ namespace Kista {
 			builder.Services.AddOperationTokenSource<HttpRequestCancellationSource>(ServiceLifetime.Singleton);
 			return builder;
 		}
+
+	/// <summary>
+	/// Registers an HTTP-based user accessor that resolves the current
+	/// user identifier from the request using default strategies:
+	/// claim ("sub") → query string ("user_id") → route value ("userId").
+	/// </summary>
+	/// <typeparam name="TKey">The type of the user identifier key.</typeparam>
+	/// <param name="builder">The repository context builder to configure.</param>
+	/// <returns>Returns the same builder instance for chaining.</returns>
+	public static RepositoryContextBuilder WithHttpUserAccessor<TKey>(this RepositoryContextBuilder builder) {
+		builder.Services.AddHttpUserAccessor<TKey>();
+		return builder;
+	}
+
+	/// <summary>
+	/// Registers an HTTP-based user accessor with custom strategy configuration.
+	/// </summary>
+	/// <typeparam name="TKey">The type of the user identifier key.</typeparam>
+	/// <param name="builder">The repository context builder to configure.</param>
+	/// <param name="configure">A delegate to configure the HTTP strategies.</param>
+	/// <returns>Returns the same builder instance for chaining.</returns>
+	public static RepositoryContextBuilder WithHttpUserAccessor<TKey>(
+		this RepositoryContextBuilder builder,
+		Action<IHttpUserIdentifierStrategyBuilder<TKey>> configure)
+	{
+		builder.Services.AddHttpUserAccessor<TKey>(configure);
+		return builder;
+	}
 	}
 }

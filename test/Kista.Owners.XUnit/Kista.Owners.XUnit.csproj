@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <NoWarn>1701;1702;CS8618;CS0618</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Kista\Kista.csproj" />
+    <ProjectReference Include="..\..\src\Kista.InMemory\Kista.InMemory.csproj" />
+    <ProjectReference Include="..\..\src\Kista.Owners\Kista.Owners.csproj" />
+    <ProjectReference Include="..\Kista.Testing\Kista.Testing.csproj" />
+  </ItemGroup>
+
+</Project>

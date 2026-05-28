@@ -1,3 +1,5 @@
+using System.Linq.Expressions;
+
 namespace Kista;
 
 /// <summary>
@@ -831,5 +833,95 @@ public class RepositoryExtensionsSyncTests : IClassFixture<PersonFixture>
     }
 
     #endregion
+
+    [Fact]
+    public void RepositoryExtensions_Exists_TKey_WithFilter_Sync() {
+        IRepository<Person, object> repo = new List<Person> { new Person { FirstName = "A" } }.AsRepository();
+        var result = repo.Exists(QueryFilter.Where<Person>(x => x.FirstName == "A"));
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void RepositoryExtensions_Remove_Single_Sync() {
+        var list = new List<Person> { new Person { Id = "1" }, new Person { Id = "2" } };
+        var repo = list.AsRepository();
+        repo.Remove(list[0]);
+        Assert.Single(list);
+    }
+
+    [Fact]
+    public void RepositoryExtensions_Remove_Single_TKey_Sync() {
+        var list = new List<Person> { new Person { Id = "1" }, new Person { Id = "2" } };
+        IRepository<Person, object> repo = list.AsRepository();
+        repo.Remove(list[0]);
+        Assert.Single(list);
+    }
+
+    [Fact]
+    public void RepositoryExtensions_Add_Sync_TEntity_Works() {
+        var list = new List<Person>();
+        var repo = list.AsRepository();
+        repo.Add(new Person { FirstName = "T" });
+        Assert.Single(list);
+    }
+
+    [Fact]
+    public void RepositoryExtensions_Add_Sync_TKey_Works() {
+        var list = new List<Person>();
+        IRepository<Person, object> repo = list.AsRepository();
+        repo.Add(new Person { FirstName = "T" });
+        Assert.Single(list);
+    }
+
+    [Fact]
+    public void RepositoryExtensions_Update_Sync_TEntity_Works() {
+        var list = new List<Person> { new Person { Id = "1" } };
+        var repo = list.AsRepository();
+        var result = repo.Update(list[0]);
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void RepositoryExtensions_Update_Sync_TKey_Works() {
+        var list = new List<Person> { new Person { Id = "1" } };
+        IRepository<Person, object> repo = list.AsRepository();
+        var result = repo.Update(list[0]);
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void RepositoryExtensions_Exists_Sync_TEntity_WithFilter() {
+        var repo = new List<Person> { new Person { FirstName = "A" } }.AsRepository();
+        Assert.True(repo.Exists(QueryFilter.Where<Person>(x => x.FirstName == "A")));
+        Assert.False(repo.Exists(QueryFilter.Where<Person>(x => x.FirstName == "Z")));
+    }
+
+    [Fact]
+    public void RepositoryExtensions_Remove_Sync_NotFound() {
+        var list = new List<Person> { new Person { Id = "1" } };
+        var repo = list.AsRepository();
+        var result = repo.Remove(new Person { Id = "X" });
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void RepositoryExtensions_Remove_Sync_TKey_NotFound() {
+        var list = new List<Person> { new Person { Id = "1" } };
+        IRepository<Person, object> repo = list.AsRepository();
+        var result = repo.Remove(new Person { Id = "X" });
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void RepositoryExtensions_CountAll_Sync_TKey_FromRepo() {
+        IRepository<Person, object> repo = new List<Person> { new Person(), new Person(), new Person() }.AsRepository();
+        Assert.Equal(3, repo.CountAll());
+    }
+
+    [Fact]
+    public void RepositoryExtensions_Exists_Sync_ExpressionFilter_SingleT() {
+        var repo = new List<Person> { new Person { FirstName = "A" } }.AsRepository();
+        Assert.True(repo.Exists((Expression<Func<Person, bool>>)(x => x.FirstName == "A")));
+    }
 }
 

@@ -92,14 +92,42 @@ namespace Kista {
 			}
 		}
 
-		/// <summary>
-		/// Registers a repository type in the service collection and tracks it.
-		/// </summary>
-		public RepositoryContextBuilder AddRepository<TRepository>(ServiceLifetime lifetime = ServiceLifetime.Scoped) {
-			_services.AddRepository(typeof(TRepository), lifetime);
-			TrackRepositoryType(typeof(TRepository));
-			return this;
+	/// <summary>
+	/// Registers a repository type and returns a <see cref="RepositoryBuilder"/> for
+	/// further type-specific configuration (e.g. owner scoping).
+	/// </summary>
+	public RepositoryBuilder AddRepository<TRepository>(ServiceLifetime lifetime = ServiceLifetime.Scoped) where TRepository : class {
+		_services.AddRepository(typeof(TRepository), lifetime);
+		TrackRepositoryType(typeof(TRepository));
+
+		var repoInterface = FindRepositoryInterface(typeof(TRepository));
+		var entityType = repoInterface.GetGenericArguments()[0];
+		var keyType = repoInterface.GetGenericArguments()[1];
+
+		return new RepositoryBuilder(Services, entityType, keyType, typeof(TRepository), repoInterface);
+	}
+
+	/// <summary>
+	/// Registers a repository type and configures it via a delegate,
+	/// returning to the context builder for further chaining.
+	/// </summary>
+	public RepositoryContextBuilder AddRepository<TRepository>(Action<RepositoryBuilder> configure, ServiceLifetime lifetime = ServiceLifetime.Scoped) where TRepository : class {
+		var repo = AddRepository<TRepository>(lifetime);
+		configure(repo);
+		return this;
+	}
+
+	private static Type FindRepositoryInterface(Type repositoryType) {
+		foreach (var iface in repositoryType.GetInterfaces()) {
+			if (iface.IsGenericType &&
+				iface.GetGenericTypeDefinition() == typeof(IRepository<,>)) {
+				return iface;
+			}
 		}
+
+		throw new InvalidOperationException(
+			$"The type '{repositoryType}' does not implement IRepository<,>");
+	}
 
 		/// <summary>
 		/// Registers a repository type in the service collection and tracks it.
@@ -225,7 +253,7 @@ namespace Kista {
 				WithSeedDataFrom();
 		}
 
-		private class CollectionSeedDataProvider<TEntity> : IRepositorySeedDataProvider<TEntity>
+		internal class CollectionSeedDataProvider<TEntity> : IRepositorySeedDataProvider<TEntity>
 			where TEntity : class {
 
 			private readonly IEnumerable<TEntity> data;

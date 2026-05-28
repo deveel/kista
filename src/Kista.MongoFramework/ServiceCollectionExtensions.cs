@@ -74,7 +74,7 @@ namespace Kista
 			where TContext : class, IMongoDbContext
 		{
 
-			ArgumentNullException.ThrowIfNull(connectionBuilder, nameof(connectionBuilder));
+			ArgumentNullException.ThrowIfNull(connectionBuilder);
 
 			var builder = new MongoConnectionBuilder(typeof(TContext), services,lifetime);
 			connectionBuilder(builder);

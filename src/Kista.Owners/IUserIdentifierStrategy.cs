@@ -1,4 +1,4 @@
-﻿// Copyright 2023-2025 Antonello Provenzano
+// Copyright 2023-2026 Antonello Provenzano
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,11 +15,20 @@
 namespace Kista
 {
 	/// <summary>
-	/// An attribute that marks a property or field as the owner
-	/// of the entity, used to identify the owner of the data.
+	/// Defines a strategy for resolving the current user identifier.
 	/// </summary>
-	[System.AttributeUsage(System.AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
-	public sealed class DataOwnerAttribute : Attribute
+	/// <typeparam name="TKey">The type of the user identifier key.</typeparam>
+	public interface IUserIdentifierStrategy<TKey>
 	{
+		/// <summary>
+		/// Resolves the current user identifier.
+		/// </summary>
+		/// <param name="serviceProvider">
+		/// Optional service provider for accessing scoped services.
+		/// </param>
+		/// <returns>
+		/// The resolved user identifier, or <c>null</c> if the strategy cannot resolve it.
+		/// </returns>
+		TKey? GetUserId(IServiceProvider? serviceProvider = null);
 	}
 }

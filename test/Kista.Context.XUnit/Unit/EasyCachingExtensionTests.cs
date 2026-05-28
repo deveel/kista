@@ -15,7 +15,7 @@ public class EasyCachingExtensionTests {
 	public void WithEasyCaching_RegistersCacheForTrackedEntityTypes() {
 		var services = new ServiceCollection();
 		services.AddRepositoryContext()
-			.AddRepository<CachingTestRepository>()
+			.AddRepository<CachingTestRepository>(_ => { })
 			.WithEasyCaching();
 
 		// Verify the service descriptor is registered
@@ -37,7 +37,7 @@ public class EasyCachingExtensionTests {
 	public void WithEasyCaching_WithDefaultExpiration_RegistersOptions() {
 		var services = new ServiceCollection();
 		services.AddRepositoryContext()
-			.AddRepository<CachingTestRepository>()
+			.AddRepository<CachingTestRepository>(_ => { })
 			.WithEasyCaching(opts => opts.DefaultExpiration = TimeSpan.FromMinutes(30));
 
 		var optionsDescriptor = services.FirstOrDefault(d =>
@@ -49,7 +49,7 @@ public class EasyCachingExtensionTests {
 	public void WithEasyCaching_WithCacheKeyPrefix_RegistersOptions() {
 		var services = new ServiceCollection();
 		services.AddRepositoryContext()
-			.AddRepository<CachingTestRepository>()
+			.AddRepository<CachingTestRepository>(_ => { })
 			.WithEasyCaching(opts => opts.CacheKeyPrefix = "myapp:");
 
 		var optionsDescriptor = services.FirstOrDefault(d =>
@@ -61,8 +61,8 @@ public class EasyCachingExtensionTests {
 	public void WithEasyCaching_WithOptionsAppliesToAllEntityTypes() {
 		var services = new ServiceCollection();
 		services.AddRepositoryContext()
-			.AddRepository<CachingTestRepository>()
-			.AddRepository<SecondCachingRepository>()
+			.AddRepository<CachingTestRepository>(_ => { })
+			.AddRepository<SecondCachingRepository>(_ => { })
 			.WithEasyCaching(opts => opts.DefaultExpiration = TimeSpan.FromHours(1));
 
 		var optionsForFirst = services.FirstOrDefault(d =>

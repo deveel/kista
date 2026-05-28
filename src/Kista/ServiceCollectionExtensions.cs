@@ -72,7 +72,7 @@ namespace Kista {
 		/// </exception>
 		[Obsolete("Use AddRepositoryContext().AddRepository() instead.", false)]
 		public static IServiceCollection AddRepository(this IServiceCollection services, Type repositoryType, ServiceLifetime lifetime = ServiceLifetime.Scoped) {
-			ArgumentNullException.ThrowIfNull(repositoryType, nameof(repositoryType));
+			ArgumentNullException.ThrowIfNull(repositoryType);
 
 			if (!repositoryType.IsClass || repositoryType.IsAbstract)
 				throw new ArgumentException($"The type '{repositoryType}' is not a valid repository type", nameof(repositoryType));

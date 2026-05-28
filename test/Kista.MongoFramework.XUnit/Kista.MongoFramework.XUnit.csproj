@@ -12,13 +12,14 @@
 
 
   <ItemGroup>
-    <PackageReference Include="Testcontainers" Version="3.5.0" />
-    <PackageReference Include="Testcontainers.MongoDb" Version="3.5.0" />
+    <PackageReference Include="Testcontainers" Version="4.12.0" />
+    <PackageReference Include="Testcontainers.MongoDb" Version="4.12.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Kista.MongoFramework.MultiTenant\Kista.MongoFramework.MultiTenant.csproj" />
     <ProjectReference Include="..\..\src\Kista.MongoFramework\Kista.MongoFramework.csproj" />
+    <ProjectReference Include="..\..\src\Kista.Owners\Kista.Owners.csproj" />
     <ProjectReference Include="..\Kista.Testing\Kista.Testing.csproj" />
   </ItemGroup>
 

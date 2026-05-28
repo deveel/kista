@@ -12,7 +12,7 @@ public class RepositoryRegistrationIntegrationTests {
 	public void AddRepositoryContext_AddRepository_ResolvesFromDI() {
 		var services = new ServiceCollection();
 		services.AddRepositoryContext()
-			.AddRepository<SimpleTestRepository>();
+			.AddRepository<SimpleTestRepository>(_ => { });
 
 		var provider = services.BuildServiceProvider();
 		var repo = provider.GetService<IRepository<SimpleTestEntity>>();
@@ -24,7 +24,7 @@ public class RepositoryRegistrationIntegrationTests {
 	public void AddRepositoryContext_AddRepository_ResolvesConcreteType() {
 		var services = new ServiceCollection();
 		services.AddRepositoryContext()
-			.AddRepository<SimpleTestRepository>();
+			.AddRepository<SimpleTestRepository>(_ => { });
 
 		var provider = services.BuildServiceProvider();
 		var repo = provider.GetService<SimpleTestRepository>();
@@ -35,7 +35,7 @@ public class RepositoryRegistrationIntegrationTests {
 	public void AddRepositoryContext_AddRepositoryWithKey_ResolvesTwoParameterInterface() {
 		var services = new ServiceCollection();
 		services.AddRepositoryContext()
-			.AddRepository<TestRepositoryWithKey>();
+			.AddRepository<TestRepositoryWithKey>(_ => { });
 
 		var provider = services.BuildServiceProvider();
 
@@ -79,7 +79,7 @@ public class RepositoryRegistrationIntegrationTests {
 	public void AddRepositoryContext_AddRepositoryCustomInterface_ResolvesAllContracts() {
 		var services = new ServiceCollection();
 		services.AddRepositoryContext()
-			.AddRepository<CustomInterfaceTestRepository>();
+			.AddRepository<CustomInterfaceTestRepository>(_ => { });
 
 		var provider = services.BuildServiceProvider();
 
@@ -92,8 +92,8 @@ public class RepositoryRegistrationIntegrationTests {
 	public void AddRepositoryContext_AddRepositoryWithDifferentLifetimes() {
 		var services = new ServiceCollection();
 		services.AddRepositoryContext()
-			.AddRepository<SimpleTestRepository>(ServiceLifetime.Singleton)
-			.AddRepository<AnotherTestRepository>(ServiceLifetime.Transient);
+			.AddRepository<SimpleTestRepository>(_ => { }, ServiceLifetime.Singleton)
+			.AddRepository<AnotherTestRepository>(_ => { }, ServiceLifetime.Transient);
 
 		var provider = services.BuildServiceProvider();
 
@@ -109,9 +109,9 @@ public class RepositoryRegistrationIntegrationTests {
 	[Fact]
 	public void AddRepositoryContext_MultipleRepositories_TracksAllTypes() {
 		var services = new ServiceCollection();
-		var builder = services.AddRepositoryContext()
-			.AddRepository<SimpleTestRepository>()
-			.AddRepository<AnotherTestRepository>();
+		var builder = services.AddRepositoryContext();
+		builder.AddRepository<SimpleTestRepository>(_ => { });
+		builder.AddRepository<AnotherTestRepository>(_ => { });
 
 		Assert.Contains(typeof(SimpleTestRepository), builder.RegisteredRepositoryTypes);
 		Assert.Contains(typeof(AnotherTestRepository), builder.RegisteredRepositoryTypes);
@@ -120,9 +120,9 @@ public class RepositoryRegistrationIntegrationTests {
 	[Fact]
 	public void AddRepositoryContext_MultipleRepositories_TracksAllEntityTypes() {
 		var services = new ServiceCollection();
-		var builder = services.AddRepositoryContext()
-			.AddRepository<SimpleTestRepository>()
-			.AddRepository<AnotherTestRepository>();
+		var builder = services.AddRepositoryContext();
+		builder.AddRepository<SimpleTestRepository>(_ => { });
+		builder.AddRepository<AnotherTestRepository>(_ => { });
 
 		Assert.Contains(typeof(SimpleTestEntity), builder.RegisteredEntityTypes);
 		Assert.Contains(typeof(AnotherTestEntity), builder.RegisteredEntityTypes);
@@ -132,9 +132,9 @@ public class RepositoryRegistrationIntegrationTests {
 	[Fact]
 	public void AddRepositoryContext_DuplicateRegistration_DoesNotDuplicate() {
 		var services = new ServiceCollection();
-		var builder = services.AddRepositoryContext()
-			.AddRepository<SimpleTestRepository>()
-			.AddRepository<SimpleTestRepository>();
+		var builder = services.AddRepositoryContext();
+		builder.AddRepository<SimpleTestRepository>(_ => { });
+		builder.AddRepository<SimpleTestRepository>(_ => { });
 
 		Assert.Single(builder.RegisteredRepositoryTypes.Where(t => t == typeof(SimpleTestRepository)));
 	}
@@ -203,8 +203,8 @@ public class RepositoryRegistrationIntegrationTests {
 		var services = new ServiceCollection();
 		var builder = services.AddRepositoryContext();
 		var result = builder
-			.AddRepository<SimpleTestRepository>()
-			.AddRepository<AnotherTestRepository>();
+			.AddRepository<SimpleTestRepository>(_ => { })
+			.AddRepository<AnotherTestRepository>(_ => { });
 
 		Assert.Same(builder, result);
 	}

@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Kista.InMemory\Kista.InMemory.csproj" />
     <ProjectReference Include="..\..\src\Kista.Manager.AspNetCore\Kista.Manager.AspNetCore.csproj" />
+    <ProjectReference Include="..\..\src\Kista.Owners\Kista.Owners.csproj" />
     <ProjectReference Include="..\Kista.Management.Testing\Kista.Management.Testing.csproj" />
     <ProjectReference Include="..\Kista.Testing.Utils\Kista.Testing.Utils.csproj" />
   </ItemGroup>

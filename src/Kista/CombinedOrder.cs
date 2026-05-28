@@ -36,7 +36,7 @@ namespace Kista {
 		/// Thrown if the given list of sorts is empty.
 		/// </exception>
 		public CombinedOrder(IEnumerable<IQueryOrder> sorts) {
-			ArgumentNullException.ThrowIfNull(sorts, nameof(sorts));
+			ArgumentNullException.ThrowIfNull(sorts);
 
 			var list = sorts.ToList();
 
@@ -62,7 +62,7 @@ namespace Kista {
 		/// the rules of this instance with the given one.
 		/// </returns>
 		public CombinedOrder Combine(IQueryOrder sort) {
-			ArgumentNullException.ThrowIfNull(sort, nameof(sort));
+			ArgumentNullException.ThrowIfNull(sort);
 
 			var list = new List<IQueryOrder>(sorts);
 			if (sort is CombinedOrder combinedSort) {

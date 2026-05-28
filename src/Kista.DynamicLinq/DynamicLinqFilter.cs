@@ -74,8 +74,8 @@ namespace Kista {
 		/// Thrown if either <paramref name="paramName"/> or <paramref name="expression"/> is <c>null</c>.
 		/// </exception>
 		public DynamicLinqFilter(string paramName, string expression, IExpressionCache? cache = null) {
-			ArgumentNullException.ThrowIfNull(paramName, nameof(paramName));
-			ArgumentNullException.ThrowIfNull(expression, nameof(expression));
+			ArgumentNullException.ThrowIfNull(paramName);
+			ArgumentNullException.ThrowIfNull(expression);
 
 			ParameterName = paramName;
 			Expression = expression;

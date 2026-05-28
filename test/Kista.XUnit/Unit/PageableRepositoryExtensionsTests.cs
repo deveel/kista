@@ -62,6 +62,36 @@ public class PageableRepositoryExtensionsTests
 		Assert.Equal(2, result.Items!.Count);
 	}
 
+	[Fact]
+	public void RepositoryExtensions_GetPage_QueryableOnly_Works() {
+		var list = new List<Person> { new Person(), new Person(), new Person() };
+		IRepository<Person, object> repo = list.AsRepository();
+		var page = repo.GetPage(new PageQuery<Person>(1, 2));
+		Assert.Equal(2, page.Items.Count);
+	}
+
+	[Fact]
+	public async Task RepositoryExtensions_GetPageAsync_QueryablePath_Works() {
+		IRepository<Person, object> repo = new List<Person> { new Person { FirstName = "A" }, new Person { FirstName = "B" } }.AsRepository();
+		var page = await repo.GetPageAsync(new PageQuery<Person>(1, 10));
+		Assert.NotNull(page);
+	}
+
+	[Fact]
+	public void RepositoryWrapper_GetPage_Sync_FromPageable() {
+		var repo = new List<Person> { new Person { FirstName = "A" }, new Person { FirstName = "B" }, new Person { FirstName = "C" } }.AsRepository();
+		var filterable = (IFilterableRepository<Person>)repo;
+		var page = filterable.GetPage(new PageQuery<Person>(1, 2));
+		Assert.Equal(2, page.Items.Count);
+	}
+
+	[Fact]
+	public async Task RepositoryExtensions_GetPageAsync_WithPageAndSize() {
+		IRepository<Person, object> repo = new List<Person> { new Person(), new Person(), new Person() }.AsRepository();
+		var page = await repo.GetPageAsync(1, 2);
+		Assert.Equal(2, page.Items.Count);
+	}
+
 	/// <summary>
 	/// An in-memory <see cref="IPageableRepository{Person, string}"/> backed by a <see cref="List{Person}"/>,
 	/// used to test synchronous and asynchronous pagination extension methods.

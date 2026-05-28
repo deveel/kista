@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <ItemGroup>
-        <PackageReference Include="Testcontainers" Version="3.5.0" />
-        <PackageReference Include="Testcontainers.PostgreSql" Version="3.5.0" />
+        <PackageReference Include="Testcontainers" Version="4.12.0" />
+        <PackageReference Include="Testcontainers.PostgreSql" Version="4.12.0" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
@@ -52,6 +52,7 @@
     <ItemGroup>
         <ProjectReference Include="..\..\src\Kista.EntityFramework\Kista.EntityFramework.csproj" />
         <ProjectReference Include="..\..\src\Kista.EntityFramework.MultiTenant\Kista.EntityFramework.MultiTenant.csproj" />
+        <ProjectReference Include="..\..\src\Kista.Owners\Kista.Owners.csproj" />
         <ProjectReference Include="..\Kista.Management.Testing\Kista.Management.Testing.csproj" />
         <ProjectReference Include="..\Kista.Testing\Kista.Testing.csproj" />
     </ItemGroup>

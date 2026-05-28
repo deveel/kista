@@ -30,7 +30,7 @@ namespace Kista {
 		/// An optional sort to apply to the query.
 		/// </param>
 		public Query(IQueryFilter filter, IQueryOrder? sort = null) {
-			ArgumentNullException.ThrowIfNull(filter, nameof(filter));
+			ArgumentNullException.ThrowIfNull(filter);
 
 			Filter = filter;
 			Order = sort;

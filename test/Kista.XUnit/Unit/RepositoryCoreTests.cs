@@ -809,6 +809,99 @@ public class RepositoryCoreTests {
         var resolved = provider.GetService<IRepositorySeedDataProvider<SeedEntity>>();
         Assert.NotNull(resolved);
     }
+
+    private sealed class NonOverrideServicesRepo : List<Person>, IRepository<Person> {
+        public object? GetEntityKey(Person entity) => entity.Id;
+        public ValueTask AddAsync(Person entity, CancellationToken cancellationToken = default) { Add(entity); return ValueTask.CompletedTask; }
+        public ValueTask AddRangeAsync(IEnumerable<Person> entities, CancellationToken cancellationToken = default) { AddRange(entities); return ValueTask.CompletedTask; }
+        public ValueTask<bool> UpdateAsync(Person entity, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public ValueTask<bool> RemoveAsync(Person entity, CancellationToken cancellationToken = default) { var r = Remove(entity); return new ValueTask<bool>(r); }
+        public ValueTask RemoveRangeAsync(IEnumerable<Person> entities, CancellationToken cancellationToken = default) { foreach (var e in entities.ToList()) Remove(e); return ValueTask.CompletedTask; }
+        public ValueTask<Person?> FindAsync(object key, CancellationToken cancellationToken = default) => new ValueTask<Person?>(this.FirstOrDefault(x => x.Id == (string)key));
+    }
+
+    [Fact]
+    public void IRepository_DefaultServices_HitDefaultImplementation() {
+        var repo = new NonOverrideServicesRepo();
+        Assert.Null(((IRepository<Person, object>)repo).Services);
+    }
+
+    [Fact]
+    public async Task RepositoryWrapper_FindAll_WithFilter_FromFilterable() {
+        var repo = new List<Person> { new Person { FirstName = "A" }, new Person { FirstName = "B" } }.AsRepository();
+        var filterable = (IFilterableRepository<Person>)repo;
+        var result = await filterable.FindAllAsync(QueryFilter.Where<Person>(x => x.FirstName == "A"));
+        Assert.Single(result);
+    }
+
+    [Fact]
+    public async Task RepositoryWrapper_FindFirst_WithFilter() {
+        var repo = new List<Person> {
+            new Person { FirstName = "A", LastName = "X" },
+            new Person { FirstName = "B", LastName = "Y" }
+        }.AsRepository();
+        var filterable = (IFilterableRepository<Person>)repo;
+        var found = await filterable.FindFirstAsync(QueryFilter.Where<Person>(x => x.FirstName == "B"));
+        Assert.NotNull(found);
+    }
+
+    [Fact]
+    public async Task RepositoryExtensions_Count_TKey_Async_WithExpression() {
+        IRepository<Person, object> repo = new List<Person> { new Person { FirstName = "A" }, new Person { FirstName = "A" } }.AsRepository();
+        var count = await repo.CountAsync((Expression<Func<Person, bool>>)(x => x.FirstName == "A"));
+        Assert.Equal(2, count);
+    }
+
+    [Fact]
+    public async Task RepositoryExtensions_ExistsAsync_SingleT_IQueryFilter() {
+        var repo = new List<Person> { new Person { FirstName = "A" } }.AsRepository();
+        var result = await repo.ExistsAsync(QueryFilter.Where<Person>(x => x.FirstName == "A"));
+        Assert.True(result);
+    }
+
+    [Fact]
+    public async Task RepositoryWrapper_RemoveRange_WithMultipleItems() {
+        var list = new List<Person> { new Person { Id = "1" }, new Person { Id = "2" }, new Person { Id = "3" }, new Person { Id = "4" } };
+        var repo = list.AsRepository();
+        await repo.RemoveRangeAsync(new List<Person> { list[0], list[2] });
+        Assert.Equal(2, list.Count);
+    }
+
+    [Fact]
+    public async Task RepositoryWrapper_FindAsync_WithKey_WhenEntityExists() {
+        var entity = new Person { Id = "key1", FirstName = "Found" };
+        var repo = new List<Person> { entity }.AsRepository();
+        var result = await repo.FindAsync((object)"key1");
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public async Task RepositoryWrapper_FindAsync_WithKey_WhenNotExists() {
+        var repo = new List<Person> { new Person { Id = "key1" } }.AsRepository();
+        var result = await repo.FindAsync((object)"nonexistent");
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void RepositoryExtensions_AsQueryable_TKey_Success() {
+        var list = new List<Person> { new Person() };
+        IRepository<Person, object> repo = list.AsRepository();
+        var queryable = repo.AsQueryable();
+        Assert.NotNull(queryable);
+    }
+
+    [Fact]
+    public void RepositoryExtensions_AsQueryable_SingleTypeParam_Success() {
+        var repo = new List<Person> { new Person() }.AsRepository();
+        var queryable = repo.AsQueryable();
+        Assert.NotNull(queryable);
+    }
+
+    [Fact]
+    public void RepositoryExtensions_RequirePageable_NonPageable_Throws() {
+        IRepository<Person, object> repo = new NonFilterableRepo<Person>();
+        Assert.Throws<NotSupportedException>(() => repo.GetPage(new PageQuery<Person>(1, 10)));
+    }
 }
 
 #region Test types

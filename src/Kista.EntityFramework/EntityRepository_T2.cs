@@ -141,13 +141,12 @@ namespace Kista
 		/// </exception>
 		protected virtual TKey? ConvertEntityKey(TKey? key) {
 			if (key == null)
-				return default;
+				return default(TKey?);
 
 			var keyType = PrimaryKey.GetKeyType();
 
 			if (keyType == null)
-				// The entity has no primary key
-				return default;
+				return default(TKey?);
 
 			if (Nullable.GetUnderlyingType(keyType) != null)
 				keyType = Nullable.GetUnderlyingType(keyType);
@@ -198,7 +197,7 @@ namespace Kista
 		public virtual async ValueTask AddAsync(TEntity entity, CancellationToken cancellationToken = default) {
 			ThrowIfDisposed();
 
-			ArgumentNullException.ThrowIfNull(entity, nameof(entity));
+			ArgumentNullException.ThrowIfNull(entity);
 
 			Logger.TraceCreatingEntity(typeof(TEntity));
 
@@ -240,7 +239,7 @@ namespace Kista
 		public virtual async ValueTask<bool> RemoveAsync(TEntity entity, CancellationToken cancellationToken = default) {
 			ThrowIfDisposed();
 
-			ArgumentNullException.ThrowIfNull(entity, nameof(entity));
+			ArgumentNullException.ThrowIfNull(entity);
 
 			try {
 				var entityId = GetEntityKey(entity)!;
@@ -326,7 +325,7 @@ namespace Kista
 		public virtual async ValueTask<bool> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default) {
 			ThrowIfDisposed();
 
-			ArgumentNullException.ThrowIfNull(entity, nameof(entity));
+			ArgumentNullException.ThrowIfNull(entity);
 
 			try {
 				var entityId = GetEntityKey(entity)!;

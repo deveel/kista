@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Kista\Kista.csproj" />
+    <ProjectReference Include="..\..\src\Kista.Owners\Kista.Owners.csproj" />
     <ProjectReference Include="..\Kista.MultiTenant.Testing\Kista.MultiTenant.Testing.csproj" />
     <ProjectReference Include="..\Kista.Testing.Utils\Kista.Testing.Utils.csproj" />
   </ItemGroup>

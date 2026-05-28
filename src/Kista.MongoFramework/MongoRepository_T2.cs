@@ -206,7 +206,7 @@ namespace Kista {
 		/// </exception>
 		protected virtual TKey? ConvertKeyValue(TKey? key) {
 			if (key == null)
-				return default;
+				return default(TKey?);
 
 			var idType = key.GetType();
 			var entityDef = EntityMapping.GetOrCreateDefinition(typeof(TEntity));
@@ -461,7 +461,7 @@ namespace Kista {
 		/// underlying database.
 		/// </exception>
 		public virtual async ValueTask AddAsync(TEntity entity, CancellationToken cancellationToken = default) {
-			ArgumentNullException.ThrowIfNull(entity, nameof(entity));
+			ArgumentNullException.ThrowIfNull(entity);
 
 			ThrowIfDisposed();
 			cancellationToken.ThrowIfCancellationRequested();
@@ -485,7 +485,7 @@ namespace Kista {
 
 		/// <inheritdoc/>
 		public async ValueTask AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) {
-			ArgumentNullException.ThrowIfNull(entities, nameof(entities));
+			ArgumentNullException.ThrowIfNull(entities);
 
 			ThrowIfDisposed();
 			cancellationToken.ThrowIfCancellationRequested();
@@ -518,7 +518,7 @@ namespace Kista {
 
 		/// <inheritdoc/>
 		public virtual async ValueTask<bool> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default) {
-			ArgumentNullException.ThrowIfNull(entity, nameof(entity));
+			ArgumentNullException.ThrowIfNull(entity);
 
 			ThrowIfDisposed();
 			cancellationToken.ThrowIfCancellationRequested();
@@ -557,7 +557,7 @@ namespace Kista {
 
 		/// <inheritdoc/>
 		public virtual async ValueTask<bool> RemoveAsync(TEntity entity, CancellationToken cancellationToken = default) {
-			ArgumentNullException.ThrowIfNull(entity, nameof(entity));
+			ArgumentNullException.ThrowIfNull(entity);
 
 			ThrowIfDisposed();
 			cancellationToken.ThrowIfCancellationRequested();
@@ -588,7 +588,7 @@ namespace Kista {
 
 		/// <inheritdoc/>
 		public async ValueTask RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) {
-			ArgumentNullException.ThrowIfNull(entities, nameof(entities));
+			ArgumentNullException.ThrowIfNull(entities);
 
 			ThrowIfDisposed();
 			cancellationToken.ThrowIfCancellationRequested();
@@ -608,7 +608,7 @@ namespace Kista {
 
 		/// <inheritdoc/>
 		public async ValueTask<TEntity?> FindAsync(TKey key, CancellationToken cancellationToken = default) {
-			ArgumentNullException.ThrowIfNull(key, nameof(key));
+			ArgumentNullException.ThrowIfNull(key);
 
 			ThrowIfDisposed();
 			cancellationToken.ThrowIfCancellationRequested();
@@ -718,9 +718,11 @@ namespace Kista {
 		}
 
 		void IDisposable.Dispose() {
-			Dispose(disposing: true);
-			GC.SuppressFinalize(this);
-			disposed = true;
+			if (!disposed) {
+				Dispose(disposing: true);
+				GC.SuppressFinalize(this);
+				disposed = true;
+			}
 		}
 
 		/// <summary>

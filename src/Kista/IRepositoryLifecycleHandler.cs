@@ -6,6 +6,7 @@ namespace Kista {
 	/// for a specific entity type.
 	/// </summary>
 	/// <typeparam name="TEntity">The type of the entity managed by the handler.</typeparam>
+#pragma warning disable S2326 // Type parameter is used for type-safe DI registration even though not referenced in method signatures
 	public interface IRepositoryLifecycleHandler<TEntity> where TEntity : class {
 		/// <summary>
 		/// Checks whether the repository for the entity type exists.
@@ -36,4 +37,5 @@ namespace Kista {
 		/// <returns>A task representing the asynchronous operation.</returns>
 		ValueTask SeedAsync(object? seedData = null, CancellationToken cancellationToken = default);
 	}
+#pragma warning restore S2326
 }

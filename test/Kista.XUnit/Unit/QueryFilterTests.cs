@@ -156,5 +156,38 @@ public class QueryFilterTests
         Assert.True(result);
     }
 
-    #endregion
+	#endregion
+
+	[Fact]
+	public void QueryFilter_AsLambda_EmptyFilter_ReturnsTrue() {
+		var result = QueryFilter.Empty.AsLambda<Person>().Compile();
+		Assert.True(result(new Person()));
+	}
+
+	[Fact]
+	public void QueryFilter_Combine_TwoNonEmpty_ReturnsCombined() {
+		var f1 = QueryFilter.Where<Person>(x => x.FirstName == "A");
+		var f2 = QueryFilter.Where<Person>(x => x.LastName == "B");
+		var combined = QueryFilter.Combine(f1, f2);
+		Assert.NotNull(combined);
+	}
+
+	[Fact]
+	public void QueryFilter_Combine_FirstEmptySecondNotEmpty_ReturnsSecond() {
+		var f2 = QueryFilter.Where<Person>(x => x.FirstName == "A");
+		var combined = QueryFilter.Combine(QueryFilter.Empty, f2);
+		Assert.NotNull(combined);
+	}
+
+	[Fact]
+	public void QueryFilter_Combine_FirstNotEmptySecondEmpty_ReturnsFirst() {
+		var f1 = QueryFilter.Where<Person>(x => x.FirstName == "A");
+		var combined = QueryFilter.Combine(f1, QueryFilter.Empty);
+		Assert.NotNull(combined);
+	}
+
+	[Fact]
+	public void QueryFilter_Combine_BothEmpty_Throws() {
+		Assert.Throws<ArgumentException>(() => QueryFilter.Combine(QueryFilter.Empty, QueryFilter.Empty));
+	}
 }

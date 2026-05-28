@@ -194,7 +194,7 @@ namespace Kista {
 		/// </exception>
         [Obsolete("Use AddRepositoryContext().WithManagement() instead.", false)]
         public static IServiceCollection AddEntityManager(this IServiceCollection services, Type managerType, ServiceLifetime lifetime = ServiceLifetime.Scoped) {
-            ArgumentNullException.ThrowIfNull(managerType, nameof(managerType));
+            ArgumentNullException.ThrowIfNull(managerType);
 
 			if (!managerType.IsClass || managerType.IsAbstract)
 				throw new ArgumentException($"The type {managerType} is not a concrete class", nameof(managerType));
@@ -259,7 +259,7 @@ namespace Kista {
 		/// </returns>
 		[Obsolete("Use AddRepositoryContext().WithManagement() instead.", false)]
 		public static IServiceCollection AddEntityCacheOptions<TEntity>(this IServiceCollection services, Action<EntityCacheOptions> configure) where TEntity : class {
-			ArgumentNullException.ThrowIfNull(configure, nameof(configure));
+			ArgumentNullException.ThrowIfNull(configure);
 
 			services.AddOptions<EntityCacheOptions<TEntity>>()
 				.Configure(options => {
@@ -291,7 +291,7 @@ namespace Kista {
 		/// </exception>
 		[Obsolete("Use AddRepositoryContext().WithManagement() instead.", false)]
 		public static IServiceCollection AddEntityCacheOptions<TEntity>(this IServiceCollection services, string configSectionPath) where TEntity : class {
-			ArgumentNullException.ThrowIfNull(configSectionPath, nameof(configSectionPath));
+			ArgumentNullException.ThrowIfNull(configSectionPath);
 
 			services.AddOptions<EntityCacheOptions<TEntity>>()
 				.BindConfiguration(configSectionPath);
@@ -402,7 +402,7 @@ namespace Kista {
 		/// </exception>
 		[Obsolete("Use AddRepositoryContext().WithManagement() instead.", false)]
 		public static IServiceCollection AddEntityValidator(this IServiceCollection services, Type validatorType, ServiceLifetime lifetime = ServiceLifetime.Transient) {
-			ArgumentNullException.ThrowIfNull(validatorType, nameof(validatorType));
+			ArgumentNullException.ThrowIfNull(validatorType);
 
 			if (!validatorType.IsClass || validatorType.IsAbstract)
 				throw new ArgumentException($"The type {validatorType} is not a concrete class", nameof(validatorType));

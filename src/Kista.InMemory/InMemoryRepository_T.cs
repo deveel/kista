@@ -73,7 +73,7 @@ namespace Kista {
 		}
 
 		private string NormalizeKey(object key) {
-			ArgumentNullException.ThrowIfNull(key, nameof(key));
+			ArgumentNullException.ThrowIfNull(key);
 
 			if (key is string s)
 				return s;

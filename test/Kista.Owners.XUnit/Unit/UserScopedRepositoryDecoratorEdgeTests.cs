@@ -67,21 +67,22 @@ public class UserScopedRepositoryDecoratorEdgeTests
         var alice = CreateDefaultServices("alice");
         var aliceRepo = alice.GetRequiredService<IRepository<StringKeyEntity, string>>();
 
-        aliceRepo.AddAsync(new StringKeyEntity { Name = "Shared" }).GetAwaiter().GetResult();
+        aliceRepo.AddAsync(new StringKeyEntity { Name = "Alice's" }).GetAwaiter().GetResult();
 
         var bob = CreateDefaultServices("bob");
         var bobRepo = bob.GetRequiredService<IRepository<StringKeyEntity, string>>();
 
-        bobRepo.AddAsync(new StringKeyEntity { Name = "Shared" }).GetAwaiter().GetResult();
+        bobRepo.AddAsync(new StringKeyEntity { Name = "Bob's" }).GetAwaiter().GetResult();
 
-        var filter = new ExpressionQueryFilter<StringKeyEntity>(x => x.Name == "Shared");
+        var filter = new ExpressionQueryFilter<StringKeyEntity>(x => x.Name == "Alice's");
         var aliceFirst = aliceRepo.FindFirstAsync(filter).GetAwaiter().GetResult();
         Assert.NotNull(aliceFirst);
-        Assert.Equal("shared", aliceFirst.OwnerId);
+        Assert.Equal("alice", aliceFirst.OwnerId);
 
-        var bobFirst = bobRepo.FindFirstAsync(filter).GetAwaiter().GetResult();
+        var bobFilter = new ExpressionQueryFilter<StringKeyEntity>(x => x.Name == "Bob's");
+        var bobFirst = bobRepo.FindFirstAsync(bobFilter).GetAwaiter().GetResult();
         Assert.NotNull(bobFirst);
-        Assert.Equal("shared", bobFirst.OwnerId);
+        Assert.Equal("bob", bobFirst.OwnerId);
     }
 
     #endregion
@@ -142,8 +143,20 @@ public class UserScopedRepositoryDecoratorEdgeTests
     [Fact]
     public void Should_WorkWith_IntKeyEntity()
     {
-        var services = CreateDefaultServices("alice");
-        var repo = services.GetRequiredService<IRepository<IntKeyEntity, int>>();
+        var services = new ServiceCollection();
+        services.AddRepositoryContext()
+            .AddRepository<IntKeyRepo>(repo => repo
+                .WithOwnerScoping(), ServiceLifetime.Singleton);
+
+        var strategy = new StaticUserIdentifierStrategy<string>("alice");
+        var composite = new CompositeUserIdentifierStrategy<string>();
+        composite.Add(strategy);
+        services.AddSingleton(composite);
+        services.AddSingleton<IUserAccessor<string>>(
+            sp => new StrategyBasedUserAccessor<string>(composite, sp));
+
+        var sp = services.BuildServiceProvider();
+        var repo = sp.GetRequiredService<IRepository<IntKeyEntity, int>>();
 
         var entity = new IntKeyEntity { Name = "Test" };
         repo.AddAsync(entity).GetAwaiter().GetResult();
@@ -318,6 +331,11 @@ public class UserScopedRepositoryDecoratorEdgeTests
     public class StringKeyRepo : InMemoryRepository<StringKeyEntity, string>
     {
         public StringKeyRepo(IServiceProvider sp) : base(null, null, sp) { }
+    }
+
+    public class IntKeyRepo : InMemoryRepository<IntKeyEntity, int>
+    {
+        public IntKeyRepo(IServiceProvider sp) : base(null, null, sp) { }
     }
 
     public class GenericInMemoryRepo<TEntity, TKey> : InMemoryRepository<TEntity, TKey>

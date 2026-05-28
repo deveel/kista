@@ -1,13 +1,11 @@
 using Bogus;
 using Microsoft.Extensions.DependencyInjection;
 using System.ComponentModel.DataAnnotations;
-using Kista.Testing;
 
 namespace Kista.Owners.XUnit.Unit;
 
 [Trait("Category", "Integration")]
 [Trait("Layer", "Infrastructure")]
-[TestCaseOrderer("Kista.Testing.AlphabeticalOrderer", "Kista.Testing")]
 public class InMemoryUserRepositoryTestSuite
     : UserRepositoryTestSuite<InMemoryUserRepositoryTestSuite.TestBook, Guid, string>
 {

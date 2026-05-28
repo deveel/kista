@@ -3,6 +3,32 @@ using System.Reflection;
 
 namespace Kista
 {
+	/// <summary>
+	/// A decorator that wraps an <see cref="IRepository{TEntity, TKey}"/> to provide
+	/// automatic user scoping — assigning the current user as owner on writes and
+	/// filtering all reads by the current user's identity.
+	/// </summary>
+	/// <remarks>
+	/// <para>
+	/// The decorator is registered via Scrutor's <c>Decorate</c> method when
+	/// <see cref="RepositoryBuilderExtensions.WithOwnerScoping(RepositoryBuilder, System.Action{UserScopingOptions}?)"/>
+	/// is called. Consumers continue to resolve <c>IRepository&lt;TEntity, TKey&gt;</c> as usual;
+	/// the decorator intercepts all operations transparently.
+	/// </para>
+	/// <para>
+	/// The entity type must implement <see cref="IHaveOwner{TKey}"/>. The owner property is
+	/// discovered automatically by scanning for the <see cref="DataOwnerAttribute"/> attribute,
+	/// then falling back to a property named <c>"Owner"</c>.
+	/// </para>
+	/// <para>
+	/// The user identity is resolved via <see cref="IUserAccessor{TKey}"/>, which is typically
+	/// backed by a <see cref="CompositeUserIdentifierStrategy{TKey}"/> chain of strategies
+	/// (claims, query string, route values, static fallback, etc.).
+	/// </para>
+	/// </remarks>
+	/// <typeparam name="TEntity">The type of entity managed by the repository.</typeparam>
+	/// <typeparam name="TKey">The type of the entity's primary key.</typeparam>
+	/// <typeparam name="TUserKey">The type of the user identifier.</typeparam>
 	public class UserScopedRepositoryDecorator<TEntity, TKey, TUserKey>
 		: IUserRepository<TEntity, TKey, TUserKey>,
 		  IFilterableRepository<TEntity, TKey>,
@@ -16,28 +42,39 @@ namespace Kista
 		private readonly IUserAccessor<TUserKey> _userAccessor;
 		private readonly UserScopingOptions? _options;
 
+		/// <summary>
+		/// Initializes a new instance of the decorator.
+		/// </summary>
+		/// <param name="inner">The inner repository to wrap.</param>
+		/// <param name="userAccessor">The user accessor for resolving the current user identity.</param>
+		/// <param name="options">Optional scoping configuration. When <c>null</c>, defaults are used.</param>
+		/// <exception cref="System.ArgumentNullException">
+		/// Thrown when <paramref name="inner"/> or <paramref name="userAccessor"/> is <c>null</c>.
+		/// </exception>
 		public UserScopedRepositoryDecorator(
 			IRepository<TEntity, TKey> inner,
 			IUserAccessor<TUserKey> userAccessor,
 			UserScopingOptions? options = null)
 		{
-			_inner = inner ?? throw new ArgumentNullException(nameof(inner));
-			_userAccessor = userAccessor ?? throw new ArgumentNullException(nameof(userAccessor));
+			_inner = inner ?? throw new System.ArgumentNullException(nameof(inner));
+			_userAccessor = userAccessor ?? throw new System.ArgumentNullException(nameof(userAccessor));
 			_options = options;
 		}
 
+		/// <summary>
+		/// Gets the user accessor used to resolve the current user identity.
+		/// </summary>
 		public IUserAccessor<TUserKey> UserAccessor => _userAccessor;
 
 		private UserScopingOptions Options => _options ?? new UserScopingOptions();
 
-		// === IRepository<TEntity, TKey> ===
-
+		/// <inheritdoc />
 		public ValueTask<TEntity?> FindAsync(TKey key, CancellationToken cancellationToken = default)
 		{
 			var userId = _userAccessor.GetUserId();
 			if (userId == null)
 				return Options.ThrowWhenUserNotSet
-					? throw new InvalidOperationException("User context is not set")
+					? throw new System.InvalidOperationException("User context is not set")
 					: new ValueTask<TEntity?>(default(TEntity));
 
 			return FindScopedAsync(key, userId, cancellationToken);
@@ -55,12 +92,14 @@ namespace Kista
 			return entity;
 		}
 
+		/// <inheritdoc />
 		public ValueTask AddAsync(TEntity entity, CancellationToken cancellationToken = default)
 			=> ApplyOwnerAndCallAsync(entity, () => _inner.AddAsync(entity, cancellationToken));
 
+		/// <inheritdoc />
 		public ValueTask AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
 		{
-			ArgumentNullException.ThrowIfNull(entities);
+			System.ArgumentNullException.ThrowIfNull(entities);
 
 			var userId = _userAccessor.GetUserId();
 			if (userId != null)
@@ -72,41 +111,47 @@ namespace Kista
 			}
 			else if (Options.ThrowWhenUserNotSet)
 			{
-				throw new InvalidOperationException("User context is not set");
+				throw new System.InvalidOperationException("User context is not set");
 			}
 
 			return _inner.AddRangeAsync(entities, cancellationToken);
 		}
 
+		/// <inheritdoc />
 		public ValueTask<bool> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
 			=> _inner.UpdateAsync(entity, cancellationToken);
 
+		/// <inheritdoc />
 		public ValueTask<bool> RemoveAsync(TEntity entity, CancellationToken cancellationToken = default)
 			=> _inner.RemoveAsync(entity, cancellationToken);
 
+		/// <inheritdoc />
 		public ValueTask RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
 			=> _inner.RemoveRangeAsync(entities, cancellationToken);
 
+		/// <inheritdoc />
 		public TKey? GetEntityKey(TEntity entity) => _inner.GetEntityKey(entity);
 
+		/// <inheritdoc />
 		public IServiceProvider? Services => _inner.Services;
 
-		// === IFilterableRepository<TEntity, TKey> ===
-
+		/// <inheritdoc />
 		public ValueTask<IList<TEntity>> FindAllAsync(IQuery query, CancellationToken cancellationToken = default)
 			=> ApplyOwnerFilterAndCallAsync(query, q => _inner.FindAllAsync(q, cancellationToken));
 
+		/// <inheritdoc />
 		public ValueTask<TEntity?> FindFirstAsync(IQuery query, CancellationToken cancellationToken = default)
 			=> ApplyOwnerFilterAndCallAsync(query, q => _inner.FindFirstAsync(q, cancellationToken));
 
+		/// <inheritdoc />
 		public ValueTask<long> CountAsync(IQueryFilter filter, CancellationToken cancellationToken = default)
 			=> ApplyOwnerFilterAndCallAsync(filter, f => _inner.CountAsync(f, cancellationToken));
 
+		/// <inheritdoc />
 		public ValueTask<bool> ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken = default)
 			=> ApplyOwnerFilterAndCallAsync(filter, f => _inner.ExistsAsync(f, cancellationToken));
 
-		// === IPageableRepository<TEntity, TKey> ===
-
+		/// <inheritdoc />
 		public ValueTask<PageResult<TEntity>> GetPageAsync(PageQuery<TEntity> request, CancellationToken cancellationToken = default)
 			=> ApplyOwnerFilterAndCallAsync(request, r => _inner.GetPageAsync(r, cancellationToken));
 
@@ -114,7 +159,7 @@ namespace Kista
 
 		private ValueTask ApplyOwnerAndCallAsync(TEntity entity, Func<ValueTask> action)
 		{
-			ArgumentNullException.ThrowIfNull(entity);
+			System.ArgumentNullException.ThrowIfNull(entity);
 
 			var userId = _userAccessor.GetUserId();
 			if (userId != null)
@@ -123,7 +168,7 @@ namespace Kista
 			}
 			else if (Options.ThrowWhenUserNotSet)
 			{
-				throw new InvalidOperationException("User context is not set");
+				throw new System.InvalidOperationException("User context is not set");
 			}
 
 			return action();
@@ -135,7 +180,7 @@ namespace Kista
 			var userId = _userAccessor.GetUserId();
 			if (userId == null)
 				return Options.ThrowWhenUserNotSet
-					? throw new InvalidOperationException("User context is not set")
+					? throw new System.InvalidOperationException("User context is not set")
 					: Array.Empty<TEntity>();
 
 			var scopedQuery = ApplyOwnerToQuery(query, userId);
@@ -183,7 +228,7 @@ namespace Kista
 			var userId = _userAccessor.GetUserId();
 			if (userId == null)
 				return Options.ThrowWhenUserNotSet
-					? throw new InvalidOperationException("User context is not set")
+					? throw new System.InvalidOperationException("User context is not set")
 					: new PageResult<TEntity>(request, 0, Array.Empty<TEntity>());
 
 			var scopedRequest = ApplyOwnerToRequest(request, userId);
@@ -223,7 +268,7 @@ namespace Kista
 						(attrType.Namespace == "Kista" || attrType.Namespace == "Kista.Owners"))
 					{
 						if (prop.PropertyType != typeof(TUserKey))
-							throw new InvalidOperationException(
+							throw new System.InvalidOperationException(
 								$"Property '{prop.Name}' has type {prop.PropertyType.Name}, expected {typeof(TUserKey).Name}");
 						return prop;
 					}
@@ -232,10 +277,10 @@ namespace Kista
 
 			var ownerProp = entityType.GetProperty("Owner", BindingFlags.Public | BindingFlags.Instance);
 			if (ownerProp == null)
-				throw new InvalidOperationException(
+				throw new System.InvalidOperationException(
 					$"Entity {entityType.Name} has no [DataOwner] property and no 'Owner' property");
 			if (ownerProp.PropertyType != typeof(TUserKey))
-				throw new InvalidOperationException(
+				throw new System.InvalidOperationException(
 					$"Property 'Owner' has type {ownerProp.PropertyType.Name}, expected {typeof(TUserKey).Name}");
 			return ownerProp;
 		}

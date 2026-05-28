@@ -44,7 +44,7 @@ public class UserConfiguration : IHaveOwner<string>
 
 ### Automatic Owner Detection with `[DataOwner]` Attribute
 
-All repository drivers (EF Core, InMemory, MongoDB) support the `[DataOwner]` attribute to mark the owner property:
+Mark the owner property with the `[DataOwner]` attribute so the framework can automatically discover it:
 
 ```csharp
 public class UserConfiguration : IHaveOwner<string>
@@ -59,36 +59,55 @@ public class UserConfiguration : IHaveOwner<string>
 }
 ```
 
-This allows the framework to:
-- **Automatically set the owner** when adding new entities via `SetOwner()`
-- **Filter queries** by the current user (EF Core query filters, InMemory/MongoDB user repositories)
-- **Detect the owner property** without explicit configuration
+If no `[DataOwner]` attribute is found, the framework falls back to a property named `Owner`.
 
-## The User Repository Interface
+## Owner Scoping via Decorator Pattern
 
-The framework provides `IUserRepository<TEntity, TKey, TOwnerKey>` to represent a repository scoped to the current user:
+Kista uses a **decorator pattern** for user scoping. Any `IRepository<TEntity, TKey>` can be wrapped with `UserScopedRepositoryDecorator`, which automatically:
 
-```csharp
-public interface IUserRepository<TEntity, TKey, TOwnerKey>
-    : IRepository<TEntity, TKey>
-    where TEntity : class, IHaveOwner<TOwnerKey>
+- **Sets the owner** on new entities when added (via `IHaveOwner<TUserKey>.SetOwner()`)
+- **Filters all queries** by the current user's ID (via `IUserAccessor<TUserKey>`)
+- **Throws** when no user context is available (configurable)
+
+### Installation
+
+```bash
+dotnet add package Kista.Owners
 ```
 
-You can extend this interface to add domain-specific operations:
+### Registration
+
+Use `.WithOwnerScoping()` on the repository builder to enable owner scoping:
 
 ```csharp
-public interface IUserConfigurationRepository
-    : IUserRepository<UserConfiguration, string, string>
-{
-    Task<UserConfiguration?> FindByKeyAsync(
-        string userId, string configurationKey,
-        CancellationToken cancellationToken = default);
-}
+builder.Services.AddRepositoryContext()
+    .UseEntityFramework<AppDbContext>(b => b
+        .ConfigureDbContext(opts => opts.UseSqlServer("...")))
+    .AddRepository<UserConfigurationRepository>(repo => repo
+        .WithOwnerScoping(), ServiceLifetime.Scoped);
 ```
+
+The decorator is registered via [Scrutor](https://github.com/khellang/Scrutor) — it wraps the underlying repository transparently. Consumers continue to resolve `IRepository<TEntity, TKey>` as usual; the decorator intercepts all operations.
+
+### Options Configuration
+
+```csharp
+builder.Services.AddRepositoryContext()
+    .UseInMemory()
+    .AddRepository<UserConfigurationRepository>(repo => repo
+        .WithOwnerScoping(opts => {
+            opts.ThrowWhenUserNotSet = false;  // Don't throw when no user (returns empty)
+        }), ServiceLifetime.Singleton);
+```
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `ThrowWhenUserNotSet` | `true` | Throw `InvalidOperationException` when no user context is available |
+| `OwnerPropertyName` | `null` | Override automatic owner property discovery (use `[DataOwner]` instead) |
 
 ## User Identifier Resolution
 
-The user repository implementations rely on an `IUserAccessor<TKey>` service to resolve the current user's identity at runtime:
+The decorator relies on an `IUserAccessor<TKey>` service to resolve the current user's identity at runtime:
 
 ```csharp
 public interface IUserAccessor<TKey>
@@ -105,10 +124,10 @@ Kista uses a composable strategy pattern for user resolution. Multiple strategie
 
 | Strategy | Package | Description |
 |----------|---------|-------------|
-| `StaticUserIdentifierStrategy<TKey>` | `Kista` | Returns a fixed user ID (ideal for background jobs, system users, disconnected scenarios) |
-| `ClaimUserIdentifierStrategy<TKey>` | `Kista.Manager.AspNetCore` | Resolves from JWT/auth claims |
-| `QueryStringUserIdentifierStrategy<TKey>` | `Kista.Manager.AspNetCore` | Resolves from HTTP query string parameters |
-| `RouteUserIdentifierStrategy<TKey>` | `Kista.Manager.AspNetCore` | Resolves from HTTP route values |
+| `StaticUserIdentifierStrategy<TKey>` | `Kista.Owners` | Returns a fixed user ID (ideal for background jobs, system users, disconnected scenarios) |
+| `ClaimUserIdentifierStrategy<TKey>` | `Kista.Owners` | Resolves from JWT/auth claims |
+| `QueryStringUserIdentifierStrategy<TKey>` | `Kista.Owners` | Resolves from HTTP query string parameters |
+| `RouteUserIdentifierStrategy<TKey>` | `Kista.Owners` | Resolves from HTTP route values |
 
 #### Registration Examples
 
@@ -139,7 +158,7 @@ builder.Services.AddHttpUserAccessor<string>(b => {
 });
 ```
 
-**Custom strategy chain via repository builder:**
+**Chained on RepositoryContextBuilder (requires `Kista.Manager.AspNetCore`):**
 
 ```csharp
 builder.Services.AddRepositoryContext()
@@ -175,7 +194,6 @@ public class HeaderUserIdentifierStrategy<TKey> : IUserIdentifierStrategy<TKey>
         if (value == null)
             return default;
 
-        // Convert string to TKey (handles string, Guid, int, etc.)
         return (TKey)Convert.ChangeType(value, typeof(TKey));
     }
 }
@@ -186,6 +204,112 @@ builder.Services.AddUserAccessor<string>(b => {
     b.AddStatic("anonymous");
 });
 ```
+
+## Complete Example: User-Scoped Entity with Owner Scoping
+
+```csharp
+// Entity definition
+public class UserNote : IHaveOwner<Guid>, IHaveTimeStamp
+{
+    public Guid Id { get; set; }
+    
+    [DataOwner]
+    public Guid OwnerId { get; set; }
+
+    public DateTimeOffset? CreatedAtUtc { get; set; }
+    public DateTimeOffset? UpdatedAtUtc { get; set; }
+
+    public string Title { get; set; }
+    public string Content { get; set; }
+
+    Guid IHaveOwner<Guid>.Owner => OwnerId;
+    void IHaveOwner<Guid>.SetOwner(Guid owner) => OwnerId = owner;
+}
+
+// Repository
+public interface IUserNoteRepository : IRepository<UserNote, Guid>
+{
+}
+
+public class UserNoteRepository : InMemoryRepository<UserNote, Guid>, IUserNoteRepository
+{
+    public UserNoteRepository(IServiceProvider sp) : base(null, null, sp) { }
+}
+
+// Registration (ASP.NET Core)
+builder.Services.AddRepositoryContext()
+    .UseInMemory(b => b.WithLifecycle())
+    .AddRepository<UserNoteRepository>(repo => repo
+        .WithOwnerScoping(), ServiceLifetime.Singleton)
+    .AddHttpUserAccessor<Guid>(b => {
+        b.AddClaim("sub");
+        b.AddQueryString("user_id");
+    });
+
+// Usage in controller
+[ApiController]
+[Route("api/notes")]
+public class NotesController : ControllerBase
+{
+    private readonly IRepository<UserNote, Guid> _notes;
+
+    public NotesController(IRepository<UserNote, Guid> notes)
+    {
+        _notes = notes;
+    }
+
+    [HttpGet]
+    public async Task<IEnumerable<UserNote>> GetNotes()
+    {
+        // Automatically filtered by current user
+        return await _notes.FindAllAsync();
+    }
+
+    [HttpPost]
+    public async Task<UserNote> CreateNote(CreateNoteRequest request)
+    {
+        var note = new UserNote {
+            Title = request.Title,
+            Content = request.Content
+        };
+
+        // OwnerId is set automatically by the decorator
+        return await _notes.AddAsync(note);
+    }
+}
+```
+
+## EF Core Query Filter Configuration
+
+You can also configure owner-based query filters directly in `OnModelCreating` (EF Core only):
+
+```csharp
+public class MyDbContext : DbContext
+{
+    private readonly IUserAccessor<string> _userAccessor;
+
+    public MyDbContext(DbContextOptions options, IUserAccessor<string> userAccessor)
+        : base(options)
+    {
+        _userAccessor = userAccessor;
+    }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        // Auto-detects [DataOwner] attribute
+        modelBuilder.Entity<UserConfiguration>()
+            .HasOwnerFilter(_userAccessor);
+
+        // Or specify the property name explicitly
+        modelBuilder.Entity<Order>()
+            .HasOwnerFilter("OwnerId", _userAccessor);
+    }
+}
+```
+
+This ensures that all queries automatically filter by the current user, providing data isolation at the database level.
+
+> **Note:** The `HasOwnerFilter()` method is specific to EF Core. For InMemory, the decorator handles owner filtering automatically. For MongoDB, use the decorator pattern as shown above.
 
 ## Automatic Timestamps
 
@@ -245,183 +369,52 @@ Console.WriteLine(article.UpdatedAtUtc); // 2025-01-15T11:45:00Z
 
 > **Note:** Timestamps are only set if the `Time` service (ITimeProvider) is registered in the DI container. This is typically done automatically in ASP.NET Core applications.
 
-## Entity Framework Core User Repository
+## Migration Guide
 
-For EF Core, the package `Kista.EntityFramework` provides `EntityUserRepository<TEntity, TKey, TOwnerKey>` as a base class for user-scoped repositories:
+If you were using the old user repository pattern (pre-Kista.Owners decorator), here's what changed:
+
+### Before (old pattern)
 
 ```csharp
-public class UserConfigurationRepository
-    : EntityUserRepository<UserConfiguration, string, string>,
-      IUserConfigurationRepository
+// Old: separate user repository classes
+public class UserNoteRepository : EntityUserRepository<UserNote, Guid, Guid>
 {
-    public UserConfigurationRepository(
-        MyDbContext context,
-        IUserAccessor<string> userAccessor,
-        ILogger<UserConfigurationRepository>? logger = null)
-        : base(context, userAccessor, logger) { }
-
-    public async Task<UserConfiguration?> FindByKeyAsync(
-        string userId, string configurationKey,
-        CancellationToken cancellationToken = default)
-    {
-        return await AsQueryable()
-            .FirstOrDefaultAsync(
-                x => x.UserId == userId && x.ConfigurationKey == configurationKey,
-                cancellationToken);
-    }
+    public UserNoteRepository(DbContext ctx, IUserAccessor<Guid> accessor, ILogger? logger = null)
+        : base(ctx, accessor, logger) { }
 }
+
+// Old: user repositories registered directly
+builder.Services.AddScoped<IUserNoteRepository, UserNoteRepository>();
 ```
 
-The base class automatically:
-- Filters all queries by the owner key from `IUserAccessor<TKey>`
-- Sets the owner on new entities via `SetOwner()` when adding
-
-## InMemory User Repository
-
-The `Kista.InMemory` package provides `InMemoryUserRepository<TEntity, TKey, TUserKey>` for testing and lightweight scenarios:
+### After (decorator pattern)
 
 ```csharp
-public class InMemoryUserConfigurationRepository
-    : InMemoryUserRepository<UserConfiguration, string, string>,
-      IUserConfigurationRepository
+// New: regular repository, decorated with owner scoping
+public class UserNoteRepository : EntityRepository<UserNote>
 {
-    public InMemoryUserConfigurationRepository(
-        IUserAccessor<string> userAccessor,
-        IEnumerable<UserConfiguration>? initialData = null)
-        : base(userAccessor, initialData) { }
-}
-```
-
-## MongoDB User Repository
-
-The `Kista.MongoFramework` package provides `MongoUserRepository<TEntity, TKey, TUserKey>` for MongoDB-backed user repositories:
-
-```csharp
-public class MongoUserConfigurationRepository
-    : MongoUserRepository<UserConfiguration, string, string>,
-      IUserConfigurationRepository
-{
-    public MongoUserConfigurationRepository(
-        IMongoDbContext context,
-        IUserAccessor<string> userAccessor,
-        ILogger<MongoUserConfigurationRepository>? logger = null)
-        : base(context, userAccessor, logger) { }
-}
-```
-
-All user repository implementations across drivers:
-- **Automatically set the owner** when adding entities (via `IHaveOwner<TUserKey>.SetOwner()`)
-- **Filter by current user** on `FindAsync()` operations
-- **Support the `[DataOwner]` attribute** for automatic owner property detection
-
-### EF Core Query Filter Configuration
-
-You can also configure owner-based query filters directly in `OnModelCreating` (EF Core only):
-
-```csharp
-public class MyDbContext : DbContext
-{
-    private readonly IUserAccessor<string> _userAccessor;
-
-    public MyDbContext(DbContextOptions options, IUserAccessor<string> userAccessor)
-        : base(options)
-    {
-        _userAccessor = userAccessor;
-    }
-
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        // Auto-detects [DataOwner] attribute
-        modelBuilder.Entity<UserConfiguration>()
-            .HasOwnerFilter(_userAccessor);
-
-        // Or specify the property name explicitly
-        modelBuilder.Entity<Order>()
-            .HasOwnerFilter("OwnerId", _userAccessor);
-    }
-}
-```
-
-This ensures that all queries automatically filter by the current user, providing data isolation at the database level.
-
-> **Note:** The `HasOwnerFilter()` method is specific to EF Core. For InMemory and MongoDB, use the respective `InMemoryUserRepository` and `MongoUserRepository` classes which handle owner filtering automatically.
-
-## Complete Example: User-Scoped Entity with Timestamps
-
-```csharp
-// Entity definition
-public class UserNote : IHaveOwner<Guid>, IHaveTimeStamp
-{
-    public Guid Id { get; set; }
-    
-    [DataOwner]
-    public Guid OwnerId { get; set; }
-
-    public DateTimeOffset? CreatedAtUtc { get; set; }
-    public DateTimeOffset? UpdatedAtUtc { get; set; }
-
-    public string Title { get; set; }
-    public string Content { get; set; }
-
-    Guid IHaveOwner<Guid>.Owner => OwnerId;
-    void IHaveOwner<Guid>.SetOwner(Guid owner) => OwnerId = owner;
+    public UserNoteRepository(DbContext ctx) : base(ctx) { }
 }
 
-// Repository
-public interface IUserNoteRepository : IUserRepository<UserNote, Guid, Guid>
-{
-}
-
-public class UserNoteRepository 
-    : EntityUserRepository<UserNote, Guid, Guid>, IUserNoteRepository
-{
-    public UserNoteRepository(
-        AppDbContext context,
-        IUserAccessor<Guid> userAccessor,
-        ILogger<UserNoteRepository>? logger = null)
-        : base(context, userAccessor, logger) { }
-}
-
-// Registration (ASP.NET Core)
+// New: decorator registered via WithOwnerScoping
 builder.Services.AddRepositoryContext()
-    .UseEntityFramework<AppDbContext>(b => b
-        .ConfigureDbContext(opts => opts.UseSqlServer("...")))
-    .AddRepository<UserNoteRepository>()
-    .WithHttpUserAccessor<Guid>(b => {
-        b.AddClaim("sub");
-        b.AddQueryString("user_id");
-    });
-
-// Usage in controller
-[ApiController]
-[Route("api/notes")]
-public class NotesController : ControllerBase
-{
-    private readonly IUserNoteRepository _notes;
-
-    public NotesController(IUserNoteRepository notes)
-    {
-        _notes = notes;
-    }
-
-    [HttpGet]
-    public async Task<IEnumerable<UserNote>> GetNotes()
-    {
-        // Automatically filtered by current user
-        return await _notes.FindAllAsync();
-    }
-
-    [HttpPost]
-    public async Task<UserNote> CreateNote(CreateNoteRequest request)
-    {
-        var note = new UserNote {
-            Title = request.Title,
-            Content = request.Content
-        };
-
-        // OwnerId is set automatically by EntityUserRepository
-        // CreatedAtUtc is set automatically by EntityManager
-        return await _notes.AddAsync(note);
-    }
-}
+    .UseEntityFramework<AppDbContext>(...)
+    .AddRepository<UserNoteRepository>(repo => repo
+        .WithOwnerScoping(), ServiceLifetime.Scoped);
 ```
+
+### Key Changes
+
+| Before | After |
+|--------|-------|
+| `EntityUserRepository<TEntity, TKey, TOwnerKey>` base class | `.WithOwnerScoping()` on any repository |
+| `InMemoryUserRepository<TEntity, TKey, TOwnerKey>` | Decorator wraps `InMemoryRepository<TEntity, TKey>` |
+| `MongoUserRepository<TEntity, TKey, TOwnerKey>` | Decorator wraps `MongoRepository<TEntity>` |
+| `IUserRepository<TEntity, TKey, TOwnerKey>` interface | No longer needed; use `IRepository<TEntity, TKey>` |
+| User accessor passed to repository constructor | Resolved from DI by the decorator |
+
+### Breaking Changes
+
+- `IUserRepository<,,>`, `InMemoryUserRepository<,,>`, `EntityUserRepository<,,>`, and `MongoUserRepository<,,>` have been **removed**.
+- Driver packages no longer depend on `Kista.Owners`; you must add it explicitly to use owner scoping.
+- `Kista.Owners` types now live in the `Kista` namespace (no `using Kista.Owners;` needed).

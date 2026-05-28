@@ -37,6 +37,7 @@ Features: Unified Repository Setup Builder, QueryBuilder Execution Extensions, P
 - **Builder Extensions**: `WithLifecycleHandler<TEntity, THandler>()` and `WithLifecycleProfile<TProfile>()` for fluent registration
 - **Default Lifecycle Profile**: `ConfigureLifecycle()` now auto-registers `DefaultRepositoryLifecycleProfile`
 - **Sample Application**: `Kista.SampleApp` with full lifecycle management and CRUD endpoints
+- **Owner Scoping via Decorator**: `Kista.Owners` package with `UserScopedRepositoryDecorator` — automatic owner assignment and query filtering via `.WithOwnerScoping()` (replaces old `IUserRepository`/`EntityUserRepository`/`InMemoryUserRepository` pattern)
 
 ## Milestone 3: v1.7.0 — "Entity Lifecycle"
 

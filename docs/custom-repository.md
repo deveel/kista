@@ -26,17 +26,16 @@ public interface IUserRepository<TUser> : IRepository<TUser> where TUser : class
 
 ## Registering the Custom Repository
 
-Once you have defined your custom repository, you need to register it in the `Startup` class, in the `ConfigureServices` method:
+Once you have defined your custom repository, you need to register it using the fluent builder API:
 
 ```csharp
-public void ConfigureServices(IServiceCollection services) {
-    // ...
-    services.AddRepository<UserRepository>();
-    // ...
-}
+// Program.cs
+builder.Services.AddRepositoryContext()
+    .UseInMemory()
+    .AddRepository<UserRepository>();
 ```
 
-The provided `AddRepository` extension method will register the repository as a scoped service by default, but you can still specify the lifetime you prefer.
+The `AddRepository` method will register the repository as a scoped service by default, but you can still specify the lifetime you prefer.
 
 The method is smart enough to scan the type specified for its base classes and interfaces that implement the `IRepository<TEntity>` interface, and register them as well.
 

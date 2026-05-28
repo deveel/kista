@@ -59,6 +59,7 @@ dotnet add package Kista
 | [_Entity Manager_](entity-manager/) | `Kista.Manager` | Business layer with validation, normalization, caching, and event sourcing. |
 | [_Entity Manager EasyCaching_](entity-manager/caching-entities.md) | `Kista.Manager.EasyCaching` | Second-level caching for EntityManager via [EasyCaching](https://github.com/dotnetcore/EasyCaching). |
 | [_Entity Manager ASP.NET Core_](entity-manager/http-request-cancellation.md) | `Kista.Manager.AspNetCore` | ASP.NET Core integration for automatic HTTP request cancellation. |
+| [_User Entities / Owner Scoping_](user-entities.md) | `Kista.Owners` | Decorator-based user scoping with automatic owner assignment and query filtering. |
 | [_Entity States_](#) | `Kista.States.Core` | Entity state management abstractions (experimental). |
 
 ## Instrumentation

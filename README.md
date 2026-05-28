@@ -68,6 +68,7 @@ The framework is organized into a _kernel_ package (providing interfaces and abs
 | `Kista.Manager.DynamicLinq` | Dynamic LINQ query extensions for the Entity Manager                                                          | [![NuGet](https://img.shields.io/nuget/v/Kista.Manager.DynamicLinq.svg)](https://www.nuget.org/packages/Kista.Manager.DynamicLinq/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.Manager.DynamicLinq.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.Manager.DynamicLinq) |
 | `Kista.Manager.EasyCaching` | Second-level caching for the Entity Manager via [EasyCaching](https://github.com/dotnetcore/EasyCaching)      | [![NuGet](https://img.shields.io/nuget/v/Kista.Manager.EasyCaching.svg)](https://www.nuget.org/packages/Kista.Manager.EasyCaching/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.Manager.EasyCaching.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.Manager.EasyCaching) |
 | `Kista.Manager.AspNetCore` | ASP.NET Core integration for automatic HTTP request cancellation                                              | [![NuGet](https://img.shields.io/nuget/v/Kista.Manager.AspNetCore.svg)](https://www.nuget.org/packages/Kista.Manager.AspNetCore/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.Manager.AspNetCore.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.Manager.AspNetCore) |
+| `Kista.Owners`             | Decorator-based user scoping with automatic owner assignment and query filtering                                   | [![NuGet](https://img.shields.io/nuget/v/Kista.Owners.svg)](https://www.nuget.org/packages/Kista.Owners/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.Owners.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.Owners) |
 | `Kista.States.Core`        | Entity state management abstractions (experimental)                                                           | [![NuGet](https://img.shields.io/nuget/v/Kista.States.Core.svg)](https://www.nuget.org/packages/Kista.States.Core/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.States.Core.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.States.Core) |
 
 ---
@@ -156,6 +157,7 @@ For driver-specific configuration, multi-tenancy, and guidance on writing a cust
 | [Entity Manager](docs/entity-manager/) | Business layer with validation, caching, and events |
 | [Custom repositories](docs/custom-repository.md) | Write your own driver |
 | [Multi-Tenancy](docs/multi-tenancy.md) | Tenant-isolated repositories |
+| [User Entities](docs/user-entities.md) | User-scoped entities with owner filtering |
 
 Full documentation is also available on [GitBook](https://deveel.gitbook.io/kista/).
 

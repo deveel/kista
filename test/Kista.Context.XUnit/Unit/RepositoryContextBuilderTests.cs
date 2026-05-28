@@ -243,9 +243,9 @@ public class RepositoryContextBuilderExtendedTests {
 	[Fact]
 	public void AddRepository_MultipleRepositories_TracksAllTypes() {
 		var services = new ServiceCollection();
-		var builder = services.AddRepositoryContext()
-			.AddRepository<ExtendedTestRepository>()
-			.AddRepository<AnotherExtendedTestRepository>();
+		var builder = services.AddRepositoryContext();
+		builder.AddRepository<ExtendedTestRepository>(_ => { });
+		builder.AddRepository<AnotherExtendedTestRepository>(_ => { });
 
 		Assert.Contains(typeof(ExtendedTestRepository), builder.RegisteredRepositoryTypes);
 		Assert.Contains(typeof(AnotherExtendedTestRepository), builder.RegisteredRepositoryTypes);
@@ -254,9 +254,9 @@ public class RepositoryContextBuilderExtendedTests {
 	[Fact]
 	public void AddRepository_MultipleRepositories_TracksAllEntityTypes() {
 		var services = new ServiceCollection();
-		var builder = services.AddRepositoryContext()
-			.AddRepository<ExtendedTestRepository>()
-			.AddRepository<AnotherExtendedTestRepository>();
+		var builder = services.AddRepositoryContext();
+		builder.AddRepository<ExtendedTestRepository>(_ => { });
+		builder.AddRepository<AnotherExtendedTestRepository>(_ => { });
 
 		Assert.Contains(typeof(ExtendedTestEntity), builder.RegisteredEntityTypes);
 		Assert.Contains(typeof(AnotherExtendedTestEntity), builder.RegisteredEntityTypes);
@@ -266,9 +266,9 @@ public class RepositoryContextBuilderExtendedTests {
 	[Fact]
 	public void AddRepository_DuplicateRegistration_DoesNotDuplicate() {
 		var services = new ServiceCollection();
-		var builder = services.AddRepositoryContext()
-			.AddRepository<ExtendedTestRepository>()
-			.AddRepository<ExtendedTestRepository>();
+		var builder = services.AddRepositoryContext();
+		builder.AddRepository<ExtendedTestRepository>(_ => { });
+		builder.AddRepository<ExtendedTestRepository>(_ => { });
 
 		Assert.Single(builder.RegisteredRepositoryTypes.Where(t => t == typeof(ExtendedTestRepository)));
 	}
@@ -363,8 +363,8 @@ public class RepositoryContextBuilderExtendedTests {
 		var services = new ServiceCollection();
 		var builder = services.AddRepositoryContext();
 		var result = builder
-			.AddRepository<ExtendedTestRepository>()
-			.AddRepository<AnotherExtendedTestRepository>();
+			.AddRepository<ExtendedTestRepository>(_ => { })
+			.AddRepository<AnotherExtendedTestRepository>(_ => { });
 
 		Assert.Same(builder, result);
 	}

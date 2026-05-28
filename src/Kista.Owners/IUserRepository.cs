@@ -1,4 +1,4 @@
-﻿// Copyright 2023-2025 Antonello Provenzano
+// Copyright 2023-2025 Antonello Provenzano
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,29 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using Kista;
+
 namespace Kista
 {
 	/// <summary>
-	/// A service that provides information about the current user
-	/// of the application.
+	/// Defines a repository that is bound to a user context,
+	/// where the entities are owned by a specific user.
 	/// </summary>
-	/// <remarks>
-	/// This contact can be used to retrieve identifier about the
-	/// user that is currently using the application, such as the
-	/// username or the user ID.
-	/// </remarks>
-	/// <typeparam name="TKey">
-	/// The type of the key that identifies the user.
+	/// <typeparam name="TEntity">
+	/// The type of the entity handled by the repository.
 	/// </typeparam>
-	public interface IUserAccessor<TKey>
+	/// <typeparam name="TKey">
+	/// The type of the unique identifier of the entity.
+	/// </typeparam>
+	/// <typeparam name="TOwnerKey">
+	/// The type of the key that identifies the owner of the entity.
+	/// </typeparam>
+	public interface IUserRepository<TEntity, TKey, TOwnerKey> : IRepository<TEntity, TKey>
+		where TEntity : class, IHaveOwner<TOwnerKey>
 	{
 		/// <summary>
-		/// Gets the identifier of the current user.
+		/// Gets the accessor to the user context of the repository.
 		/// </summary>
-		/// <returns>
-		/// Returns a string that represents the identifier of the
-		/// user that is currently using the application.
-		/// </returns>
-		TKey? GetUserId();
+		IUserAccessor<TOwnerKey> UserAccessor { get; }
 	}
 }

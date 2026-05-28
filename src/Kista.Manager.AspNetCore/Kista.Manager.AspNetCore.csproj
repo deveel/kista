@@ -9,4 +9,7 @@
     <ItemGroup>
       <ProjectReference Include="..\Kista.Manager\Kista.Manager.csproj" />
     </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\Kista.Owners\Kista.Owners.csproj" />
+    </ItemGroup>
 </Project>

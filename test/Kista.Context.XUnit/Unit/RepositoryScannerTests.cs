@@ -174,8 +174,8 @@ public class RepositoryScannerExtendedTests {
 	[Fact]
 	public void ScanRepositories_PreservesExistingRegistrations() {
 		var services = new ServiceCollection();
-		var builder = services.AddRepositoryContext()
-			.AddRepository<ExplicitScanRepository>();
+		var builder = services.AddRepositoryContext();
+		builder.AddRepository<ExplicitScanRepository>(_ => { });
 
 		var initialCount = services.Count;
 		builder.ScanRepositories(typeof(InMemoryRepository<>).Assembly);

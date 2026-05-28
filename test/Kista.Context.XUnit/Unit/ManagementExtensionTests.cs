@@ -14,7 +14,7 @@ public class ManagementExtensionTests {
 	public void WithManagement_RegistersManagerForTrackedEntityTypes() {
 		var services = new ServiceCollection();
 		services.AddRepositoryContext()
-			.AddRepository<ManagementTestRepository>()
+			.AddRepository<ManagementTestRepository>(_ => { })
 			.WithManagement();
 
 		var provider = services.BuildServiceProvider();
@@ -38,7 +38,7 @@ public class ManagementExtensionTests {
 	public void WithManagement_WithTransientLifetime_CreatesNewInstances() {
 		var services = new ServiceCollection();
 		services.AddRepositoryContext()
-			.AddRepository<ManagementTestRepository>()
+			.AddRepository<ManagementTestRepository>(_ => { })
 			.WithManagement(null, ServiceLifetime.Transient);
 
 		var provider = services.BuildServiceProvider();

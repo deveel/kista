@@ -21,5 +21,8 @@
 	<ItemGroup>
 	  <ProjectReference Include="..\Kista\Kista.csproj" />
 	</ItemGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\Kista.Owners\Kista.Owners.csproj" />
+	</ItemGroup>
 
 </Project>

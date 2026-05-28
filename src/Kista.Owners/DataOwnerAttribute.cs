@@ -1,4 +1,4 @@
-﻿// Copyright 2023-2025 Antonello Provenzano
+// Copyright 2023-2025 Antonello Provenzano
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,24 +15,11 @@
 namespace Kista
 {
 	/// <summary>
-	/// The contract used to define an object that 
-	/// has an owner.
+	/// An attribute that marks a property or field as the owner
+	/// of the entity, used to identify the owner of the data.
 	/// </summary>
-	public interface IHaveOwner<TKey>
+	[System.AttributeUsage(System.AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
+	public sealed class DataOwnerAttribute : Attribute
 	{
-		/// <summary>
-		/// Gets the identifier of the owner of 
-		/// the object.
-		/// </summary>
-		TKey Owner { get; }
-
-		/// <summary>
-		/// Sets the owner of the object, eventually
-		/// overriding the current owner.
-		/// </summary>
-		/// <param name="owner">
-		/// The identifier of the new owner.
-		/// </param>
-		void SetOwner(TKey owner);
 	}
 }

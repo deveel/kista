@@ -1,3 +1,4 @@
+using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Kista
@@ -53,10 +54,8 @@ namespace Kista
 
 		private static Type? FindUserKeyType(Type entityType)
 		{
-			foreach (var iface in entityType.GetInterfaces())
+			foreach (var iface in entityType.GetInterfaces().Where(iface => iface.IsGenericType))
 			{
-				if (!iface.IsGenericType) continue;
-
 				var genericDef = iface.GetGenericTypeDefinition();
 				if (genericDef == typeof(IHaveOwner<>) ||
 					genericDef.FullName == "Kista.IHaveOwner`1")

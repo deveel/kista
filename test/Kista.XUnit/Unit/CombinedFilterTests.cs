@@ -135,7 +135,7 @@ public class CombinedFilterTests
 		}.AsQueryable();
 		var f1 = QueryFilter.Where<Person>(x => x.FirstName == "A");
 		var f2 = QueryFilter.Where<Person>(x => x.LastName == "B");
-		var combined = QueryFilter.Combine(new[] { f1, f2 });
+		var combined = QueryFilter.Combine(f1, f2);
 
 		var result = combined.Apply(people).ToList();
 
@@ -148,7 +148,7 @@ public class CombinedFilterTests
 	public void CombinedQueryFilter_Initialize_CallsAllFilters() {
 		var f1 = QueryFilter.Where<Person>(x => x.FirstName == "A");
 		var f2 = QueryFilter.Where<Person>(x => x.LastName == "B");
-		var combined = QueryFilter.Combine(new[] { f1, f2 });
+		var combined = QueryFilter.Combine(f1, f2);
 		var ctx = new DefaultFilterContext(new ServiceCollection().BuildServiceProvider());
 		combined.Initialize(ctx);
 	}

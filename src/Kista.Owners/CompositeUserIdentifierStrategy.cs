@@ -43,14 +43,9 @@ namespace Kista
 		/// <inheritdoc/>
 		public TKey? GetUserId(IServiceProvider? serviceProvider = null)
 		{
-			foreach (var strategy in strategies)
-			{
-				var userId = strategy.GetUserId(serviceProvider);
-				if (userId != null)
-					return userId;
-			}
-
-			return default;
+			return strategies
+				.Select(strategy => strategy.GetUserId(serviceProvider))
+				.FirstOrDefault(userId => !EqualityComparer<TKey>.Default.Equals(userId, default));
 		}
 	}
 

@@ -97,10 +97,14 @@ namespace Kista {
 	/// further type-specific configuration (e.g. owner scoping).
 	/// </summary>
 	public RepositoryBuilder AddRepository<TRepository>(ServiceLifetime lifetime = ServiceLifetime.Scoped) where TRepository : class {
-		_services.AddRepository(typeof(TRepository), lifetime);
+		var repoInterface = FindRepositoryInterface(typeof(TRepository));
+		var serviceTypes = RepositoryRegistrationUtil.GetRepositoryServiceTypes(typeof(TRepository));
+		foreach (var serviceType in serviceTypes) {
+			_services.TryAdd(new ServiceDescriptor(serviceType, typeof(TRepository), lifetime));
+		}
+		_services.TryAdd(new ServiceDescriptor(typeof(TRepository), typeof(TRepository), lifetime));
 		TrackRepositoryType(typeof(TRepository));
 
-		var repoInterface = FindRepositoryInterface(typeof(TRepository));
 		var entityType = repoInterface.GetGenericArguments()[0];
 		var keyType = repoInterface.GetGenericArguments()[1];
 
@@ -117,6 +121,19 @@ namespace Kista {
 		return this;
 	}
 
+	/// <summary>
+	/// Registers a repository type in the service collection and tracks it.
+	/// </summary>
+	public RepositoryContextBuilder AddRepository(Type repositoryType, ServiceLifetime lifetime = ServiceLifetime.Scoped) {
+		if (repositoryType.IsGenericTypeDefinition) {
+			RegisterOpenGenericRepository(repositoryType, lifetime);
+		} else {
+			_services.AddRepository(repositoryType, lifetime);
+		}
+		TrackRepositoryType(repositoryType);
+		return this;
+	}
+
 	private static Type FindRepositoryInterface(Type repositoryType) {
 		foreach (var iface in repositoryType.GetInterfaces()) {
 			if (iface.IsGenericType &&
@@ -128,19 +145,6 @@ namespace Kista {
 		throw new InvalidOperationException(
 			$"The type '{repositoryType}' does not implement IRepository<,>");
 	}
-
-		/// <summary>
-		/// Registers a repository type in the service collection and tracks it.
-		/// </summary>
-		public RepositoryContextBuilder AddRepository(Type repositoryType, ServiceLifetime lifetime = ServiceLifetime.Scoped) {
-			if (repositoryType.IsGenericTypeDefinition) {
-				RegisterOpenGenericRepository(repositoryType, lifetime);
-			} else {
-				_services.AddRepository(repositoryType, lifetime);
-			}
-			TrackRepositoryType(repositoryType);
-			return this;
-		}
 
 		/// <summary>
 		/// Registers an open generic repository type with the service collection.

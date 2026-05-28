@@ -86,7 +86,7 @@ public class ServiceCollectionExtensionsTests
 	[Fact]
 	public void ServiceCollectionExtensions_AddRepositoryController_Default_Obsolete_StillWorks() {
 		var services = new ServiceCollection();
-		services.AddRepositoryController();
+		services.AddRepositoryController<TestRepositoryController>();
 		var provider = services.BuildServiceProvider();
 		Assert.NotNull(provider.GetService<IRepositoryController>());
 	}
@@ -95,16 +95,16 @@ public class ServiceCollectionExtensionsTests
 	/// A stub implementation of <see cref="ISystemTime"/> that delegates to the real system clock,
 	/// used to verify custom <see cref="ISystemTime"/> registration overloads.
 	/// </summary>
-	private class TestTime : ISystemTime
+	private sealed class TestTime : ISystemTime
 	{
 		public DateTimeOffset UtcNow => DateTimeOffset.UtcNow;
 		public DateTimeOffset Now => DateTimeOffset.Now;
 	}
 
-	private class TestRepositoryController : IRepositoryController {
-		public ValueTask CreateRepositoryAsync<TEntity>(CancellationToken ct = default) where TEntity : class => ValueTask.CompletedTask;
-		public ValueTask CreateRepositoryAsync<TEntity, TKey>(CancellationToken ct = default) where TEntity : class => ValueTask.CompletedTask;
-		public ValueTask DropRepositoryAsync<TEntity>(CancellationToken ct = default) where TEntity : class => ValueTask.CompletedTask;
-		public ValueTask DropRepositoryAsync<TEntity, TKey>(CancellationToken ct = default) where TEntity : class => ValueTask.CompletedTask;
+	private sealed class TestRepositoryController : IRepositoryController {
+		public ValueTask CreateRepositoryAsync<TEntity>(CancellationToken cancellationToken = default) where TEntity : class => ValueTask.CompletedTask;
+		public ValueTask CreateRepositoryAsync<TEntity, TKey>(CancellationToken cancellationToken = default) where TEntity : class => ValueTask.CompletedTask;
+		public ValueTask DropRepositoryAsync<TEntity>(CancellationToken cancellationToken = default) where TEntity : class => ValueTask.CompletedTask;
+		public ValueTask DropRepositoryAsync<TEntity, TKey>(CancellationToken cancellationToken = default) where TEntity : class => ValueTask.CompletedTask;
 	}
 }

@@ -54,7 +54,7 @@ namespace Kista
 			return ConvertValue(value);
 		}
 
-		private TKey? ConvertValue(string value)
+		private static TKey? ConvertValue(string value)
 		{
 			try
 			{
@@ -64,7 +64,19 @@ namespace Kista
 				var converter = TypeDescriptor.GetConverter(typeof(TKey));
 				return (TKey?)converter.ConvertFromInvariantString(value);
 			}
-			catch
+			catch (FormatException)
+			{
+				return default;
+			}
+			catch (NotSupportedException)
+			{
+				return default;
+			}
+			catch (ArgumentException)
+			{
+				return default;
+			}
+			catch (InvalidCastException)
 			{
 				return default;
 			}

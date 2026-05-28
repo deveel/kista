@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -36,6 +37,7 @@ namespace Kista
 		where TEntity : class, IHaveOwner<TUserKey>
 		where TKey : notnull
 	{
+		private const string UserContextNotSetMessage = "User context is not set";
 		private static readonly Lazy<PropertyInfo> _ownerProperty = new(DiscoverOwnerProperty);
 
 		private readonly IRepository<TEntity, TKey> _inner;
@@ -72,9 +74,9 @@ namespace Kista
 		public ValueTask<TEntity?> FindAsync(TKey key, CancellationToken cancellationToken = default)
 		{
 			var userId = _userAccessor.GetUserId();
-			if (userId == null)
+			if (EqualityComparer<TUserKey>.Default.Equals(userId, default))
 				return Options.ThrowWhenUserNotSet
-					? throw new System.InvalidOperationException("User context is not set")
+					? throw new System.InvalidOperationException(UserContextNotSetMessage)
 					: new ValueTask<TEntity?>(default(TEntity));
 
 			return FindScopedAsync(key, userId, cancellationToken);
@@ -102,7 +104,7 @@ namespace Kista
 			System.ArgumentNullException.ThrowIfNull(entities);
 
 			var userId = _userAccessor.GetUserId();
-			if (userId != null)
+			if (!EqualityComparer<TUserKey>.Default.Equals(userId, default))
 			{
 				foreach (var entity in entities)
 				{
@@ -111,7 +113,7 @@ namespace Kista
 			}
 			else if (Options.ThrowWhenUserNotSet)
 			{
-				throw new System.InvalidOperationException("User context is not set");
+				throw new System.InvalidOperationException(UserContextNotSetMessage);
 			}
 
 			return _inner.AddRangeAsync(entities, cancellationToken);
@@ -162,13 +164,13 @@ namespace Kista
 			System.ArgumentNullException.ThrowIfNull(entity);
 
 			var userId = _userAccessor.GetUserId();
-			if (userId != null)
+			if (!EqualityComparer<TUserKey>.Default.Equals(userId, default))
 			{
 				_ownerProperty.Value.SetValue(entity, userId);
 			}
 			else if (Options.ThrowWhenUserNotSet)
 			{
-				throw new System.InvalidOperationException("User context is not set");
+				throw new System.InvalidOperationException(UserContextNotSetMessage);
 			}
 
 			return action();
@@ -178,9 +180,9 @@ namespace Kista
 			IQuery query, Func<IQuery, ValueTask<IList<TEntity>>> action)
 		{
 			var userId = _userAccessor.GetUserId();
-			if (userId == null)
+			if (EqualityComparer<TUserKey>.Default.Equals(userId, default))
 				return Options.ThrowWhenUserNotSet
-					? throw new System.InvalidOperationException("User context is not set")
+					? throw new System.InvalidOperationException(UserContextNotSetMessage)
 					: Array.Empty<TEntity>();
 
 			var scopedQuery = ApplyOwnerToQuery(query, userId);
@@ -191,7 +193,7 @@ namespace Kista
 			IQuery query, Func<IQuery, ValueTask<TEntity?>> action)
 		{
 			var userId = _userAccessor.GetUserId();
-			if (userId == null)
+			if (EqualityComparer<TUserKey>.Default.Equals(userId, default))
 				return null;
 
 			var scopedQuery = ApplyOwnerToQuery(query, userId);
@@ -202,7 +204,7 @@ namespace Kista
 			IQueryFilter filter, Func<IQueryFilter, ValueTask<long>> action)
 		{
 			var userId = _userAccessor.GetUserId();
-			if (userId == null)
+			if (EqualityComparer<TUserKey>.Default.Equals(userId, default))
 				return 0;
 
 			var ownerFilter = BuildOwnerFilter(userId);
@@ -214,7 +216,7 @@ namespace Kista
 			IQueryFilter filter, Func<IQueryFilter, ValueTask<bool>> action)
 		{
 			var userId = _userAccessor.GetUserId();
-			if (userId == null)
+			if (EqualityComparer<TUserKey>.Default.Equals(userId, default))
 				return false;
 
 			var ownerFilter = BuildOwnerFilter(userId);
@@ -226,9 +228,9 @@ namespace Kista
 			PageQuery<TEntity> request, Func<PageQuery<TEntity>, ValueTask<PageResult<TEntity>>> action)
 		{
 			var userId = _userAccessor.GetUserId();
-			if (userId == null)
+			if (EqualityComparer<TUserKey>.Default.Equals(userId, default))
 				return Options.ThrowWhenUserNotSet
-					? throw new System.InvalidOperationException("User context is not set")
+					? throw new System.InvalidOperationException(UserContextNotSetMessage)
 					: new PageResult<TEntity>(request, 0, Array.Empty<TEntity>());
 
 			var scopedRequest = ApplyOwnerToRequest(request, userId);
@@ -261,9 +263,8 @@ namespace Kista
 
 			foreach (var prop in entityType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
 			{
-				foreach (var attr in prop.GetCustomAttributes())
+				foreach (var attrType in prop.GetCustomAttributes().Select(attr => attr.GetType()))
 				{
-					var attrType = attr.GetType();
 					if (attrType.Name == "DataOwnerAttribute" &&
 						(attrType.Namespace == "Kista" || attrType.Namespace == "Kista.Owners"))
 					{
@@ -287,7 +288,7 @@ namespace Kista
 
 		// === FILTER BUILDING ===
 
-		private IQueryFilter BuildOwnerFilter(TUserKey userId)
+		private static IQueryFilter BuildOwnerFilter(TUserKey userId)
 		{
 			return new ExpressionQueryFilter<TEntity>(BuildOwnerExpression(userId));
 		}

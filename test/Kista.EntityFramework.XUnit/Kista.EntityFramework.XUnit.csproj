@@ -10,17 +10,17 @@
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.NetTopologySuite" Version="8.0.26" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite" Version="8.0.11" />
-        <PackageReference Include="Finbuckle.MultiTenant.EntityFrameworkCore" Version="8.0.0" />
+        <PackageReference Include="Finbuckle.MultiTenant.EntityFrameworkCore" Version="8.1.14" />
     </ItemGroup>
     <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="9.0.15" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.NetTopologySuite" Version="9.0.15" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite" Version="9.0.4" />
-        <PackageReference Include="Finbuckle.MultiTenant.EntityFrameworkCore" Version="9.4.7" />
+        <PackageReference Include="Finbuckle.MultiTenant.EntityFrameworkCore" Version="9.4.9" />
     </ItemGroup>
     <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
-        <PackageReference Include="Finbuckle.MultiTenant" Version="10.0.4" />
+        <PackageReference Include="Finbuckle.MultiTenant" Version="10.1.0" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="10.0.5" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.NetTopologySuite" Version="10.0.5" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />

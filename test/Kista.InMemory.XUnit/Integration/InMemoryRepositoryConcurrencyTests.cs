@@ -275,7 +275,7 @@ public class InMemoryRepositoryConcurrencyTests {
             await repository.AddAsync(p, cancellationToken);
 
         // Act — 100 concurrent GetEntityKey calls stress the Lazy<MemberInfo?> cache
-        var tasks = people.Select(p => Task.Run(() => repository.GetEntityKey(p), cancellationToken));
+        var tasks = people.Select(p => Task.Run(() => ((IRepository<Person, string>)repository).GetEntityKey(p), cancellationToken));
         var keys = await Task.WhenAll(tasks);
 
         // Assert — every call returns the correct, non-null key

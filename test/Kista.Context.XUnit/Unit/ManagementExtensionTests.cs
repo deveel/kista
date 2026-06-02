@@ -62,5 +62,6 @@ public class ManagementExtensionTests {
 		public ValueTask RemoveRangeAsync(IEnumerable<ManagementTestEntity> entities, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
 		public ValueTask<ManagementTestEntity?> FindAsync(object key, CancellationToken cancellationToken = default) => new((ManagementTestEntity?)null);
 		public object? GetEntityKey(ManagementTestEntity entity) => (object?)entity.Id;
+		public ValueTask<PageResult<ManagementTestEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 	}
 }

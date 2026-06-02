@@ -37,10 +37,10 @@ namespace Kista {
 	/// <typeparam name="TKey">
 	/// The type of the key of the entity that is stored in the repository.
 	/// </typeparam>
-	public class MongoRepository<TEntity, TKey> : IRepository<TEntity, TKey>,
+	public class MongoRepository<TEntity, TKey> : RepositoryBase<TEntity, TKey>,
 		IQueryableRepository<TEntity, TKey>,
-		IPageableRepository<TEntity, TKey>,
 		IFilterableRepository<TEntity, TKey>,
+		IPageableRepository<TEntity, TKey>,
 		IControllableRepository,
 		IAsyncDisposable,
 		IDisposable
@@ -101,14 +101,44 @@ namespace Kista {
 		protected ILogger Logger { get; }
 
 		/// <inheritdoc />
-		public IServiceProvider? Services { get; }
+		protected override IServiceProvider? Services { get; }
 
 		private void InitializeFilter(IQueryFilter? filter) {
 			if (filter != null && Services != null)
 				filter.Initialize(new DefaultFilterContext(Services));
 		}
 
-		IQueryable<TEntity> IQueryableRepository<TEntity, TKey>.AsQueryable() => DbSet.AsQueryable();
+			[Obsolete("Use the abstract Kista.RepositoryBase<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
+		public virtual IQueryable<TEntity> AsQueryable() => DbSet.AsQueryable();
+
+		/// <summary>
+		/// Returns the <see cref="IQueryable{T}"/> that backs the entity set
+		/// exposed by this repository. The hatch is intentionally
+		/// <c>protected</c>: the LINQ provider must not leak to consumer
+		/// code.
+		/// </summary>
+		/// <returns>
+		/// Returns the <see cref="IQueryable{T}"/> produced by
+		/// <see cref="DbSet"/>.AsQueryable().
+		/// </returns>
+		protected override IQueryable<TEntity> Query() => DbSet.AsQueryable();
+
+		/// <inheritdoc />
+		protected override bool IsQueryable => true;
+
+		IQueryable<TEntity> IQueryableRepository<TEntity, TKey>.AsQueryable() => Query();
+
+		ValueTask<bool> IFilterableRepository<TEntity, TKey>.ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken)
+			=> ExistsAsync(filter, cancellationToken);
+
+		ValueTask<long> IFilterableRepository<TEntity, TKey>.CountAsync(IQueryFilter filter, CancellationToken cancellationToken)
+			=> CountAsync(filter, cancellationToken);
+
+		ValueTask<TEntity?> IFilterableRepository<TEntity, TKey>.FindFirstAsync(IQuery query, CancellationToken cancellationToken)
+			=> FindFirstAsync(query, cancellationToken);
+
+		ValueTask<IList<TEntity>> IFilterableRepository<TEntity, TKey>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
+			=> FindAllAsync(query, cancellationToken);
 
 		/// <summary>
 		/// Gets the <see cref="IMongoCollection{TEntity}"/> instance that is used
@@ -172,9 +202,11 @@ namespace Kista {
 		/// The entity whose ID property value is to be retrieved.
 		/// </param>
 		/// <returns>
-		/// Returns the value of the ID property of the given entity.
+		/// Returns the value of the ID property of the entity.
 		/// </returns>
-		public virtual TKey? GetEntityKey(TEntity entity) {
+		protected override TKey? GetEntityKey(TEntity entity) {
+			ArgumentNullException.ThrowIfNull(entity);
+
 			var entityDef = EntityMapping.GetOrCreateDefinition(typeof(TEntity));
 
 			var idProperty = entityDef.GetIdProperty();
@@ -460,7 +492,7 @@ namespace Kista {
 		/// Thrown when an error occurs while creating the entity in the
 		/// underlying database.
 		/// </exception>
-		public virtual async ValueTask AddAsync(TEntity entity, CancellationToken cancellationToken = default) {
+		public override async ValueTask AddAsync(TEntity entity, CancellationToken cancellationToken = default) {
 			ArgumentNullException.ThrowIfNull(entity);
 
 			ThrowIfDisposed();
@@ -484,7 +516,7 @@ namespace Kista {
 		}
 
 		/// <inheritdoc/>
-		public async ValueTask AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) {
+		public override async ValueTask AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) {
 			ArgumentNullException.ThrowIfNull(entities);
 
 			ThrowIfDisposed();
@@ -517,7 +549,7 @@ namespace Kista {
 		}
 
 		/// <inheritdoc/>
-		public virtual async ValueTask<bool> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default) {
+		public override async ValueTask<bool> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default) {
 			ArgumentNullException.ThrowIfNull(entity);
 
 			ThrowIfDisposed();
@@ -556,7 +588,7 @@ namespace Kista {
 		#endregion
 
 		/// <inheritdoc/>
-		public virtual async ValueTask<bool> RemoveAsync(TEntity entity, CancellationToken cancellationToken = default) {
+		public override async ValueTask<bool> RemoveAsync(TEntity entity, CancellationToken cancellationToken = default) {
 			ArgumentNullException.ThrowIfNull(entity);
 
 			ThrowIfDisposed();
@@ -587,7 +619,7 @@ namespace Kista {
 		}
 
 		/// <inheritdoc/>
-		public async ValueTask RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) {
+		public override async ValueTask RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) {
 			ArgumentNullException.ThrowIfNull(entities);
 
 			ThrowIfDisposed();
@@ -607,7 +639,7 @@ namespace Kista {
 		}
 
 		/// <inheritdoc/>
-		public async ValueTask<TEntity?> FindAsync(TKey key, CancellationToken cancellationToken = default) {
+		public override async ValueTask<TEntity?> FindAsync(TKey key, CancellationToken cancellationToken = default) {
 			ArgumentNullException.ThrowIfNull(key);
 
 			ThrowIfDisposed();
@@ -637,10 +669,10 @@ namespace Kista {
 		}
 
 		/// <inheritdoc/>
-		public async ValueTask<TEntity?> FindFirstAsync(IQuery query, CancellationToken cancellationToken = default) {
+		protected override async ValueTask<TEntity?> FindFirstAsync(IQuery query, CancellationToken cancellationToken = default) {
 			try {
 				InitializeFilter(query.Filter);
-				var entities = query.Apply(DbSet.AsQueryable());
+				var entities = query.Apply(Query());
 				return await entities.FirstOrDefaultAsync(cancellationToken);
 			} catch (Exception ex) {
 				throw new RepositoryException("Unable to find the entity", ex);
@@ -648,10 +680,10 @@ namespace Kista {
 		}
 
 		/// <inheritdoc/>
-		public async ValueTask<IList<TEntity>> FindAllAsync(IQuery query, CancellationToken cancellationToken = default) {
+		protected override async ValueTask<IList<TEntity>> FindAllAsync(IQuery query, CancellationToken cancellationToken = default) {
 			try {
 				InitializeFilter(query.Filter);
-				var entities = query.Apply(DbSet.AsQueryable());
+				var entities = query.Apply(Query());
 				return await entities.ToListAsync(cancellationToken);
 			} catch (Exception ex) {
 
@@ -660,17 +692,17 @@ namespace Kista {
 		}
 
 		/// <inheritdoc/>
-		public async ValueTask<PageResult<TEntity>> GetPageAsync(PageQuery<TEntity> query, CancellationToken cancellationToken = default) {
+		async ValueTask<PageQueryResult<TEntity>> IPageableRepository<TEntity, TKey>.GetPageAsync(PageQuery<TEntity> query, CancellationToken cancellationToken) {
 			try {
 				InitializeFilter(((IQuery)query).Filter);
-				var entitySet = query.ApplyQuery(DbSet.AsQueryable());
+				var entitySet = query.ApplyQuery(Query());
 
 				var totalCount = await entitySet.CountAsync(cancellationToken);
 
 				entitySet = entitySet.Skip(query.Offset).Take(query.Size);
 
 				var items = await entitySet.ToListAsync(cancellationToken);
-				return new PageResult<TEntity>(query, totalCount, items);
+				return new PageQueryResult<TEntity>(query, totalCount, items);
 			} catch (Exception ex) {
 
 				throw new RepositoryException("Unable to execute the query", ex);
@@ -678,10 +710,27 @@ namespace Kista {
 		}
 
 		/// <inheritdoc/>
-		public ValueTask<bool> ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken = default) {
+		public override async ValueTask<PageResult<TEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) {
+			try {
+				var entitySet = Query();
+
+				var totalCount = await entitySet.CountAsync(cancellationToken);
+
+				entitySet = entitySet.Skip(request.Offset).Take(request.Size);
+
+				var items = await entitySet.ToListAsync(cancellationToken);
+				return new PageResult<TEntity>(request, totalCount, items);
+			} catch (Exception ex) {
+
+				throw new RepositoryException("Unable to retrieve the page", ex);
+			}
+		}
+
+		/// <inheritdoc/>
+		protected override ValueTask<bool> ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken = default) {
 			try {
 				InitializeFilter(filter);
-				var query = DbSet.AsQueryable();
+				var query = Query();
 				if (filter != null) {
 					query = filter.Apply(query);
 				}
@@ -694,10 +743,10 @@ namespace Kista {
 		}
 
 		/// <inheritdoc/>
-		public async ValueTask<long> CountAsync(IQueryFilter filter, CancellationToken cancellationToken = default) {
+		protected override async ValueTask<long> CountAsync(IQueryFilter filter, CancellationToken cancellationToken = default) {
 			try {
 				InitializeFilter(filter);
-				var query = DbSet.AsQueryable();
+				var query = Query();
 				if (filter != null) {
 					query = filter.Apply(query);
 				}

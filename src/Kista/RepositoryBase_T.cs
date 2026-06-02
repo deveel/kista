@@ -1,29 +1,28 @@
-﻿// Copyright 2023-2025 Antonello Provenzano
+// Copyright 2023-2025 Antonello Provenzano
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
 //    http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System;
-
 namespace Kista {
 	/// <summary>
-	/// Represents a repository that is capable of returning a page of items
-	/// of the given type contained in the underlying storage.
+	/// An abstract repository base class that hides the underlying
+	/// <see cref="IQueryable{T}"/> data access hatch from consumer code, with
+	/// the key type defaulted to <see cref="object"/>.
 	/// </summary>
 	/// <typeparam name="TEntity">
-	/// The strongly typed entity that is stored in the repository
+	/// The type of the entity managed by the repository.
 	/// </typeparam>
-	/// <seealso cref="IPageableRepository{TEntity, TKey}"/>
-	[Obsolete("Use the abstract Kista.RepositoryBase<TEntity> base class instead. Paging is now provided directly by the base class.", false)]
-    public interface IPageableRepository<TEntity> : IPageableRepository<TEntity, object> where TEntity : class {
-    }
+	/// <seealso cref="RepositoryBase{TEntity, TKey}"/>
+	public abstract class RepositoryBase<TEntity> : RepositoryBase<TEntity, object>
+		where TEntity : class {
+	}
 }

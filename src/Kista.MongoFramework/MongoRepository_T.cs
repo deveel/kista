@@ -27,9 +27,9 @@ namespace Kista {
 	/// The type of the entity that is stored in the repository.
 	/// </typeparam>
 	public class MongoRepository<TEntity> : MongoRepository<TEntity, object>,
-		IRepository<TEntity>, 
-		IQueryableRepository<TEntity>, 
-		IPageableRepository<TEntity>, 
+		IQueryableRepository<TEntity>,
+		IRepository<TEntity>,
+		IPageableRepository<TEntity>,
 		IFilterableRepository<TEntity>
 		where TEntity : class {
 		/// <summary>
@@ -65,8 +65,23 @@ namespace Kista {
 			: base(context, logger, services) {
 		}
 
-		IQueryable<TEntity> IQueryableRepository<TEntity, object>.AsQueryable() => DbSet.AsQueryable();
+		[Obsolete("Use the abstract Kista.RepositoryBase<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
+		public new IQueryable<TEntity> AsQueryable() => base.AsQueryable();
+
+		IQueryable<TEntity> IQueryableRepository<TEntity, object>.AsQueryable() => Query();
 
 		object? IRepository<TEntity, object>.GetEntityKey(TEntity entity) => GetEntityKey(entity);
+
+		ValueTask<bool> IFilterableRepository<TEntity, object>.ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken)
+			=> ExistsAsync(filter, cancellationToken);
+
+		ValueTask<long> IFilterableRepository<TEntity, object>.CountAsync(IQueryFilter filter, CancellationToken cancellationToken)
+			=> CountAsync(filter, cancellationToken);
+
+		ValueTask<TEntity?> IFilterableRepository<TEntity, object>.FindFirstAsync(IQuery query, CancellationToken cancellationToken)
+			=> FindFirstAsync(query, cancellationToken);
+
+		ValueTask<IList<TEntity>> IFilterableRepository<TEntity, object>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
+			=> FindAllAsync(query, cancellationToken);
 	}
 }

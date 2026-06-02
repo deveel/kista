@@ -32,8 +32,7 @@ namespace Kista
 	/// <typeparam name="TUserKey">The type of the user identifier.</typeparam>
 	public class UserScopedRepositoryDecorator<TEntity, TKey, TUserKey>
 		: IUserRepository<TEntity, TKey, TUserKey>,
-		  IFilterableRepository<TEntity, TKey>,
-		  IPageableRepository<TEntity, TKey>
+		  IFilterableRepository<TEntity, TKey>
 		where TEntity : class, IHaveOwner<TUserKey>
 		where TKey : notnull
 	{
@@ -154,8 +153,8 @@ namespace Kista
 			=> ApplyOwnerFilterAndCallAsync(filter, f => _inner.ExistsAsync(f, cancellationToken));
 
 		/// <inheritdoc />
-		public ValueTask<PageResult<TEntity>> GetPageAsync(PageQuery<TEntity> request, CancellationToken cancellationToken = default)
-			=> ApplyOwnerFilterAndCallAsync(request, r => _inner.GetPageAsync(r, cancellationToken));
+		public ValueTask<PageResult<TEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default)
+			=> ApplyOwnerFilterAndCallAsyncPage(request, r => _inner.GetPageAsync(r, cancellationToken));
 
 		// === Helpers ===
 
@@ -224,8 +223,21 @@ namespace Kista
 			return await action(combined);
 		}
 
-		private async ValueTask<PageResult<TEntity>> ApplyOwnerFilterAndCallAsync(
-			PageQuery<TEntity> request, Func<PageQuery<TEntity>, ValueTask<PageResult<TEntity>>> action)
+		private async ValueTask<PageQueryResult<TEntity>> ApplyOwnerFilterAndCallAsync(
+			PageQuery<TEntity> request, Func<PageQuery<TEntity>, ValueTask<PageQueryResult<TEntity>>> action)
+		{
+			var userId = _userAccessor.GetUserId();
+			if (EqualityComparer<TUserKey>.Default.Equals(userId, default))
+				return Options.ThrowWhenUserNotSet
+					? throw new System.InvalidOperationException(UserContextNotSetMessage)
+					: new PageQueryResult<TEntity>(request, 0, Array.Empty<TEntity>());
+
+			var scopedRequest = ApplyOwnerToRequest(request, userId);
+			return await action(scopedRequest);
+		}
+
+		private async ValueTask<PageResult<TEntity>> ApplyOwnerFilterAndCallAsyncPage(
+			PageRequest request, Func<PageRequest, ValueTask<PageResult<TEntity>>> action)
 		{
 			var userId = _userAccessor.GetUserId();
 			if (EqualityComparer<TUserKey>.Default.Equals(userId, default))
@@ -233,7 +245,10 @@ namespace Kista
 					? throw new System.InvalidOperationException(UserContextNotSetMessage)
 					: new PageResult<TEntity>(request, 0, Array.Empty<TEntity>());
 
-			var scopedRequest = ApplyOwnerToRequest(request, userId);
+			var scopedRequest = new PageQuery<TEntity>(request.Page, request.Size);
+			var ownerFilter = BuildOwnerFilter(userId);
+			scopedRequest.Query = new Query(ownerFilter, null);
+
 			return await action(scopedRequest);
 		}
 

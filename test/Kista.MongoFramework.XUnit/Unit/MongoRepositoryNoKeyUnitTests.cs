@@ -40,10 +40,11 @@ public class MongoRepositoryNoKeyUnitTests
 		var provider = services.BuildServiceProvider();
 		var context = provider.GetRequiredService<TestMongoContext>();
 		var repository = new MongoRepository<TestEntity>(context);
-		var queryableRepo = (IQueryableRepository<TestEntity, object>)repository;
 
 		// Act
-		var queryable = queryableRepo.AsQueryable();
+#pragma warning disable CS0618
+		var queryable = repository.AsQueryable();
+#pragma warning restore CS0618
 
 		// Assert
 		Assert.NotNull(queryable);

@@ -20,7 +20,7 @@ public class InMemoryRepositoryFilterInitializationTests {
 	public void Services_IsNull_WhenNoServiceProviderProvided() {
 		var repo = new InMemoryRepository<Person>(_persons);
 
-		Assert.Null(repo.Services);
+		Assert.Null(((IRepository<Person>)repo).Services);
 	}
 
 	[Fact]
@@ -28,7 +28,7 @@ public class InMemoryRepositoryFilterInitializationTests {
 		var services = new ServiceCollection().BuildServiceProvider();
 		var repo = new InMemoryRepository<Person>(_persons, services: services);
 
-		Assert.Same(services, repo.Services);
+		Assert.Same(services, ((IRepository<Person>)repo).Services);
 	}
 
 	#endregion
@@ -43,10 +43,11 @@ public class InMemoryRepositoryFilterInitializationTests {
 		var provider = services.BuildServiceProvider();
 
 		var repo = new InMemoryRepository<Person>(_persons, services: provider);
+		var filterable = (IFilterableRepository<Person>)repo;
 		var filter = new DynamicLinqFilter("x.FirstName == \"John\"");
 
-		var count1 = await repo.CountAsync(filter);
-		var count2 = await repo.CountAsync(filter);
+		var count1 = await filterable.CountAsync(filter);
+		var count2 = await filterable.CountAsync(filter);
 
 		Assert.Equal(2, count1);
 		Assert.Equal(2, count2);
@@ -61,10 +62,11 @@ public class InMemoryRepositoryFilterInitializationTests {
 		var provider = services.BuildServiceProvider();
 
 		var repo = new InMemoryRepository<Person>(_persons, services: provider);
+		var filterable = (IFilterableRepository<Person>)repo;
 		var filter = new DynamicLinqFilter("x.FirstName == \"Jane\"");
 
-		var exists1 = await repo.ExistsAsync(filter);
-		var exists2 = await repo.ExistsAsync(filter);
+		var exists1 = await filterable.ExistsAsync(filter);
+		var exists2 = await filterable.ExistsAsync(filter);
 
 		Assert.True(exists1);
 		Assert.True(exists2);
@@ -79,10 +81,11 @@ public class InMemoryRepositoryFilterInitializationTests {
 		var provider = services.BuildServiceProvider();
 
 		var repo = new InMemoryRepository<Person>(_persons, services: provider);
+		var filterable = (IFilterableRepository<Person>)repo;
 		var filter = new DynamicLinqFilter("x.LastName == \"Smith\"");
 
-		var result1 = await repo.FindFirstAsync(new Query(filter));
-		var result2 = await repo.FindFirstAsync(new Query(filter));
+		var result1 = await filterable.FindFirstAsync(new Query(filter));
+		var result2 = await filterable.FindFirstAsync(new Query(filter));
 
 		Assert.NotNull(result1);
 		Assert.Equal("John", result1.FirstName);
@@ -97,10 +100,12 @@ public class InMemoryRepositoryFilterInitializationTests {
 		var provider = services.BuildServiceProvider();
 
 		var repo = new InMemoryRepository<Person>(_persons, services: provider);
+		var filterable = (IFilterableRepository<Person>)repo;
 		var filter = new DynamicLinqFilter("x.LastName == \"Doe\"");
 
-		var results1 = await repo.FindAllAsync(new Query(filter));
-		var results2 = await repo.FindAllAsync(new Query(filter));
+        var cancellationToken = TestContext.Current.CancellationToken;
+		var results1 = await filterable.FindAllAsync(new Query(filter), cancellationToken);
+		var results2 = await filterable.FindAllAsync(new Query(filter), cancellationToken);
 
 		Assert.Equal(2, results1.Count);
 		Assert.Equal(2, results2.Count);
@@ -135,10 +140,11 @@ public class InMemoryRepositoryFilterInitializationTests {
 	[Fact]
 	public async Task CountAsync_DoesNotCache_WhenNoServiceProvider() {
 		var repo = new InMemoryRepository<Person>(_persons);
+		var filterable = (IFilterableRepository<Person>)repo;
 		var filter = new DynamicLinqFilter("x.FirstName == \"John\"");
 
-		var count1 = await repo.CountAsync(filter);
-		var count2 = await repo.CountAsync(filter);
+		var count1 = await filterable.CountAsync(filter);
+		var count2 = await filterable.CountAsync(filter);
 
 		Assert.Equal(2, count1);
 		Assert.Equal(2, count2);
@@ -148,10 +154,11 @@ public class InMemoryRepositoryFilterInitializationTests {
 	[Fact]
 	public async Task ExistsAsync_DoesNotCache_WhenNoServiceProvider() {
 		var repo = new InMemoryRepository<Person>(_persons);
+		var filterable = (IFilterableRepository<Person>)repo;
 		var filter = new DynamicLinqFilter("x.FirstName == \"Jane\"");
 
-		var exists1 = await repo.ExistsAsync(filter);
-		var exists2 = await repo.ExistsAsync(filter);
+		var exists1 = await filterable.ExistsAsync(filter);
+		var exists2 = await filterable.ExistsAsync(filter);
 
 		Assert.True(exists1);
 		Assert.True(exists2);
@@ -172,10 +179,11 @@ public class InMemoryRepositoryFilterInitializationTests {
 		var provider = services.BuildServiceProvider();
 
 		var repo = new InMemoryRepository<Person>(_persons, services: provider);
+		var filterable = (IFilterableRepository<Person>)repo;
 		var filter = new DynamicLinqFilter("x.FirstName == \"John\"", constructorCache);
 
-		await repo.CountAsync(filter);
-		await repo.CountAsync(filter);
+		await filterable.CountAsync(filter);
+		await filterable.CountAsync(filter);
 
 		Assert.Same(constructorCache, filter.Cache);
 		Assert.Equal(1, constructorCache.Statistics.Hits);
@@ -194,12 +202,13 @@ public class InMemoryRepositoryFilterInitializationTests {
 		var provider = services.BuildServiceProvider();
 
 		var repo = new InMemoryRepository<Person>(_persons, services: provider);
+		var filterable = (IFilterableRepository<Person>)repo;
 
 		var filter1 = new DynamicLinqFilter("x.FirstName == \"John\"");
 		var filter2 = new DynamicLinqFilter("x.LastName == \"Doe\"");
 		var combined = QueryFilter.Combine(filter1, filter2);
 
-		var count = await repo.CountAsync(combined);
+		var count = await filterable.CountAsync(combined);
 
 		Assert.Equal(1, count);
 		Assert.NotNull(filter1.Cache);
@@ -217,9 +226,10 @@ public class InMemoryRepositoryFilterInitializationTests {
 		var provider = services.BuildServiceProvider();
 
 		var repo = new InMemoryRepository<Person>(_persons, services: provider);
+		var filterable = (IFilterableRepository<Person>)repo;
 		var filter = new ExpressionQueryFilter<Person>(x => x.FirstName == "John");
 
-		var count = await repo.CountAsync(filter);
+		var count = await filterable.CountAsync(filter);
 
 		Assert.Equal(2, count);
 	}

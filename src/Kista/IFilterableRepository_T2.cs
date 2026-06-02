@@ -25,6 +25,7 @@ namespace Kista {
 	/// <typeparam name="TKey">
 	/// The type of key used to identify the entity in the repository
 	/// </typeparam>
+	[Obsolete("Use the abstract Kista.RepositoryBase<TEntity, TKey> base class instead. Filtering is now provided directly by the base class.", false)]
 	public interface IFilterableRepository<TEntity, TKey> : IRepository<TEntity, TKey> where TEntity : class {
 		/// <summary>
 		/// Determines if at least one item in the repository exists for the

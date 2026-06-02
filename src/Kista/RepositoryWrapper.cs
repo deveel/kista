@@ -266,5 +266,15 @@ namespace Kista {
 
 			return new ValueTask<long>(result);
 		}
+
+		/// <inheritdoc/>
+		public ValueTask<PageResult<TEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) {
+			var items = entities
+				.Skip(request.Offset)
+				.Take(request.Size)
+				.ToList();
+
+			return new ValueTask<PageResult<TEntity>>(new PageResult<TEntity>(request, entities.Count(), items));
+		}
 	}
 }

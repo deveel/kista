@@ -273,7 +273,7 @@ public class ListAsRepositoryTests : IClassFixture<PersonFixture>
         // Arrange
         var cancellationToken = TestContext.Current.CancellationToken;
         var totalPages = (int)Math.Ceiling(_people.Count / 10.0);
-        var request = new PageQuery<Person>(1, 10);
+        var request = new PageRequest(1, 10);
 
         // Act
         var page = await _repository.GetPageAsync(request, cancellationToken);
@@ -288,87 +288,39 @@ public class ListAsRepositoryTests : IClassFixture<PersonFixture>
     }
 
     [Fact]
-    public async Task Should_ReturnFilteredPage_When_GettingPageWithFilter()
+    public async Task Should_ReturnSecondPage_When_GettingPage()
     {
         // Arrange
         var cancellationToken = TestContext.Current.CancellationToken;
-        var target = RandomPerson();
-        var subset = _people.Where(x => x.FirstName == target.FirstName).ToList();
-        var expectedItemCount = Math.Min(10, subset.Count);
-        var expectedTotalPages = (int)Math.Ceiling(subset.Count / 10.0);
-        var request = new PageQuery<Person>(1, 10).Where(x => x.FirstName == target.FirstName);
+        var request = new PageRequest(2, 10);
 
         // Act
         var page = await _repository.GetPageAsync(request, cancellationToken);
 
         // Assert
-        Assert.Equal(subset.Count, page.TotalItems);
-        Assert.Equal(expectedTotalPages, page.TotalPages);
-        Assert.Equal(expectedItemCount, page.Items.Count);
+        Assert.Equal(10, page.Request.Size);
+        Assert.Equal(2, page.Request.Page);
+        Assert.Equal(_people.Count, page.TotalItems);
+        Assert.NotNull(page.Items);
+        Assert.Equal(10, page.Items.Count);
     }
 
     [Fact]
-    public async Task Should_ReturnEmptyPage_When_GettingPageWithNonMatchingFilter()
+    public async Task Should_ReturnLastPage_When_GettingPageBeyondTotal()
     {
         // Arrange
         var cancellationToken = TestContext.Current.CancellationToken;
-        var request = new PageQuery<Person>(1, 10).Where(x => x.FirstName == "__no_match__");
+        var request = new PageRequest(999, 10);
 
         // Act
         var page = await _repository.GetPageAsync(request, cancellationToken);
 
         // Assert
-        Assert.Equal(0, page.TotalItems);
-        Assert.Equal(0, page.TotalPages);
+        Assert.Equal(10, page.Request.Size);
+        Assert.Equal(999, page.Request.Page);
+        Assert.Equal(_people.Count, page.TotalItems);
+        Assert.NotNull(page.Items);
         Assert.Empty(page.Items);
-    }
-
-    [Fact]
-    public async Task Should_ReturnSortedPage_When_GettingPageWithAscendingSort()
-    {
-        // Arrange
-        var cancellationToken = TestContext.Current.CancellationToken;
-        var request = new PageQuery<Person>(1, 10).OrderBy(x => x.FirstName);
-        var expectedFirst = _people.OrderBy(x => x.FirstName).First().FirstName;
-
-        // Act
-        var page = await _repository.GetPageAsync(request, cancellationToken);
-
-        // Assert
-        Assert.Equal(10, page.Items.Count);
-        Assert.Equal(expectedFirst, page.Items.First().FirstName);
-    }
-
-    [Fact]
-    public async Task Should_ReturnSortedPage_When_GettingPageWithDescendingSort()
-    {
-        // Arrange
-        var cancellationToken = TestContext.Current.CancellationToken;
-        var request = new PageQuery<Person>(1, 10).OrderByDescending(x => x.FirstName);
-        var expectedFirst = _people.OrderByDescending(x => x.FirstName).First().FirstName;
-
-        // Act
-        var page = await _repository.GetPageAsync(request, cancellationToken);
-
-        // Assert
-        Assert.Equal(10, page.Items.Count);
-        Assert.Equal(expectedFirst, page.Items.First().FirstName);
-    }
-
-    [Fact]
-    public async Task Should_ReturnSortedPage_When_GettingPageWithFieldNameSort()
-    {
-        // Arrange
-        var cancellationToken = TestContext.Current.CancellationToken;
-        var request = new PageQuery<Person>(1, 10).OrderBy("FirstName");
-        var expectedFirst = _people.OrderBy(x => x.FirstName).First().FirstName;
-
-        // Act
-        var page = await _repository.GetPageAsync(request, cancellationToken);
-
-        // Assert
-        Assert.Equal(10, page.Items.Count);
-        Assert.Equal(expectedFirst, page.Items.First().FirstName);
     }
 
     #endregion

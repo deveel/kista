@@ -185,5 +185,24 @@ namespace Kista {
 		/// Thrown if the provided <paramref name="key"/> is <c>null</c>
 		/// </exception>
 		ValueTask<TEntity?> FindAsync(TKey key, CancellationToken cancellationToken = default);
+
+		/// <summary>
+		/// Gets a page of items from the repository using simple pagination
+		/// without filtering or sorting.
+		/// </summary>
+		/// <param name="request">
+		/// The page request specifying the page number and size.
+		/// </param>
+		/// <param name="cancellationToken">
+		/// A token used to cancel the operation.
+		/// </param>
+		/// <returns>
+		/// Returns a <see cref="PageResult{TEntity}"/> containing the page
+		/// items and pagination metadata.
+		/// </returns>
+		/// <exception cref="RepositoryException">
+		/// Thrown if an error occurred while retrieving the page.
+		/// </exception>
+		ValueTask<PageResult<TEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default);
 	}
 }

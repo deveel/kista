@@ -62,11 +62,10 @@ public class MongoRepositoryNoKeyTests : MongoRepositoryNoKeyTestSuite<MongoPers
 
 	[Fact]
 	public async Task Should_AsQueryable_ReturnQueryable() {
-		// Arrange
-		var queryableRepo = (IQueryableRepository<MongoPerson, object>)Repository;
-
 		// Act
-		var queryable = queryableRepo.AsQueryable();
+#pragma warning disable CS0618
+		var queryable = ((MongoRepository<MongoPerson>)Repository).AsQueryable();
+#pragma warning restore CS0618
 
 		// Assert
 		Assert.NotNull(queryable);

@@ -28,17 +28,6 @@ namespace Kista {
 			return repository is IQueryableRepository<TEntity, TKey>;
 		}
 
-		private static bool IsPageable<TEntity, TKey>(this IRepository<TEntity, TKey> repository) where TEntity : class {
-			return repository is IPageableRepository<TEntity, TKey>;
-		}
-
-		private static IPageableRepository<TEntity, TKey> RequirePageable<TEntity, TKey>(this IRepository<TEntity, TKey> repository) where TEntity : class {
-			if (!(repository is IPageableRepository<TEntity, TKey> pageable))
-				throw new NotSupportedException("The repository is not pageable");
-
-			return pageable;
-		}
-
 		#region AsFilterable
 
 		/// <summary>
@@ -57,6 +46,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository is not filterable
 		/// </exception>
+		[Obsolete("Use the abstract Kista.RepositoryBase<TEntity> base class instead. Filtering is now provided directly by the base class.", false)]
 		public static IFilterableRepository<TEntity> AsFilterable<TEntity>(this IRepository<TEntity> repository)
 			where TEntity : class {
 			if (!(repository is IFilterableRepository<TEntity> filterable))
@@ -87,6 +77,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository is not filterable
 		/// </exception>
+		[Obsolete("Use the abstract Kista.RepositoryBase<TEntity, TKey> base class instead. Filtering is now provided directly by the base class.", false)]
 		public static IFilterableRepository<TEntity, TKey> AsFilterable<TEntity, TKey>(this IRepository<TEntity, TKey> repository)
 			where TEntity : class {
 			if (!(repository is IFilterableRepository<TEntity, TKey> filterable))
@@ -115,6 +106,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository is not queryable
 		/// </exception>
+		[Obsolete("Use the abstract Kista.RepositoryBase<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
 		public static IQueryableRepository<TEntity> AsQueryable<TEntity>(this IRepository<TEntity> repository)
 			where TEntity : class {
 			if (!(repository is IQueryableRepository<TEntity> queryable))
@@ -142,6 +134,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository is not queryable
 		/// </exception>
+		[Obsolete("Use the abstract Kista.RepositoryBase<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
 		public static IQueryableRepository<TEntity, TKey> AsQueryable<TEntity, TKey>(this IRepository<TEntity, TKey> repository)
 			where TEntity : class {
 			if (!(repository is IQueryableRepository<TEntity, TKey> queryable))
@@ -537,14 +530,11 @@ namespace Kista {
 		/// </param>
 		/// <remarks>
 		/// <para>
-		/// This method attempts to cast the given repository to a
-		/// <see cref="IPageableRepository{TEntity}"/> and invoke the
-		/// native method <see cref="IPageableRepository{TEntity, TKey}.GetPageAsync(PageQuery{TEntity}, CancellationToken)"/>.
-		/// </para>
-		/// <para>
-		/// If the repository does not implement the interface, the method
-		/// attempts to cast it to a <see cref="IQueryableRepository{TEntity}"/>
-		/// and invoke the a paging operation on the <see cref="IQueryable{T}"/>.
+		/// This method performs simple unsorted pagination using the
+		/// <see cref="IRepository{TEntity, TKey}.GetPageAsync(PageRequest, CancellationToken)"/>
+		/// contract. For filtered and sorted queries, use the protected
+		/// <c>RepositoryBase{TEntity, TKey}.QueryPageAsync(PageQuery{TEntity}, CancellationToken)</c>
+		/// method inside your repository implementation.
 		/// </para>
 		/// </remarks>
 		/// <returns>
@@ -554,15 +544,9 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository does not support paging.
 		/// </exception>
-		public static ValueTask<PageResult<TEntity>> GetPageAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, PageQuery<TEntity> request, CancellationToken cancellationToken = default)
-			where TEntity : class {
-			if (repository.IsPageable())
-				return repository.RequirePageable().GetPageAsync(request, cancellationToken);
-			if (repository.IsQueryable())
-				return new ValueTask<PageResult<TEntity>>(repository.AsQueryable().GetPage(request));
-
-			throw new NotSupportedException("The repository does not support paging");
-		}
+		public static ValueTask<PageResult<TEntity>> GetPageAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, PageRequest request, CancellationToken cancellationToken = default)
+			where TEntity : class
+			=> repository.GetPageAsync(request, cancellationToken);
 
 		/// <summary>
 		/// Gets a page of entities from the repository, given
@@ -590,16 +574,13 @@ namespace Kista {
 		/// Returns an instance of <see cref="PageResult{TEntity}"/> that
 		/// represents the result of the query.
 		/// </returns>
-		/// <exception cref="NotSupportedException">
-		/// Thrown when the repository does not support paging.
-		/// </exception>
 		/// <exception cref="ArgumentOutOfRangeException">
 		/// Thrown when the given page number is less than 1, or the given
 		/// size is less than zero.
 		/// </exception>
 		public static ValueTask<PageResult<TEntity>> GetPageAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, int page, int size, CancellationToken cancellationToken = default)
 			where TEntity : class
-			=> repository.GetPageAsync(new PageQuery<TEntity>(page, size), cancellationToken);
+			=> repository.GetPageAsync(new PageRequest(page, size), cancellationToken);
 
         /// <summary>
         /// Gets a page of entities from the repository, given
@@ -614,19 +595,16 @@ namespace Kista {
         /// <param name="repository">
         /// The instance of the repository to use to retrieve the page.
         /// </param>
-        /// <param name="query">
-        /// The query object that defines the scope of the page to retrieve
+        /// <param name="request">
+        /// The request object that defines the scope of the page to retrieve
         /// </param>
 		/// <remarks>
 		/// <para>
-		/// This method attempts to cast the given repository to a
-		/// <see cref="IPageableRepository{TEntity}"/> and invoke the
-		/// native method <see cref="IPageableRepository{TEntity, TKey}.GetPageAsync(PageQuery{TEntity}, CancellationToken)"/>.
-		/// </para>
-		/// <para>
-		/// If the repository does not implement the interface, the method
-		/// attempts to cast it to a <see cref="IQueryableRepository{TEntity}"/>
-		/// and invoke the a paging operation on the <see cref="IQueryable{T}"/>.
+		/// This method performs simple unsorted pagination using the
+		/// <see cref="IRepository{TEntity, TKey}.GetPageAsync(PageRequest, CancellationToken)"/>
+		/// contract. For filtered and sorted queries, use the protected
+		/// <c>RepositoryBase{TEntity, TKey}.QueryPageAsync(PageQuery{TEntity}, CancellationToken)</c>
+		/// method inside your repository implementation.
 		/// </para>
 		/// </remarks>
         /// <returns>
@@ -634,17 +612,11 @@ namespace Kista {
         /// represents the paged result of the query.
         /// </returns>
         /// <exception cref="NotSupportedException">
-        /// Thrown when the repository does not support paging or querying.
+        /// Thrown when the repository does not support paging.
         /// </exception>
-		public static PageResult<TEntity> GetPage<TEntity, TKey>(this IRepository<TEntity, TKey> repository, PageQuery<TEntity> query)
-			where TEntity : class {
-			if (repository.IsPageable())
-				return repository.RequirePageable().GetPage(query);
-			if (repository.IsQueryable())
-				return repository.AsQueryable().GetPage(query);
-
-			throw new NotSupportedException("The repository does not support paging");
-		}
+		public static PageResult<TEntity> GetPage<TEntity, TKey>(this IRepository<TEntity, TKey> repository, PageRequest request)
+			where TEntity : class
+			=> repository.GetPageAsync(request).GetAwaiter().GetResult();
 
 		/// <summary>
 		/// Synchronously gets a page of entities from the repository, given
@@ -682,7 +654,7 @@ namespace Kista {
 		/// </exception>
 		public static PageResult<TEntity> GetPage<TEntity, TKey>(this IRepository<TEntity, TKey> repository, int page, int size)
 			where TEntity : class
-			=> repository.GetPage(new PageQuery<TEntity>(page, size));
+			=> repository.GetPage(new PageRequest(page, size));
 
 		#endregion
 
@@ -756,6 +728,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository does not support querying or filtering.
 		/// </exception>
+		[Obsolete("Use the abstract Kista.RepositoryBase<TEntity, TKey> base class instead. Filtering is now provided directly by the base class.", false)]
 		public static ValueTask<bool> ExistsAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, IQueryFilter filter, CancellationToken cancellationToken = default)
 			where TEntity : class {
 			if (repository.IsFilterable())
@@ -963,6 +936,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository does not support querying or filtering.
 		/// </exception>
+		[Obsolete("Use the abstract Kista.RepositoryBase<TEntity, TKey> base class instead. Filtering is now provided directly by the base class.", false)]
         public static ValueTask<long> CountAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken = default)
             where TEntity : class {
 			if (repository.IsFilterable())
@@ -999,6 +973,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository does not support querying or filtering.
 		/// </exception>
+		[Obsolete("Use the abstract Kista.RepositoryBase<TEntity, TKey> base class instead. Filtering is now provided directly by the base class.", false)]
 		public static ValueTask<long> CountAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, IQueryFilter filter, CancellationToken cancellationToken = default)
 			where TEntity : class {
 			if (repository.IsFilterable())
@@ -1031,6 +1006,7 @@ namespace Kista {
         /// Thrown when the repository does not support querying or filtering.
         /// </exception>
         /// <seealso cref="IFilterableRepository{TEntity, TKey}.CountAsync(IQueryFilter, CancellationToken)"/>
+		[Obsolete("Use the abstract Kista.RepositoryBase<TEntity, TKey> base class instead. Filtering is now provided directly by the base class.", false)]
 		public static ValueTask<long> CountAllAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, CancellationToken cancellationToken = default)
 			where TEntity : class {
 			if (repository.IsFilterable())
@@ -1342,6 +1318,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository does not support querying.
 		/// </exception>
+		[Obsolete("Use the abstract Kista.RepositoryBase<TEntity, TKey> base class instead. Filtering is now provided directly by the base class.", false)]
 		public static ValueTask<TEntity?> FindFirstAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, IQuery query, CancellationToken cancellationToken = default)
 			where TEntity : class {
 			if (repository.IsFilterable())
@@ -1779,6 +1756,7 @@ namespace Kista {
 		/// Thrown when the repository does not support querying 
 		/// or filtering.
 		/// </exception>
+		[Obsolete("Use the abstract Kista.RepositoryBase<TEntity, TKey> base class instead. Filtering is now provided directly by the base class.", false)]
 		public static ValueTask<IList<TEntity>> FindAllAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, IQuery query, CancellationToken cancellationToken = default)
 			where TEntity : class {
 			if (repository.IsFilterable())

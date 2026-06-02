@@ -86,6 +86,7 @@ public class RepositoryScannerTests {
 		public ValueTask RemoveRangeAsync(IEnumerable<ScanPerson> entities, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
 		public ValueTask<ScanPerson?> FindAsync(object key, CancellationToken cancellationToken = default) => new((ScanPerson?)null);
 		public object? GetEntityKey(ScanPerson entity) => (object?)entity.Id;
+		public ValueTask<PageResult<ScanPerson>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 	}
 }
 
@@ -220,6 +221,7 @@ public class RepositoryScannerExtendedTests {
 		public abstract ValueTask RemoveRangeAsync(IEnumerable<ScanExtendedPerson> entities, CancellationToken cancellationToken = default);
 		public abstract ValueTask<ScanExtendedPerson?> FindAsync(object key, CancellationToken cancellationToken = default);
 		public abstract object? GetEntityKey(ScanExtendedPerson entity);
+		public abstract ValueTask<PageResult<ScanExtendedPerson>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default);
 	}
 
 	public class ConcreteScanRepository : IRepository<ScanExtendedPerson> {
@@ -230,6 +232,7 @@ public class RepositoryScannerExtendedTests {
 		public ValueTask RemoveRangeAsync(IEnumerable<ScanExtendedPerson> entities, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
 		public ValueTask<ScanExtendedPerson?> FindAsync(object key, CancellationToken cancellationToken = default) => new((ScanExtendedPerson?)null);
 		public object? GetEntityKey(ScanExtendedPerson entity) => (object?)entity.Id;
+		public ValueTask<PageResult<ScanExtendedPerson>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 	}
 
 	public class ExplicitScanRepository : IRepository<ScanExtendedPerson> {
@@ -240,6 +243,7 @@ public class RepositoryScannerExtendedTests {
 		public ValueTask RemoveRangeAsync(IEnumerable<ScanExtendedPerson> entities, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
 		public ValueTask<ScanExtendedPerson?> FindAsync(object key, CancellationToken cancellationToken = default) => new((ScanExtendedPerson?)null);
 		public object? GetEntityKey(ScanExtendedPerson entity) => (object?)entity.Id;
+		public ValueTask<PageResult<ScanExtendedPerson>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 	}
 
 	public interface ISpecializedScanRepository : IRepository<ScanExtendedPerson> {
@@ -255,5 +259,6 @@ public class RepositoryScannerExtendedTests {
 		public ValueTask RemoveRangeAsync(IEnumerable<ScanExtendedPerson> entities, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
 		public ValueTask<ScanExtendedPerson?> FindAsync(object key, CancellationToken cancellationToken = default) => new((ScanExtendedPerson?)null);
 		public object? GetEntityKey(ScanExtendedPerson entity) => (object?)entity.Id;
+		public ValueTask<PageResult<ScanExtendedPerson>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 	}
 }

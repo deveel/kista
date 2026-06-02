@@ -72,6 +72,7 @@ public class BackwardCompatibilityTests {
 		public ValueTask RemoveRangeAsync(IEnumerable<CompatTestEntity> entities, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
 		public ValueTask<CompatTestEntity?> FindAsync(object key, CancellationToken cancellationToken = default) => new((CompatTestEntity?)null);
 		public object? GetEntityKey(CompatTestEntity entity) => (object?)entity.Id;
+		public ValueTask<PageResult<CompatTestEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 	}
 }
 #pragma warning restore CS0618

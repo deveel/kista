@@ -23,6 +23,7 @@ namespace Kista {
 	/// The strongly typed entity that is stored in the repository
 	/// </typeparam>
 	/// <seealso cref="IFilterableRepository{TEntity, TKey}"/>
+	[Obsolete("Use the abstract Kista.RepositoryBase<TEntity> base class instead. Filtering is now provided directly by the base class.", false)]
     public interface IFilterableRepository<TEntity> : IFilterableRepository<TEntity, object> where TEntity : class {
     }
 }

@@ -1311,6 +1311,9 @@ public class LifecycleTests {
 
 		public ValueTask<TEntity?> FindAsync(object key, CancellationToken cancellationToken = default)
 			=> throw new NotSupportedException();
+
+		public ValueTask<PageResult<TEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default)
+			=> throw new NotSupportedException();
 	}
 
 	/// <summary>
@@ -1357,6 +1360,9 @@ public class LifecycleTests {
 			=> throw new NotSupportedException();
 
 		public ValueTask<TEntity?> FindAsync(TKey key, CancellationToken cancellationToken = default)
+			=> throw new NotSupportedException();
+
+		public ValueTask<PageResult<TEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default)
 			=> throw new NotSupportedException();
 	}
 

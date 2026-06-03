@@ -103,11 +103,6 @@ namespace Kista {
 		/// <inheritdoc />
 		protected override IServiceProvider? Services { get; }
 
-		private void InitializeFilter(IQueryFilter? filter) {
-			if (filter != null && Services != null)
-				filter.Initialize(new DefaultFilterContext(Services));
-		}
-
 			[Obsolete("Use the abstract Kista.RepositoryBase<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
 		public virtual IQueryable<TEntity> AsQueryable() => DbSet.AsQueryable();
 
@@ -158,8 +153,7 @@ namespace Kista {
 		/// Thrown when the repository has been disposed.
 		/// </exception>
 		protected void ThrowIfDisposed() {
-			if (disposed)
-				throw new ObjectDisposedException(GetType().Name);
+			DisposableHelper.ThrowIfDisposed(disposed, GetType().Name);
 		}
 
 		/// <summary>
@@ -370,43 +364,12 @@ namespace Kista {
 				var entityDef = EntityMapping.GetOrCreateDefinition(typeof(TEntity));
 
 				foreach (var indexDef in entityDef.Indexes) {
-					var indices = BuildIndexModels(indexDef);
+					var indices = MongoIndexBuilder<TEntity>.BuildIndexModels(indexDef);
 					await Collection.Indexes.CreateManyAsync(indices, cancellationToken);
 				}
 			} catch (Exception ex) {
 				throw new RepositoryException("Unable to create the indices for the repository", ex);
 			}
-		}
-
-		private static List<CreateIndexModel<TEntity>> BuildIndexModels(IndexDefinition indexDef) {
-			var keysBuilder = new IndexKeysDefinitionBuilder<TEntity>();
-			var indices = new List<CreateIndexModel<TEntity>>();
-
-			foreach (var path in indexDef.IndexPaths) {
-				var keysDef = BuildIndexKeys(keysBuilder, path);
-				if (keysDef == null)
-					continue;
-
-				var options = new CreateIndexOptions {
-					Unique = indexDef.IsUnique,
-					Name = indexDef.IndexName
-				};
-				indices.Add(new CreateIndexModel<TEntity>(keysDef, options));
-			}
-
-			return indices;
-		}
-
-		private static IndexKeysDefinition<TEntity>? BuildIndexKeys(IndexKeysDefinitionBuilder<TEntity> builder, IndexPathDefinition path) {
-			var fieldDef = new StringFieldDefinition<TEntity>(path.Path);
-			return path.IndexType switch {
-				IndexType.Standard => path.SortOrder == IndexSortOrder.Descending
-					? builder.Descending(fieldDef)
-					: builder.Ascending(fieldDef),
-				IndexType.Geo2dSphere => builder.Geo2DSphere(fieldDef),
-				IndexType.Text => builder.Text(fieldDef),
-				_ => null
-			};
 		}
 
 		async ValueTask IControllableRepository.DropAsync(CancellationToken cancellationToken) {

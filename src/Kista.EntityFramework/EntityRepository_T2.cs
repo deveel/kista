@@ -190,11 +190,6 @@ namespace Kista
 
 		bool ITrackingRepository<TEntity, TKey>.IsTrackingChanges => IsTrackingChanges;
 
-		private void InitializeFilter(IQueryFilter? filter) {
-			if (filter != null && Services != null)
-				filter.Initialize(new DefaultFilterContext(Services));
-		}
-
 		/// <summary>
 		/// Assesses if the repository has been disposed.
 		/// </summary>
@@ -202,8 +197,7 @@ namespace Kista
 		/// Thrown when the repository has been disposed.
 		/// </exception>
 		protected void ThrowIfDisposed() {
-			if (disposedValue)
-				throw new ObjectDisposedException(GetType().Name);
+			DisposableHelper.ThrowIfDisposed(disposedValue, GetType().Name);
 		}
 
 		/// <summary>

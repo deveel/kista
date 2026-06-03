@@ -220,11 +220,6 @@ namespace Kista {
 		ValueTask<IList<TEntity>> IFilterableRepository<TEntity, TKey>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
 			=> FindAllAsync(query, cancellationToken);
 
-		private void InitializeFilter(IQueryFilter? filter) {
-			if (filter != null && Services != null)
-				filter.Initialize(new DefaultFilterContext(Services));
-		}
-
 		/// <summary>
 		/// Gets a point-in-time snapshot of all entities in the repository.
 		/// </summary>

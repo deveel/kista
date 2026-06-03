@@ -6,30 +6,20 @@ namespace Kista
     /// <summary>
     /// Fluent builder for configuring the In-Memory repository driver.
     /// </summary>
-    public class InMemoryRepositoryBuilder {
-        private readonly RepositoryContextBuilder _parent;
-        private bool _enableLifecycle = false;
-
-        internal InMemoryRepositoryBuilder(RepositoryContextBuilder parent) {
-            _parent = parent;
+    public class InMemoryRepositoryBuilder : RepositoryDriverBuilder {
+        internal InMemoryRepositoryBuilder(RepositoryContextBuilder parent)
+            : base(parent, enableLifecycle: false) {
             RegisterOpenGenerics();
         }
 
-        /// <summary>
-        /// Gets the underlying service collection.
-        /// </summary>
-        public IServiceCollection Services => _parent.Services;
-
         private void RegisterOpenGenerics() {
-            _parent.AddRepository(typeof(InMemoryRepository<>), ServiceLifetime.Singleton);
-            _parent.AddRepository(typeof(InMemoryRepository<,>), ServiceLifetime.Singleton);
+            Parent.AddRepository(typeof(InMemoryRepository<>), ServiceLifetime.Singleton);
+            Parent.AddRepository(typeof(InMemoryRepository<,>), ServiceLifetime.Singleton);
             UpdateLifecycleRegistration();
         }
 
         private void UpdateLifecycleRegistration() {
-            if (_enableLifecycle) {
-                _parent.Services.TryAddTransient(typeof(IRepositoryLifecycleHandler<>), typeof(InMemoryRepositoryLifecycleHandler<>));
-            }
+            RegisterLifecycleHandler(typeof(InMemoryRepositoryLifecycleHandler<>));
         }
 
         /// <summary>
@@ -37,8 +27,8 @@ namespace Kista
         /// registering a <see cref="InMemoryRepositoryLifecycleHandler{TEntity}"/>
         /// for each entity type.
         /// </summary>
-        public InMemoryRepositoryBuilder WithLifecycle() {
-            _enableLifecycle = true;
+        public new InMemoryRepositoryBuilder WithLifecycle() {
+            base.WithLifecycle<InMemoryRepositoryBuilder>();
             UpdateLifecycleRegistration();
             return this;
         }
@@ -56,6 +46,6 @@ namespace Kista
         /// <summary>
         /// Implicitly converts to the parent <see cref="RepositoryContextBuilder"/>.
         /// </summary>
-        public static implicit operator RepositoryContextBuilder(InMemoryRepositoryBuilder builder) => builder._parent;
+        public static implicit operator RepositoryContextBuilder(InMemoryRepositoryBuilder builder) => builder.Parent;
     }
 }

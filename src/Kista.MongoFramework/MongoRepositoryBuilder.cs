@@ -8,23 +8,16 @@ namespace Kista
     /// <summary>
     /// Fluent builder for configuring the MongoDB repository driver via MongoFramework.
     /// </summary>
-    public class MongoRepositoryBuilder {
-        private readonly RepositoryContextBuilder _parent;
+    public class MongoRepositoryBuilder : RepositoryDriverBuilder {
         private readonly Type _contextType;
         private Action<MongoConnectionBuilder>? _connectionConfig;
         private string? _connectionString;
         private ServiceLifetime _lifetime = ServiceLifetime.Scoped;
-        private bool _enableLifecycle = true;
 
-        internal MongoRepositoryBuilder(RepositoryContextBuilder parent, Type contextType) {
-            _parent = parent;
+        internal MongoRepositoryBuilder(RepositoryContextBuilder parent, Type contextType)
+            : base(parent) {
             _contextType = contextType;
         }
-
-        /// <summary>
-        /// Gets the underlying service collection.
-        /// </summary>
-        public IServiceCollection Services => _parent.Services;
 
         /// <summary>
         /// Sets the connection string for the MongoDB connection.
@@ -55,16 +48,16 @@ namespace Kista
         /// registering a <see cref="MongoRepositoryLifecycleHandler{TEntity}"/>
         /// for each entity type.
         /// </summary>
-        public MongoRepositoryBuilder WithLifecycle() {
-            _enableLifecycle = true;
+        public new MongoRepositoryBuilder WithLifecycle() {
+            base.WithLifecycle<MongoRepositoryBuilder>();
             return this;
         }
 
         /// <summary>
         /// Disables lifecycle support for the MongoDB repositories.
         /// </summary>
-        public MongoRepositoryBuilder WithoutLifecycle() {
-            _enableLifecycle = false;
+        public new MongoRepositoryBuilder WithoutLifecycle() {
+            base.WithoutLifecycle<MongoRepositoryBuilder>();
             return this;
         }
 
@@ -74,32 +67,30 @@ namespace Kista
             } else if (_connectionConfig != null) {
                 RegisterMongoContext(_connectionConfig);
             } else {
-                _parent.Services.TryAdd(ServiceDescriptor.Scoped(_contextType, _contextType));
-                _parent.Services.TryAdd(ServiceDescriptor.Scoped(typeof(IMongoDbContext), _contextType));
+                Parent.Services.TryAdd(ServiceDescriptor.Scoped(_contextType, _contextType));
+                Parent.Services.TryAdd(ServiceDescriptor.Scoped(typeof(IMongoDbContext), _contextType));
             }
 
-            _parent.AddRepository(typeof(MongoRepository<>), _lifetime);
-            _parent.AddRepository(typeof(MongoRepository<,>), _lifetime);
+            Parent.AddRepository(typeof(MongoRepository<>), _lifetime);
+            Parent.AddRepository(typeof(MongoRepository<,>), _lifetime);
 
-            if (_enableLifecycle) {
-                _parent.Services.TryAddTransient(typeof(IRepositoryLifecycleHandler<>), typeof(MongoRepositoryLifecycleHandler<>));
-            }
+            RegisterLifecycleHandler(typeof(MongoRepositoryLifecycleHandler<>));
         }
 
         private void RegisterMongoContext(string connectionString) {
-            var connectionBuilder = new MongoConnectionBuilder(_contextType, _parent.Services, _lifetime);
+            var connectionBuilder = new MongoConnectionBuilder(_contextType, Parent.Services, _lifetime);
             connectionBuilder.UseConnection(connectionString);
 
-            _parent.Services.TryAdd(ServiceDescriptor.Scoped(_contextType, _contextType));
-            _parent.Services.TryAdd(ServiceDescriptor.Scoped(typeof(IMongoDbContext), _contextType));
+            Parent.Services.TryAdd(ServiceDescriptor.Scoped(_contextType, _contextType));
+            Parent.Services.TryAdd(ServiceDescriptor.Scoped(typeof(IMongoDbContext), _contextType));
         }
 
         private void RegisterMongoContext(Action<MongoConnectionBuilder> configure) {
-            var cb = new MongoConnectionBuilder(_contextType, _parent.Services, _lifetime);
+            var cb = new MongoConnectionBuilder(_contextType, Parent.Services, _lifetime);
             configure(cb);
 
-            _parent.Services.TryAdd(ServiceDescriptor.Scoped(_contextType, _contextType));
-            _parent.Services.TryAdd(ServiceDescriptor.Scoped(typeof(IMongoDbContext), _contextType));
+            Parent.Services.TryAdd(ServiceDescriptor.Scoped(_contextType, _contextType));
+            Parent.Services.TryAdd(ServiceDescriptor.Scoped(typeof(IMongoDbContext), _contextType));
         }
 
         /// <summary>
@@ -107,7 +98,7 @@ namespace Kista
         /// </summary>
         public static implicit operator RepositoryContextBuilder(MongoRepositoryBuilder builder) {
             builder.FinalizeRegistration();
-            return builder._parent;
+            return builder.Parent;
         }
     }
 }

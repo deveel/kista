@@ -82,31 +82,7 @@ namespace Kista {
 					.GetCollection<TEntity>(entityDef.CollectionName);
 
 				foreach (var indexDef in entityDef.Indexes) {
-					var keysBuilder = new IndexKeysDefinitionBuilder<TEntity>();
-					var indices = new List<CreateIndexModel<TEntity>>();
-					foreach (var path in indexDef.IndexPaths) {
-						var fieldDef = new StringFieldDefinition<TEntity>(path.Path);
-						IndexKeysDefinition<TEntity>? keysDef = null;
-						if (path.IndexType == IndexType.Standard) {
-							keysDef = path.SortOrder == IndexSortOrder.Descending
-								? keysBuilder.Descending(fieldDef)
-								: keysBuilder.Ascending(fieldDef);
-						} else if (path.IndexType == IndexType.Geo2dSphere) {
-							keysDef = keysBuilder.Geo2DSphere(fieldDef);
-						} else if (path.IndexType == IndexType.Text) {
-							keysDef = keysBuilder.Text(fieldDef);
-						}
-
-						if (keysDef != null) {
-							var options = new CreateIndexOptions {
-								Unique = indexDef.IsUnique,
-								Name = indexDef.IndexName
-							};
-							var indexModel = new CreateIndexModel<TEntity>(keysDef, options);
-							indices.Add(indexModel);
-						}
-					}
-
+					var indices = MongoIndexBuilder<TEntity>.BuildIndexModels(indexDef);
 					if (indices.Any())
 						await collection.Indexes.CreateManyAsync(indices, cancellationToken);
 				}

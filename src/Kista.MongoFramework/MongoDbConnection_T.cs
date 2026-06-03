@@ -51,8 +51,7 @@ namespace Kista {
 		}
 
 		private void ThrowIfDisposed() {
-			if (disposed)
-				throw new ObjectDisposedException(nameof(MongoDbConnection<TContext>));
+			DisposableHelper.ThrowIfDisposed(disposed, nameof(MongoDbConnection<TContext>));
 		}
 
 		/// <summary>

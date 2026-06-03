@@ -49,6 +49,17 @@ namespace Kista {
 	/// </remarks>
 	public abstract class RepositoryBase<TEntity, TKey> : IRepository<TEntity, TKey>, IFilterableRepository<TEntity, TKey>
 		where TEntity : class {
+
+		/// <summary>
+		/// Initializes the given query filter with the current service provider.
+		/// </summary>
+		/// <param name="filter">
+		/// The query filter to initialize, or <c>null</c>.
+		/// </param>
+		protected void InitializeFilter(IQueryFilter? filter) {
+			if (filter != null && Services != null)
+				filter.Initialize(new DefaultFilterContext(Services));
+		}
 		/// <summary>
 		/// Gets the service provider associated with this repository, if any.
 		/// </summary>

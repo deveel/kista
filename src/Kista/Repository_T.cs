@@ -21,8 +21,8 @@ namespace Kista {
 	/// <typeparam name="TEntity">
 	/// The type of the entity managed by the repository.
 	/// </typeparam>
-	/// <seealso cref="RepositoryBase{TEntity, TKey}"/>
-	public abstract class RepositoryBase<TEntity> : RepositoryBase<TEntity, object>
+	/// <seealso cref="Repository{TEntity,TKey}"/>
+	public abstract class Repository<TEntity> : Repository<TEntity, object>
 		where TEntity : class {
 	}
 }

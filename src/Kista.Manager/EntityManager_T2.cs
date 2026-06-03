@@ -174,8 +174,8 @@ namespace Kista {
 		/// Throws when the service has been disposed.
 		/// </exception>
 		/// <remarks>
-		/// This property is obsolete. Use <see cref="IRepository{TEntity, TKey}.GetPageAsync(PageRequest, CancellationToken)"/>
-		/// for simple pagination, or the protected <c>RepositoryBase{TEntity, TKey}.QueryPageAsync(PageQuery{TEntity}, CancellationToken)</c>
+		/// This property is obsolete. Use <see cref="IRepository{TEntity, TKey}.GetPageAsync(PageRequest,System.Threading.CancellationToken)"/>
+		/// for simple pagination, or the protected <see cref="Repository{TEntity,TKey}.QueryPageAsync(PageQuery{TEntity}, System.Threading.CancellationToken)"/>
 		/// for filtered and sorted queries inside your repository implementation.
 		/// </remarks>
 		[Obsolete("Use IRepository<TEntity, TKey>.GetPageAsync(PageRequest, CancellationToken) for simple pagination instead.", false)]

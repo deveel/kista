@@ -21,11 +21,11 @@ namespace Kista {
 	/// This extension class is obsolete. It depends on the obsolete
 	/// <see cref="IQueryableRepository{TEntity, TKey}"/> contract and is
 	/// expected to be removed in a future major version. Repositories that
-	/// inherit from <see cref="RepositoryBase{TEntity, TKey}"/> expose
+	/// inherit from <see cref="Repository{TEntity,TKey}"/> expose
 	/// ready-made <c>FindAsync(IQuery, CancellationToken)</c> and
 	/// <c>QueryPageAsync(PageQuery{TEntity}, CancellationToken)</c> methods.
 	/// </remarks>
-	[Obsolete("Use the abstract Kista.RepositoryBase<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
+	[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
 	public static class QueryableRepositoryExtensions {
 		/// <summary>
 		/// Gets a page of entities from the repository,
@@ -47,7 +47,7 @@ namespace Kista {
 		/// Returns an instance of <see cref="PageQueryResult{TEntity}"/> that
 		/// is the result of the query.
 		/// </returns>
-		[Obsolete("Use the abstract Kista.RepositoryBase<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
+		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
 		public static PageQueryResult<TEntity> GetPage<TEntity, TKey>(this IQueryableRepository<TEntity, TKey> repository, PageQuery<TEntity> request)
 			where TEntity : class {
 			var query = request.ApplyQuery(repository.AsQueryable());

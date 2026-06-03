@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Kista;
 
 /// <summary>
-/// Integration tests for <see cref="RepositoryBase{TEntity, TKey}"/> when
+/// Integration tests for <see cref="Repository{TEntity,TKey}"/> when
 /// hosted on top of an Entity Framework Core provider. The tests verify that
 /// the new translation pipeline binds <see cref="IQuery"/> and
 /// <see cref="PageQuery{TEntity}"/> parameters correctly through the protected
@@ -17,7 +17,7 @@ namespace Kista;
 [Collection(nameof(SqlConnectionCollection))]
 [Trait("Category", "Integration")]
 [Trait("Layer", "Infrastructure")]
-[Trait("Feature", "RepositoryBase")]
+[Trait("Feature", "Repository")]
 public class RepositoryBaseEfTests {
 	private readonly SqlTestConnection sql;
 
@@ -128,11 +128,11 @@ public class RepositoryBaseEfTests {
 	#region Fixtures
 
 	/// <summary>
-	/// A thin <see cref="RepositoryBase{DbPerson, Guid}"/> that
+	/// A thin <see cref="Repository{TEntity,TKey}"/> that
 	/// implements the abstract <c>Query()</c> hatch by returning the EF
 	/// <see cref="DbSet{TEntity}"/> as <see cref="IQueryable{T}"/>.
 	/// </summary>
-	private class TestEfRepository : RepositoryBase<DbPerson, Guid> {
+	private class TestEfRepository : Repository<DbPerson, Guid> {
 		private readonly PersonDbContext context;
 
 		public TestEfRepository(PersonDbContext context) {

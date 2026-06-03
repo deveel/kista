@@ -64,7 +64,7 @@ public interface IProductRepository : IRepository<Product, Guid> {
         CancellationToken ct = default);
 }
 
-public class ProductRepository : RepositoryBase<Product, Guid>, IProductRepository {
+public class ProductRepository : Repository<Product, Guid>, IProductRepository {
     public async Task<PageQueryResult<Product>> FindProductsPagedAsync(
         PageQuery<Product> request,
         CancellationToken ct = default) {

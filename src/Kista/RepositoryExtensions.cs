@@ -46,7 +46,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository is not filterable
 		/// </exception>
-		[Obsolete("Use the abstract Kista.RepositoryBase<TEntity> base class instead. Filtering is now provided directly by the base class.", false)]
+		[Obsolete("Use the abstract Kista.Repository<TEntity> base class instead. Filtering is now provided directly by the base class.", false)]
 		public static IFilterableRepository<TEntity> AsFilterable<TEntity>(this IRepository<TEntity> repository)
 			where TEntity : class {
 			if (!(repository is IFilterableRepository<TEntity> filterable))
@@ -77,7 +77,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository is not filterable
 		/// </exception>
-		[Obsolete("Use the abstract Kista.RepositoryBase<TEntity, TKey> base class instead. Filtering is now provided directly by the base class.", false)]
+		[Obsolete("Use the abstract Kista.Repositor<TEntity, TKey> base class instead. Filtering is now provided directly by the base class.", false)]
 		public static IFilterableRepository<TEntity, TKey> AsFilterable<TEntity, TKey>(this IRepository<TEntity, TKey> repository)
 			where TEntity : class {
 			if (!(repository is IFilterableRepository<TEntity, TKey> filterable))
@@ -106,7 +106,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository is not queryable
 		/// </exception>
-		[Obsolete("Use the abstract Kista.RepositoryBase<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
+		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
 		public static IQueryableRepository<TEntity> AsQueryable<TEntity>(this IRepository<TEntity> repository)
 			where TEntity : class {
 			if (!(repository is IQueryableRepository<TEntity> queryable))
@@ -134,7 +134,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository is not queryable
 		/// </exception>
-		[Obsolete("Use the abstract Kista.RepositoryBase<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
+		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
 		public static IQueryableRepository<TEntity, TKey> AsQueryable<TEntity, TKey>(this IRepository<TEntity, TKey> repository)
 			where TEntity : class {
 			if (!(repository is IQueryableRepository<TEntity, TKey> queryable))
@@ -533,7 +533,7 @@ namespace Kista {
 		/// This method performs simple unsorted pagination using the
 		/// <see cref="IRepository{TEntity, TKey}.GetPageAsync(PageRequest, CancellationToken)"/>
 		/// contract. For filtered and sorted queries, use the protected
-		/// <c>RepositoryBase{TEntity, TKey}.QueryPageAsync(PageQuery{TEntity}, CancellationToken)</c>
+		/// <c>Repository{TEntity, TKey}.QueryPageAsync(PageQuery{TEntity}, CancellationToken)</c>
 		/// method inside your repository implementation.
 		/// </para>
 		/// </remarks>
@@ -603,7 +603,7 @@ namespace Kista {
 		/// This method performs simple unsorted pagination using the
 		/// <see cref="IRepository{TEntity, TKey}.GetPageAsync(PageRequest, CancellationToken)"/>
 		/// contract. For filtered and sorted queries, use the protected
-		/// <c>RepositoryBase{TEntity, TKey}.QueryPageAsync(PageQuery{TEntity}, CancellationToken)</c>
+		/// <c>Repository{TEntity, TKey}.QueryPageAsync(PageQuery{TEntity}, CancellationToken)</c>
 		/// method inside your repository implementation.
 		/// </para>
 		/// </remarks>
@@ -728,7 +728,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository does not support querying or filtering.
 		/// </exception>
-		[Obsolete("Use the abstract Kista.RepositoryBase<TEntity, TKey> base class instead. Filtering is now provided directly by the base class.", false)]
+		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. Filtering is now provided directly by the base class.", false)]
 		public static ValueTask<bool> ExistsAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, IQueryFilter filter, CancellationToken cancellationToken = default)
 			where TEntity : class {
 			if (repository.IsFilterable())
@@ -936,7 +936,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository does not support querying or filtering.
 		/// </exception>
-		[Obsolete("Use the abstract Kista.RepositoryBase<TEntity, TKey> base class instead. Filtering is now provided directly by the base class.", false)]
+		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. Filtering is now provided directly by the base class.", false)]
         public static ValueTask<long> CountAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken = default)
             where TEntity : class {
 			if (repository.IsFilterable())
@@ -973,7 +973,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository does not support querying or filtering.
 		/// </exception>
-		[Obsolete("Use the abstract Kista.RepositoryBase<TEntity, TKey> base class instead. Filtering is now provided directly by the base class.", false)]
+		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. Filtering is now provided directly by the base class.", false)]
 		public static ValueTask<long> CountAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, IQueryFilter filter, CancellationToken cancellationToken = default)
 			where TEntity : class {
 			if (repository.IsFilterable())
@@ -1006,7 +1006,7 @@ namespace Kista {
         /// Thrown when the repository does not support querying or filtering.
         /// </exception>
         /// <seealso cref="IFilterableRepository{TEntity, TKey}.CountAsync(IQueryFilter, CancellationToken)"/>
-		[Obsolete("Use the abstract Kista.RepositoryBase<TEntity, TKey> base class instead. Filtering is now provided directly by the base class.", false)]
+		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. Filtering is now provided directly by the base class.", false)]
 		public static ValueTask<long> CountAllAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, CancellationToken cancellationToken = default)
 			where TEntity : class {
 			if (repository.IsFilterable())
@@ -1318,7 +1318,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository does not support querying.
 		/// </exception>
-		[Obsolete("Use the abstract Kista.RepositoryBase<TEntity, TKey> base class instead. Filtering is now provided directly by the base class.", false)]
+		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. Filtering is now provided directly by the base class.", false)]
 		public static ValueTask<TEntity?> FindFirstAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, IQuery query, CancellationToken cancellationToken = default)
 			where TEntity : class {
 			if (repository.IsFilterable())
@@ -1756,7 +1756,7 @@ namespace Kista {
 		/// Thrown when the repository does not support querying 
 		/// or filtering.
 		/// </exception>
-		[Obsolete("Use the abstract Kista.RepositoryBase<TEntity, TKey> base class instead. Filtering is now provided directly by the base class.", false)]
+		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. Filtering is now provided directly by the base class.", false)]
 		public static ValueTask<IList<TEntity>> FindAllAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, IQuery query, CancellationToken cancellationToken = default)
 			where TEntity : class {
 			if (repository.IsFilterable())

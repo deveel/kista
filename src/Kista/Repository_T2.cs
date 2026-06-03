@@ -47,7 +47,7 @@ namespace Kista {
 	/// <see cref="ToListAsync"/>.
 	/// </para>
 	/// </remarks>
-	public abstract class RepositoryBase<TEntity, TKey> : IRepository<TEntity, TKey>, IFilterableRepository<TEntity, TKey>
+	public abstract class Repository<TEntity, TKey> : IRepository<TEntity, TKey>, IFilterableRepository<TEntity, TKey>
 		where TEntity : class {
 
 		/// <summary>
@@ -495,7 +495,7 @@ namespace Kista {
 		/// layer and break at runtime far from the repository.
 		/// </para>
 		/// </remarks>
-		[Obsolete("Use the abstract Kista.RepositoryBase<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
+		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
 		public virtual IQueryable<TEntity> AsQueryable() => Query();
 	}
 }

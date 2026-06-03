@@ -129,4 +129,4 @@ After registration, the following service types become available in the DI conta
 | `IMyCustomRepository` | The custom interface (if defined) that extends `IRepository<MyEntity>` with domain-specific query methods. |
 | `ITrackingRepository<MyEntity>` | Change-tracking queries (if implemented). |
 
-> **Note:** The legacy extension interfaces `IQueryableRepository`, `IPageableRepository`, and `IFilterableRepository` are deprecated. Query capabilities are now provided through `protected` members of `RepositoryBase<TEntity, TKey>` and should be exposed via domain-specific methods on your custom repository interface. See [The Repository Pattern](repository-pattern.md) and [Customize the Repository](custom-repository.md) for details.
+> **Note:** The legacy extension interfaces `IQueryableRepository`, `IPageableRepository`, and `IFilterableRepository` are deprecated. Query capabilities are now provided through `protected` members of `Repository<TEntity, TKey>` and should be exposed via domain-specific methods on your custom repository interface. See [The Repository Pattern](repository-pattern.md) and [Customize the Repository](custom-repository.md) for details.

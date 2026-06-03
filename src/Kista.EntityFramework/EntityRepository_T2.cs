@@ -33,7 +33,7 @@ namespace Kista
 	/// The type of the key of the entity managed by the repository.
 	/// </typeparam>
 	public class EntityRepository<TEntity, TKey> :
-		RepositoryBase<TEntity, TKey>,
+		Repository<TEntity, TKey>,
 		IQueryableRepository<TEntity, TKey>,
 		IFilterableRepository<TEntity, TKey>,
 		IPageableRepository<TEntity, TKey>,

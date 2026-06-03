@@ -6,7 +6,7 @@ using MongoFramework;
 namespace Kista;
 
 /// <summary>
-/// Integration tests for <see cref="RepositoryBase{TEntity, TKey}"/> when
+/// Integration tests for <see cref="Repository{TEntity,TKey}"/> when
 /// hosted on top of the MongoFramework provider. The tests verify that the new
 /// translation pipeline binds <see cref="IQuery"/> and
 /// <see cref="PageQuery{TEntity}"/> parameters correctly through the protected
@@ -16,7 +16,7 @@ namespace Kista;
 [Collection(nameof(MongoSingleDatabaseCollection))]
 [Trait("Category", "Integration")]
 [Trait("Layer", "Infrastructure")]
-[Trait("Feature", "RepositoryBase")]
+[Trait("Feature", "Repository")]
 public class RepositoryBaseMongoTests : IAsyncLifetime {
 	private readonly MongoSingleDatabase mongo;
 	private IServiceProvider Services = null!;

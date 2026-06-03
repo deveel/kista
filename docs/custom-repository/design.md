@@ -65,11 +65,11 @@ public interface INamedEntityRepository<TEntity> : IRepository<TEntity, Guid>
 Implementations close the generic:
 
 ```csharp
-public class ProductRepository : RepositoryBase<Product, Guid>, INamedEntityRepository<Product> {
+public class ProductRepository : Repository<Product, Guid>, INamedEntityRepository<Product> {
     // ...
 }
 
-public class CategoryRepository : RepositoryBase<Category, Guid>, INamedEntityRepository<Category> {
+public class CategoryRepository : Repository<Category, Guid>, INamedEntityRepository<Category> {
     // ...
 }
 ```

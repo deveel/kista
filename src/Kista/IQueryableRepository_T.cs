@@ -22,7 +22,7 @@ namespace Kista {
 	/// The strongly typed entity that is stored in the repository
 	/// </typeparam>
 	/// <seealso cref="IQueryableRepository{TEntity, TKey}"/>
-	[Obsolete("Use the abstract Kista.RepositoryBase<TEntity> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
+	[Obsolete("Use the abstract Kista.Repository<TEntity> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
 	public interface IQueryableRepository<TEntity> : IQueryableRepository<TEntity, object> where TEntity : class {
 	}
 }

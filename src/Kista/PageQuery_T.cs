@@ -23,7 +23,7 @@ namespace Kista {
 	/// <typeparam name="TEntity">
 	/// The type of entity to page.
 	/// </typeparam>
-	/// <seealso cref="RepositoryBase{TEntity, TKey}.QueryPageAsync(PageQuery{TEntity}, CancellationToken)"/>
+	/// <seealso cref="Repository{TEntity,TKey}.QueryPageAsync(PageQuery{TEntity}, CancellationToken)"/>
 	public class PageQuery<TEntity> : PageRequest, IQuery where TEntity : class {
 		private QueryBuilder<TEntity> queryBuilder;
 

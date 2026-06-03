@@ -19,7 +19,7 @@ namespace Kista {
 	/// </summary>
 	/// <remarks>
 	/// These methods are obsolete. Use <see cref="IRepository{TEntity, TKey}.GetPageAsync(PageRequest, CancellationToken)"/>
-	/// for simple pagination, or the protected <c>RepositoryBase{TEntity, TKey}.QueryPageAsync(PageQuery{TEntity}, CancellationToken)</c>
+	/// for simple pagination, or the protected <see cref="Repository{TEntity,TKey}.QueryPage(PageQuery{TEntity}, CancellationToken)"/>
 	/// for filtered and sorted queries inside the data layer.
 	/// </remarks>
 	[Obsolete("Use IRepository<TEntity, TKey>.GetPageAsync(PageRequest, CancellationToken) for simple pagination instead.", false)]

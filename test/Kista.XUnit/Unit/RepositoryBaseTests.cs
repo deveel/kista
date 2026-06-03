@@ -3,7 +3,7 @@ using System.Reflection;
 namespace Kista;
 
 /// <summary>
-/// Tests for the abstract <see cref="RepositoryBase{TEntity, TKey}"/> base
+/// Tests for the abstract <see cref="Repository{TEntity,TKey}"/> base
 /// class. The base class owns the unpacking, sorting, filtering and pagination
 /// of <see cref="IQuery"/> and <see cref="PageQuery{TEntity}"/> instances: these
 /// tests assert the pipeline end-to-end through the protected hatch by using a
@@ -11,8 +11,8 @@ namespace Kista;
 /// </summary>
 [Trait("Category", "Unit")]
 [Trait("Layer", "Core")]
-[Trait("Feature", "RepositoryBase")]
-public class RepositoryBaseTests {
+[Trait("Feature", "Repository")]
+public class RepositoryTests {
 	#region FindAsync(IQuery)
 
 	[Fact]
@@ -180,9 +180,9 @@ public class RepositoryBaseTests {
 
 	[Fact]
 	public void QueryHatch_IsProtected() {
-		// The Query() declared on RepositoryBase<,> must be protected so the
+		// The Query() declared on Repository<,> must be protected so the
 		// IQueryable hatch is hidden from consumer code.
-		var declared = typeof(RepositoryBase<Person, string>)
+		var declared = typeof(Repository<Person, string>)
 			.GetMethod("Query", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
 		Assert.NotNull(declared);
 		Assert.False(declared!.IsPublic, "Query() hatch must not be public");
@@ -196,12 +196,12 @@ public class RepositoryBaseTests {
 	#region Test fixture
 
 	/// <summary>
-	/// A minimal <see cref="RepositoryBase{TEntity, TKey}"/> subclass that
+	/// A minimal <see cref="Repository{TEntity,TKey}"/> subclass that
 	/// exposes the protected <c>FindAsync(IQuery)</c> and
 	/// <c>QueryPageAsync(PageQuery{TEntity})</c> methods as public passthroughs
 	/// so the test class can exercise them.
 	/// </summary>
-	private sealed class TestRepository : RepositoryBase<Person, string> {
+	private sealed class TestRepository : Repository<Person, string> {
 		private readonly List<Person> _people;
 
 		public TestRepository(int seedCount = 20) {

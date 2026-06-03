@@ -1,13 +1,13 @@
 # Implementation
 
-This page covers how to implement a custom repository by extending `RepositoryBase<TEntity, TKey>` and using its protected query hatch.
+This page covers how to implement a custom repository by extending `Repository<TEntity, TKey>` and using its protected query hatch.
 
-## Extending `RepositoryBase`
+## Extending `Repository`
 
-All driver implementations (`EntityRepository`, `MongoRepository`, `InMemoryRepository`) inherit from `RepositoryBase<TEntity, TKey>`. Your custom repository should do the same:
+All driver implementations (`EntityRepository`, `MongoRepository`, `InMemoryRepository`) inherit from `Repository<TEntity, TKey>`. Your custom repository should do the same:
 
 ```csharp
-public class ProductRepository : RepositoryBase<Product, Guid>, IProductRepository {
+public class ProductRepository : Repository<Product, Guid>, IProductRepository {
     private readonly AppDbContext _context;
 
     public ProductRepository(AppDbContext context) {
@@ -70,7 +70,7 @@ public class ProductRepository : RepositoryBase<Product, Guid>, IProductReposito
 
 ## Required Abstract Members
 
-Every `RepositoryBase` subclass must implement three members:
+Every `Repository` subclass must implement three members:
 
 | Member | Purpose |
 |--------|---------|
@@ -126,11 +126,11 @@ public override ValueTask AddAsync(Product entity, CancellationToken ct = defaul
 }
 ```
 
-Note that `RepositoryBase` does **not** call `SaveChanges()` — that is the responsibility of the caller or a unit-of-work pattern. The driver implementations handle this according to their engine's semantics.
+Note that `Repository` does **not** call `SaveChanges()` — that is the responsibility of the caller or a unit-of-work pattern. The driver implementations handle this according to their engine's semantics.
 
 ## Using Protected Query Methods
 
-`RepositoryBase` provides ready-made query methods that use the `Query()` hatch internally. You can call these from your domain-specific methods:
+`Repository` provides ready-made query methods that use the `Query()` hatch internally. You can call these from your domain-specific methods:
 
 ### `FindAsync(IQuery)`
 
@@ -242,10 +242,10 @@ The EF Core driver overrides these to use `IQueryable` async extensions. The Mon
 
 ## Explicit Interface Implementation
 
-`RepositoryBase` implements `IFilterableRepository<TEntity, TKey>` explicitly. The filterable methods are exposed as `protected` members and forwarded through explicit interface implementations:
+`Repository` implements `IFilterableRepository<TEntity, TKey>` explicitly. The filterable methods are exposed as `protected` members and forwarded through explicit interface implementations:
 
 ```csharp
-// In RepositoryBase:
+// In Repository:
 protected virtual ValueTask<bool> ExistsAsync(IQueryFilter filter, CancellationToken ct = default);
 
 ValueTask<bool> IFilterableRepository<TEntity, TKey>.ExistsAsync(IQueryFilter filter, CancellationToken ct)

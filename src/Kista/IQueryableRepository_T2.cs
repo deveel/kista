@@ -33,7 +33,7 @@ namespace Kista {
 	/// repository.
 	/// </para>
 	/// <para>
-	/// Inherit from the abstract <see cref="RepositoryBase{TEntity, TKey}"/>
+	/// Inherit from the abstract <see cref="Repository{TEntity,TKey}"/>
 	/// base class instead: it hides the <see cref="IQueryable{T}"/> hatch
 	/// behind a <c>protected abstract</c> member and provides ready-made
 	/// <c>FindAsync(IQuery, CancellationToken)</c> and
@@ -42,7 +42,7 @@ namespace Kista {
 	/// <see cref="PageQuery{TEntity}"/> inside the data layer.
 	/// </para>
 	/// </remarks>
-	[Obsolete("Use the abstract Kista.RepositoryBase<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
+	[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
 	public interface IQueryableRepository<TEntity, TKey> : IRepository<TEntity, TKey> where TEntity : class {
 		/// <summary>
 		/// Gets a queryable object that can be used to query the repository
@@ -51,7 +51,7 @@ namespace Kista {
 		/// Returns an instance of <see cref="IQueryable{T}"/> that can be used
 		/// to query the repository.
 		/// </returns>
-		[Obsolete("Use the abstract Kista.RepositoryBase<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
+		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
 		IQueryable<TEntity> AsQueryable();
 	}
 }

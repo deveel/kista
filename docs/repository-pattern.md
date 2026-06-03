@@ -29,16 +29,16 @@ public interface IRepository<TEntity, TKey> where TEntity : class {
 
 The base `IRepository<TEntity, TKey>` contract intentionally exposes only mutations, key-based look-up, and simple unsorted pagination. This is deliberate — in Domain-Driven Design, entities are identified by a unique key, and the base repository contract reflects that.
 
-Generic query capabilities (filtering, sorting, complex pagination) are **not** part of the public interface. Instead, they are hidden behind a `protected` hatch in the `RepositoryBase<TEntity, TKey>` abstract class. This prevents the `IQueryable<T>` leak — where LINQ expressions escape the data layer and throw `NotSupportedException` at runtime far from the repository.
+Generic query capabilities (filtering, sorting, complex pagination) are **not** part of the public interface. Instead, they are hidden behind a `protected` hatch in the `Repository<TEntity, TKey>` abstract class. This prevents the `IQueryable<T>` leak — where LINQ expressions escape the data layer and throw `NotSupportedException` at runtime far from the repository.
 
 If you need richer queries, you have two options:
 
 1. **Specification Pattern** (recommended): Add domain-specific query methods to your own repository interface. See [Customize the Repository](custom-repository.md).
-2. **Extend `RepositoryBase`**: Inherit from the abstract base class and use its protected query methods internally.
+2. **Extend `Repository`**: Inherit from the abstract base class and use its protected query methods internally.
 
-## The `RepositoryBase<TEntity, TKey>` Abstract Class
+## The `Repository<TEntity, TKey>` Abstract Class
 
-All driver implementations (`EntityRepository`, `MongoRepository`, `InMemoryRepository`) inherit from `RepositoryBase<TEntity, TKey>`. This base class provides:
+All driver implementations (`EntityRepository`, `MongoRepository`, `InMemoryRepository`) inherit from `Repository<TEntity, TKey>`. This base class provides:
 
 - Ready-made implementations of the `IRepository<TEntity, TKey>` mutation and look-up methods
 - A `protected` `Query()` method that returns the underlying `IQueryable<TEntity>` — accessible **only** to subclasses
@@ -48,7 +48,7 @@ All driver implementations (`EntityRepository`, `MongoRepository`, `InMemoryRepo
 ### Protected Query Hatch
 
 ```csharp
-public abstract class RepositoryBase<TEntity, TKey> : IRepository<TEntity, TKey> {
+public abstract class Repository<TEntity, TKey> : IRepository<TEntity, TKey> {
     // The IQueryable hatch — protected, never exposed to consumers
     protected abstract IQueryable<TEntity> Query();
 
@@ -72,7 +72,7 @@ The `Query()` method is the single entry point into the data layer. Subclasses r
 
 ### Public Surface
 
-The only query methods exposed to consumer code by `RepositoryBase` are:
+The only query methods exposed to consumer code by `Repository` are:
 
 | Method | Description |
 |--------|-------------|
@@ -98,10 +98,10 @@ public interface IProductRepository : IRepository<Product, Guid> {
 }
 ```
 
-The implementation extends `RepositoryBase` and uses the protected `Query()` hatch internally:
+The implementation extends `Repository` and uses the protected `Query()` hatch internally:
 
 ```csharp
-public class ProductRepository : RepositoryBase<Product, Guid>, IProductRepository {
+public class ProductRepository : Repository<Product, Guid>, IProductRepository {
     private readonly AppDbContext _context;
 
     public ProductRepository(AppDbContext context) {
@@ -169,7 +169,7 @@ public interface IProductRepository : IRepository<Product, Guid> {
 The implementation uses the protected `QueryPageAsync` method:
 
 ```csharp
-public class ProductRepository : RepositoryBase<Product, Guid>, IProductRepository {
+public class ProductRepository : Repository<Product, Guid>, IProductRepository {
     // ...
 
     public async Task<PageQueryResult<Product>> FindProductsPageAsync(PageQuery<Product> request, CancellationToken ct = default) {
@@ -298,4 +298,4 @@ The following interfaces are marked `[Obsolete]` and should not be used in new c
 - `IPageableRepository<TEntity, TKey>` — exposed `GetPageAsync(PageQuery<TEntity>)`, leaking query composition
 - `IFilterableRepository<TEntity, TKey>` — exposed filter-based queries as a public contract
 
-All their functionality is now provided through the `protected` members of `RepositoryBase<TEntity, TKey>`. Existing code using these interfaces will continue to compile (the obsolete attribute is non-breaking), but new code should inherit from `RepositoryBase` and implement domain-specific query methods instead.
+All their functionality is now provided through the `protected` members of `Repository<TEntity, TKey>`. Existing code using these interfaces will continue to compile (the obsolete attribute is non-breaking), but new code should inherit from `Repository` and implement domain-specific query methods instead.

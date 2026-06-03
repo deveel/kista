@@ -37,7 +37,7 @@ namespace Kista {
 	/// <typeparam name="TKey">
 	/// The type of the key of the entity that is stored in the repository.
 	/// </typeparam>
-	public class MongoRepository<TEntity, TKey> : RepositoryBase<TEntity, TKey>,
+	public class MongoRepository<TEntity, TKey> : Repository<TEntity, TKey>,
 		IQueryableRepository<TEntity, TKey>,
 		IFilterableRepository<TEntity, TKey>,
 		IPageableRepository<TEntity, TKey>,
@@ -103,7 +103,7 @@ namespace Kista {
 		/// <inheritdoc />
 		protected override IServiceProvider? Services { get; }
 
-			[Obsolete("Use the abstract Kista.RepositoryBase<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
+			[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
 		public virtual IQueryable<TEntity> AsQueryable() => DbSet.AsQueryable();
 
 		/// <summary>

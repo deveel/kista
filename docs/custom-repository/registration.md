@@ -56,7 +56,7 @@ Available lifetimes:
 Open generic repositories are registered as open generics:
 
 ```csharp
-public class NamedEntityRepository<TEntity> : RepositoryBase<TEntity, Guid>, INamedEntityRepository<TEntity>
+public class NamedEntityRepository<TEntity> : Repository<TEntity, Guid>, INamedEntityRepository<TEntity>
     where TEntity : class, INamedEntity {
     // ...
 }
@@ -143,7 +143,7 @@ The legacy extension interfaces (`IQueryableRepository`, `IPageableRepository`, 
 
 ```csharp
 // Legacy — not recommended for new code
-public class LegacyRepository : RepositoryBase<Product, Guid>,
+public class LegacyRepository : Repository<Product, Guid>,
                                  IQueryableRepository<Product, Guid> {
     // ...
 }

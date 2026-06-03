@@ -23,7 +23,7 @@ namespace Kista {
 	/// The strongly typed entity that is stored in the repository
 	/// </typeparam>
 	/// <seealso cref="IPageableRepository{TEntity, TKey}"/>
-	[Obsolete("Use the abstract Kista.RepositoryBase<TEntity> base class instead. Paging is now provided directly by the base class.", false)]
+	[Obsolete("Use the abstract Kista.Repository<TEntity> base class instead. Paging is now provided directly by the base class.", false)]
     public interface IPageableRepository<TEntity> : IPageableRepository<TEntity, object> where TEntity : class {
     }
 }

@@ -65,7 +65,7 @@ namespace Kista {
 			: base(context, logger, services) {
 		}
 
-		[Obsolete("Use the abstract Kista.RepositoryBase<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
+		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
 		public new IQueryable<TEntity> AsQueryable() => base.AsQueryable();
 
 		IQueryable<TEntity> IQueryableRepository<TEntity, object>.AsQueryable() => Query();

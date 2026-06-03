@@ -23,7 +23,7 @@ namespace Kista {
 	/// The type of entity handled by the repository.
 	/// </typeparam>
 	/// <seealso cref="PageQuery{TEntity}"/>
-	/// <seealso cref="RepositoryBase{TEntity, TKey}.QueryPageAsync(PageQuery{TEntity}, CancellationToken)"/>
+	/// <seealso cref="Repository{TEntity,TKey}.QueryPageAsync(PageQuery{TEntity}, CancellationToken)"/>
 	public class PageQueryResult<TEntity> : PageResult<TEntity> where TEntity : class {
 		/// <summary>
 		/// Constructs the result referencing the original request, a count

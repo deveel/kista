@@ -32,7 +32,7 @@ namespace Kista {
 	/// code through the <see cref="PageQuery{TEntity}.Query"/> property.
 	/// </para>
 	/// <para>
-	/// Inherit from the abstract <see cref="RepositoryBase{TEntity, TKey}"/>
+	/// Inherit from the abstract <see cref="Repository{TEntity,TKey}"/>
 	/// base class instead: it hides the query translation pipeline behind
 	/// <c>protected</c> members and provides a public
 	/// <c>GetPageAsync(PageRequest, CancellationToken)</c> for simple
@@ -41,7 +41,7 @@ namespace Kista {
 	/// filtered/sorted queries inside the data layer.
 	/// </para>
 	/// </remarks>
-	[Obsolete("Use the abstract Kista.RepositoryBase<TEntity, TKey> base class instead. Paging is now provided directly by the base class.", false)]
+	[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. Paging is now provided directly by the base class.", false)]
 	public interface IPageableRepository<TEntity, TKey> : IRepository<TEntity, TKey> where TEntity : class {
 		/// <summary>
 		/// Gets a page of items from the repository
@@ -64,7 +64,7 @@ namespace Kista {
 		/// implementation of the repository
 		/// </exception>
 		/// <seealso cref="PageQueryResult{TEntity}"/>
-		[Obsolete("Use the abstract Kista.RepositoryBase<TEntity, TKey> base class instead. Paging is now provided directly by the base class.", false)]
+		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. Paging is now provided directly by the base class.", false)]
 		ValueTask<PageQueryResult<TEntity>> GetPageAsync(PageQuery<TEntity> request, CancellationToken cancellationToken = default);
 	}
 }

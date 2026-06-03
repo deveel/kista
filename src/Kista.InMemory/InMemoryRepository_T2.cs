@@ -48,7 +48,7 @@ namespace Kista {
 	/// </para>
 	/// </remarks>
 	public class InMemoryRepository<TEntity, TKey> :
-		RepositoryBase<TEntity, TKey>,
+		Repository<TEntity, TKey>,
 		IQueryableRepository<TEntity, TKey>,
 		IFilterableRepository<TEntity, TKey>,
 		IPageableRepository<TEntity, TKey>,
@@ -181,7 +181,7 @@ namespace Kista {
 			Dispose(disposing: false);
 		}
 
-		[Obsolete("Use the abstract Kista.RepositoryBase<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
+		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
 		public virtual IQueryable<TEntity> AsQueryable() => Entities.AsQueryable();
 
 		bool ITrackingRepository<TEntity, TKey>.IsTrackingChanges => true;

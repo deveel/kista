@@ -1,4 +1,4 @@
-﻿// Copyright 2023-2025 Antonello Provenzano
+﻿// Copyright 2023-2026 Antonello Provenzano
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,6 +17,15 @@ namespace Kista {
 	/// Extends the <see cref="IQueryableRepository{TEntity}"/> interface
 	/// to provide methods to query the repository.
 	/// </summary>
+	/// <remarks>
+	/// This extension class is obsolete. It depends on the obsolete
+	/// <see cref="IQueryableRepository{TEntity, TKey}"/> contract and is
+	/// expected to be removed in a future major version. Repositories that
+	/// inherit from <see cref="Repository{TEntity,TKey}"/> expose
+	/// ready-made <c>FindAsync(IQuery, CancellationToken)</c> and
+	/// <c>QueryPageAsync(PageQuery{TEntity}, CancellationToken)</c> methods.
+	/// </remarks>
+	[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
 	public static class QueryableRepositoryExtensions {
 		/// <summary>
 		/// Gets a page of entities from the repository,
@@ -35,10 +44,11 @@ namespace Kista {
 		/// The request object that defines the scope of the page to retrieve.
 		/// </param>
 		/// <returns>
-		/// Returns an instance of <see cref="PageResult{TEntity}"/> that
+		/// Returns an instance of <see cref="PageQueryResult{TEntity}"/> that
 		/// is the result of the query.
 		/// </returns>
-		public static PageResult<TEntity> GetPage<TEntity, TKey>(this IQueryableRepository<TEntity, TKey> repository, PageQuery<TEntity> request)
+		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
+		public static PageQueryResult<TEntity> GetPage<TEntity, TKey>(this IQueryableRepository<TEntity, TKey> repository, PageQuery<TEntity> request)
 			where TEntity : class {
 			var query = request.ApplyQuery(repository.AsQueryable());
 
@@ -47,7 +57,7 @@ namespace Kista {
 				.Take(request.Size)
 				.ToList();
 
-			return new PageResult<TEntity>(request, total, items);
+			return new PageQueryResult<TEntity>(request, total, items);
 		}
 	}
 }

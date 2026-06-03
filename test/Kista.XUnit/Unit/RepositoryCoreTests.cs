@@ -818,6 +818,10 @@ public class RepositoryCoreTests {
         public ValueTask<bool> RemoveAsync(Person entity, CancellationToken cancellationToken = default) { var r = Remove(entity); return new ValueTask<bool>(r); }
         public ValueTask RemoveRangeAsync(IEnumerable<Person> entities, CancellationToken cancellationToken = default) { foreach (var e in entities.ToList()) { Remove(e); } return ValueTask.CompletedTask; }
         public ValueTask<Person?> FindAsync(object key, CancellationToken cancellationToken = default) => new ValueTask<Person?>(this.FirstOrDefault(x => x.Id == (string)key));
+        public ValueTask<PageResult<Person>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) {
+            var items = this.Skip(request.Offset).Take(request.Size).ToList();
+            return new ValueTask<PageResult<Person>>(new PageResult<Person>(request, this.Count, items));
+        }
     }
 
     [Fact]
@@ -946,6 +950,10 @@ class ScanTestRepo : List<ScanEntity>, IScanRepo {
     public ValueTask<bool> RemoveAsync(ScanEntity entity, CancellationToken ct = default) { var r = Remove(entity); return new ValueTask<bool>(r); }
     public ValueTask RemoveRangeAsync(IEnumerable<ScanEntity> entities, CancellationToken ct = default) { foreach (var e in entities.ToList()) Remove(e); return ValueTask.CompletedTask; }
     public ValueTask<ScanEntity?> FindAsync(object key, CancellationToken ct = default) => new ValueTask<ScanEntity?>(this.FirstOrDefault(x => x.Id == (string)key));
+    public ValueTask<PageResult<ScanEntity>> GetPageAsync(PageRequest request, CancellationToken ct = default) {
+        var items = this.Skip(request.Offset).Take(request.Size).ToList();
+        return new ValueTask<PageResult<ScanEntity>>(new PageResult<ScanEntity>(request, this.Count, items));
+    }
 }
 
 /// <summary>
@@ -968,6 +976,10 @@ class OpenScanRepo<TEntity> : List<TEntity>, IRepository<TEntity> where TEntity 
     public ValueTask<bool> RemoveAsync(TEntity entity, CancellationToken ct = default) { var r = Remove(entity); return new ValueTask<bool>(r); }
     public ValueTask RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken ct = default) { foreach (var e in entities.ToList()) Remove(e); return ValueTask.CompletedTask; }
     public ValueTask<TEntity?> FindAsync(object key, CancellationToken ct = default) => throw new NotSupportedException();
+    public ValueTask<PageResult<TEntity>> GetPageAsync(PageRequest request, CancellationToken ct = default) {
+        var items = this.Skip(request.Offset).Take(request.Size).ToList();
+        return new ValueTask<PageResult<TEntity>>(new PageResult<TEntity>(request, this.Count, items));
+    }
 }
 
 /// <summary>
@@ -985,6 +997,7 @@ class NonFilterableRepo<TEntity> : IRepository<TEntity> where TEntity : class {
     public ValueTask<bool> RemoveAsync(TEntity entity, CancellationToken ct = default) => throw new NotSupportedException();
     public ValueTask RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken ct = default) => throw new NotSupportedException();
     public ValueTask<bool> UpdateAsync(TEntity entity, CancellationToken ct = default) => throw new NotSupportedException();
+    public ValueTask<PageResult<TEntity>> GetPageAsync(PageRequest request, CancellationToken ct = default) => throw new NotSupportedException();
 }
 
 /// <summary>

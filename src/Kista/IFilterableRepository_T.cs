@@ -1,4 +1,4 @@
-﻿// Copyright 2023-2025 Antonello Provenzano
+﻿// Copyright 2023-2026 Antonello Provenzano
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ namespace Kista {
 	/// The strongly typed entity that is stored in the repository
 	/// </typeparam>
 	/// <seealso cref="IFilterableRepository{TEntity, TKey}"/>
+	[Obsolete("Use the abstract Kista.Repository<TEntity> base class instead. Filtering is now provided directly by the base class.", false)]
     public interface IFilterableRepository<TEntity> : IFilterableRepository<TEntity, object> where TEntity : class {
     }
 }

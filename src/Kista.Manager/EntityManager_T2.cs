@@ -1,4 +1,4 @@
-﻿// Copyright 2023-2025 Antonello Provenzano
+﻿// Copyright 2023-2026 Antonello Provenzano
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -150,7 +150,9 @@ namespace Kista {
 			=> Services?.GetService<IOperationCancellationSource>()?.Token ?? default;
 
 		/// <summary>
-		/// Gets a value indicating if the repository supports paging
+		/// Gets a value indicating if the repository supports paging.
+		/// All repositories now support basic unsorted pagination via
+		/// <see cref="IRepository{TEntity, TKey}.GetPageAsync(PageRequest, CancellationToken)"/>.
 		/// </summary>
 		/// <exception cref="ObjectDisposedException">
 		/// Throws when the service has been disposed.
@@ -158,28 +160,35 @@ namespace Kista {
 		public virtual bool SupportsPaging {
 			get {
 				ThrowIfDisposed();
-
-				return (Repository is IPageableRepository<TEntity, TKey>);
+				return true;
 			}
 		}
 
 		/// <summary>
-		/// Gets the repository that supports paging
+		/// Gets the repository that supports filtered and sorted paging.
 		/// </summary>
 		/// <exception cref="NotSupportedException">
-		/// Thrown when the repository does not support paging
+		/// Thrown when the repository does not support filtered/sorted paging.
 		/// </exception>
 		/// <exception cref="ObjectDisposedException">
 		/// Throws when the service has been disposed.
 		/// </exception>
+		/// <remarks>
+		/// This property is obsolete. Use <see cref="IRepository{TEntity, TKey}.GetPageAsync(PageRequest,System.Threading.CancellationToken)"/>
+		/// for simple pagination, or the protected <see cref="Repository{TEntity,TKey}.QueryPageAsync(PageQuery{TEntity}, System.Threading.CancellationToken)"/>
+		/// for filtered and sorted queries inside your repository implementation.
+		/// </remarks>
+		[Obsolete("Use IRepository<TEntity, TKey>.GetPageAsync(PageRequest, CancellationToken) for simple pagination instead.", false)]
 		protected virtual IPageableRepository<TEntity, TKey> PageableRepository {
 			get {
 				ThrowIfDisposed();
 
+#pragma warning disable CS0618 // Type or member is obsolete
 				if (!(Repository is IPageableRepository<TEntity, TKey> pageable))
-					throw new NotSupportedException("The repository does not support paging");
+					throw new NotSupportedException("The repository does not support filtered/sorted paging");
 
 				return pageable;
+#pragma warning restore CS0618 // Type or member is obsolete
 			}
 		}
 
@@ -1368,7 +1377,7 @@ namespace Kista {
 		/// A token used to cancel the operation.
 		/// </param>
 		/// <returns>
-		/// Returns a <see cref="PageResult{TEntity}"/> containing the entities
+		/// Returns a <see cref="PageQueryResult{TEntity}"/> containing the entities
 		/// that match the given paging criteria.
 		/// </returns>
 		/// <exception cref="NotSupportedException">
@@ -1377,9 +1386,16 @@ namespace Kista {
 		/// <exception cref="OperationException">
 		/// Thrown when an unknown error occurs while retrieving the page.
 		/// </exception>
-		public virtual async ValueTask<PageResult<TEntity>> GetPageAsync(PageQuery<TEntity> query, CancellationToken? cancellationToken = null) {
+		/// <remarks>
+		/// This method is obsolete. Use <see cref="GetPageAsync(PageRequest, CancellationToken?)"/>
+		/// for simple pagination, or implement filtered/sorted paging in your repository
+		/// using the protected <c>QueryPageAsync(PageQuery{TEntity}, CancellationToken)</c> method.
+		/// </remarks>
+		[Obsolete("Use GetPageAsync(PageRequest, CancellationToken?) for simple pagination instead.", false)]
+		public virtual async ValueTask<PageQueryResult<TEntity>> GetPageAsync(PageQuery<TEntity> query, CancellationToken? cancellationToken = null) {
 			ThrowIfDisposed();
 
+#pragma warning disable CS0618 // Type or member is obsolete
 			if (!SupportsPaging)
 				throw new NotSupportedException("The repository does not support paging");
 
@@ -1391,6 +1407,7 @@ namespace Kista {
 				LogUnknownError(ex);
 				throw new OperationException(EntityErrorCodes.UnknownError, Domain, "Could not look for the entity", ex);
 			}
+#pragma warning restore CS0618 // Type or member is obsolete
 		}
 	}
 }

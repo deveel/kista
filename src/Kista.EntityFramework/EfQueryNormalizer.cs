@@ -1,4 +1,4 @@
-// Copyright 2023-2025 Antonello Provenzano
+// Copyright 2023-2026 Antonello Provenzano
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,18 +32,18 @@ namespace Kista {
 			return query.Provider.CreateQuery<TEntity>(normalizedExpression);
 		}
 
-		public static Expression<Func<TEntity, bool>> Normalize<TEntity>(Expression<Func<TEntity, bool>> predicate)
-			where TEntity : class {
-			ArgumentNullException.ThrowIfNull(predicate);
-
-			var normalizedBody = StartsWithToLikeVisitor.Instance.Visit(predicate.Body)
-				?? throw new InvalidOperationException("The normalized predicate body cannot be null.");
-
-			if (ReferenceEquals(normalizedBody, predicate.Body))
-				return predicate;
-
-			return Expression.Lambda<Func<TEntity, bool>>(normalizedBody, predicate.Parameters);
-		}
+		// public static Expression<Func<TEntity, bool>> Normalize<TEntity>(Expression<Func<TEntity, bool>> predicate)
+		// 	where TEntity : class {
+		// 	ArgumentNullException.ThrowIfNull(predicate);
+		//
+		// 	var normalizedBody = StartsWithToLikeVisitor.Instance.Visit(predicate.Body)
+		// 		?? throw new InvalidOperationException("The normalized predicate body cannot be null.");
+		//
+		// 	if (ReferenceEquals(normalizedBody, predicate.Body))
+		// 		return predicate;
+		//
+		// 	return Expression.Lambda<Func<TEntity, bool>>(normalizedBody, predicate.Parameters);
+		// }
 
 		private sealed class StartsWithToLikeVisitor : ExpressionVisitor {
 			private static readonly MethodInfo LikeMethod = typeof(DbFunctionsExtensions)

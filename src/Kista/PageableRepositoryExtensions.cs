@@ -1,4 +1,4 @@
-﻿// Copyright 2023-2025 Antonello Provenzano
+﻿// Copyright 2023-2026 Antonello Provenzano
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,6 +17,12 @@ namespace Kista {
 	/// Defines a set of extension methods for the <see cref="IPageableRepository{TEntity}"/>
 	/// that allows to retrieve a page of entities from the repository.
 	/// </summary>
+	/// <remarks>
+	/// These methods are obsolete. Use <see cref="IRepository{TEntity, TKey}.GetPageAsync(PageRequest, CancellationToken)"/>
+	/// for simple pagination, or the protected <see cref="Repository{TEntity,TKey}.QueryPage(PageQuery{TEntity}, CancellationToken)"/>
+	/// for filtered and sorted queries inside the data layer.
+	/// </remarks>
+	[Obsolete("Use IRepository<TEntity, TKey>.GetPageAsync(PageRequest, CancellationToken) for simple pagination instead.", false)]
 	public static class PageableRepositoryExtensions {
 		/// <summary>
 		/// Gets a page of entities from the repository,
@@ -46,14 +52,15 @@ namespace Kista {
 		/// without filtering and sorting.
 		/// </remarks>
 		/// <returns>
-		/// Returns an instance of <see cref="PageResult{TEntity}"/> that
+		/// Returns an instance of <see cref="PageQueryResult{TEntity}"/> that
 		/// is the result of the query.
 		/// </returns>
 		/// <exception cref="ArgumentOutOfRangeException">
 		/// Thrown when the given page number is less than 1, or
 		/// if the given page size is less than 0.
 		/// </exception>
-		public static ValueTask<PageResult<TEntity>> GetPageAsync<TEntity, TKey>(this IPageableRepository<TEntity, TKey> repository, int page, int size, CancellationToken cancellationToken = default)
+		[Obsolete("Use IRepository<TEntity, TKey>.GetPageAsync(PageRequest, CancellationToken) instead.", false)]
+		public static ValueTask<PageQueryResult<TEntity>> GetPageAsync<TEntity, TKey>(this IPageableRepository<TEntity, TKey> repository, int page, int size, CancellationToken cancellationToken = default)
 			where TEntity : class
 			=> repository.GetPageAsync(new PageQuery<TEntity>(page, size), cancellationToken);
 
@@ -74,10 +81,11 @@ namespace Kista {
 		/// The request object that defines the scope of the page to retrieve.
 		/// </param>
 		/// <returns>
-		/// Returns an instance of <see cref="PageResult{TEntity}"/> that
+		/// Returns an instance of <see cref="PageQueryResult{TEntity}"/> that
 		/// is the result of the query.
 		/// </returns>
-		public static PageResult<TEntity> GetPage<TEntity, TKey>(this IPageableRepository<TEntity, TKey> repository, PageQuery<TEntity> request)
+		[Obsolete("Use IRepository<TEntity, TKey>.GetPageAsync(PageRequest, CancellationToken) for simple pagination, or the protected QueryPageAsync for filtered queries.", false)]
+		public static PageQueryResult<TEntity> GetPage<TEntity, TKey>(this IPageableRepository<TEntity, TKey> repository, PageQuery<TEntity> request)
 			where TEntity : class
 			=> repository.GetPageAsync(request).GetAwaiter().GetResult();
 	}

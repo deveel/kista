@@ -1,3 +1,5 @@
+using DotNet.Testcontainers.Images;
+
 using Testcontainers.PostgreSql;
 
 namespace Kista {
@@ -11,6 +13,7 @@ namespace Kista {
 				.WithUsername("test")
 				.WithPassword("test")
 				.WithDatabase("testdb")
+                .WithImagePullPolicy(PullPolicy.Missing)
 				.Build();
 		}
 

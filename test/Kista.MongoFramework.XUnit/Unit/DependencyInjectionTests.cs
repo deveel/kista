@@ -111,7 +111,6 @@ public class DependencyInjectionTests {
         Assert.NotNull(provider.GetService<IRepository<MongoPerson>>());
         Assert.NotNull(provider.GetService<IPageableRepository<MongoPerson>>());
         Assert.NotNull(provider.GetService<IFilterableRepository<MongoPerson>>());
-        Assert.NotNull(provider.GetService<IQueryableRepository<MongoPerson>>());
     }
 
     [Fact]
@@ -132,7 +131,6 @@ public class DependencyInjectionTests {
         Assert.NotNull(provider.GetService<IRepository<MongoPerson>>());
         Assert.NotNull(provider.GetService<IPageableRepository<MongoPerson>>());
         Assert.NotNull(provider.GetService<IFilterableRepository<MongoPerson>>());
-        Assert.NotNull(provider.GetService<IQueryableRepository<MongoPerson>>());
     }
 
     #endregion

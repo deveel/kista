@@ -7,22 +7,15 @@ namespace Kista
     /// <summary>
     /// Fluent builder for configuring the Entity Framework Core repository driver.
     /// </summary>
-    public class EntityFrameworkRepositoryBuilder {
-        private readonly RepositoryContextBuilder _parent;
+    public class EntityFrameworkRepositoryBuilder : RepositoryDriverBuilder {
         private readonly Type _dbContextType;
         private Action<DbContextOptionsBuilder>? _dbContextConfig;
         private ServiceLifetime _lifetime = ServiceLifetime.Scoped;
-        private bool _enableLifecycle = true;
 
-        internal EntityFrameworkRepositoryBuilder(RepositoryContextBuilder parent, Type dbContextType) {
-            _parent = parent;
+        internal EntityFrameworkRepositoryBuilder(RepositoryContextBuilder parent, Type dbContextType)
+            : base(parent) {
             _dbContextType = dbContextType;
         }
-
-        /// <summary>
-        /// Gets the underlying service collection.
-        /// </summary>
-        public IServiceCollection Services => _parent.Services;
 
         /// <summary>
         /// Gets the DbContext type being configured.
@@ -50,32 +43,30 @@ namespace Kista
         /// registering a <see cref="EntityFrameworkRepositoryLifecycleHandler{TEntity}"/>
         /// for each entity type.
         /// </summary>
-        public EntityFrameworkRepositoryBuilder WithLifecycle() {
-            _enableLifecycle = true;
+        public new EntityFrameworkRepositoryBuilder WithLifecycle() {
+            base.WithLifecycle<EntityFrameworkRepositoryBuilder>();
             return this;
         }
 
         /// <summary>
         /// Disables lifecycle support for the Entity Framework repositories.
         /// </summary>
-        public EntityFrameworkRepositoryBuilder WithoutLifecycle() {
-            _enableLifecycle = false;
+        public new EntityFrameworkRepositoryBuilder WithoutLifecycle() {
+            base.WithoutLifecycle<EntityFrameworkRepositoryBuilder>();
             return this;
         }
 
         internal void FinalizeRegistration() {
             if (_dbContextConfig != null) {
-                RegisterDbContext(_parent.Services, _dbContextConfig, _lifetime);
+                RegisterDbContext(Parent.Services, _dbContextConfig, _lifetime);
             } else {
-                RegisterDbContext(_parent.Services, _lifetime);
+                RegisterDbContext(Parent.Services, _lifetime);
             }
 
-            _parent.AddRepository(typeof(EntityRepository<>), _lifetime);
-            _parent.AddRepository(typeof(EntityRepository<,>), _lifetime);
+            Parent.AddRepository(typeof(EntityRepository<>), _lifetime);
+            Parent.AddRepository(typeof(EntityRepository<,>), _lifetime);
 
-            if (_enableLifecycle) {
-                _parent.Services.TryAddTransient(typeof(IRepositoryLifecycleHandler<>), typeof(EntityFrameworkRepositoryLifecycleHandler<>));
-            }
+            RegisterLifecycleHandler(typeof(EntityFrameworkRepositoryLifecycleHandler<>));
         }
 
         private void RegisterDbContext(IServiceCollection services, Action<DbContextOptionsBuilder> configure, ServiceLifetime lifetime) {
@@ -106,7 +97,7 @@ namespace Kista
         /// </summary>
         public RepositoryContextBuilder Build() {
             FinalizeRegistration();
-            return _parent;
+            return Parent;
         }
 
         /// <summary>
@@ -114,7 +105,7 @@ namespace Kista
         /// </summary>
         public static implicit operator RepositoryContextBuilder(EntityFrameworkRepositoryBuilder builder) {
             builder.FinalizeRegistration();
-            return builder._parent;
+            return builder.Parent;
         }
     }
 }

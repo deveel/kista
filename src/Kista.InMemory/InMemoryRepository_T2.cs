@@ -1,4 +1,4 @@
-﻿// Copyright 2023-2025 Antonello Provenzano
+﻿// Copyright 2023-2026 Antonello Provenzano
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -48,13 +48,13 @@ namespace Kista {
 	/// </para>
 	/// </remarks>
 	public class InMemoryRepository<TEntity, TKey> :
-		IRepository<TEntity, TKey>,
+		Repository<TEntity, TKey>,
 		IQueryableRepository<TEntity, TKey>,
-		IPageableRepository<TEntity, TKey>,
 		IFilterableRepository<TEntity, TKey>,
+		IPageableRepository<TEntity, TKey>,
 		ITrackingRepository<TEntity, TKey>,
 		IDisposable
-		where TEntity : class 
+		where TEntity : class
 		where TKey : notnull {
 
 		private SortedList<TKey, Entry> entities;
@@ -181,17 +181,44 @@ namespace Kista {
 			Dispose(disposing: false);
 		}
 
-		IQueryable<TEntity> IQueryableRepository<TEntity, TKey>.AsQueryable() => Entities.AsQueryable();
+		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
+		public virtual IQueryable<TEntity> AsQueryable() => Entities.AsQueryable();
 
 		bool ITrackingRepository<TEntity, TKey>.IsTrackingChanges => true;
 
-		/// <inheritdoc />
-		public IServiceProvider? Services { get; }
+	/// <inheritdoc />
+	protected override IServiceProvider? Services { get; }
 
-		private void InitializeFilter(IQueryFilter? filter) {
-			if (filter != null && Services != null)
-				filter.Initialize(new DefaultFilterContext(Services));
-		}
+		/// <summary>
+		/// Returns the <see cref="IQueryable{T}"/> that backs the entity set
+		/// exposed by this repository. The hatch is intentionally
+		/// <c>protected</c>: the LINQ provider must not leak to consumer
+		/// code. The implementation materialises a snapshot under the read
+		/// lock so that the returned queryable is safe to iterate after the
+		/// lock is released.
+		/// </summary>
+		/// <returns>
+		/// Returns a snapshot <see cref="IQueryable{T}"/> of the entities
+		/// currently in the repository.
+		/// </returns>
+		protected override IQueryable<TEntity> Query() => Entities.AsQueryable();
+
+		/// <inheritdoc />
+		protected override bool IsQueryable => true;
+
+		IQueryable<TEntity> IQueryableRepository<TEntity, TKey>.AsQueryable() => Query();
+
+		ValueTask<bool> IFilterableRepository<TEntity, TKey>.ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken)
+			=> ExistsAsync(filter, cancellationToken);
+
+		ValueTask<long> IFilterableRepository<TEntity, TKey>.CountAsync(IQueryFilter filter, CancellationToken cancellationToken)
+			=> CountAsync(filter, cancellationToken);
+
+		ValueTask<TEntity?> IFilterableRepository<TEntity, TKey>.FindFirstAsync(IQuery query, CancellationToken cancellationToken)
+			=> FindFirstAsync(query, cancellationToken);
+
+		ValueTask<IList<TEntity>> IFilterableRepository<TEntity, TKey>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
+			=> FindAllAsync(query, cancellationToken);
 
 		/// <summary>
 		/// Gets a point-in-time snapshot of all entities in the repository.
@@ -256,7 +283,7 @@ namespace Kista {
 		}
 
 		/// <inheritdoc/>
-		public virtual TKey? GetEntityKey(TEntity entity) {
+		protected override TKey? GetEntityKey(TEntity entity) {
 			ArgumentNullException.ThrowIfNull(entity);
 
 			return GetEntityId(entity);
@@ -285,7 +312,7 @@ namespace Kista {
 		}
 
 		/// <inheritdoc/>
-		public ValueTask<long> CountAsync(IQueryFilter filter, CancellationToken cancellationToken = default) {
+		protected override ValueTask<long> CountAsync(IQueryFilter filter, CancellationToken cancellationToken = default) {
 			cancellationToken.ThrowIfCancellationRequested();
 
 			try {
@@ -310,7 +337,7 @@ namespace Kista {
 		/// internal store, so it is safe to call concurrently from multiple threads.
 		/// </remarks>
 		/// <inheritdoc/>
-		public ValueTask AddAsync(TEntity entity, CancellationToken cancellationToken = default) {
+		public override ValueTask AddAsync(TEntity entity, CancellationToken cancellationToken = default) {
 			ArgumentNullException.ThrowIfNull(entity);
 
 			cancellationToken.ThrowIfCancellationRequested();
@@ -348,7 +375,7 @@ namespace Kista {
 		/// internal store, so it is safe to call concurrently from multiple threads.
 		/// </remarks>
 		/// <inheritdoc/>
-		public ValueTask AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) {
+		public override ValueTask AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) {
 			ArgumentNullException.ThrowIfNull(entities);
 
 			cancellationToken.ThrowIfCancellationRequested();
@@ -391,7 +418,7 @@ namespace Kista {
 		/// internal store, so it is safe to call concurrently from multiple threads.
 		/// </remarks>
 		/// <inheritdoc/>
-		public ValueTask<bool> RemoveAsync(TEntity entity, CancellationToken cancellationToken = default) {
+		public override ValueTask<bool> RemoveAsync(TEntity entity, CancellationToken cancellationToken = default) {
 			ArgumentNullException.ThrowIfNull(entity);
 
 			cancellationToken.ThrowIfCancellationRequested();
@@ -424,7 +451,7 @@ namespace Kista {
 		/// internal store, so it is safe to call concurrently from multiple threads.
 		/// </remarks>
 		/// <inheritdoc/>
-		public ValueTask RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) {
+		public override ValueTask RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) {
 			cancellationToken.ThrowIfCancellationRequested();
 
 			ArgumentNullException.ThrowIfNull(entities);
@@ -466,7 +493,7 @@ namespace Kista {
 		}
 
 		/// <inheritdoc/>
-		public ValueTask<bool> ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken = default) {
+		protected override ValueTask<bool> ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken = default) {
 			cancellationToken.ThrowIfCancellationRequested();
 
 			try {
@@ -485,7 +512,7 @@ namespace Kista {
 
 
 		/// <inheritdoc/>
-		public ValueTask<IList<TEntity>> FindAllAsync(IQuery query, CancellationToken cancellationToken = default) {
+		protected override ValueTask<IList<TEntity>> FindAllAsync(IQuery query, CancellationToken cancellationToken = default) {
 			cancellationToken.ThrowIfCancellationRequested();
 
 			try {
@@ -503,7 +530,7 @@ namespace Kista {
 		}
 
 		/// <inheritdoc/>
-		public ValueTask<TEntity?> FindFirstAsync(IQuery query, CancellationToken cancellationToken = default) {
+		protected override ValueTask<TEntity?> FindFirstAsync(IQuery query, CancellationToken cancellationToken = default) {
 			cancellationToken.ThrowIfCancellationRequested();
 
 			try {
@@ -541,7 +568,7 @@ namespace Kista {
 		}
 
 		/// <inheritdoc/>
-		public ValueTask<TEntity?> FindAsync(TKey key, CancellationToken cancellationToken = default) {
+		public override ValueTask<TEntity?> FindAsync(TKey key, CancellationToken cancellationToken = default) {
 			ArgumentNullException.ThrowIfNull(key);
 
 			cancellationToken.ThrowIfCancellationRequested();
@@ -582,7 +609,7 @@ namespace Kista {
 		}
 
 		/// <inheritdoc/>
-		public ValueTask<PageResult<TEntity>> GetPageAsync(PageQuery<TEntity> request, CancellationToken cancellationToken = default) {
+		ValueTask<PageQueryResult<TEntity>> IPageableRepository<TEntity, TKey>.GetPageAsync(PageQuery<TEntity> request, CancellationToken cancellationToken) {
 			cancellationToken.ThrowIfCancellationRequested();
 
 			try {
@@ -596,13 +623,42 @@ namespace Kista {
 						.Take(request.Size)
 						.ToList();
 
-					var result = new PageResult<TEntity>(request, itemCount, items);
-					return new ValueTask<PageResult<TEntity>>(result);
+					var result = new PageQueryResult<TEntity>(request, itemCount, items);
+					return new ValueTask<PageQueryResult<TEntity>>(result);
 				} finally {
 					_lock.ExitReadLock();
 				}
 			} catch (Exception ex) when (ex is not RepositoryException) {
 				throw new RepositoryException("Unable to retrieve the pages", ex);
+			}
+		}
+
+		/// <inheritdoc/>
+		public override async ValueTask<PageResult<TEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) {
+			ArgumentNullException.ThrowIfNull(request);
+			cancellationToken.ThrowIfCancellationRequested();
+
+			if (request is PageQuery<TEntity> pageQuery) {
+				var result = await ((IPageableRepository<TEntity, TKey>)this).GetPageAsync(pageQuery, cancellationToken).ConfigureAwait(false);
+				return result;
+			}
+
+			try {
+				_lock.EnterReadLock();
+				try {
+					var entitySet = GetEntityQueryable();
+					var itemCount = entitySet.Count();
+					var items = entitySet
+						.Skip(request.Offset)
+						.Take(request.Size)
+						.ToList();
+
+					return new PageResult<TEntity>(request, itemCount, items);
+				} finally {
+					_lock.ExitReadLock();
+				}
+			} catch (Exception ex) when (ex is not RepositoryException) {
+				throw new RepositoryException("Unable to retrieve the page", ex);
 			}
 		}
 
@@ -614,7 +670,7 @@ namespace Kista {
 		/// internal store, so it is safe to call concurrently from multiple threads.
 		/// </remarks>
 		/// <inheritdoc/>
-		public ValueTask<bool> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default) {
+		public override ValueTask<bool> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default) {
 			cancellationToken.ThrowIfCancellationRequested();
 
 			ArgumentNullException.ThrowIfNull(entity);

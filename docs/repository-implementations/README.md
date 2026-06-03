@@ -13,15 +13,19 @@ The _Kista_ framework ships with a set of ready-to-use repository implementation
 
 ## Capability Matrix
 
+All driver implementations inherit from `Repository<TEntity, TKey>`, which provides a unified set of capabilities:
+
 | Capability | In-Memory | EF Core | MongoDB |
 | ---------- | :-------: | :-----: | :-----: |
 | Base Repository (`IRepository`) | ✅ | ✅ | ✅ |
-| Filterable (`IFilterableRepository`) | ✅ | ✅ | ✅ |
-| Queryable (`IQueryableRepository`) | ✅ | ✅ | ✅ |
-| Pageable (`IPageableRepository`) | ✅ | ✅ | ✅ |
+| Protected query hatch (`Query()`) | ✅ | ✅ | ✅ |
+| Protected filter/sort methods | ✅ | ✅ | ✅ |
+| Protected pagination (`QueryPageAsync`) | ✅ | ✅ | ✅ |
 | Tracking (`ITrackingRepository`) | ❌ | ✅ | ✅ |
 | Multi-tenant | ❌ | ✅ | ✅ |
 | User-scoped (`IUserRepository`) | ❌ | ✅ | ❌ |
+
+> **Note:** The legacy extension interfaces (`IFilterableRepository`, `IQueryableRepository`, `IPageableRepository`) are deprecated. All query capabilities are now provided through `protected` members of `Repository<TEntity, TKey>` and should be exposed via domain-specific methods on your custom repository interface.
 
 ## Dynamic LINQ Support
 

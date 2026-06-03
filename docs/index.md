@@ -15,7 +15,7 @@ To learn about the specific usage of the framework, you can read the following d
 | [_Filter Cache_](filtering/filter-cache.md) | Bounded expression caching for high-throughput Dynamic LINQ queries |
 | [_The Entity Manager_](entity-manager/) | Provide your application with a business layer on top of the Repository for additional functions (_logging_, _validation_, _caching_, _event sourcing_, etc.) |
 | [_Repository Lifecycle_](repository-lifecycle.md) | Automate repository creation, teardown, and seeding during application startup |
-| [_Extending the Repository_](custom-repository.md) | Learn how to create a custom repository to access your data source, according to your specific data logic |
+| [_Extending the Repository_](custom-repository/) | Learn how to create a custom repository to access your data source, according to your specific data logic |
 | [_Multi-Tenancy_](multi-tenancy.md) | Learn how to use the framework in a multi-tenant application |
 | [_User Entities_](user-entities.md) | Learn how to define and query entities that are scoped to a specific user |
 | [_Sample Application_](sample-app.md) | A complete ASP.NET Core reference app with lifecycle management and CRUD endpoints |
@@ -125,9 +125,8 @@ After registration, the following service types become available in the DI conta
 | Service | Description |
 | ------- | ----------- |
 | `MyCustomRepository` | The concrete repository implementation. |
-| `IRepository<MyEntity>` | Core CRUD and key-based look-up. |
-| `IMyCustomRepository` | The custom interface (if defined) that extends `IRepository<MyEntity>`. |
-| `IQueryableRepository<MyEntity>` | LINQ-based queries (if implemented). |
-| `IPageableRepository<MyEntity>` | Paginated queries (if implemented). |
-| `IFilterableRepository<MyEntity>` | Filter-expression–based queries (if implemented). |
+| `IRepository<MyEntity>` | Core CRUD, key-based look-up (`FindAsync`), and unsorted pagination (`GetPageAsync`). |
+| `IMyCustomRepository` | The custom interface (if defined) that extends `IRepository<MyEntity>` with domain-specific query methods. |
 | `ITrackingRepository<MyEntity>` | Change-tracking queries (if implemented). |
+
+> **Note:** The legacy extension interfaces `IQueryableRepository`, `IPageableRepository`, and `IFilterableRepository` are deprecated. Query capabilities are now provided through `protected` members of `Repository<TEntity, TKey>` and should be exposed via domain-specific methods on your custom repository interface. See [The Repository Pattern](repository-pattern.md) and [Customize the Repository](custom-repository.md) for details.

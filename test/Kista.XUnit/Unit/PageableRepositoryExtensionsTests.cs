@@ -8,6 +8,7 @@ namespace Kista;
 [Trait("Category", "Unit")]
 [Trait("Layer", "Core")]
 [Trait("Feature", "PageableRepository")]
+#pragma warning disable CS0618 // Type or member is obsolete
 public class PageableRepositoryExtensionsTests
 {
 	[Fact]
@@ -66,14 +67,14 @@ public class PageableRepositoryExtensionsTests
 	public void RepositoryExtensions_GetPage_QueryableOnly_Works() {
 		var list = new List<Person> { new Person(), new Person(), new Person() };
 		IRepository<Person, object> repo = list.AsRepository();
-		var page = repo.GetPage(new PageQuery<Person>(1, 2));
+		var page = repo.GetPage(new PageRequest(1, 2));
 		Assert.Equal(2, page.Items.Count);
 	}
 
 	[Fact]
 	public async Task RepositoryExtensions_GetPageAsync_QueryablePath_Works() {
 		IRepository<Person, object> repo = new List<Person> { new Person { FirstName = "A" }, new Person { FirstName = "B" } }.AsRepository();
-		var page = await repo.GetPageAsync(new PageQuery<Person>(1, 10));
+		var page = await repo.GetPageAsync(new PageRequest(1, 10));
 		Assert.NotNull(page);
 	}
 
@@ -147,14 +148,27 @@ public class PageableRepositoryExtensionsTests
 			return ValueTask.FromResult(true);
 		}
 
-		public ValueTask<PageResult<Person>> GetPageAsync(PageQuery<Person> query, CancellationToken cancellationToken = default)
+		public ValueTask<PageResult<Person>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default)
+		{
+			var items = _entities
+				.Skip((request.Page - 1) * request.Size)
+				.Take(request.Size)
+				.ToList();
+
+			return ValueTask.FromResult<PageResult<Person>>(new PageResult<Person>(request, _entities.Count, items));
+		}
+
+#pragma warning disable CS0618 // Type or member is obsolete
+		ValueTask<PageQueryResult<Person>> IPageableRepository<Person, string>.GetPageAsync(PageQuery<Person> query, CancellationToken cancellationToken)
 		{
 			var items = _entities
 				.Skip((query.Page - 1) * query.Size)
 				.Take(query.Size)
 				.ToList();
 
-			return ValueTask.FromResult(new PageResult<Person>(query, _entities.Count, items));
+			return ValueTask.FromResult(new PageQueryResult<Person>(query, _entities.Count, items));
 		}
+#pragma warning restore CS0618 // Type or member is obsolete
 	}
 }
+#pragma warning restore CS0618 // Type or member is obsolete

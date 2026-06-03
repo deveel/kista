@@ -1,4 +1,4 @@
-﻿// Copyright 2023-2025 Antonello Provenzano
+﻿// Copyright 2023-2026 Antonello Provenzano
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,11 +20,11 @@ namespace Kista {
 	/// <typeparam name="TEntity">
 	/// The type of entity managed by the repository.
 	/// </typeparam>
-	public class InMemoryRepository<TEntity> : 
+	public class InMemoryRepository<TEntity> :
 		InMemoryRepository<TEntity, string>,
-		IRepository<TEntity>, 
-		IQueryableRepository<TEntity>, 
-		IPageableRepository<TEntity>, 
+		IQueryableRepository<TEntity>,
+		IRepository<TEntity>,
+		IPageableRepository<TEntity>,
 		IFilterableRepository<TEntity>,
 		IDisposable
 		where TEntity : class {
@@ -62,7 +62,12 @@ namespace Kista {
 			GC.SuppressFinalize(this);
 		}
 
-		IQueryable<TEntity> IQueryableRepository<TEntity, object>.AsQueryable() => Entities.AsQueryable();
+		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
+		public new IQueryable<TEntity> AsQueryable() => base.AsQueryable();
+
+		IQueryable<TEntity> IQueryableRepository<TEntity, object>.AsQueryable() => Query();
+
+		IServiceProvider? IRepository<TEntity, object>.Services => Services;
 
 		object? IRepository<TEntity, object>.GetEntityKey(TEntity entity) {
 			return GetEntityKey(entity);
@@ -71,6 +76,23 @@ namespace Kista {
 		ValueTask<TEntity?> IRepository<TEntity, object>.FindAsync(object key, CancellationToken cancellationToken) {
 			return FindAsync(NormalizeKey(key), cancellationToken);
 		}
+
+		ValueTask<bool> IFilterableRepository<TEntity, object>.ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken)
+			=> ExistsAsync(filter, cancellationToken);
+
+		ValueTask<long> IFilterableRepository<TEntity, object>.CountAsync(IQueryFilter filter, CancellationToken cancellationToken)
+			=> CountAsync(filter, cancellationToken);
+
+		ValueTask<TEntity?> IFilterableRepository<TEntity, object>.FindFirstAsync(IQuery query, CancellationToken cancellationToken)
+			=> FindFirstAsync(query, cancellationToken);
+
+		ValueTask<IList<TEntity>> IFilterableRepository<TEntity, object>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
+			=> FindAllAsync(query, cancellationToken);
+
+#pragma warning disable CS0618 // Type or member is obsolete
+		ValueTask<PageQueryResult<TEntity>> IPageableRepository<TEntity, object>.GetPageAsync(PageQuery<TEntity> request, CancellationToken cancellationToken)
+			=> ((IPageableRepository<TEntity, string>)this).GetPageAsync(request, cancellationToken);
+#pragma warning restore CS0618 // Type or member is obsolete
 
 		private string NormalizeKey(object key) {
 			ArgumentNullException.ThrowIfNull(key);

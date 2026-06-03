@@ -119,6 +119,11 @@ public class RepositoryContextBuilderTests {
 		}
 
 		public object? GetEntityKey(TestEntity entity) => (object?)entity.Id;
+
+		public ValueTask<PageResult<TestEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) {
+			var items = _entities.Skip(request.Offset).Take(request.Size).ToList();
+			return new ValueTask<PageResult<TestEntity>>(new PageResult<TestEntity>(request, _entities.Count, items));
+		}
 	}
 
 	public class TestEntityWithGuidId {
@@ -161,6 +166,11 @@ public class RepositoryContextBuilderTests {
 		}
 
 		public Guid GetEntityKey(TestEntityWithGuidId entity) => entity.Id;
+
+		public ValueTask<PageResult<TestEntityWithGuidId>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) {
+			var items = _entities.Skip(request.Offset).Take(request.Size).ToList();
+			return new ValueTask<PageResult<TestEntityWithGuidId>>(new PageResult<TestEntityWithGuidId>(request, _entities.Count, items));
+		}
 	}
 
 	public class AnotherTestEntity {
@@ -177,6 +187,7 @@ public class RepositoryContextBuilderTests {
 		public ValueTask RemoveRangeAsync(IEnumerable<AnotherTestEntity> entities, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
 		public ValueTask<AnotherTestEntity?> FindAsync(object key, CancellationToken cancellationToken = default) => new((AnotherTestEntity?)null);
 		public object? GetEntityKey(AnotherTestEntity entity) => entity.Id;
+		public ValueTask<PageResult<AnotherTestEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 	}
 
 	public interface ICustomTestRepository : IRepository<TestEntity> {
@@ -192,6 +203,7 @@ public class RepositoryContextBuilderTests {
 		public ValueTask RemoveRangeAsync(IEnumerable<TestEntity> entities, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
 		public ValueTask<TestEntity?> FindAsync(object key, CancellationToken cancellationToken = default) => new((TestEntity?)null);
 		public object? GetEntityKey(TestEntity entity) => (object?)entity.Id;
+		public ValueTask<PageResult<TestEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 	}
 }
 
@@ -383,6 +395,7 @@ public class RepositoryContextBuilderExtendedTests {
 		public ValueTask RemoveRangeAsync(IEnumerable<ExtendedTestEntity> entities, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
 		public ValueTask<ExtendedTestEntity?> FindAsync(object key, CancellationToken cancellationToken = default) => new((ExtendedTestEntity?)null);
 		public object? GetEntityKey(ExtendedTestEntity entity) => (object?)entity.Id;
+		public ValueTask<PageResult<ExtendedTestEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 	}
 
 	public class ExtendedTestEntityWithGuidId {
@@ -398,6 +411,7 @@ public class RepositoryContextBuilderExtendedTests {
 		public ValueTask RemoveRangeAsync(IEnumerable<ExtendedTestEntityWithGuidId> entities, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
 		public ValueTask<ExtendedTestEntityWithGuidId?> FindAsync(Guid key, CancellationToken cancellationToken = default) => new((ExtendedTestEntityWithGuidId?)null);
 		public Guid GetEntityKey(ExtendedTestEntityWithGuidId entity) => entity.Id;
+		public ValueTask<PageResult<ExtendedTestEntityWithGuidId>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 	}
 
 	public class AnotherExtendedTestEntity {
@@ -413,6 +427,7 @@ public class RepositoryContextBuilderExtendedTests {
 		public ValueTask RemoveRangeAsync(IEnumerable<AnotherExtendedTestEntity> entities, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
 		public ValueTask<AnotherExtendedTestEntity?> FindAsync(object key, CancellationToken cancellationToken = default) => new((AnotherExtendedTestEntity?)null);
 		public object? GetEntityKey(AnotherExtendedTestEntity entity) => entity.Id;
+		public ValueTask<PageResult<AnotherExtendedTestEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 	}
 
 	public class SimpleExtendedEntity {
@@ -428,6 +443,7 @@ public class RepositoryContextBuilderExtendedTests {
 		public ValueTask RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
 		public ValueTask<TEntity?> FindAsync(object key, CancellationToken cancellationToken = default) => default;
 		public object? GetEntityKey(TEntity entity) => null;
+		public ValueTask<PageResult<TEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 	}
 
 	public class OpenGenericExtendedRepositoryWithKey<TEntity, TKey> : IRepository<TEntity, TKey> where TEntity : class {
@@ -438,6 +454,7 @@ public class RepositoryContextBuilderExtendedTests {
 		public ValueTask RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
 		public ValueTask<TEntity?> FindAsync(TKey key, CancellationToken cancellationToken = default) => default;
 		public TKey? GetEntityKey(TEntity entity) => default;
+		public ValueTask<PageResult<TEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 	}
 
 	public interface ICustomExtendedTestRepository : IRepository<ExtendedTestEntity> {
@@ -453,5 +470,6 @@ public class RepositoryContextBuilderExtendedTests {
 		public ValueTask RemoveRangeAsync(IEnumerable<ExtendedTestEntity> entities, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
 		public ValueTask<ExtendedTestEntity?> FindAsync(object key, CancellationToken cancellationToken = default) => new((ExtendedTestEntity?)null);
 		public object? GetEntityKey(ExtendedTestEntity entity) => (object?)entity.Id;
+		public ValueTask<PageResult<ExtendedTestEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 	}
 }

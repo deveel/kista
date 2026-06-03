@@ -123,11 +123,10 @@ After registration the following services are resolvable from the DI container (
 
 | Interface | Description |
 |---|---|
-| `IRepository<TEntity>` | Core CRUD and single-entity look-ups |
-| `IQueryableRepository<TEntity>` | LINQ-based queries |
-| `IPageableRepository<TEntity>` | Paginated result sets |
-| `IFilterableRepository<TEntity>` | Filter-based queries |
+| `IRepository<TEntity>` | Core CRUD, single-entity look-up (`FindAsync`), and unsorted pagination (`GetPageAsync`) |
 | `ITrackingRepository<TEntity>` | Change tracking and original value look-ups |
+
+> **Note:** The legacy interfaces `IQueryableRepository`, `IPageableRepository`, and `IFilterableRepository` are deprecated. Query capabilities are now provided through `protected` members of `Repository<TEntity, TKey>`. For domain-specific queries, extend the base repository with custom methods. See the [full documentation](docs/index.md) for details.
 
 ### 3. Consume the repository in your services
 
@@ -155,7 +154,7 @@ For driver-specific configuration, multi-tenancy, and guidance on writing a cust
 | [MongoDB driver](docs/repository-implementations/mongodb.md) | Storing entities in MongoDB |
 | [In-Memory driver](docs/repository-implementations/in-memory.md) | In-process volatile storage |
 | [Entity Manager](docs/entity-manager/) | Business layer with validation, caching, and events |
-| [Custom repositories](docs/custom-repository.md) | Write your own driver |
+| [Custom repositories](docs/custom-repository/) | Write your own driver |
 | [Multi-Tenancy](docs/multi-tenancy.md) | Tenant-isolated repositories |
 | [User Entities](docs/user-entities.md) | User-scoped entities with owner filtering |
 

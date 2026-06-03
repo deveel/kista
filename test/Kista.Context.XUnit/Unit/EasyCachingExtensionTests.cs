@@ -87,6 +87,7 @@ public class EasyCachingExtensionTests {
 		public ValueTask RemoveRangeAsync(IEnumerable<SecondCachingEntity> entities, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
 		public ValueTask<SecondCachingEntity?> FindAsync(object key, CancellationToken cancellationToken = default) => new((SecondCachingEntity?)null);
 		public object? GetEntityKey(SecondCachingEntity entity) => (object?)entity.Id;
+		public ValueTask<PageResult<SecondCachingEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 	}
 
 	public class CachingTestEntity {
@@ -102,5 +103,6 @@ public class EasyCachingExtensionTests {
 		public ValueTask RemoveRangeAsync(IEnumerable<CachingTestEntity> entities, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
 		public ValueTask<CachingTestEntity?> FindAsync(object key, CancellationToken cancellationToken = default) => new((CachingTestEntity?)null);
 		public object? GetEntityKey(CachingTestEntity entity) => (object?)entity.Id;
+		public ValueTask<PageResult<CachingTestEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 	}
 }

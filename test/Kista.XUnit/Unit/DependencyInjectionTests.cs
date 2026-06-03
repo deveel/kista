@@ -84,6 +84,9 @@ class MyRepository<TEntity> : IRepository<TEntity>
 
     public ValueTask<bool> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default) =>
         Repository.UpdateAsync(entity, cancellationToken);
+
+    public ValueTask<PageResult<TEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) =>
+        Repository.GetPageAsync(request, cancellationToken);
 }
 
 /// <summary>

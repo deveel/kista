@@ -1,4 +1,4 @@
-﻿// Copyright 2023-2025 Antonello Provenzano
+﻿// Copyright 2023-2026 Antonello Provenzano
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,6 +24,25 @@ namespace Kista {
 	/// <typeparam name="TKey">
 	/// The type of the key used to uniquely identify the entity.
 	/// </typeparam>
+	/// <remarks>
+	/// <para>
+	/// This contract is obsolete. The <c>AsQueryable()</c> hatch it exposes
+	/// leaks the underlying LINQ provider into consumer code and lets
+	/// expressions be evaluated outside the data layer, where they can
+	/// throw <see cref="NotSupportedException"/> at runtime far from the
+	/// repository.
+	/// </para>
+	/// <para>
+	/// Inherit from the abstract <see cref="Repository{TEntity,TKey}"/>
+	/// base class instead: it hides the <see cref="IQueryable{T}"/> hatch
+	/// behind a <c>protected abstract</c> member and provides ready-made
+	/// <c>FindAsync(IQuery, CancellationToken)</c> and
+	/// <c>QueryPageAsync(PageQuery{TEntity}, CancellationToken)</c>
+	/// implementations that unpack <see cref="Query"/> and
+	/// <see cref="PageQuery{TEntity}"/> inside the data layer.
+	/// </para>
+	/// </remarks>
+	[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
 	public interface IQueryableRepository<TEntity, TKey> : IRepository<TEntity, TKey> where TEntity : class {
 		/// <summary>
 		/// Gets a queryable object that can be used to query the repository
@@ -32,6 +51,7 @@ namespace Kista {
 		/// Returns an instance of <see cref="IQueryable{T}"/> that can be used
 		/// to query the repository.
 		/// </returns>
+		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
 		IQueryable<TEntity> AsQueryable();
 	}
 }

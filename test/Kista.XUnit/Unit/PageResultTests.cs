@@ -1,19 +1,19 @@
 ﻿namespace Kista;
 
 /// <summary>
-/// Tests for <see cref="PageResult{T}"/> construction and pagination state,
-/// verifying <see cref="PageResult{T}.TotalItems"/>, <see cref="PageResult{T}.TotalPages"/>,
-/// <see cref="PageResult{T}.IsFirstPage"/>, <see cref="PageResult{T}.IsLastPage"/>,
+/// Tests for <see cref="PageQueryResultQueryResult{TEntity}"/> construction and pagination state,
+/// verifying <see cref="PageQueryResultQueryResult{TEntity}.TotalItems"/>, <see cref="PageQueryResultQueryResult{TEntity}.TotalPages"/>,
+/// <see cref="PageQueryResultQueryResult{TEntity}.IsFirstPage"/>, <see cref="PageQueryResultQueryResult{TEntity}.IsLastPage"/>,
 /// and edge cases such as null request or negative total items.
 /// </summary>
 [Trait("Category", "Unit")]
 [Trait("Layer", "Core")]
-[Trait("Feature", "PageResult")]
-public class PageResultTests
+[Trait("Feature", "PageQueryResult")]
+public class PageQueryResultTests
 {
     private readonly PersonFaker _faker = new PersonFaker();
 
-    #region PageResult construction
+    #region PageQueryResult construction
 
     [Fact]
     public void Should_HaveCorrectPaginationState_When_OnFirstPageOfManyPages()
@@ -23,7 +23,7 @@ public class PageResultTests
         var items = _faker.Generate(10);
 
         // Act
-        var result = new PageResult<Person>(query, 100, items);
+        var result = new PageQueryResult<Person>(query, 100, items);
 
         // Assert
         Assert.Equal(100, result.TotalItems);
@@ -47,7 +47,7 @@ public class PageResultTests
         var items = _faker.Generate(8);
 
         // Act
-        var result = new PageResult<Person>(query, 100, items);
+        var result = new PageQueryResult<Person>(query, 100, items);
 
         // Assert
         Assert.Equal(100, result.TotalItems);
@@ -69,14 +69,14 @@ public class PageResultTests
         var query = new PageQuery<Person>(1, 10);
 
         // Act & Assert
-        Assert.Throws<ArgumentOutOfRangeException>(() => new PageResult<Person>(query, -1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new PageQueryResult<Person>(query, -1));
     }
 
     [Fact]
     public void Should_ThrowArgumentNullException_When_RequestIsNull()
     {
         // Arrange & Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new PageResult<Person>(null!, 0));
+        Assert.Throws<ArgumentNullException>(() => new PageQueryResult<Person>(null!, 0));
     }
 
     [Fact]
@@ -86,7 +86,7 @@ public class PageResultTests
         var query = new PageQuery<Person>(1, 10);
 
         // Act
-        var result = PageResult<Person>.Empty(query);
+        var result = PageQueryResult<Person>.Empty(query);
 
         // Assert
         Assert.Equal(0, result.TotalItems);

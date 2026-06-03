@@ -1,4 +1,4 @@
-﻿// Copyright 2023-2025 Antonello Provenzano
+﻿// Copyright 2023-2026 Antonello Provenzano
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ namespace Kista {
 	/// <typeparam name="TEntity">
 	/// The type of entity to page.
 	/// </typeparam>
-	/// <seealso cref="IPageableRepository{TEntity,TKey}.GetPageAsync(PageQuery{TEntity}, CancellationToken)"/>
-	public class PageQuery<TEntity> : IQuery where TEntity : class {
+	/// <seealso cref="Repository{TEntity,TKey}.QueryPageAsync(PageQuery{TEntity}, CancellationToken)"/>
+	public class PageQuery<TEntity> : PageRequest, IQuery where TEntity : class {
 		private QueryBuilder<TEntity> queryBuilder;
 
 		/// <summary>
@@ -39,31 +39,10 @@ namespace Kista {
 		/// <exception cref="ArgumentOutOfRangeException">
 		/// If either the page number or the page size are smaller than 1.
 		/// </exception>
-		public PageQuery(int page, int size) {
-            ArgumentOutOfRangeException.ThrowIfLessThan(page, 1);
-            ArgumentOutOfRangeException.ThrowIfLessThan(size, 1);
-
-			Page = page;
-			Size = size;
-
+		public PageQuery(int page, int size) : base(page, size) {
 			queryBuilder = new QueryBuilder<TEntity>();
 		}
 
-		/// <summary>
-		/// Gets the number of the page to return
-		/// </summary>
-		public int Page { get; }
-
-		/// <summary>
-		/// Gets the maximum number of items to be returned.
-		/// </summary>
-		public int Size { get; }
-
-		/// <summary>
-		/// Gets the starting offet in the repository where to start
-		/// collecting the items to return
-		/// </summary>
-		public int Offset => (Page - 1) * Size;
 
 		/// <summary>
 		/// The query that is applied to the request

@@ -1,4 +1,4 @@
-﻿// Copyright 2023-2025 Antonello Provenzano
+﻿// Copyright 2023-2026 Antonello Provenzano
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ namespace Kista {
 	/// <typeparam name="TKey">
 	/// The type of key used to identify the entity in the repository
 	/// </typeparam>
+	[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. Filtering is now provided directly by the base class.", false)]
 	public interface IFilterableRepository<TEntity, TKey> : IRepository<TEntity, TKey> where TEntity : class {
 		/// <summary>
 		/// Determines if at least one item in the repository exists for the

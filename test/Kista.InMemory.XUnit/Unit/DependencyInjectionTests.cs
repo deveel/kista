@@ -60,8 +60,6 @@ public class DependencyInjectionTests {
         Assert.NotNull(provider.GetService<IPageableRepository<Person, string>>());
         Assert.NotNull(provider.GetService<IFilterableRepository<Person>>());
         Assert.NotNull(provider.GetService<IFilterableRepository<Person, string>>());
-        Assert.NotNull(provider.GetService<IQueryableRepository<Person>>());
-        Assert.NotNull(provider.GetService<IQueryableRepository<Person, string>>());
     }
 
     [Fact]
@@ -81,7 +79,5 @@ public class DependencyInjectionTests {
         Assert.IsType<PersonRepository>(provider.GetService<IPageableRepository<Person>>());
         Assert.NotNull(provider.GetService<IFilterableRepository<Person>>());
         Assert.IsType<PersonRepository>(provider.GetService<IFilterableRepository<Person>>());
-        Assert.NotNull(provider.GetService<IQueryableRepository<Person>>());
-        Assert.IsType<PersonRepository>(provider.GetService<IQueryableRepository<Person>>());
     }
 }

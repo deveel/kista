@@ -1,4 +1,4 @@
-﻿// Copyright 2023-2025 Antonello Provenzano
+﻿// Copyright 2023-2026 Antonello Provenzano
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -265,6 +265,27 @@ namespace Kista {
 			}
 
 			return new ValueTask<long>(result);
+		}
+
+		/// <inheritdoc/>
+		public ValueTask<PageResult<TEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) {
+			if (request is PageQuery<TEntity> pageQuery) {
+				var queryable = pageQuery.ApplyQuery(entities.AsQueryable());
+				var total = queryable.Count();
+				var items = queryable
+					.Skip(request.Offset)
+					.Take(request.Size)
+					.ToList();
+
+				return new ValueTask<PageResult<TEntity>>(new PageResult<TEntity>(request, total, items));
+			}
+
+			var allItems = entities
+				.Skip(request.Offset)
+				.Take(request.Size)
+				.ToList();
+
+			return new ValueTask<PageResult<TEntity>>(new PageResult<TEntity>(request, entities.Count(), allItems));
 		}
 	}
 }

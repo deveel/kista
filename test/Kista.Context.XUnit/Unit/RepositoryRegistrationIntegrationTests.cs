@@ -234,6 +234,7 @@ public class RepositoryRegistrationIntegrationTests {
 		public ValueTask RemoveRangeAsync(IEnumerable<SimpleTestEntity> entities, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
 		public ValueTask<SimpleTestEntity?> FindAsync(object key, CancellationToken cancellationToken = default) => new((SimpleTestEntity?)null);
 		public object? GetEntityKey(SimpleTestEntity entity) => (object?)entity.Id;
+		public ValueTask<PageResult<SimpleTestEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 	}
 
 	public class AnotherTestRepository : IRepository<AnotherTestEntity> {
@@ -244,6 +245,7 @@ public class RepositoryRegistrationIntegrationTests {
 		public ValueTask RemoveRangeAsync(IEnumerable<AnotherTestEntity> entities, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
 		public ValueTask<AnotherTestEntity?> FindAsync(object key, CancellationToken cancellationToken = default) => new((AnotherTestEntity?)null);
 		public object? GetEntityKey(AnotherTestEntity entity) => entity.Id;
+		public ValueTask<PageResult<AnotherTestEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 	}
 
 	public class TestRepositoryWithKey : IRepository<TestEntityWithKey, string> {
@@ -254,6 +256,7 @@ public class RepositoryRegistrationIntegrationTests {
 		public ValueTask RemoveRangeAsync(IEnumerable<TestEntityWithKey> entities, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
 		public ValueTask<TestEntityWithKey?> FindAsync(string key, CancellationToken cancellationToken = default) => new((TestEntityWithKey?)null);
 		public string GetEntityKey(TestEntityWithKey entity) => entity.Id;
+		public ValueTask<PageResult<TestEntityWithKey>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 	}
 
 	public class OpenGenericTestRepository<TEntity> : IRepository<TEntity> where TEntity : class {
@@ -264,6 +267,7 @@ public class RepositoryRegistrationIntegrationTests {
 		public ValueTask RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
 		public ValueTask<TEntity?> FindAsync(object key, CancellationToken cancellationToken = default) => default;
 		public object? GetEntityKey(TEntity entity) => null;
+		public ValueTask<PageResult<TEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 	}
 
 	public class OpenGenericTestRepositoryWithKey<TEntity, TKey> : IRepository<TEntity, TKey> where TEntity : class {
@@ -274,6 +278,7 @@ public class RepositoryRegistrationIntegrationTests {
 		public ValueTask RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
 		public ValueTask<TEntity?> FindAsync(TKey key, CancellationToken cancellationToken = default) => default;
 		public TKey GetEntityKey(TEntity entity) => default!;
+		public ValueTask<PageResult<TEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 	}
 
 	public interface ICustomTestRepository : IRepository<SimpleTestEntity> {
@@ -289,6 +294,7 @@ public class RepositoryRegistrationIntegrationTests {
 		public ValueTask RemoveRangeAsync(IEnumerable<SimpleTestEntity> entities, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
 		public ValueTask<SimpleTestEntity?> FindAsync(object key, CancellationToken cancellationToken = default) => new((SimpleTestEntity?)null);
 		public object? GetEntityKey(SimpleTestEntity entity) => (object?)entity.Id;
+		public ValueTask<PageResult<SimpleTestEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 	}
 
 	[ExcludeFromScan]
@@ -300,5 +306,6 @@ public class RepositoryRegistrationIntegrationTests {
 		public ValueTask RemoveRangeAsync(IEnumerable<SimpleTestEntity> entities, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
 		public ValueTask<SimpleTestEntity?> FindAsync(object key, CancellationToken cancellationToken = default) => new((SimpleTestEntity?)null);
 		public object? GetEntityKey(SimpleTestEntity entity) => (object?)entity.Id;
+		public ValueTask<PageResult<SimpleTestEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 	}
 }

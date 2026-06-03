@@ -1,4 +1,4 @@
-﻿// Copyright 2023-2025 Antonello Provenzano
+﻿// Copyright 2023-2026 Antonello Provenzano
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -47,5 +47,17 @@ namespace Kista {
         public EntityRepository(DbContext context, IServiceProvider? services = null, ILogger<EntityRepository<TEntity>>? logger = null)
             : base(context, services, logger) {
         }
+
+		ValueTask<bool> IFilterableRepository<TEntity, object>.ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken)
+			=> ExistsAsync(filter, cancellationToken);
+
+		ValueTask<long> IFilterableRepository<TEntity, object>.CountAsync(IQueryFilter filter, CancellationToken cancellationToken)
+			=> CountAsync(filter, cancellationToken);
+
+		ValueTask<TEntity?> IFilterableRepository<TEntity, object>.FindFirstAsync(IQuery query, CancellationToken cancellationToken)
+			=> FindFirstAsync(query, cancellationToken);
+
+		ValueTask<IList<TEntity>> IFilterableRepository<TEntity, object>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
+			=> FindAllAsync(query, cancellationToken);
 	}
 }

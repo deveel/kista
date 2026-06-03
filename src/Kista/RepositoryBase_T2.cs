@@ -299,6 +299,9 @@ namespace Kista {
 			ArgumentNullException.ThrowIfNull(request);
 			cancellationToken.ThrowIfCancellationRequested();
 
+			if (request is PageQuery<TEntity> pageQuery)
+				return await QueryPageAsync(pageQuery, cancellationToken).ConfigureAwait(false);
+
 			var queryable = NormalizeQuery(Query());
 			var total = await CountAsync(queryable, cancellationToken).ConfigureAwait(false);
 			var items = await ToListAsync(queryable.Skip(request.Offset).Take(request.Size), cancellationToken).ConfigureAwait(false);

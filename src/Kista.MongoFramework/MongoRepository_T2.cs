@@ -712,6 +712,9 @@ namespace Kista {
 		/// <inheritdoc/>
 		public override async ValueTask<PageResult<TEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) {
 			try {
+				if (request is PageQuery<TEntity> pageQuery)
+					return await ((IPageableRepository<TEntity, TKey>)this).GetPageAsync(pageQuery, cancellationToken).ConfigureAwait(false);
+
 				var entitySet = Query();
 
 				var totalCount = await entitySet.CountAsync(cancellationToken);
@@ -755,6 +758,13 @@ namespace Kista {
 			} catch (Exception ex) {
 				throw new RepositoryException("Unable to count the entities", ex);
 			}
+		}
+
+		/// <inheritdoc/>
+		protected override ValueTask<long> CountAsync(IQueryable<TEntity> queryable, CancellationToken cancellationToken = default) {
+			ArgumentNullException.ThrowIfNull(queryable);
+
+			return new ValueTask<long>(queryable.Count());
 		}
 
 		#region Dispose

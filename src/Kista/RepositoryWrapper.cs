@@ -269,12 +269,23 @@ namespace Kista {
 
 		/// <inheritdoc/>
 		public ValueTask<PageResult<TEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) {
-			var items = entities
+			if (request is PageQuery<TEntity> pageQuery) {
+				var queryable = pageQuery.ApplyQuery(entities.AsQueryable());
+				var total = queryable.Count();
+				var items = queryable
+					.Skip(request.Offset)
+					.Take(request.Size)
+					.ToList();
+
+				return new ValueTask<PageResult<TEntity>>(new PageResult<TEntity>(request, total, items));
+			}
+
+			var allItems = entities
 				.Skip(request.Offset)
 				.Take(request.Size)
 				.ToList();
 
-			return new ValueTask<PageResult<TEntity>>(new PageResult<TEntity>(request, entities.Count(), items));
+			return new ValueTask<PageResult<TEntity>>(new PageResult<TEntity>(request, entities.Count(), allItems));
 		}
 	}
 }

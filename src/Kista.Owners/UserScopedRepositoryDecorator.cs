@@ -32,7 +32,8 @@ namespace Kista
 	/// <typeparam name="TUserKey">The type of the user identifier.</typeparam>
 	public class UserScopedRepositoryDecorator<TEntity, TKey, TUserKey>
 		: IUserRepository<TEntity, TKey, TUserKey>,
-		  IFilterableRepository<TEntity, TKey>
+		  IFilterableRepository<TEntity, TKey>,
+		  IPageableRepository<TEntity, TKey>
 		where TEntity : class, IHaveOwner<TUserKey>
 		where TKey : notnull
 	{
@@ -155,6 +156,10 @@ namespace Kista
 		/// <inheritdoc />
 		public ValueTask<PageResult<TEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default)
 			=> ApplyOwnerFilterAndCallAsyncPage(request, r => _inner.GetPageAsync(r, cancellationToken));
+
+		/// <inheritdoc />
+		ValueTask<PageQueryResult<TEntity>> IPageableRepository<TEntity, TKey>.GetPageAsync(PageQuery<TEntity> request, CancellationToken cancellationToken)
+			=> ApplyOwnerFilterAndCallAsync(request, r => ((IPageableRepository<TEntity, TKey>)_inner).GetPageAsync(r, cancellationToken));
 
 		// === Helpers ===
 

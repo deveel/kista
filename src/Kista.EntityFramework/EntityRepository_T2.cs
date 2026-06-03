@@ -630,6 +630,9 @@ namespace Kista
 			ArgumentNullException.ThrowIfNull(request);
 
 			try {
+				if (request is PageQuery<TEntity> pageQuery)
+					return await ((IPageableRepository<TEntity, TKey>)this).GetPageAsync(pageQuery, cancellationToken).ConfigureAwait(false);
+
 				var querySet = EfQueryNormalizer.Normalize(Query());
 				var total = await querySet.CountAsync(cancellationToken);
 

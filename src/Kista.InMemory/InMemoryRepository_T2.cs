@@ -643,6 +643,11 @@ namespace Kista {
 			ArgumentNullException.ThrowIfNull(request);
 			cancellationToken.ThrowIfCancellationRequested();
 
+			if (request is PageQuery<TEntity> pageQuery) {
+				var result = await ((IPageableRepository<TEntity, TKey>)this).GetPageAsync(pageQuery, cancellationToken).ConfigureAwait(false);
+				return result;
+			}
+
 			try {
 				_lock.EnterReadLock();
 				try {

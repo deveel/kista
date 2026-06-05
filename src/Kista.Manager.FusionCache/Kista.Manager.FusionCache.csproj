@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageTags>repository;manager;entitymanager;entity;cache;caching;fusioncache</PackageTags>
+    <Description>Extends the Entity Manager with an implementation of the entity cache backed by FusionCache</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ZiggyCreatures.FusionCache" Version="2.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Kista.Manager\Kista.Manager.csproj" />
+  </ItemGroup>
+
+</Project>

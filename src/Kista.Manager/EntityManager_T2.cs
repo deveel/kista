@@ -608,20 +608,21 @@ namespace Kista {
 		/// </param>
 		/// <remarks>
 		/// The default implementation of this method uses the
-		/// the <see cref="IEntityCache{TEntity}.GenerateKeys(TEntity)"/>
-		/// method, if any is available, otherwise it returns an
-		/// empty array, that means that the entity will not be
-		/// cached.
+		/// <see cref="IEntityCacheKeyGenerator{TEntity}"/> service
+		/// to generate the cache keys, if any is available, otherwise
+		/// it returns an empty array, meaning that the entity will
+		/// not be cached.
 		/// </remarks>
 		/// <returns>
 		/// Returns an array of strings that are the keys that
 		/// are used to identify the entity in the cache.
 		/// </returns>
 		protected virtual string[] GenerateCacheKeys(TEntity entity) {
-			if (EntityCache == null)
+			var generator = EntityCacheKeyGenerator;
+			if (generator == null)
 				return Array.Empty<string>();
 
-			return EntityCache.GenerateKeys(entity);
+			return generator.GenerateAllKeys(entity);
 		}
 
 		private async ValueTask SetToCacheAsync(TEntity entity, CancellationToken cancellationToken) {

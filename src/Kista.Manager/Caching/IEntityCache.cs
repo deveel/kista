@@ -19,20 +19,15 @@ namespace Kista.Caching {
 	/// <typeparam name="TEntity">
 	/// The type of the entity to cache.
 	/// </typeparam>
+	/// <remarks>
+	/// <para>
+	/// Implementations of this interface are responsible for storing,
+	/// retrieving, and removing entities from the cache. The key
+	/// generation is handled separately by
+	/// <see cref="IEntityCacheKeyGenerator{TEntity}"/>.
+	/// </para>
+	/// </remarks>
 	public interface IEntityCache<TEntity> where TEntity : class {
-		/// <summary>
-		/// Generates all the keys that can be used to identify
-		/// the given entity in the cache.
-		/// </summary>
-		/// <param name="entity">
-		/// The instance of the entity to generate the keys for.
-		/// </param>
-		/// <returns>
-		/// Returns an array of strings that are the keys that
-		/// will be used to identify the entity in the cache.
-		/// </returns>
-		string[] GenerateKeys(TEntity entity);
-
 		/// <summary>
 		/// Gets the given entity from the cache, if available,
 		/// and uses the given factory to create the entity if to

@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Kista.Manager\Kista.Manager.csproj" />
+    <ProjectReference Include="..\Kista.Manager.XUnit\Kista.Manager.XUnit.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -127,14 +127,6 @@ namespace Kista.Caching {
 		}
 
 		/// <inheritdoc/>
-		public virtual string[] GenerateKeys(TEntity entity) {
-			if (keyGenerator == null)
-				throw new NotSupportedException("The key generator is not defined for this cache");
-
-			return keyGenerator.GenerateAllKeys(entity);
-		}
-
-		/// <inheritdoc/>
 		public async ValueTask<TEntity?> GetOrSetAsync(string cacheKey, Func<ValueTask<TEntity?>> valueFactory, CancellationToken cancellationToken = default) {
 			try {
 				var factory = Factory(valueFactory, cancellationToken);

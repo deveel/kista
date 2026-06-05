@@ -677,6 +677,34 @@ The current design maintains a parallel universe of interfaces — `IRepository<
 
 ---
 
+### Feature — Remove Obsolete Capability Interfaces
+
+**Title:** Drop `IQueryableRepository`, `IPageableRepository`, and `IFilterableRepository`
+
+**Intent**  
+> "Eliminate the three interfaces that were deprecated in v1.x — their functionality is now built directly into the abstract `Repository<TEntity, TKey>` base class, making the public contract simpler and removing confusion."
+
+**The Problem Today**  
+`IQueryableRepository<TEntity, TKey>`, `IPageableRepository<TEntity, TKey>`, and `IFilterableRepository<TEntity, TKey>` — and their single-T shims — carry `[Obsolete]` with `error = false`. Consumers can still implement or inject them, but the same capabilities (filtering, pagination, queryable access) are already provided by the `Repository<TEntity, TKey>` base class through protected members. Keeping the dead interfaces bloats the type hierarchy, clutters DI auto-registration, forces every concrete repository to maintain explicit interface implementations, and leaks internal abstractions (`IQueryable<T>`, `PageQuery<T>.Query`) into consumer code.
+
+**What We Are Building**  
+- Delete the 6 interface definition files from `src/Kista/`
+- Remove `IFilterableRepository`, `IPageableRepository`, and `IQueryableRepository` from all concrete repository declarations (`MongoRepository`, `InMemoryRepository`, `EntityRepository`, `UserScopedRepositoryDecorator`, `RepositoryWrapper`) and drop their explicit interface method implementations
+- Delete the two extension-method files (`QueryableRepositoryExtensions.cs`, `PageableRepositoryExtensions.cs`) that target these interfaces
+- Remove the `AsFilterable()` and `AsQueryable()` helper extensions from `RepositoryExtensions.cs`; refactor internal methods (`ExistsAsync`, `CountAsync`, `FindFirstAsync`, `FindAllAsync`) that fall back to queryable casts
+- Remove the 6 obsolete interface entries from DI registration (`RepositoryRegistrationUtil`) and assembly scanning (`RepositoryScanner`)
+- Update `EntityManager<TEntity, TKey>` to use `Repository<TEntity, TKey>` base-class checks instead of casting to obsolete interfaces
+- Update all affected test files to stop casting to or asserting on these interfaces
+
+**Benefits**
+- Smaller, clearer public API surface — no redundant interface paths
+- Concrete repositories no longer carry stale explicit interface implementations
+- DI registration and auto-discovery are simpler and faster
+- Consumers are guided toward the single `Repository<TEntity, TKey>` base class instead of choosing between multiple capability interfaces
+- Every `[Obsolete]` warning in v1.x codebases is resolved simply by upgrading to v2.0
+
+---
+
 ### Feature — Repository Source Generators
 
 **Title:** Compile-Time Repository Scaffolding via Roslyn Source Generators

@@ -203,6 +203,7 @@ We are actively building Kista toward a comprehensive, production-ready framewor
 - [ ] **v2.0.0** — "Platform Modernization"
   - [ ] Minimum .NET 9 Baseline
   - [ ] Simplified Repository Interface Hierarchy
+  - [ ] Remove Obsolete Capability Interfaces
   - [ ] Repository Source Generators
 
 - [ ] **v2.1.0** — "New Database Drivers"

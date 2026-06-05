@@ -9,6 +9,8 @@
     <ProjectReference Include="..\..\src\Kista.InMemory\Kista.InMemory.csproj" />
     <ProjectReference Include="..\..\src\Kista.Manager\Kista.Manager.csproj" />
     <ProjectReference Include="..\..\src\Kista.Manager.EasyCaching\Kista.Manager.EasyCaching.csproj" />
+    <ProjectReference Include="..\..\src\Kista.Manager.FusionCache\Kista.Manager.FusionCache.csproj" />
+    <ProjectReference Include="..\..\src\Kista.Manager.DistributedCache\Kista.Manager.DistributedCache.csproj" />
   </ItemGroup>
 
 </Project>

@@ -50,6 +50,16 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kista.Manager.EasyCaching",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kista.Manager.EasyCaching.XUnit", "test\Kista.Manager.EasyCaching.XUnit\Kista.Manager.EasyCaching.XUnit.csproj", "{F47C196B-758D-4C05-8918-FB63C61649EB}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kista.Manager.FusionCache", "src\Kista.Manager.FusionCache\Kista.Manager.FusionCache.csproj", "{2D9B7C1A-3E5F-4A8B-BC1D-6F8E9A7B4C2D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kista.Manager.FusionCache.XUnit", "test\Kista.Manager.FusionCache.XUnit\Kista.Manager.FusionCache.XUnit.csproj", "{3E0C8D2B-4F6A-5B9C-C0E2-7A9F0B8C5D3E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kista.Manager.DistributedCache", "src\Kista.Manager.DistributedCache\Kista.Manager.DistributedCache.csproj", "{4F1D9E3C-5A7B-6C0D-D1F3-8B0A1C9D6E4F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kista.Manager.DistributedCache.XUnit", "test\Kista.Manager.DistributedCache.XUnit\Kista.Manager.DistributedCache.XUnit.csproj", "{5A2E0F4D-6B8C-7D1E-E2A4-9C1B2D0E7F5A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kista.Manager.MemoryCache.XUnit", "test\Kista.Manager.MemoryCache.XUnit\Kista.Manager.MemoryCache.XUnit.csproj", "{6B3F1A5E-7C9D-8E2F-F3B5-0D2C3E1F8A6B}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kista.Management.Testing", "test\Kista.Management.Testing\Kista.Management.Testing.csproj", "{7DC0EA52-DAAB-49D4-8443-3409C001E27E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "management", "management", "{85200FA4-CC68-4758-B6E5-287E8AFA79FE}"
@@ -426,6 +436,16 @@ Global
 		{92B6334E-D360-4EDB-9E34-A8F661E433F7}.Release|x64.Build.0 = Release|Any CPU
 		{92B6334E-D360-4EDB-9E34-A8F661E433F7}.Release|x86.ActiveCfg = Release|Any CPU
 		{92B6334E-D360-4EDB-9E34-A8F661E433F7}.Release|x86.Build.0 = Release|Any CPU
+		{4F1D9E3C-5A7B-6C0D-D1F3-8B0A1C9D6E4F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F1D9E3C-5A7B-6C0D-D1F3-8B0A1C9D6E4F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5A2E0F4D-6B8C-7D1E-E2A4-9C1B2D0E7F5A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5A2E0F4D-6B8C-7D1E-E2A4-9C1B2D0E7F5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2D9B7C1A-3E5F-4A8B-BC1D-6F8E9A7B4C2D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2D9B7C1A-3E5F-4A8B-BC1D-6F8E9A7B4C2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3E0C8D2B-4F6A-5B9C-C0E2-7A9F0B8C5D3E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3E0C8D2B-4F6A-5B9C-C0E2-7A9F0B8C5D3E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6B3F1A5E-7C9D-8E2F-F3B5-0D2C3E1F8A6B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6B3F1A5E-7C9D-8E2F-F3B5-0D2C3E1F8A6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -461,6 +481,11 @@ Global
 		{C4CE594C-71F8-4052-98CA-99B027DA9A8E} = {2860FD4D-510F-43C8-870E-5559B90D0CAD}
 		{62506A7F-7217-4204-9B6B-5638AE44AC05} = {2860FD4D-510F-43C8-870E-5559B90D0CAD}
 		{92B6334E-D360-4EDB-9E34-A8F661E433F7} = {50434E05-0F21-4871-AFB3-A483CEE4A300}
+		{4F1D9E3C-5A7B-6C0D-D1F3-8B0A1C9D6E4F} = {2860FD4D-510F-43C8-870E-5559B90D0CAD}
+		{2D9B7C1A-3E5F-4A8B-BC1D-6F8E9A7B4C2D} = {2860FD4D-510F-43C8-870E-5559B90D0CAD}
+		{5A2E0F4D-6B8C-7D1E-E2A4-9C1B2D0E7F5A} = {50434E05-0F21-4871-AFB3-A483CEE4A300}
+		{3E0C8D2B-4F6A-5B9C-C0E2-7A9F0B8C5D3E} = {50434E05-0F21-4871-AFB3-A483CEE4A300}
+		{6B3F1A5E-7C9D-8E2F-F3B5-0D2C3E1F8A6B} = {50434E05-0F21-4871-AFB3-A483CEE4A300}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {01FD9B16-84B3-4D99-80C1-11B2F3D65B56}

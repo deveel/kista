@@ -13,6 +13,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\Kista.Testing\Fixtures\IPerson.cs" Link="Fixtures\IPerson.cs" />
+    <Compile Include="..\Kista.Testing\Fixtures\IRelationship.cs" Link="Fixtures\IRelationship.cs" />
+    <Compile Include="..\Kista.Testing\Fixtures\TestTime.cs" Link="Fixtures\TestTime.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\Kista\Kista.csproj" />
     <ProjectReference Include="..\Kista.MultiTenant.Testing\Kista.MultiTenant.Testing.csproj" />
     <ProjectReference Include="..\Kista.Testing.Utils\Kista.Testing.Utils.csproj" />

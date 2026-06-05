@@ -71,9 +71,8 @@ namespace Kista {
 			if (!validatorType.IsClass || validatorType.IsAbstract)
 				throw new ArgumentException($"The type {validatorType} is not a concrete class", nameof(TValidator));
 
-			var interfaceTypes = validatorType.GetInterfaces();
+			var interfaceTypes = validatorType.GetInterfaces().Where(x => x.IsGenericType);
 			foreach (var interfaceType in interfaceTypes) {
-				if (!interfaceType.IsGenericType) continue;
 
 				var genericDef = interfaceType.GetGenericTypeDefinition();
 
@@ -110,11 +109,11 @@ namespace Kista {
 			if (!generatorType.IsClass || generatorType.IsAbstract)
 				throw new ArgumentException($"The type {generatorType} is not a concrete class", nameof(TGenerator));
 
-			var interfaces = generatorType.GetInterfaces()
-				.Where(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IEntityCacheKeyGenerator<>));
+			var entityTypes = generatorType.GetInterfaces()
+				.Where(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IEntityCacheKeyGenerator<>))
+				.Select(x => x.GetGenericArguments()[0]);
 
-			foreach (var interfaceType in interfaces) {
-				var entityType = interfaceType.GetGenericArguments()[0];
+			foreach (var entityType in entityTypes) {
 				if (entityType == EntityType) {
 					var compareType = typeof(IEntityCacheKeyGenerator<>).MakeGenericType(entityType);
 					Services.TryAdd(new ServiceDescriptor(compareType, generatorType, _lifetime));

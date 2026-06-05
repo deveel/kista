@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Linq.Expressions;
+
 using System;
 
 namespace Kista {
@@ -42,7 +44,9 @@ namespace Kista {
 	/// <c>FindFirstAsync(IQuery, CancellationToken)</c> and
 	/// <c>FindAllAsync(IQuery, CancellationToken)</c> methods that
 	/// unpack the query, apply sorting/filtering/pagination through the engine
-	/// hatch, and surface the result. Engine-specific async execution can be
+	/// hatch, and surface the result. For convenience, each method also has a
+	/// <c>Expression&lt;Func&lt;TEntity, bool&gt;&gt;</c>-based overload that
+	/// automatically wraps the predicate in the appropriate filter or query. Engine-specific async execution can be
 	/// customised by overriding <see cref="CountAsync(IQueryable{TEntity}, CancellationToken)"/> and
 	/// <see cref="ToListAsync"/>.
 	/// </para>
@@ -350,6 +354,27 @@ namespace Kista {
 		}
 
 		/// <summary>
+		/// Checks if an entity exists in the repository that matches the given
+		/// predicate expression.
+		/// </summary>
+		/// <param name="predicate">
+		/// The predicate expression used to check the existence of any matching entity.
+		/// </param>
+		/// <param name="cancellationToken">
+		/// A token used to cancel the operation.
+		/// </param>
+		/// <returns>
+		/// Returns <c>true</c> if any entity exists in the repository that matches
+		/// the given predicate, otherwise <c>false</c>.
+		/// </returns>
+		/// <exception cref="NotSupportedException">
+		/// Thrown when <see cref="IsQueryable"/> is <c>false</c> and the subclass
+		/// has not overridden this method.
+		/// </exception>
+		protected virtual ValueTask<bool> ExistsAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+			=> ExistsAsync(new ExpressionQueryFilter<TEntity>(predicate), cancellationToken);
+
+		/// <summary>
 		/// Counts the number of items in the repository matching the given
 		/// filtering conditions.
 		/// </summary>
@@ -384,6 +409,26 @@ namespace Kista {
 		}
 
 		/// <summary>
+		/// Counts the number of items in the repository that match the given
+		/// predicate expression.
+		/// </summary>
+		/// <param name="predicate">
+		/// The predicate expression used to count the matching entities.
+		/// </param>
+		/// <param name="cancellationToken">
+		/// A token used to cancel the operation.
+		/// </param>
+		/// <returns>
+		/// Returns the total count of items matching the given predicate.
+		/// </returns>
+		/// <exception cref="NotSupportedException">
+		/// Thrown when <see cref="IsQueryable"/> is <c>false</c> and the subclass
+		/// has not overridden this method.
+		/// </exception>
+		protected virtual ValueTask<long> CountAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+			=> CountAsync(new ExpressionQueryFilter<TEntity>(predicate), cancellationToken);
+
+		/// <summary>
 		/// Finds the first item in the repository that matches the given query.
 		/// </summary>
 		/// <param name="query">
@@ -414,6 +459,27 @@ namespace Kista {
 		}
 
 		/// <summary>
+		/// Finds the first item in the repository that matches the given
+		/// predicate expression.
+		/// </summary>
+		/// <param name="predicate">
+		/// The predicate expression used to identify the item to return.
+		/// </param>
+		/// <param name="cancellationToken">
+		/// A token used to cancel the operation.
+		/// </param>
+		/// <returns>
+		/// Returns the first item in the repository that matches the given predicate,
+		/// or <c>null</c> if none of the items matches the condition.
+		/// </returns>
+		/// <exception cref="NotSupportedException">
+		/// Thrown when <see cref="IsQueryable"/> is <c>false</c> and the subclass
+		/// has not overridden this method.
+		/// </exception>
+		protected virtual ValueTask<TEntity?> FindFirstAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+			=> FindFirstAsync(Kista.Query.Where(predicate), cancellationToken);
+
+		/// <summary>
 		/// Finds all the items in the repository that match the given filtering condition.
 		/// </summary>
 		/// <param name="query">
@@ -442,6 +508,27 @@ namespace Kista {
 			}
 			throw new NotSupportedException("Querying requires IQueryable support or a subclass override.");
 		}
+
+		/// <summary>
+		/// Finds all the items in the repository that match the given
+		/// predicate expression.
+		/// </summary>
+		/// <param name="predicate">
+		/// The predicate expression used to identify the items to return.
+		/// </param>
+		/// <param name="cancellationToken">
+		/// A token used to cancel the operation.
+		/// </param>
+		/// <returns>
+		/// Returns a list of items in the repository that match the given predicate,
+		/// or an empty list if none of the items matches the condition.
+		/// </returns>
+		/// <exception cref="NotSupportedException">
+		/// Thrown when <see cref="IsQueryable"/> is <c>false</c> and the subclass
+		/// has not overridden this method.
+		/// </exception>
+		protected virtual ValueTask<IList<TEntity>> FindAllAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+			=> FindAllAsync(Kista.Query.Where(predicate), cancellationToken);
 
 		/// <inheritdoc />
 		public abstract ValueTask AddAsync(TEntity entity, CancellationToken cancellationToken = default);

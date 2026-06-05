@@ -1,4 +1,6 @@
-﻿namespace Kista;
+﻿#pragma warning disable CS0618
+
+namespace Kista;
 
 [Trait("Category", "Unit")]
 [Trait("Layer", "Infrastructure")]

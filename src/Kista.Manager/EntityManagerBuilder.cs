@@ -113,11 +113,9 @@ namespace Kista {
 				.Where(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IEntityCacheKeyGenerator<>))
 				.Select(x => x.GetGenericArguments()[0]);
 
-			foreach (var entityType in entityTypes) {
-				if (entityType == EntityType) {
-					var compareType = typeof(IEntityCacheKeyGenerator<>).MakeGenericType(entityType);
-					Services.TryAdd(new ServiceDescriptor(compareType, generatorType, _lifetime));
-				}
+			foreach (var entityType in entityTypes.Where(entityType => entityType == EntityType)) {
+				var compareType = typeof(IEntityCacheKeyGenerator<>).MakeGenericType(entityType);
+				Services.TryAdd(new ServiceDescriptor(compareType, generatorType, _lifetime));
 			}
 
 			Services.Add(new ServiceDescriptor(generatorType, generatorType, _lifetime));

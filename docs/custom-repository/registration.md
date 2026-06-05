@@ -4,7 +4,13 @@ This page covers how to register custom repositories with the DI container using
 
 ## Basic Registration
 
-Use `AddRepository<T>()` on the repository context builder:
+Use `AddRepository<T>()` on the repository context builder. The driver's open-generic registrations (e.g. `InMemoryRepository<>` from `.UseInMemory()`) serve as defaults for all entities; `AddRepository<T>()` registers a concrete type that overrides the open generic for that specific entity:
+
+```csharp
+builder.Services.AddRepositoryContext()
+    .UseInMemory()                       // default: InMemoryRepository for all entities
+    .AddRepository<SpecialProductRepo>(); // override: SpecialProductRepo for Product only
+```
 
 ```csharp
 builder.Services.AddRepositoryContext()

@@ -18,6 +18,53 @@ using Microsoft.Extensions.Options;
 
 namespace Kista.Caching {
 	/// <summary>
+	/// Extension methods for configuring EasyCaching on an <see cref="EntityManagerBuilder"/>.
+	/// </summary>
+	public static class EntityManagerBuilderExtensions {
+		/// <summary>
+		/// Enables EasyCaching-based entity caching for the entity type
+		/// being configured by the <see cref="EntityManagerBuilder"/>.
+		/// </summary>
+		/// <param name="builder">The entity manager builder.</param>
+		/// <param name="configure">
+		/// An optional delegate to configure the EasyCaching options.
+		/// </param>
+		/// <param name="lifetime">
+		/// The service lifetime for the cache registration (default: Singleton).
+		/// </param>
+		/// <returns>The builder for chaining.</returns>
+		public static EntityManagerBuilder WithEasyCaching(
+			this EntityManagerBuilder builder,
+			Action<EasyCachingOptions>? configure = null,
+			ServiceLifetime lifetime = ServiceLifetime.Singleton) {
+
+			var entityType = builder.EntityType;
+			var options = new EasyCachingOptions();
+			configure?.Invoke(options);
+
+			var cacheType = typeof(EntityEasyCache<>).MakeGenericType(entityType);
+			var cacheInterface = typeof(IEntityCache<>).MakeGenericType(entityType);
+
+			builder.Services.TryAdd(new ServiceDescriptor(cacheInterface, cacheType, lifetime));
+			builder.Services.TryAdd(new ServiceDescriptor(cacheType, cacheType, lifetime));
+
+			if (options.DefaultExpiration.HasValue || !string.IsNullOrEmpty(options.CacheKeyPrefix)) {
+				var entityOptionsType = typeof(EntityCacheOptions<>).MakeGenericType(entityType);
+				var expiration = options.DefaultExpiration;
+				var prefix = options.CacheKeyPrefix;
+
+				builder.Services.AddSingleton(typeof(IConfigureOptions<>).MakeGenericType(entityOptionsType), sp => {
+					return Activator.CreateInstance(
+						typeof(ConfiguredEntityCacheOptions<>).MakeGenericType(entityType),
+						expiration, prefix)!;
+				});
+			}
+
+			return builder;
+		}
+	}
+
+	/// <summary>
 	/// Options for configuring EasyCaching-based entity caching.
 	/// </summary>
 	public class EasyCachingOptions {

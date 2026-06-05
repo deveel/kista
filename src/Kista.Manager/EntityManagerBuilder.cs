@@ -1,0 +1,141 @@
+// Copyright 2023-2026 Antonello Provenzano
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+using Kista.Caching;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+
+namespace Kista {
+	/// <summary>
+	/// A fluent builder for configuring entity-specific services
+	/// (validators, cache key generators, error factories, caching)
+	/// for a single entity type.
+	/// </summary>
+	/// <remarks>
+	/// <para>
+	/// Created by <see cref="RepositoryBuilderExtensions.WithManagement(RepositoryBuilder, Action{EntityManagerBuilder}, ServiceLifetime)"/>
+	/// and scoped to the entity and key types of the repository being configured.
+	/// </para>
+	/// </remarks>
+	public class EntityManagerBuilder {
+		private readonly RepositoryBuilder _repoBuilder;
+		private readonly ServiceLifetime _lifetime;
+
+		/// <summary>
+		/// Constructs the builder with the given repository builder and lifetime.
+		/// </summary>
+		/// <param name="repoBuilder"></param>
+		/// <param name="lifetime"></param>
+		internal EntityManagerBuilder(RepositoryBuilder repoBuilder, ServiceLifetime lifetime) {
+			_repoBuilder = repoBuilder;
+			_lifetime = lifetime;
+		}
+
+		/// <summary>
+		/// Gets the underlying service collection for direct registration.
+		/// </summary>
+		public IServiceCollection Services => _repoBuilder.Services;
+
+		/// <summary>
+		/// Gets the entity type managed by the repository.
+		/// </summary>
+		public Type EntityType => _repoBuilder.EntityType;
+
+		/// <summary>
+		/// Gets the entity key type managed by the repository.
+		/// </summary>
+		public Type EntityKeyType => _repoBuilder.EntityKeyType;
+
+		/// <summary>
+		/// Registers a validator type by scanning its implemented
+		/// <see cref="IEntityValidator{TEntity}"/> and <see cref="IEntityValidator{TEntity, TKey}"/>
+		/// interfaces, filtering for those matching the current entity and key types.
+		/// </summary>
+		/// <typeparam name="TValidator">The type of the validator to register.</typeparam>
+		/// <returns>This builder for chaining.</returns>
+		public EntityManagerBuilder WithValidator<TValidator>()
+			where TValidator : class {
+			var validatorType = typeof(TValidator);
+
+			if (!validatorType.IsClass || validatorType.IsAbstract)
+				throw new ArgumentException($"The type {validatorType} is not a concrete class", nameof(TValidator));
+
+			var interfaceTypes = validatorType.GetInterfaces();
+			foreach (var interfaceType in interfaceTypes) {
+				if (!interfaceType.IsGenericType) continue;
+
+				var genericDef = interfaceType.GetGenericTypeDefinition();
+
+				if (genericDef == typeof(IEntityValidator<>)) {
+					var entityType = interfaceType.GetGenericArguments()[0];
+					if (entityType == EntityType) {
+						var compareType = typeof(IEntityValidator<>).MakeGenericType(entityType);
+						Services.TryAdd(new ServiceDescriptor(compareType, validatorType, _lifetime));
+					}
+				} else if (genericDef == typeof(IEntityValidator<,>)) {
+					var args = interfaceType.GetGenericArguments();
+					if (args[0] == EntityType) {
+						var compareType = typeof(IEntityValidator<,>).MakeGenericType(args[0], args[1]);
+						Services.TryAdd(new ServiceDescriptor(compareType, validatorType, _lifetime));
+					}
+				}
+			}
+
+			Services.Add(new ServiceDescriptor(validatorType, validatorType, _lifetime));
+			return this;
+		}
+
+		/// <summary>
+		/// Registers a cache key generator type by scanning its implemented
+		/// <see cref="IEntityCacheKeyGenerator{TEntity}"/> interfaces,
+		/// filtering for those matching the current entity type.
+		/// </summary>
+		/// <typeparam name="TGenerator">The type of the key generator to register.</typeparam>
+		/// <returns>This builder for chaining.</returns>
+		public EntityManagerBuilder WithCacheKeyGenerator<TGenerator>()
+			where TGenerator : class {
+			var generatorType = typeof(TGenerator);
+
+			if (!generatorType.IsClass || generatorType.IsAbstract)
+				throw new ArgumentException($"The type {generatorType} is not a concrete class", nameof(TGenerator));
+
+			var interfaces = generatorType.GetInterfaces()
+				.Where(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IEntityCacheKeyGenerator<>));
+
+			foreach (var interfaceType in interfaces) {
+				var entityType = interfaceType.GetGenericArguments()[0];
+				if (entityType == EntityType) {
+					var compareType = typeof(IEntityCacheKeyGenerator<>).MakeGenericType(entityType);
+					Services.TryAdd(new ServiceDescriptor(compareType, generatorType, _lifetime));
+				}
+			}
+
+			Services.Add(new ServiceDescriptor(generatorType, generatorType, _lifetime));
+			return this;
+		}
+
+		/// <summary>
+		/// Registers an operation error factory for the current entity type.
+		/// </summary>
+		/// <typeparam name="TFactory">
+		/// The type of the <see cref="IOperationErrorFactory"/> to register.
+		/// </typeparam>
+		/// <returns>This builder for chaining.</returns>
+		public EntityManagerBuilder WithOperationErrorFactory<TFactory>()
+			where TFactory : class, IOperationErrorFactory {
+			Services.AddOperationErrorFactory(EntityType, typeof(TFactory));
+			return this;
+		}
+	}
+}

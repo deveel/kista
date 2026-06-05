@@ -20,6 +20,7 @@
   * [Overview](filtering/index.md)
   * [Filter Cache](filtering/filter-cache.md)
 * [The Entity Manager](entity-manager/README.md)
+  * [Entity Validation](entity-manager/entity-validation.md)
   * [HTTP Request Cancellation](entity-manager/http-request-cancellation.md)
   * [Caching Entities](entity-manager/caching-entities.md)
 * [Sample Application](sample-app.md)

@@ -86,6 +86,8 @@ builder.Services.AddRepositoryContext()
         .WithConnectionString("mongodb://..."));
 ```
 
+Each `Use*()` method registers **open-generic** repository types (`InMemoryRepository<>`, `EntityRepository<>`, `MongoRepository<>`) with the DI container. This means `IRepository<AnyEntity>` resolves automatically — you do **not** need to write a repository class for every entity type. When you also register a concrete repository via `AddRepository<MyRepo>()`, the closed generic takes precedence over the open generic for that specific entity, letting you mix bulk defaults with per-entity customization.
+
 Each driver call returns to the parent builder, allowing you to chain multiple concerns:
 
 ```csharp

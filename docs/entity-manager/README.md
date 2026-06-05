@@ -1,56 +1,91 @@
 # The Entity Manager
+
 > **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project purpose as a data access framework.
 
-The `EntityManager<TEntity>` class is an optional application-layer service that wraps an `IRepository<TEntity>` and enriches every operation with cross-cutting concerns:
+The `EntityManager<TEntity>` (and `EntityManager<TEntity, TKey>`) is an optional application-layer service that wraps an `IRepository<TEntity>` and enriches every operation with cross-cutting concerns:
 
-- **Validation** — entities are validated (via `IEntityValidator<TEntity>`) before being added or updated.
-- **Caching** — frequently accessed entities can be served from a second-level cache (via `IEntityCache<TEntity>`).
+- **Validation** — entities are validated before being added or updated.
+- **Caching** — frequently accessed entities can be served from a second-level cache.
 - **Timestamping** — entities implementing `IHaveTimeStamp` are automatically stamped on create/update.
 - **Structured error handling** — operations return structured error results rather than throwing raw exceptions.
 - **Logging** — all operations are logged through the standard `ILogger` infrastructure.
 
-`EntityManager<TEntity>` is designed to be used at the **application service layer**, sitting between your controllers / use-case handlers and the underlying repository.
+`EntityManager<TEntity>` is designed to sit between your controllers / use-case handlers and the underlying repository, at the **application service layer**.
 
-## Constructor
+## Prerequisites
 
-```csharp
-public EntityManager<TEntity>(
-    IRepository<TEntity>           repository,
-    IEntityValidator<TEntity>?     validator    = null,
-    IEntityCache<TEntity>?         cache        = null,
-    ISystemTime?                   systemTime   = null,
-    IOperationErrorFactory<TEntity>? errorFactory = null,
-    IServiceProvider?              services     = null,
-    ILoggerFactory?                loggerFactory = null)
+The entity manager is packaged separately from the core repository:
+
+| Package | Description |
+|---------|-------------|
+| `Kista.Manager` | Base manager, validation abstractions, error factories |
+| `Kista.Manager.EasyCaching` | Second-level caching via EasyCaching |
+| `Kista.Manager.AspNetCore` | Automatic HTTP request cancellation for ASP.NET Core |
+| `Kista.Manager.DynamicLinq` | Dynamic LINQ query extensions for the manager |
+
+```bash
+dotnet add package Kista.Manager
 ```
-
-All parameters beyond `repository` are optional and resolved from the DI container at registration time (see below).
 
 ## Registration
 
-Use `AddEntityManager<TManager>` to register a concrete manager type (or a custom sub-class):
+There are two ways to register an entity manager: **per-repository** (explicit, recommended) and **global** (convenience for bulk registration).
+
+### Per-repository (recommended)
+
+Use `WithManagement()` on the `RepositoryBuilder` returned by `AddRepository<T>()`. This binds the manager to a specific repository and entity type:
 
 ```csharp
-// Program.cs
-
-// Register the default EntityManager for MyEntity
-builder.Services.AddManagerFor<MyEntity>();
-
-// Or register a custom sub-class that derives from EntityManager<MyEntity>
-builder.Services.AddEntityManager<MyEntityManager>();
+services.AddRepositoryContext()
+    .AddRepository<PersonRepository>(repo => repo
+        .WithManagement(mgmt => mgmt
+            .WithValidator<PersonValidator>()
+            .WithCacheKeyGenerator<PersonKeyGenerator>()
+            .WithOperationErrorFactory<PersonErrorFactory>()
+            .WithEasyCaching(opts =>
+            {
+                opts.DefaultExpiration = TimeSpan.FromMinutes(15);
+            })))
+    .UseInMemory();
 ```
 
-After registration, the DI container provides both the concrete type and all `EntityManager<TEntity>` base-type projections.
-
-To register a custom validator:
+To register a manager with no additional services (the EntityManager itself is still registered):
 
 ```csharp
-builder.Services.AddEntityValidator<MyEntityValidator>();
+services.AddRepositoryContext()
+    .AddRepository<PersonRepository>(repo => repo
+        .WithManagement())
+    .UseInMemory();
 ```
+
+### Global (convenience)
+
+Use `WithManagement()` on the `RepositoryContextBuilder` to register managers for **all tracked entity types** in one call:
+
+```csharp
+services.AddRepositoryContext()
+    .AddRepository<PersonRepository>(_ => { })
+    .AddRepository<OrderRepository>(_ => { })
+    .WithManagement()              // registers EntityManager<Person> and EntityManager<Order>
+    .UseInMemory();
+```
+
+You can pass a `ManagementOptions` delegate to control auto-registration:
+
+```csharp
+services.AddRepositoryContext()
+    .AddRepository<PersonRepository>(_ => { })
+    .WithManagement(opts =>
+    {
+        opts.AutoRegisterManagers = true;   // default: true
+    });
+```
+
+> Both approaches coexist. Use per-repository when you need entity-specific configuration; use global when you want quick setup with no extras.
 
 ## Custom Managers
 
-Derive from `EntityManager<TEntity>` to add domain-specific business operations:
+Derive from `EntityManager<TEntity>` (or `EntityManager<TEntity, TKey>`) to add domain-specific business operations:
 
 ```csharp
 public class OrderManager : EntityManager<Order>
@@ -66,7 +101,7 @@ public class OrderManager : EntityManager<Order>
     {
         var order = await FindAsync(orderId, ct);
         if (order == null)
-            return NotFound("ORDER_NOT_FOUND");
+            return OperationResult.Fail(...);
 
         order.Ship();
         return await UpdateAsync(order, ct);
@@ -74,22 +109,57 @@ public class OrderManager : EntityManager<Order>
 }
 ```
 
-## Operation Cancellation
-
-Every async method accepts an optional `CancellationToken`. When no token is supplied (or `null` is passed), the manager checks for an `IOperationCancellationSource` registered in the DI container and uses its token automatically.
-
-This is useful for tying operation lifetime to an HTTP request:
+Register a custom manager by registering it directly in the DI container:
 
 ```csharp
-// Register the ASP.NET Core HTTP cancellation source
-// (provided by Kista.Manager.AspNetCore)
+services.AddScoped<OrderManager>();
+```
+
+The base `EntityManager<Order>` is registered automatically when using `WithManagement()`, so DI can resolve both the base type and your custom type.
+
+## Operation Results
+
+EntityManager methods return `OperationResult` (for void-like operations) or `OperationResult<T>` (for operations that return a value), rather than throwing exceptions for expected failures:
+
+| Method | Returns |
+|--------|---------|
+| `AddAsync(entity)` | `OperationResult` |
+| `UpdateAsync(entity)` | `OperationResult` |
+| `RemoveAsync(entity)` | `OperationResult` |
+| `FindAsync(key)` | `OperationResult<TEntity>` |
+| `FindFirstAsync(query)` | `OperationResult<TEntity>` |
+
+```csharp
+var result = await manager.AddAsync(person);
+if (result.IsSuccess)
+{
+    // entity added
+}
+else
+{
+    var error = result.Error;
+    // error.ErrorCode, error.Message
+}
+```
+
+This allows the caller to handle validation failures, not-found conditions, and infrastructure errors uniformly without try/catch blocks.
+
+## Operation Cancellation
+
+Every async method accepts an optional `CancellationToken`. When no token is supplied, the manager checks for an `IOperationCancellationSource` registered in the DI container and uses its token automatically.
+
+For ASP.NET Core, install `Kista.Manager.AspNetCore` and call `AddHttpRequestTokenSource()`:
+
+```csharp
 builder.Services.AddHttpRequestTokenSource();
 ```
 
-With this in place, when the HTTP request is aborted, all in-flight repository operations are cancelled without any additional code in your manager.
+When the HTTP client disconnects, all in-flight repository operations are cancelled automatically.
 
 See [HTTP Request Cancellation](http-request-cancellation.md) for full details.
 
-## Caching
+## See Also
 
-See [Caching Entities](caching-entities.md) for details on integrating second-level caching via [EasyCaching](https://easycaching.readthedocs.io/en/latest/).
+- [Entity Validation](entity-validation.md) — validators, error factories, and the validation flow
+- [Caching Entities](caching-entities.md) — cache registration, key generators, serialization
+- [HTTP Request Cancellation](http-request-cancellation.md) — automatic cancellation via ASP.NET Core

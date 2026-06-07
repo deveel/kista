@@ -2,17 +2,16 @@
 ![GitHub license](https://img.shields.io/github/license/deveel/kista?color=blue)
 ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/deveel/kista/ci.yml?logo=github)
 [![codecov](https://codecov.io/gh/deveel/kista/graph/badge.svg?token=5US7L3C7ES)](https://codecov.io/gh/deveel/kista)
-[![Documentation](https://img.shields.io/badge/gitbook-docs?logo=gitbook&label=docs&color=blue)](https://deveel.gitbook.io/kista/)
+[![Documentation](https://img.shields.io/badge/docs-kista.deveel.org?label=docs&color=CC0000)](https://kista.deveel.org)
 
-<p align="center">
-  <img src="kista-full-logo.png" alt="Kista logo">
-</p>
+<div align="center">
+  <img src="/img/kista-full-logo.png" alt="Kista logo" />
+</div>
 
 > **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project's purpose as a data access framework.
 
 
 # Why Kista?
-> **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project purpose as a data access framework.
 
 ## Motivation and Drivers
 

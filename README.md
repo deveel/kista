@@ -69,7 +69,6 @@ The framework is organized into a _kernel_ package (providing interfaces and abs
 | `Kista.Manager.EasyCaching` | Second-level caching for the Entity Manager via [EasyCaching](https://github.com/dotnetcore/EasyCaching)      | [![NuGet](https://img.shields.io/nuget/v/Kista.Manager.EasyCaching.svg)](https://www.nuget.org/packages/Kista.Manager.EasyCaching/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.Manager.EasyCaching.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.Manager.EasyCaching) |
 | `Kista.Manager.AspNetCore` | ASP.NET Core integration for automatic HTTP request cancellation                                              | [![NuGet](https://img.shields.io/nuget/v/Kista.Manager.AspNetCore.svg)](https://www.nuget.org/packages/Kista.Manager.AspNetCore/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.Manager.AspNetCore.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.Manager.AspNetCore) |
 | `Kista.Owners`             | Decorator-based user scoping with automatic owner assignment and query filtering                                   | [![NuGet](https://img.shields.io/nuget/v/Kista.Owners.svg)](https://www.nuget.org/packages/Kista.Owners/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.Owners.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.Owners) |
-| `Kista.States.Core`        | Entity state management abstractions (experimental)                                                           | [![NuGet](https://img.shields.io/nuget/v/Kista.States.Core.svg)](https://www.nuget.org/packages/Kista.States.Core/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.States.Core.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.States.Core) |
 
 ---
 
@@ -180,10 +179,10 @@ We are actively building Kista toward a comprehensive, production-ready framewor
 - [ ] **v1.6.0** — "Developer Flow"
   - [x] Unified Repository Setup Builder
   - [ ] QueryBuilder Execution Extensions
-  - [ ] Pluggable Cache Provider Abstraction
-  - [ ] Automatic Timestamp and Ownership Management
+  - [x] Pluggable Cache Provider Abstraction
+  - [x] Automatic Timestamp and Ownership Management
   - [ ] Repository Health Checks
-  - [ ] Repository Controller Lifecycle Redesign
+  - [x] Repository Controller Lifecycle Redesign
 
 - [ ] **v1.7.0** — "Entity Lifecycle"
   - [ ] Soft Delete Support

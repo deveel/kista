@@ -51,6 +51,8 @@ The MongoDB driver package lives in a source folder spelled `Deveel.Repsotiory.M
 - Correct discoverability for the package and its documentation
 - Sets a clean baseline before the v2.0 breaking-change window
 
+**Status:** ✅ Completed.
+
 ---
 
 ### Feature — Thread-Safe In-Memory Repository
@@ -74,6 +76,8 @@ The MongoDB driver package lives in a source folder spelled `Deveel.Repsotiory.M
 - Eliminates the sporadically-failing integration test that can affect consumer CI pipelines
 - Documents the exact thread-safety contract consumers can rely on
 - Builds confidence that switching from In-Memory to a real driver in production is functionally equivalent
+
+**Status:** ✅ Completed.
 
 ---
 
@@ -126,6 +130,8 @@ The framework lists .NET 10 as a target framework but has not been thoroughly va
 - Clear signaling of which .NET versions are supported and for how long
 - Alignment with Microsoft's LTS support windows reduces long-term maintenance burden
 
+**Status:** ✅ Completed.
+
 ---
 
 ### Feature — XML Documentation Completeness
@@ -149,6 +155,8 @@ The framework lists .NET 10 as a target framework but has not been thoroughly va
 - Lower barrier to entry for new contributors and library adopters
 - Reduced reliance on reading source code for basic usage questions
 - Improved long-term maintainability score
+
+**Status:** ✅ Completed.
 
 ---
 
@@ -176,6 +184,8 @@ Repository methods that complete synchronously (e.g., In-Memory finds that hit a
 - Industry best-practice alignment — `ValueTask<T>` is now the standard for hot-path async methods
 - No change to consumer code — the conversion is purely implementation-level
 
+**Status:** ✅ Completed.
+
 ---
 
 ### Feature — General Performance Optimizations
@@ -201,6 +211,8 @@ The framework has not undergone systematic performance profiling under realistic
 - Teams adopting Kista can do so without performance anxiety
 - Regression-detection baselines prevent future changes from eroding throughput
 - Open-source community gains visibility into the framework's performance characteristics and can contribute optimizations
+
+**Status:** ✅ Completed.
 
 ---
 
@@ -236,6 +248,8 @@ Each driver ships its own `AddRepository*` extension overloads with driver-speci
 - Cross-cutting infrastructure (caching, validation) configured in one place instead of duplicated per repository
 - Shorter, more readable `Program.cs` / `Startup.cs`
 - Easier driver switching (e.g. In-Memory in tests, MongoDB in production) through environment-conditional configuration
+
+**Status:** ✅ Completed.
 
 ---
 
@@ -285,6 +299,8 @@ Each driver ships its own `AddRepository*` extension overloads with driver-speci
 - The distributed Redis adapter enables correct caching semantics in multi-instance deployments
 - Swapping cache providers requires only a DI configuration change — no application code changes
 
+**Status:** ✅ Completed.
+
 ---
 
 ### Feature — Automatic Timestamp and Ownership Management
@@ -309,6 +325,8 @@ Each driver ships its own `AddRepository*` extension overloads with driver-speci
 - Server-authoritative timestamps that do not trust client-submitted clock values
 - `ISystemTime` injection keeps timestamps deterministic and testable in unit tests
 - Reduces the number of cross-cutting concerns teams must wire up manually per entity type
+
+**Status:** ✅ Completed.
 
 ---
 
@@ -360,6 +378,8 @@ Teams deploying repository-backed services usually need liveness and readiness c
 - Safer and more repeatable repository bootstrapping in tests and deployment pipelines
 - Less custom infrastructure code for consumer applications
 - A clean migration path from the current controller implementation to a more maintainable model
+
+**Status:** ✅ Completed.
 
 ---
 

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Kista {
 	/// <summary>
@@ -65,6 +66,7 @@ namespace Kista {
 		/// </exception>
 		/// <seealso cref="PageQueryResult{TEntity}"/>
 		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. Paging is now provided directly by the base class.", false)]
+		[ExcludeFromCodeCoverage]
 		ValueTask<PageQueryResult<TEntity>> GetPageAsync(PageQuery<TEntity> request, CancellationToken cancellationToken = default);
 	}
 }

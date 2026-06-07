@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Kista {
 	/// <summary>
@@ -6,6 +7,7 @@ namespace Kista {
 	/// lifecycle model. Use <see cref="RepositoryLifecycleOptions"/> instead.
 	/// </summary>
 	[Obsolete("Use RepositoryLifecycleOptions instead")]
+	[ExcludeFromCodeCoverage]
 	public class RepositoryControllerOptions {
 		/// <summary>
 		/// Gets or sets whether a repository should be deleted if it already exists.

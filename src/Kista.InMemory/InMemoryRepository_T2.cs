@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -182,6 +183,7 @@ namespace Kista {
 		}
 
 		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
+		[ExcludeFromCodeCoverage]
 		public virtual IQueryable<TEntity> AsQueryable() => Entities.AsQueryable();
 
 		bool ITrackingRepository<TEntity, TKey>.IsTrackingChanges => true;

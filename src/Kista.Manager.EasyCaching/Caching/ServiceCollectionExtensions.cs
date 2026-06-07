@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -44,6 +45,7 @@ namespace Kista.Caching {
 		/// Thrown when the given <paramref name="cacheType"/> is not a valid
 		/// type for an EasyCaching cache.
 		/// </exception>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Use AddRepositoryContext().WithEasyCaching() instead.", false)]
 		public static IServiceCollection AddEntityEasyCache(this IServiceCollection services, Type cacheType, ServiceLifetime lifetime = ServiceLifetime.Singleton) {
 			var baseClass = cacheType;
@@ -100,6 +102,7 @@ namespace Kista.Caching {
 		/// Thrown when the given <typeparamref name="TCache"/> is not a valid
 		/// type for an EasyCaching cache.
 		/// </exception>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Use AddRepositoryContext().WithEasyCaching() instead.", false)]
 		public static IServiceCollection AddEntityEasyCache<TCache>(this IServiceCollection services, ServiceLifetime lifetime = ServiceLifetime.Singleton)
 			where TCache : class {
@@ -122,6 +125,7 @@ namespace Kista.Caching {
 		/// <returns>
 		/// Returns the given collection of services for chaining calls.
 		/// </returns>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Use AddRepositoryContext().WithEasyCaching() instead.", false)]
 		public static IServiceCollection AddEntityEasyCacheFor<TEntity>(this IServiceCollection services, ServiceLifetime lifetime = ServiceLifetime.Singleton)
 			where TEntity : class {
@@ -147,6 +151,7 @@ namespace Kista.Caching {
 		/// <returns>
 		/// Returns the given collection of services for chaining calls.
 		/// </returns>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Use AddRepositoryContext().WithEasyCaching() instead.", false)]
 		public static IServiceCollection AddEntityEasyCacheFor<TEntity>(this IServiceCollection services, Action<EntityCacheOptions> configure, ServiceLifetime lifetime = ServiceLifetime.Singleton)
 			where TEntity : class {
@@ -174,6 +179,7 @@ namespace Kista.Caching {
 		/// <returns>
 		/// Returns the given collection of services for chaining calls.
 		/// </returns>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Use AddRepositoryContext().WithEasyCaching() instead.", false)]
 		public static IServiceCollection AddEntityEasyCacheFor<TEntity>(this IServiceCollection services, string configSectionPath, ServiceLifetime lifetime = ServiceLifetime.Singleton)
 			where TEntity : class {
@@ -202,6 +208,7 @@ namespace Kista.Caching {
 		/// Thrown when the given <paramref name="converterType"/> is not a valid
 		/// instance of <see cref="IEntityEasyCacheConverter{TEntity, TCached}"/>.
 		/// </exception>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Use AddRepositoryContext().WithEasyCaching() instead.", false)]
 		public static IServiceCollection AddEntityEasyCacheConverter(this IServiceCollection services, Type converterType,  ServiceLifetime lifetime = ServiceLifetime.Singleton) {
 			if (!converterType.IsClass || converterType.IsAbstract)
@@ -245,6 +252,7 @@ namespace Kista.Caching {
 		/// Thrown when the given <typeparamref name="TConverter"/> is not a valid
 		/// instance of <see cref="IEntityEasyCacheConverter{TEntity, TCached}"/>.
 		/// </exception>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Use AddRepositoryContext().WithEasyCaching() instead.", false)]
 		public static IServiceCollection AddEntityEasyCacheConverter<TConverter>(this IServiceCollection services, ServiceLifetime lifetime = ServiceLifetime.Singleton)
 			where TConverter : class {

@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 
 namespace Kista {
@@ -46,6 +47,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository is not filterable
 		/// </exception>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Use the abstract Kista.Repository<TEntity> base class instead. Filtering is now provided directly by the base class.", false)]
 		public static IFilterableRepository<TEntity> AsFilterable<TEntity>(this IRepository<TEntity> repository)
 			where TEntity : class {
@@ -77,6 +79,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository is not filterable
 		/// </exception>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Use the abstract Kista.Repositor<TEntity, TKey> base class instead. Filtering is now provided directly by the base class.", false)]
 		public static IFilterableRepository<TEntity, TKey> AsFilterable<TEntity, TKey>(this IRepository<TEntity, TKey> repository)
 			where TEntity : class {
@@ -106,6 +109,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository is not queryable
 		/// </exception>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
 		public static IQueryableRepository<TEntity> AsQueryable<TEntity>(this IRepository<TEntity> repository)
 			where TEntity : class {
@@ -134,6 +138,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository is not queryable
 		/// </exception>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
 		public static IQueryableRepository<TEntity, TKey> AsQueryable<TEntity, TKey>(this IRepository<TEntity, TKey> repository)
 			where TEntity : class {
@@ -685,6 +690,7 @@ namespace Kista {
 		/// Returns <c>true</c> if any entity exists in the repository
 		/// that matches the given filter, otherwise <c>false</c>.
 		/// </returns>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static ValueTask<bool> ExistsAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken = default)
             where TEntity : class
@@ -729,6 +735,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository does not support querying or filtering.
 		/// </exception>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. Filtering is now provided directly by the base class.", false)]
 		public static ValueTask<bool> ExistsAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, IQueryFilter filter, CancellationToken cancellationToken = default)
 			where TEntity : class {
@@ -764,6 +771,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository does not support querying or filtering.
 		/// </exception>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static bool Exists<TEntity, TKey>(this IRepository<TEntity, TKey> repository, IQueryFilter filter)
 			where TEntity : class
@@ -791,6 +799,7 @@ namespace Kista {
 		/// otherwise it returns <c>false</c>.
 		/// </returns>
 		/// <seealso cref="IFilterableRepository{TEntity, TKey}.ExistsAsync(IQueryFilter, CancellationToken)"/>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
         public static bool Exists<TEntity, TKey>(this IRepository<TEntity, TKey> repository, Expression<Func<TEntity, bool>> filter)
             where TEntity : class
@@ -820,6 +829,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository does not support querying or filtering.
 		/// </exception>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static ValueTask<bool> ExistsAsync<TEntity>(this IRepository<TEntity> repository, IQueryFilter filter, CancellationToken cancellationToken = default)
 			where TEntity : class
@@ -846,6 +856,7 @@ namespace Kista {
 		/// Returns <c>true</c> if any entity exists in the repository
 		/// that matches the given filter, otherwise <c>false</c>.
 		/// </returns>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static ValueTask<bool> ExistsAsync<TEntity>(this IRepository<TEntity> repository, Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken = default)
 			where TEntity : class
@@ -877,6 +888,7 @@ namespace Kista {
 		/// in async contexts to avoid potential deadlocks.
 		/// </para>
 		/// </remarks>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static bool Exists<TEntity>(this IRepository<TEntity> repository, IQueryFilter filter)
 			where TEntity : class
@@ -908,6 +920,7 @@ namespace Kista {
 		/// in async contexts to avoid potential deadlocks.
 		/// </para>
 		/// </remarks>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static bool Exists<TEntity>(this IRepository<TEntity> repository, Expression<Func<TEntity, bool>> filter)
 			where TEntity : class
@@ -943,6 +956,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository does not support querying or filtering.
 		/// </exception>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. Filtering is now provided directly by the base class.", false)]
         public static ValueTask<long> CountAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken = default)
             where TEntity : class {
@@ -980,6 +994,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository does not support querying or filtering.
 		/// </exception>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. Filtering is now provided directly by the base class.", false)]
 		public static ValueTask<long> CountAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, IQueryFilter filter, CancellationToken cancellationToken = default)
 			where TEntity : class {
@@ -1013,6 +1028,7 @@ namespace Kista {
         /// Thrown when the repository does not support querying or filtering.
         /// </exception>
         /// <seealso cref="IFilterableRepository{TEntity, TKey}.CountAsync(IQueryFilter, CancellationToken)"/>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. Filtering is now provided directly by the base class.", false)]
 		public static ValueTask<long> CountAllAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, CancellationToken cancellationToken = default)
 			where TEntity : class {
@@ -1045,6 +1061,7 @@ namespace Kista {
 		/// the given filter.
 		/// </returns>
 		/// <seealso cref="CountAsync{TEntity, TKey}(IRepository{TEntity, TKey}, Expression{Func{TEntity, bool}}, CancellationToken)"/>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static long Count<TEntity, TKey>(this IRepository<TEntity, TKey> repository, Expression<Func<TEntity, bool>> filter)
             where TEntity : class
@@ -1079,6 +1096,7 @@ namespace Kista {
 		/// </para>
 		/// </remarks>
 		/// <seealso cref="CountAsync{TEntity, TKey}(IRepository{TEntity, TKey}, IQueryFilter, CancellationToken)"/>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static long Count<TEntity, TKey>(this IRepository<TEntity, TKey> repository, IQueryFilter filter)
 			where TEntity : class
@@ -1110,6 +1128,7 @@ namespace Kista {
 		/// </para>
 		/// </remarks>
 		/// <seealso cref="CountAsync{TEntity, TKey}(IRepository{TEntity, TKey}, IQueryFilter, CancellationToken)"/>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static long Count<TEntity>(this IRepository<TEntity> repository, IQueryFilter filter)
 			where TEntity : class
@@ -1131,6 +1150,7 @@ namespace Kista {
 		/// Returns the number of entities in the repository.
 		/// </returns>
 		/// <seealso cref="CountAllAsync{TEntity, TKey}(IRepository{TEntity, TKey}, CancellationToken)"/>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static long CountAll<TEntity, TKey>(this IRepository<TEntity, TKey> repository)
 			where TEntity : class
@@ -1158,6 +1178,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository does not support querying or filtering.
 		/// </exception>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static ValueTask<long> CountAsync<TEntity>(this IRepository<TEntity> repository, Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken = default)
 			where TEntity : class
@@ -1182,6 +1203,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository does not support querying or filtering.
 		/// </exception>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static ValueTask<long> CountAllAsync<TEntity>(this IRepository<TEntity> repository, CancellationToken cancellationToken = default)
 			where TEntity : class
@@ -1211,6 +1233,7 @@ namespace Kista {
 		/// in async contexts to avoid potential deadlocks.
 		/// </para>
 		/// </remarks>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static long Count<TEntity>(this IRepository<TEntity> repository, Expression<Func<TEntity, bool>> filter)
 			where TEntity : class
@@ -1237,6 +1260,7 @@ namespace Kista {
 		/// in async contexts to avoid potential deadlocks.
 		/// </para>
 		/// </remarks>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static long CountAll<TEntity>(this IRepository<TEntity> repository)
 			where TEntity : class
@@ -1333,6 +1357,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository does not support querying.
 		/// </exception>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. Filtering is now provided directly by the base class.", false)]
 		public static ValueTask<TEntity?> FindFirstAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, IQuery query, CancellationToken cancellationToken = default)
 			where TEntity : class {
@@ -1368,6 +1393,7 @@ namespace Kista {
 		/// matched the given filter, or <c>null</c> if no entity matches
 		/// the given filter.
 		/// </returns>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static ValueTask<TEntity?> FindFirstAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, IQueryFilter filter, CancellationToken cancellationToken = default)
 			where TEntity : class
@@ -1397,6 +1423,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository does not support filtering.
 		/// </exception>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static TEntity? FindFirst<TEntity, TKey>(this IRepository<TEntity, TKey> repository, IQueryFilter filter)
             where TEntity : class
@@ -1429,6 +1456,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository does not support filtering.
 		/// </exception>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static ValueTask<TEntity?> FindFirstAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken = default)
             where TEntity : class
@@ -1454,6 +1482,7 @@ namespace Kista {
 		/// is the first entity in the repository, or <c>null</c> if the
 		/// repository is empty.
 		/// </returns>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static ValueTask<TEntity?> FindFirstAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, CancellationToken cancellationToken = default)
             where TEntity : class
@@ -1490,6 +1519,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository does not support querying.
 		/// </exception>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static TEntity? FindFirst<TEntity, TKey>(this IRepository<TEntity, TKey> repository, IQuery query)
 			where TEntity : class
@@ -1526,6 +1556,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository does not support filtering.
 		/// </exception>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static TEntity? FindFirst<TEntity, TKey>(this IRepository<TEntity, TKey> repository, Expression<Func<TEntity, bool>> filter)
 			where TEntity : class
@@ -1556,6 +1587,7 @@ namespace Kista {
 		/// in async contexts to avoid potential deadlocks.
 		/// </para>
 		/// </remarks>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static TEntity? FindFirst<TEntity, TKey>(this IRepository<TEntity, TKey> repository)
 			where TEntity : class
@@ -1584,6 +1616,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository does not support querying.
 		/// </exception>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static ValueTask<TEntity?> FindFirstAsync<TEntity>(this IRepository<TEntity> repository, IQuery query, CancellationToken cancellationToken = default)
 			where TEntity : class
@@ -1609,6 +1642,7 @@ namespace Kista {
 		/// Returns an instance of <typeparamref name="TEntity"/> that matched the given
 		/// filter, or <c>null</c> if no entity matches.
 		/// </returns>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static ValueTask<TEntity?> FindFirstAsync<TEntity>(this IRepository<TEntity> repository, IQueryFilter filter, CancellationToken cancellationToken = default)
 			where TEntity : class
@@ -1637,6 +1671,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository does not support filtering.
 		/// </exception>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static ValueTask<TEntity?> FindFirstAsync<TEntity>(this IRepository<TEntity> repository, Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken = default)
 			where TEntity : class
@@ -1659,6 +1694,7 @@ namespace Kista {
 		/// Returns an instance of <typeparamref name="TEntity"/> that is the first
 		/// entity in the repository, or <c>null</c> if the repository is empty.
 		/// </returns>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static ValueTask<TEntity?> FindFirstAsync<TEntity>(this IRepository<TEntity> repository, CancellationToken cancellationToken = default)
 			where TEntity : class
@@ -1689,6 +1725,7 @@ namespace Kista {
 		/// in async contexts to avoid potential deadlocks.
 		/// </para>
 		/// </remarks>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static TEntity? FindFirst<TEntity>(this IRepository<TEntity> repository, IQuery query)
 			where TEntity : class
@@ -1719,6 +1756,7 @@ namespace Kista {
 		/// in async contexts to avoid potential deadlocks.
 		/// </para>
 		/// </remarks>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static TEntity? FindFirst<TEntity>(this IRepository<TEntity> repository, Expression<Func<TEntity, bool>> filter)
 			where TEntity : class
@@ -1746,6 +1784,7 @@ namespace Kista {
 		/// in async contexts to avoid potential deadlocks.
 		/// </para>
 		/// </remarks>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static TEntity? FindFirst<TEntity>(this IRepository<TEntity> repository)
 			where TEntity : class
@@ -1785,6 +1824,7 @@ namespace Kista {
 		/// Thrown when the repository does not support querying 
 		/// or filtering.
 		/// </exception>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. Filtering is now provided directly by the base class.", false)]
 		public static ValueTask<IList<TEntity>> FindAllAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, IQuery query, CancellationToken cancellationToken = default)
 			where TEntity : class {
@@ -1819,6 +1859,7 @@ namespace Kista {
 		/// Returns a list of <typeparamref name="TEntity"/> from
 		/// the repository that match the given filter.
 		/// </returns>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static ValueTask<IList<TEntity>> FindAllAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, IQueryFilter filter, CancellationToken cancellationToken = default)
 			where TEntity : class
@@ -1847,6 +1888,7 @@ namespace Kista {
 		/// Returns a list of <typeparamref name="TEntity"/> from
 		/// the repository that match the given filter.
 		/// </returns>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static ValueTask<IList<TEntity>> FindAllAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken = default)
             where TEntity : class
@@ -1874,6 +1916,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository does not support querying or filtering.
 		/// </exception>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static ValueTask<IList<TEntity>> FindAllAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, CancellationToken cancellationToken = default)
             where TEntity : class
@@ -1898,6 +1941,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository does not support querying or filtering.
 		/// </exception>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static IList<TEntity> FindAll<TEntity, TKey>(this IRepository<TEntity, TKey> repository)
             where TEntity : class
@@ -1923,6 +1967,7 @@ namespace Kista {
 		/// Returns a list of <typeparamref name="TEntity"/> from
 		/// the repository that match the given filter.
 		/// </returns>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static IList<TEntity> FindAll<TEntity, TKey>(this IRepository<TEntity, TKey> repository, IQueryFilter filter)
             where TEntity : class
@@ -1959,6 +2004,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository does not support querying or filtering.
 		/// </exception>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static IList<TEntity> FindAll<TEntity, TKey>(this IRepository<TEntity, TKey> repository, IQuery query)
 			where TEntity : class
@@ -1992,6 +2038,7 @@ namespace Kista {
 		/// in async contexts to avoid potential deadlocks.
 		/// </para>
 		/// </remarks>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static IList<TEntity> FindAll<TEntity, TKey>(this IRepository<TEntity, TKey> repository, Expression<Func<TEntity, bool>> filter)
 			where TEntity : class
@@ -2022,6 +2069,7 @@ namespace Kista {
 		/// in async contexts to avoid potential deadlocks.
 		/// </para>
 		/// </remarks>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static IList<TEntity> FindAll<TEntity>(this IRepository<TEntity> repository, IQueryFilter filter)
 			where TEntity : class
@@ -2050,6 +2098,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository does not support querying or filtering.
 		/// </exception>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static ValueTask<IList<TEntity>> FindAllAsync<TEntity>(this IRepository<TEntity> repository, IQuery query, CancellationToken cancellationToken = default)
 			where TEntity : class
@@ -2075,6 +2124,7 @@ namespace Kista {
 		/// Returns a list of <typeparamref name="TEntity"/> from
 		/// the repository that match the given filter.
 		/// </returns>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static ValueTask<IList<TEntity>> FindAllAsync<TEntity>(this IRepository<TEntity> repository, IQueryFilter filter, CancellationToken cancellationToken = default)
 			where TEntity : class
@@ -2100,6 +2150,7 @@ namespace Kista {
 		/// Returns a list of <typeparamref name="TEntity"/> from
 		/// the repository that match the given filter.
 		/// </returns>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static ValueTask<IList<TEntity>> FindAllAsync<TEntity>(this IRepository<TEntity> repository, Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken = default)
 			where TEntity : class
@@ -2125,6 +2176,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository does not support querying or filtering.
 		/// </exception>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static ValueTask<IList<TEntity>> FindAllAsync<TEntity>(this IRepository<TEntity> repository, CancellationToken cancellationToken = default)
 			where TEntity : class
@@ -2155,6 +2207,7 @@ namespace Kista {
 		/// in async contexts to avoid potential deadlocks.
 		/// </para>
 		/// </remarks>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static IList<TEntity> FindAll<TEntity>(this IRepository<TEntity> repository, IQuery query)
 			where TEntity : class
@@ -2185,6 +2238,7 @@ namespace Kista {
 		/// in async contexts to avoid potential deadlocks.
 		/// </para>
 		/// </remarks>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static IList<TEntity> FindAll<TEntity>(this IRepository<TEntity> repository, Expression<Func<TEntity, bool>> filter)
 			where TEntity : class
@@ -2212,6 +2266,7 @@ namespace Kista {
 		/// in async contexts to avoid potential deadlocks.
 		/// </para>
 		/// </remarks>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
 		public static IList<TEntity> FindAll<TEntity>(this IRepository<TEntity> repository)
 			where TEntity : class

@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Diagnostics.CodeAnalysis;
 using Deveel;
 
 namespace Kista {
@@ -42,6 +43,7 @@ namespace Kista {
 		/// containing the first entity that matches the given expression,
 		/// or a failure result if no entity was found or an error occurred.
 		/// </returns>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Use DynamicLinqFilter directly with EntityManager's query methods instead. Query capabilities should not be exposed through the EntityManager contract.", false)]
 		public static ValueTask<OperationResult<TEntity>> FindFirstAsync<TEntity>(this EntityManager<TEntity> manager, string expression, CancellationToken? cancellationToken = null)
 			where TEntity : class
@@ -71,6 +73,7 @@ namespace Kista {
 		/// containing the first entity that matches the given expression,
 		/// or a failure result if no entity was found or an error occurred.
 		/// </returns>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Use DynamicLinqFilter directly with EntityManager's query methods instead. Query capabilities should not be exposed through the EntityManager contract.", false)]
 		public static ValueTask<OperationResult<TEntity>> FindFirstAsync<TEntity, TKey>(this EntityManager<TEntity, TKey> manager, string expression, CancellationToken? cancellationToken = null)
 			where TEntity : class
@@ -97,6 +100,7 @@ namespace Kista {
 		/// <returns>
 		/// Returns a list of entities that matches the given expression.
 		/// </returns>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Use DynamicLinqFilter directly with EntityManager's query methods instead. Query capabilities should not be exposed through the EntityManager contract.", false)]
 		public static ValueTask<IList<TEntity>> FindAllAsync<TEntity>(this EntityManager<TEntity> manager, string expression, CancellationToken? cancellationToken = null)
 			where TEntity : class
@@ -124,6 +128,7 @@ namespace Kista {
 		/// <returns>
 		/// Returns a list of entities that matches the given expression.
 		/// </returns>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Use DynamicLinqFilter directly with EntityManager's query methods instead. Query capabilities should not be exposed through the EntityManager contract.", false)]
 		public static ValueTask<IList<TEntity>> FindAllAsync<TEntity, TKey>(this EntityManager<TEntity, TKey> manager, string expression, CancellationToken? cancellationToken = null)
 			where TEntity : class
@@ -150,6 +155,7 @@ namespace Kista {
 		/// <returns>
 		/// Returns the number of entities that matches the given expression.
 		/// </returns>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Use DynamicLinqFilter directly with EntityManager's query methods instead. Query capabilities should not be exposed through the EntityManager contract.", false)]
 		public static ValueTask<long> CountAsync<TEntity>(this EntityManager<TEntity> manager, string expression, CancellationToken? cancellationToken = null)
 			where TEntity : class
@@ -177,6 +183,7 @@ namespace Kista {
 		/// <returns>
 		/// Returns the number of entities that matches the given expression.
 		/// </returns>
+		[ExcludeFromCodeCoverage]
 		[Obsolete("Use DynamicLinqFilter directly with EntityManager's query methods instead. Query capabilities should not be exposed through the EntityManager contract.", false)]
 		public static ValueTask<long> CountAsync<TEntity, TKey>(this EntityManager<TEntity, TKey> manager, string expression, CancellationToken? cancellationToken = null)
 			where TEntity : class

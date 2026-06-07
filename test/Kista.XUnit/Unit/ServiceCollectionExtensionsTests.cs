@@ -101,6 +101,121 @@ public class ServiceCollectionExtensionsTests
 		public DateTimeOffset Now => DateTimeOffset.Now;
 	}
 
+	[Fact]
+	public void AddRepositoryLifecycleOrchestrator_Default_RegistersService() {
+		var services = new ServiceCollection();
+
+		services.AddRepositoryLifecycleOrchestrator();
+
+		var provider = services.BuildServiceProvider();
+		Assert.NotNull(provider.GetService<IRepositoryLifecycleService>());
+	}
+
+	[Fact]
+	public void AddRepositoryLifecycleOrchestrator_WithConfigure_AppliesOptions() {
+		var services = new ServiceCollection();
+		services.AddRepositoryLifecycleOrchestrator(o => o.DeleteIfExists = false);
+
+		var provider = services.BuildServiceProvider();
+		var options = provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<RepositoryLifecycleOptions>>();
+		Assert.False(options.Value.DeleteIfExists);
+	}
+
+	[Fact]
+	public void WithLifecycleHandler_Type_RegistersHandler() {
+		var services = new ServiceCollection();
+		var builder = new RepositoryContextBuilder(services);
+
+		builder.WithLifecycleHandler<Person, TestLifecycleHandler>();
+
+		var provider = services.BuildServiceProvider();
+		Assert.NotNull(provider.GetService<IRepositoryLifecycleHandler<Person>>());
+	}
+
+	[Fact]
+	public void WithLifecycleHandler_Factory_RegistersHandler() {
+		var services = new ServiceCollection();
+		var builder = new RepositoryContextBuilder(services);
+
+		builder.WithLifecycleHandler<Person, TestLifecycleHandler>(sp => new TestLifecycleHandler());
+
+		var provider = services.BuildServiceProvider();
+		Assert.NotNull(provider.GetService<IRepositoryLifecycleHandler<Person>>());
+	}
+
+	[Fact]
+	public void WithLifecycleHandler_Instance_RegistersSingleton() {
+		var services = new ServiceCollection();
+		var builder = new RepositoryContextBuilder(services);
+		var handler = new TestLifecycleHandler();
+
+		builder.WithLifecycleHandler<Person>(handler);
+
+		var provider = services.BuildServiceProvider();
+		Assert.Same(handler, provider.GetService<IRepositoryLifecycleHandler<Person>>());
+	}
+
+	[Fact]
+	public void WithLifecycleProfile_Type_RegistersProfile() {
+		var services = new ServiceCollection();
+		var builder = new RepositoryContextBuilder(services);
+
+		builder.WithLifecycleProfile<TestLifecycleProfile>();
+
+		var provider = services.BuildServiceProvider();
+		Assert.NotNull(provider.GetService<IRepositoryLifecycleProfile>());
+	}
+
+	[Fact]
+	public void WithLifecycleProfile_Instance_RegistersSingleton() {
+		var services = new ServiceCollection();
+		var builder = new RepositoryContextBuilder(services);
+		var profile = new TestLifecycleProfile();
+
+		builder.WithLifecycleProfile(profile);
+
+		var provider = services.BuildServiceProvider();
+		Assert.Same(profile, provider.GetService<IRepositoryLifecycleProfile>());
+	}
+
+	[Fact]
+	public void ConfigureLifecycle_WithAction_RegistersOrchestratorAndProfile() {
+		var services = new ServiceCollection();
+		var builder = new RepositoryContextBuilder(services);
+
+		builder.ConfigureLifecycle(o => o.DeleteIfExists = false);
+
+		var provider = services.BuildServiceProvider();
+		Assert.NotNull(provider.GetService<IRepositoryLifecycleService>());
+		Assert.NotNull(provider.GetService<IRepositoryLifecycleProfile>());
+	}
+
+	[Fact]
+	public void ConfigureLifecycle_Default_RegistersOrchestratorAndProfile() {
+		var services = new ServiceCollection();
+		var builder = new RepositoryContextBuilder(services);
+
+		builder.ConfigureLifecycle();
+
+		var provider = services.BuildServiceProvider();
+		Assert.NotNull(provider.GetService<IRepositoryLifecycleService>());
+		Assert.NotNull(provider.GetService<IRepositoryLifecycleProfile>());
+	}
+
+	private sealed class TestLifecycleHandler : IRepositoryLifecycleHandler<Person> {
+		public ValueTask<bool> ExistsAsync(CancellationToken cancellationToken = default) => ValueTask.FromResult(true);
+		public ValueTask CreateAsync(CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
+		public ValueTask DropAsync(CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
+		public ValueTask SeedAsync(object? seedData = null, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
+	}
+
+	private sealed class TestLifecycleProfile : IRepositoryLifecycleProfile {
+		public bool AutoCreate => true;
+		public bool AutoDrop => false;
+		public SeedStrategy GetSeedStrategy(string? environmentName = null) => SeedStrategy.IfEmpty;
+		public object? GetSeedData(Type entityType) => null;
+	}
+
 	private sealed class TestRepositoryController : IRepositoryController {
 		public ValueTask CreateRepositoryAsync<TEntity>(CancellationToken cancellationToken = default) where TEntity : class => ValueTask.CompletedTask;
 		public ValueTask CreateRepositoryAsync<TEntity, TKey>(CancellationToken cancellationToken = default) where TEntity : class => ValueTask.CompletedTask;

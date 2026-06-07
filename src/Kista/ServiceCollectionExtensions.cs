@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -41,6 +42,7 @@ namespace Kista {
 		/// </returns>
 		/// <seealso cref="AddRepository(IServiceCollection, Type, ServiceLifetime)"/>
 		[Obsolete("Use AddRepositoryContext().AddRepository<TRepository>() instead.", false)]
+		[ExcludeFromCodeCoverage]
 		public static IServiceCollection AddRepository<TRepository>(this IServiceCollection services, ServiceLifetime lifetime = ServiceLifetime.Scoped)
 			=> services.AddRepository(typeof(TRepository), lifetime);
 
@@ -71,6 +73,7 @@ namespace Kista {
 		/// repository type.
 		/// </exception>
 		[Obsolete("Use AddRepositoryContext().AddRepository() instead.", false)]
+		[ExcludeFromCodeCoverage]
 		public static IServiceCollection AddRepository(this IServiceCollection services, Type repositoryType, ServiceLifetime lifetime = ServiceLifetime.Scoped) {
 			ArgumentNullException.ThrowIfNull(repositoryType);
 
@@ -107,6 +110,7 @@ namespace Kista {
         /// Returns the same <see cref="IServiceCollection"/> to allow chaining.
         /// </returns>
         [Obsolete("Use AddRepositoryContext().ConfigureLifecycle() instead.", false)]
+        [ExcludeFromCodeCoverage]
         public static IServiceCollection AddRepositoryController<TController>(this IServiceCollection services, Action<RepositoryControllerOptions>? configure = null)
             where TController : class, IRepositoryController {
 
@@ -134,6 +138,7 @@ namespace Kista {
         /// Returns the same <see cref="IServiceCollection"/> to allow chaining.
         /// </returns>
         [Obsolete("Use AddRepositoryContext().ConfigureLifecycle() instead.", false)]
+        [ExcludeFromCodeCoverage]
         public static IServiceCollection AddRepositoryController(this IServiceCollection services, Action<RepositoryControllerOptions>? configure = null)
             => services.AddRepositoryController<DefaultRepositoryController>(configure);
 

@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace Kista {
 	/// <summary>
 	/// Defines a set of extension methods for the <see cref="IPageableRepository{TEntity}"/>
@@ -23,6 +25,7 @@ namespace Kista {
 	/// for filtered and sorted queries inside the data layer.
 	/// </remarks>
 	[Obsolete("Use IRepository<TEntity, TKey>.GetPageAsync(PageRequest, CancellationToken) for simple pagination instead.", false)]
+	[ExcludeFromCodeCoverage]
 	public static class PageableRepositoryExtensions {
 		/// <summary>
 		/// Gets a page of entities from the repository,
@@ -60,6 +63,7 @@ namespace Kista {
 		/// if the given page size is less than 0.
 		/// </exception>
 		[Obsolete("Use IRepository<TEntity, TKey>.GetPageAsync(PageRequest, CancellationToken) instead.", false)]
+		[ExcludeFromCodeCoverage]
 		public static ValueTask<PageQueryResult<TEntity>> GetPageAsync<TEntity, TKey>(this IPageableRepository<TEntity, TKey> repository, int page, int size, CancellationToken cancellationToken = default)
 			where TEntity : class
 			=> repository.GetPageAsync(new PageQuery<TEntity>(page, size), cancellationToken);
@@ -85,6 +89,7 @@ namespace Kista {
 		/// is the result of the query.
 		/// </returns>
 		[Obsolete("Use IRepository<TEntity, TKey>.GetPageAsync(PageRequest, CancellationToken) for simple pagination, or the protected QueryPageAsync for filtered queries.", false)]
+		[ExcludeFromCodeCoverage]
 		public static PageQueryResult<TEntity> GetPage<TEntity, TKey>(this IPageableRepository<TEntity, TKey> repository, PageQuery<TEntity> request)
 			where TEntity : class
 			=> repository.GetPageAsync(request).GetAwaiter().GetResult();

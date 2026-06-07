@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace Kista {
 	/// <summary>
 	/// A repository that uses the memory of the process to store
@@ -63,6 +65,7 @@ namespace Kista {
 		}
 
 		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
+		[ExcludeFromCodeCoverage]
 		public new IQueryable<TEntity> AsQueryable() => base.AsQueryable();
 
 		IQueryable<TEntity> IQueryableRepository<TEntity, object>.AsQueryable() => Query();

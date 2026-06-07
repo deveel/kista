@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq.Expressions;
 
@@ -104,6 +105,7 @@ namespace Kista {
 		protected override IServiceProvider? Services { get; }
 
 			[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
+			[ExcludeFromCodeCoverage]
 		public virtual IQueryable<TEntity> AsQueryable() => DbSet.AsQueryable();
 
 		/// <summary>

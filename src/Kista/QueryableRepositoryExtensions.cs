@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace Kista {
 	/// <summary>
 	/// Extends the <see cref="IQueryableRepository{TEntity}"/> interface
@@ -26,6 +28,7 @@ namespace Kista {
 	/// <c>QueryPageAsync(PageQuery{TEntity}, CancellationToken)</c> methods.
 	/// </remarks>
 	[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
+	[ExcludeFromCodeCoverage]
 	public static class QueryableRepositoryExtensions {
 		/// <summary>
 		/// Gets a page of entities from the repository,
@@ -48,6 +51,7 @@ namespace Kista {
 		/// is the result of the query.
 		/// </returns>
 		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
+		[ExcludeFromCodeCoverage]
 		public static PageQueryResult<TEntity> GetPage<TEntity, TKey>(this IQueryableRepository<TEntity, TKey> repository, PageQuery<TEntity> request)
 			where TEntity : class {
 			var query = request.ApplyQuery(repository.AsQueryable());

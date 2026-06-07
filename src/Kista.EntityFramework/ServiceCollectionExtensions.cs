@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -43,6 +44,7 @@ namespace Kista {
 		/// Returns the service collection with the repository registered.
 		/// </returns>
 		[Obsolete("Use AddRepositoryContext().UseEntityFramework<TDbContext>() instead.", false)]
+		[ExcludeFromCodeCoverage]
 		public static IServiceCollection AddEntityRepository(this IServiceCollection services, Type entityType, ServiceLifetime lifetime = ServiceLifetime.Scoped) {
 			var repositoryType = typeof(EntityRepository<>).MakeGenericType(entityType);
 			return services.AddRepository(repositoryType, lifetime);
@@ -65,6 +67,7 @@ namespace Kista {
 		/// Returns the service collection with the repository registered.
 		/// </returns>
 		[Obsolete("Use AddRepositoryContext().UseEntityFramework<TDbContext>() instead.", false)]
+		[ExcludeFromCodeCoverage]
 		public static IServiceCollection AddEntityRepository<TEntity>(this IServiceCollection services, ServiceLifetime lifetime = ServiceLifetime.Scoped) where TEntity : class
 			=> services.AddEntityRepository(typeof(TEntity), lifetime);
     }

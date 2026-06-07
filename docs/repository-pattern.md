@@ -33,7 +33,7 @@ Generic query capabilities (filtering, sorting, complex pagination) are **not** 
 
 If you need richer queries, you have two options:
 
-1. **Specification Pattern** (recommended): Add domain-specific query methods to your own repository interface. See [Customize the Repository](custom-repository.md).
+1. **Specification Pattern** (recommended): Add domain-specific query methods to your own repository interface. See [Customize the Repository](custom-repository/).
 2. **Extend `Repository`**: Inherit from the abstract base class and use its protected query methods internally.
 
 ## The `Repository<TEntity, TKey>` Abstract Class

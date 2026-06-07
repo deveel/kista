@@ -92,7 +92,7 @@ const config: Config = {
       appId: 'JYSR40O1I0',
       apiKey: '479261bc4e1a490dec72ff2d553c229b',
       indexName: 'kista',
-      contextualSearch: true,
+      contextualSearch: false,
     },
     colorMode: {
       defaultMode: 'light',

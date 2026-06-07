@@ -1,8 +1,9 @@
 ![GitHub release](https://img.shields.io/github/v/release/deveel/kista)
+[![Nuget release](https://img.shields.io/nuget/v/Kista?logo=nuget&label=kista)](https://www.nuget.org/packages/Kista/)
 ![GitHub license](https://img.shields.io/github/license/deveel/kista?color=blue)
 ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/deveel/kista/ci.yml?logo=github)
 [![codecov](https://codecov.io/gh/deveel/kista/graph/badge.svg?token=5US7L3C7ES)](https://codecov.io/gh/deveel/kista)
-[![Documentation](https://img.shields.io/badge/gitbook-docs?logo=gitbook&label=docs&color=blue)](https://deveel.gitbook.io/kista/)
+[![Documentation](https://img.shields.io/badge/kista.deveel.org-blue?style=flat&logo=docusaurus&label=docs)](https://kista.deveel.org/)
 
 <p align="center">
   <img src="kista-full-logo.png" alt="Kista logo" width="500">

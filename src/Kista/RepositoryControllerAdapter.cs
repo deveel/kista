@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Kista {
 	/// <summary>
@@ -7,6 +8,7 @@ namespace Kista {
 	/// Use <see cref="IRepositoryLifecycleService"/> directly instead.
 	/// </summary>
 	[Obsolete("Use IRepositoryLifecycleService instead")]
+	[ExcludeFromCodeCoverage]
 	public class RepositoryControllerAdapter : IRepositoryController {
 		private readonly IRepositoryLifecycleService service;
 

@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -45,6 +46,7 @@ namespace Kista
 		/// Returns the service collection for chaining.
 		/// </returns>
 		[Obsolete("Use AddRepositoryContext().UseMongoDB<TContext>() instead.", false)]
+		[ExcludeFromCodeCoverage]
 		public static IServiceCollection AddMongoDbContext<TContext>(this IServiceCollection services, string connectionString, ServiceLifetime lifetime = ServiceLifetime.Singleton)
 			where TContext : class, IMongoDbContext
 		{
@@ -70,6 +72,7 @@ namespace Kista
 		/// Returns the service collection for chaining.
 		/// </returns>
 		[Obsolete("Use AddRepositoryContext().UseMongoDB<TContext>() instead.", false)]
+		[ExcludeFromCodeCoverage]
 		public static IServiceCollection AddMongoDbContext<TContext>(this IServiceCollection services, Action<MongoConnectionBuilder> connectionBuilder, ServiceLifetime lifetime = ServiceLifetime.Scoped)
 			where TContext : class, IMongoDbContext
 		{

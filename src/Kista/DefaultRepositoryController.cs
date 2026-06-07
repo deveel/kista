@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -22,6 +23,7 @@ namespace Kista {
 	/// A default implementation of the <see cref="IRepositoryController"/> interface
 	/// </summary>
     [Obsolete("Use RepositoryLifecycleService (via IRepositoryLifecycleService) instead")]
+    [ExcludeFromCodeCoverage]
     public class DefaultRepositoryController : IRepositoryController {
 		private readonly RepositoryControllerOptions options;
 		private readonly IServiceProvider serviceProvider;

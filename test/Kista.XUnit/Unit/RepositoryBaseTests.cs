@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace Kista;
@@ -176,6 +177,311 @@ public class RepositoryTests {
 
 	#endregion
 
+	#region ExistsAsync
+
+	[Fact]
+	public async Task ExistsAsync_FilterMatch_ReturnsTrue() {
+		var sut = new TestRepository();
+
+		var result = await sut.PublicExistsAsync(new ExpressionQueryFilter<Person>(p => p.FirstName == "Alice"));
+
+		Assert.True(result);
+	}
+
+	[Fact]
+	public async Task ExistsAsync_FilterNoMatch_ReturnsFalse() {
+		var sut = new TestRepository();
+
+		var result = await sut.PublicExistsAsync(new ExpressionQueryFilter<Person>(p => p.FirstName == "NonExistent"));
+
+		Assert.False(result);
+	}
+
+	[Fact]
+	public async Task ExistsAsync_NullFilter_ReturnsAny() {
+		var sut = new TestRepository();
+
+		var result = await sut.PublicExistsAsync((IQueryFilter?)null);
+
+		Assert.True(result);
+	}
+
+	[Fact]
+	public async Task ExistsAsync_PredicateMatch_ReturnsTrue() {
+		var sut = new TestRepository();
+
+		var result = await sut.PublicExistsAsync((Expression<Func<Person, bool>>)(p => p.FirstName == "Alice"));
+
+		Assert.True(result);
+	}
+
+	[Fact]
+	public async Task ExistsAsync_PredicateNoMatch_ReturnsFalse() {
+		var sut = new TestRepository();
+
+		var result = await sut.PublicExistsAsync((Expression<Func<Person, bool>>)(p => p.FirstName == "NonExistent"));
+
+		Assert.False(result);
+	}
+
+	#endregion
+
+	#region CountAsync
+
+	[Fact]
+	public async Task CountAsync_FilterMatch_ReturnsCount() {
+		var sut = new TestRepository(seedCount: 10);
+		var expected = sut.Universe.Count(p => p.FirstName == "Alice");
+
+		var result = await sut.PublicCountAsync(new ExpressionQueryFilter<Person>(p => p.FirstName == "Alice"));
+
+		Assert.Equal(expected, result);
+	}
+
+	[Fact]
+	public async Task CountAsync_NullFilter_ReturnsTotal() {
+		var sut = new TestRepository(seedCount: 10);
+
+		var result = await sut.PublicCountAsync((IQueryFilter?)null);
+
+		Assert.Equal(10, result);
+	}
+
+	[Fact]
+	public async Task CountAsync_Predicate_ReturnsMatchCount() {
+		var sut = new TestRepository(seedCount: 10);
+		var expected = sut.Universe.Count(p => p.FirstName == "Alice");
+
+		var result = await sut.PublicCountAsync((Expression<Func<Person, bool>>)(p => p.FirstName == "Alice"));
+
+		Assert.Equal(expected, result);
+	}
+
+	#endregion
+
+	#region FindFirstAsync
+
+	[Fact]
+	public async Task FindFirstAsync_Match_ReturnsEntity() {
+		var sut = new TestRepository();
+
+		var result = await sut.PublicFindFirstAsync(Query.Where<Person>(p => p.FirstName == "Alice"));
+
+		Assert.NotNull(result);
+		Assert.Equal("Alice", result!.FirstName);
+	}
+
+	[Fact]
+	public async Task FindFirstAsync_NoMatch_ReturnsNull() {
+		var sut = new TestRepository();
+
+		var result = await sut.PublicFindFirstAsync(Query.Where<Person>(p => p.FirstName == "NonExistent"));
+
+		Assert.Null(result);
+	}
+
+	[Fact]
+	public async Task FindFirstAsync_PredicateMatch_ReturnsEntity() {
+		var sut = new TestRepository();
+
+		var result = await sut.PublicFindFirstAsync((Expression<Func<Person, bool>>)(p => p.FirstName == "Alice"));
+
+		Assert.NotNull(result);
+		Assert.Equal("Alice", result!.FirstName);
+	}
+
+	[Fact]
+	public async Task FindFirstAsync_PredicateNoMatch_ReturnsNull() {
+		var sut = new TestRepository();
+
+		var result = await sut.PublicFindFirstAsync((Expression<Func<Person, bool>>)(p => p.FirstName == "NonExistent"));
+
+		Assert.Null(result);
+	}
+
+	#endregion
+
+	#region FindAllAsync
+
+	[Fact]
+	public async Task FindAllAsync_Match_ReturnsEntities() {
+		var sut = new TestRepository();
+		var expected = sut.Universe.Count(p => p.FirstName == "Alice");
+
+		var result = await sut.PublicFindAllAsync(Query.Where<Person>(p => p.FirstName == "Alice"));
+
+		Assert.Equal(expected, result.Count);
+		Assert.All(result, p => Assert.Equal("Alice", p.FirstName));
+	}
+
+	[Fact]
+	public async Task FindAllAsync_NoMatch_ReturnsEmpty() {
+		var sut = new TestRepository();
+
+		var result = await sut.PublicFindAllAsync(Query.Where<Person>(p => p.FirstName == "NonExistent"));
+
+		Assert.Empty(result);
+	}
+
+	[Fact]
+	public async Task FindAllAsync_PredicateMatch_ReturnsEntities() {
+		var sut = new TestRepository();
+		var expected = sut.Universe.Count(p => p.FirstName == "Alice");
+
+		var result = await sut.PublicFindAllAsync((Expression<Func<Person, bool>>)(p => p.FirstName == "Alice"));
+
+		Assert.Equal(expected, result.Count);
+	}
+
+	[Fact]
+	public async Task FindAllAsync_PredicateNoMatch_ReturnsEmpty() {
+		var sut = new TestRepository();
+
+		var result = await sut.PublicFindAllAsync((Expression<Func<Person, bool>>)(p => p.FirstName == "NonExistent"));
+
+		Assert.Empty(result);
+	}
+
+	#endregion
+
+	#region GetPageAsync(PageRequest)
+
+	[Fact]
+	public async Task GetPageAsync_WithPageRequest_ReturnsSlice() {
+		var sut = new TestRepository(seedCount: 25);
+
+		var result = await sut.PublicGetPageAsync(new PageRequest(2, 10));
+
+		Assert.Equal(25, result.TotalItems);
+		Assert.Equal(10, result.Items!.Count);
+	}
+
+	[Fact]
+	public async Task GetPageAsync_PageRequest_Null_Throws() {
+		var sut = new TestRepository();
+
+		await Assert.ThrowsAsync<ArgumentNullException>(
+			() => sut.PublicGetPageAsync(null!).AsTask());
+	}
+
+	[Fact]
+	public async Task GetPageAsync_PageRequest_Cancelled_Throws() {
+		var sut = new TestRepository();
+		using var cts = new CancellationTokenSource();
+		cts.Cancel();
+
+		await Assert.ThrowsAnyAsync<OperationCanceledException>(
+			() => sut.PublicGetPageAsync(new PageRequest(1, 10), cts.Token).AsTask());
+	}
+
+	[Fact]
+	public async Task GetPageAsync_WithPageQuery_DelegatesToQueryPage() {
+		var sut = new TestRepository(seedCount: 25);
+
+		var result = await sut.PublicGetPageAsync(new PageQuery<Person>(1, 10));
+
+		Assert.Equal(25, result.TotalItems);
+	}
+
+	#endregion
+
+	#region NotQueryable
+
+	[Fact]
+	public async Task ExistsAsync_NotQueryable_ThrowsNotSupported() {
+		var sut = new NonQueryableRepository();
+
+		await Assert.ThrowsAsync<NotSupportedException>(
+			() => sut.PublicExistsAsync(new ExpressionQueryFilter<Person>(p => p.FirstName == "Alice")).AsTask());
+	}
+
+	[Fact]
+	public async Task CountAsync_NotQueryable_ThrowsNotSupported() {
+		var sut = new NonQueryableRepository();
+
+		await Assert.ThrowsAsync<NotSupportedException>(
+			() => sut.PublicCountAsync(new ExpressionQueryFilter<Person>(p => p.FirstName == "Alice")).AsTask());
+	}
+
+	[Fact]
+	public async Task FindFirstAsync_NotQueryable_ThrowsNotSupported() {
+		var sut = new NonQueryableRepository();
+
+		await Assert.ThrowsAsync<NotSupportedException>(
+			() => sut.PublicFindFirstAsync(Query.Where<Person>(p => p.FirstName == "Alice")).AsTask());
+	}
+
+	[Fact]
+	public async Task FindAllAsync_NotQueryable_ThrowsNotSupported() {
+		var sut = new NonQueryableRepository();
+
+		await Assert.ThrowsAsync<NotSupportedException>(
+			() => sut.PublicFindAllAsync(Query.Where<Person>(p => p.FirstName == "Alice")).AsTask());
+	}
+
+	#endregion
+
+	#region IFilterableRepository explicit interface
+
+	[Fact]
+	public async Task FilterableInterface_ExistsAsync_Delegates() {
+		IFilterableRepository<Person, string> sut = new TestRepository();
+
+		var result = await sut.ExistsAsync(new ExpressionQueryFilter<Person>(p => p.FirstName == "Alice"));
+
+		Assert.True(result);
+	}
+
+	[Fact]
+	public async Task FilterableInterface_CountAsync_Delegates() {
+		IFilterableRepository<Person, string> sut = new TestRepository(seedCount: 10);
+
+		var result = await sut.CountAsync(new ExpressionQueryFilter<Person>(p => p.FirstName == "Alice"));
+
+		Assert.True(result > 0);
+	}
+
+	[Fact]
+	public async Task FilterableInterface_FindFirstAsync_Delegates() {
+		IFilterableRepository<Person, string> sut = new TestRepository();
+
+		var result = await sut.FindFirstAsync(Query.Where<Person>(p => p.FirstName == "Alice"));
+
+		Assert.NotNull(result);
+	}
+
+	[Fact]
+	public async Task FilterableInterface_FindAllAsync_Delegates() {
+		IFilterableRepository<Person, string> sut = new TestRepository();
+
+		var result = await sut.FindAllAsync(Query.Where<Person>(p => p.FirstName == "Alice"));
+
+		Assert.NotEmpty(result);
+	}
+
+	#endregion
+
+	#region IRepository explicit interface
+
+	[Fact]
+	public void RepositoryInterface_Services_ReturnsNull() {
+		IRepository<Person, string> sut = new TestRepository();
+
+		Assert.Null(sut.Services);
+	}
+
+	[Fact]
+	public void RepositoryInterface_GetEntityKey_ReturnsId() {
+		IRepository<Person, string> sut = new TestRepository();
+		var person = new PersonFaker().Generate();
+
+		var key = sut.GetEntityKey(person);
+
+		Assert.Equal(person.Id, key);
+	}
+
+	#endregion
+
 	#region Negative coverage — Query() hatch is protected
 
 	[Fact]
@@ -237,6 +543,33 @@ public class RepositoryTests {
 		public ValueTask<PageQueryResult<Person>> PublicQueryPageAsync(PageQuery<Person> request, CancellationToken cancellationToken = default)
 			=> QueryPageAsync(request, cancellationToken);
 
+		public ValueTask<bool> PublicExistsAsync(IQueryFilter? filter, CancellationToken cancellationToken = default)
+			=> ExistsAsync(filter, cancellationToken);
+
+		public ValueTask<bool> PublicExistsAsync(Expression<Func<Person, bool>> predicate, CancellationToken cancellationToken = default)
+			=> ExistsAsync(predicate, cancellationToken);
+
+		public ValueTask<long> PublicCountAsync(IQueryFilter? filter, CancellationToken cancellationToken = default)
+			=> CountAsync(filter, cancellationToken);
+
+		public ValueTask<long> PublicCountAsync(Expression<Func<Person, bool>> predicate, CancellationToken cancellationToken = default)
+			=> CountAsync(predicate, cancellationToken);
+
+		public ValueTask<Person?> PublicFindFirstAsync(IQuery query, CancellationToken cancellationToken = default)
+			=> FindFirstAsync(query, cancellationToken);
+
+		public ValueTask<Person?> PublicFindFirstAsync(Expression<Func<Person, bool>> predicate, CancellationToken cancellationToken = default)
+			=> FindFirstAsync(predicate, cancellationToken);
+
+		public ValueTask<IList<Person>> PublicFindAllAsync(IQuery query, CancellationToken cancellationToken = default)
+			=> FindAllAsync(query, cancellationToken);
+
+		public ValueTask<IList<Person>> PublicFindAllAsync(Expression<Func<Person, bool>> predicate, CancellationToken cancellationToken = default)
+			=> FindAllAsync(predicate, cancellationToken);
+
+		public ValueTask<PageResult<Person>> PublicGetPageAsync(PageRequest request, CancellationToken cancellationToken = default)
+			=> GetPageAsync(request, cancellationToken);
+
 		/// <inheritdoc />
 		public override ValueTask AddAsync(Person entity, CancellationToken cancellationToken = default) {
 			ArgumentNullException.ThrowIfNull(entity);
@@ -279,6 +612,31 @@ public class RepositoryTests {
 			ArgumentNullException.ThrowIfNull(key);
 			return ValueTask.FromResult(_people.FirstOrDefault(p => p.Id == key));
 		}
+	}
+
+	private sealed class NonQueryableRepository : Repository<Person, string> {
+		protected override IServiceProvider? Services => null;
+		protected override string? GetEntityKey(Person entity) => entity.Id;
+		protected override IQueryable<Person> Query() => throw new NotSupportedException();
+
+		public ValueTask<bool> PublicExistsAsync(IQueryFilter filter, CancellationToken cancellationToken = default)
+			=> ExistsAsync(filter, cancellationToken);
+
+		public ValueTask<long> PublicCountAsync(IQueryFilter filter, CancellationToken cancellationToken = default)
+			=> CountAsync(filter, cancellationToken);
+
+		public ValueTask<Person?> PublicFindFirstAsync(IQuery query, CancellationToken cancellationToken = default)
+			=> FindFirstAsync(query, cancellationToken);
+
+		public ValueTask<IList<Person>> PublicFindAllAsync(IQuery query, CancellationToken cancellationToken = default)
+			=> FindAllAsync(query, cancellationToken);
+
+		public override ValueTask AddAsync(Person entity, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+		public override ValueTask AddRangeAsync(IEnumerable<Person> entities, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+		public override ValueTask<bool> UpdateAsync(Person entity, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+		public override ValueTask<bool> RemoveAsync(Person entity, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+		public override ValueTask RemoveRangeAsync(IEnumerable<Person> entities, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+		public override ValueTask<Person?> FindAsync(string key, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 	}
 
 	#endregion

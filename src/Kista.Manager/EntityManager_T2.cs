@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 using Deveel;
 using Kista.Caching;
 using System.Linq.Expressions;
@@ -179,6 +180,7 @@ namespace Kista {
 		/// for filtered and sorted queries inside your repository implementation.
 		/// </remarks>
 		[Obsolete("Use IRepository<TEntity, TKey>.GetPageAsync(PageRequest, CancellationToken) for simple pagination instead.", false)]
+		[ExcludeFromCodeCoverage]
 		protected virtual IPageableRepository<TEntity, TKey> PageableRepository {
 			get {
 				ThrowIfDisposed();
@@ -1393,6 +1395,7 @@ namespace Kista {
 		/// using the protected <c>QueryPageAsync(PageQuery{TEntity}, CancellationToken)</c> method.
 		/// </remarks>
 		[Obsolete("Use GetPageAsync(PageRequest, CancellationToken?) for simple pagination instead.", false)]
+		[ExcludeFromCodeCoverage]
 		public virtual async ValueTask<PageQueryResult<TEntity>> GetPageAsync(PageQuery<TEntity> query, CancellationToken? cancellationToken = null) {
 			ThrowIfDisposed();
 

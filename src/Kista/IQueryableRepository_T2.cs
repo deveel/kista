@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Kista {
 	/// <summary>
@@ -52,6 +53,7 @@ namespace Kista {
 		/// to query the repository.
 		/// </returns>
 		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
+		[ExcludeFromCodeCoverage]
 		IQueryable<TEntity> AsQueryable();
 	}
 }

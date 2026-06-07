@@ -80,18 +80,9 @@ namespace Kista {
 	/// of queries per minute with identical filter shapes.
 	/// </para>
 	/// <para>
-	/// The cache uses a combination of a <see cref="Dictionary{TKey,TValue}"/> for O(1)
-	/// key lookup and a <see cref="LinkedList{T}"/> to track access order for LRU eviction.
-	/// All operations are protected by a <see cref="SemaphoreSlim"/> (initialized as a
-	/// binary semaphore) to ensure thread safety under concurrent access. The semaphore
-	/// uses spin-waiting before falling back to kernel-level waiting, reducing
-	/// context-switch overhead under moderate contention typical of high-throughput
-	/// query paths.
-	/// </para>
-	/// <para>
-	/// Statistics are tracked using <see cref="Volatile"/> reads and writes on the hit
-	/// and miss counters, providing lock-free access to <see cref="IFilterCacheStatistics"/>
-	/// properties without impacting cache throughput.
+	/// The implementation is backed by <see cref="BoundedCache{TValue}"/> which provides the
+	/// LRU eviction mechanism and thread safety using a <see cref="Dictionary{TKey,TValue}"/>
+	/// for O(1) key lookup and a <see cref="LinkedList{T}"/> to maintain access order.
 	/// </para>
 	/// </remarks>
 	/// <example>
@@ -114,14 +105,7 @@ namespace Kista {
 	/// <seealso cref="IFilterCacheStatistics"/>
 	/// <seealso cref="BoundedFilterCacheOptions"/>
 	/// <seealso cref="BoundedExpressionCache"/>
-	public sealed class BoundedFilterCache : IFilterCache {
-		private readonly SemaphoreSlim _semaphore = new(1, 1);
-		private readonly Dictionary<string, LinkedListNode<CacheEntry>> _map;
-		private readonly LinkedList<CacheEntry> _order;
-		private readonly int _maxCapacity;
-		private long _hits;
-		private long _misses;
-
+	public sealed class BoundedFilterCache : BoundedCache<Delegate>, IFilterCache {
 		/// <summary>
 		/// Initializes a new instance of the <see cref="BoundedFilterCache"/> class
 		/// with the specified maximum capacity.
@@ -133,22 +117,14 @@ namespace Kista {
 		/// <exception cref="ArgumentOutOfRangeException">
 		/// Thrown when <paramref name="maxCapacity"/> is less than 1.
 		/// </exception>
-		public BoundedFilterCache(int maxCapacity) {
-			if (maxCapacity < 1)
-				throw new ArgumentOutOfRangeException(nameof(maxCapacity), "MaxCapacity must be at least 1.");
-
-			_maxCapacity = maxCapacity;
-			_map = new Dictionary<string, LinkedListNode<CacheEntry>>(maxCapacity, StringComparer.Ordinal);
-			_order = new LinkedList<CacheEntry>();
-			Statistics = new InternalStatistics(this);
+		public BoundedFilterCache(int maxCapacity) : base(maxCapacity) {
 		}
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="BoundedFilterCache"/> class
 		/// with the default maximum capacity of 1024 entries.
 		/// </summary>
-		public BoundedFilterCache()
-			: this(new BoundedFilterCacheOptions().MaxCapacity) {
+		public BoundedFilterCache() : base() {
 		}
 
 		/// <summary>
@@ -161,111 +137,17 @@ namespace Kista {
 		/// <exception cref="ArgumentNullException">
 		/// Thrown when <paramref name="options"/> is <c>null</c>.
 		/// </exception>
-		public BoundedFilterCache(BoundedFilterCacheOptions options)
-			: this(options?.MaxCapacity ?? throw new ArgumentNullException(nameof(options))) {
-		}
-
-		private sealed record CacheEntry(string Expression, Delegate Lambda);
-
-		private sealed class InternalStatistics(BoundedFilterCache cache) : IFilterCacheStatistics {
-			/// <inheritdoc/>
-			public long Hits => Volatile.Read(ref cache._hits);
-			/// <inheritdoc/>
-			public long Misses => Volatile.Read(ref cache._misses);
-			/// <inheritdoc/>
-			public int CurrentSize => cache._map.Count;
-			/// <inheritdoc/>
-			public int MaxCapacity => cache._maxCapacity;
-
-			/// <inheritdoc/>
-			public double HitRate {
-				get {
-					var total = Hits + Misses;
-					return total == 0 ? 0 : (double)Hits / total;
-				}
-			}
-
-			/// <inheritdoc/>
-			public void Reset() {
-				Volatile.Write(ref cache._hits, 0);
-				Volatile.Write(ref cache._misses, 0);
-			}
+		public BoundedFilterCache(BoundedFilterCacheOptions options) : base(options) {
 		}
 
 		/// <inheritdoc />
-		public IFilterCacheStatistics Statistics { get; }
-
-		/// <inheritdoc />
-		/// <remarks>
-		/// On a cache hit, the accessed entry is promoted to the most-recently-used
-		/// position in the LRU ordering. This ensures that frequently used expressions
-		/// are not evicted.
-		/// </remarks>
-		public bool TryGet(string expression, out Delegate? lambda) {
-			ArgumentNullException.ThrowIfNull(expression);
-
-			_semaphore.Wait();
-			try {
-				if (_map.TryGetValue(expression, out var node)) {
-					_order.Remove(node);
-					_order.AddFirst(node);
-					Interlocked.Increment(ref _hits);
-					lambda = node.Value.Lambda;
-					return true;
-				}
-
-				Interlocked.Increment(ref _misses);
-				lambda = null;
-				return false;
-			} finally {
-				_semaphore.Release();
-			}
+		public bool TryGet(string expression, out Delegate? labda) {
+			return TryGetCore(expression, out labda);
 		}
 
 		/// <inheritdoc />
-		/// <remarks>
-		/// If the key already exists, the stored delegate is updated and the entry
-		/// is promoted to the most-recently-used position. If the cache is at capacity
-		/// and the key is new, the least recently used entry is evicted before insertion.
-		/// </remarks>
 		public void Set(string expression, Delegate lambda) {
-			ArgumentNullException.ThrowIfNull(expression);
-			ArgumentNullException.ThrowIfNull(lambda);
-
-			_semaphore.Wait();
-			try {
-				if (_map.TryGetValue(expression, out var existingNode)) {
-					_order.Remove(existingNode);
-				} else if (_map.Count >= _maxCapacity) {
-					var lruNode = _order.Last;
-					if (lruNode != null) {
-						_order.RemoveLast();
-						_map.Remove(lruNode.Value.Expression);
-					}
-				}
-
-				var entry = new CacheEntry(expression, lambda);
-				var newNode = _order.AddFirst(entry);
-				_map[expression] = newNode;
-			} finally {
-				_semaphore.Release();
-			}
-		}
-
-		/// <inheritdoc />
-		/// <remarks>
-		/// This method removes all cached delegates but does not reset the
-		/// <see cref="Statistics"/> counters. Call <see cref="IFilterCacheStatistics.Reset"/>
-		/// separately if you need to clear the statistics as well.
-		/// </remarks>
-		public void Clear() {
-			_semaphore.Wait();
-			try {
-				_map.Clear();
-				_order.Clear();
-			} finally {
-				_semaphore.Release();
-			}
+			SetCore(expression, lambda);
 		}
 	}
 }

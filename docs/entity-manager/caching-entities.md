@@ -1,7 +1,8 @@
 # Caching Entities
+
 > **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project purpose as a data access framework.
 
-The `EntityManager<TEntity>` supports an optional second-level cache via the `IEntityCache<TEntity>` service. When registered, the manager transparently caches entities on write and serves them from the cache on subsequent reads, reducing the number of calls to the underlying repository.
+The `EntityManager<TEntity>` supports an optional second-level cache via the `IEntityCache<TEntity>` service. When registered, the manager transparently caches entities on write and serves them from the cache on subsequent reads, reducing calls to the underlying repository.
 
 ## Installation
 
@@ -11,28 +12,58 @@ Install the EasyCaching integration package:
 dotnet add package Kista.Manager.EasyCaching
 ```
 
-## Registration
-
-Register EasyCaching and the entity cache in the DI container:
+EasyCaching must be configured globally with a provider (e.g., in-memory, Redis, Memcached):
 
 ```csharp
-// Program.cs
 builder.Services.AddEasyCaching(options =>
-{
-    options.UseInMemory("default");
-});
+    options.UseInMemory("default"));
+```
 
-// Register the default EntityEasyCache<MyEntity>
+## Registration
+
+### Via EntityManagerBuilder (recommended)
+
+When using the per-repository `WithManagement()` callback, use `WithEasyCaching()` on the `EntityManagerBuilder`:
+
+```csharp
+services.AddRepositoryContext()
+    .AddRepository<PersonRepository>(repo => repo
+        .WithManagement(mgmt => mgmt
+            .WithEasyCaching(opts =>
+            {
+                opts.DefaultExpiration = TimeSpan.FromMinutes(15);
+            })))
+    .UseInMemory();
+```
+
+### Global registration
+
+Enable caching for all tracked entity types via the `RepositoryContextBuilder`:
+
+```csharp
+services.AddRepositoryContext()
+    .AddRepository<PersonRepository>(_ => { })
+    .AddRepository<OrderRepository>(_ => { })
+    .WithEasyCaching(opts =>
+    {
+        opts.DefaultExpiration = TimeSpan.FromMinutes(5);
+    });
+```
+
+### Direct registration (legacy)
+
+The following methods on `IServiceCollection` are still supported but deprecated in favor of the fluent builder:
+
+```csharp
 builder.Services.AddEntityEasyCacheFor<MyEntity>();
 
-// Then register the manager (which picks up the cache automatically)
 builder.Services.AddManagerFor<MyEntity>();
 ```
 
 You can configure cache options inline or from configuration:
 
 ```csharp
-// Inline configuration
+// Inline
 builder.Services.AddEntityEasyCacheFor<MyEntity>(options =>
 {
     options.Expiration = TimeSpan.FromMinutes(5);
@@ -55,26 +86,49 @@ The `EntityManager<TEntity>` intercepts the following operations to read from or
 | `RemoveAsync` | `RemoveAsync` | Evicts the entity from the cache after removal. |
 | `RemoveRangeAsync` | `RemoveAsync` (batch) | Evicts all removed entities from the cache. |
 
+### Cache invalidation
+
+The manager automatically invalidates cached entries when entities are updated or removed. There is no time-based invalidation by default; expiration is controlled by the EasyCaching provider configuration (e.g., `DefaultExpiration` in `WithEasyCaching()`).
+
+If an entity is modified outside the manager (directly through the repository), cached entries may become stale. In that case, call `RemoveAsync` through the manager or evict entries directly using the cache provider.
+
+### Cache on Find vs FindFirst
+
+`FindAsync` always checks the cache first. `FindFirstAsync` does **not** cache results, since queries are dynamic and caching their output is not generally safe without additional semantics.
+
 ## Cache Keys
 
-By default, the primary key of the entity is used to derive the cache key. To customize key generation, implement `IEntityCacheKeyGenerator<TEntity>` and register it:
+By default, the entity's primary key (`IHaveKey<TKey>.Key`) is converted to a string and used as the cache key. The default key format is `{EntityType.Name}:{key}`.
+
+To customize key generation, implement `IEntityCacheKeyGenerator<TEntity>` and register it via the `EntityManagerBuilder`:
 
 ```csharp
-public class MyEntityCacheKeyGenerator : IEntityCacheKeyGenerator<MyEntity>
+public class PersonKeyGenerator : IEntityCacheKeyGenerator<Person>
 {
-    public IEnumerable<string> GetKeys(MyEntity entity)
-    {
-        yield return $"myentity:{entity.Id}";
-        yield return $"myentity:by-name:{entity.Name}";
-    }
+    public string GenerateKey(object key) => $"person:{key}";
+    public string[] GenerateAllKeys(Person entity) =>
+        [$"person:{entity.Id}", $"person:email:{entity.Email}"];
 }
 
+services.AddRepositoryContext()
+    .AddRepository<PersonRepository>(repo => repo
+        .WithManagement(mgmt => mgmt
+            .WithCacheKeyGenerator<PersonKeyGenerator>()));
+```
+
+The `WithCacheKeyGenerator<TGenerator>()` method scans the type for implemented `IEntityCacheKeyGenerator<>` interfaces and registers each one matching the builder's current entity type.
+
+Multiple keys from `GenerateAllKeys` enable lookups by alternate identifiers (e.g., email, external ID) while keeping a single entry in the cache.
+
+For legacy direct registration (deprecated):
+
+```csharp
 builder.Services.AddEntityCacheKeyGenerator<MyEntityCacheKeyGenerator>();
 ```
 
 ## Cache Serialization
 
-In some scenarios, entities must be converted to a serializable form before being stored in the cache (e.g., when the cache provider serializes objects to JSON or binary). To handle this, derive from `EntityEasyCache<TEntity, TCached>` and implement `IEntityEasyCacheConverter<TEntity, TCached>`:
+Some cache providers (Redis, distributed caches) require entities to be serialized to a specific format. To handle this, implement `IEntityEasyCacheConverter<TEntity, TCached>` and register a typed cache:
 
 ```csharp
 public class MyEntityCacheConverter
@@ -92,3 +146,8 @@ Then register a typed `EntityEasyCache<MyEntity, MyEntityCacheModel>`:
 ```csharp
 builder.Services.AddEntityEasyCache<EntityEasyCache<MyEntity, MyEntityCacheModel>>();
 ```
+
+## See Also
+
+- [Entity Validation](entity-validation.md) — configure validators and error factories
+- [HTTP Request Cancellation](http-request-cancellation.md) — automatic cancellation via ASP.NET Core

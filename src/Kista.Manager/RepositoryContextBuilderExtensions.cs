@@ -46,9 +46,6 @@ namespace Kista {
 				foreach (var entityType in builder.RegisteredEntityTypes) {
 					var managerType = typeof(EntityManager<>).MakeGenericType(entityType);
 					builder.Services.TryAdd(new ServiceDescriptor(managerType, managerType, lifetime));
-
-					var repositoryInterface = typeof(IRepository<>).MakeGenericType(entityType);
-					builder.Services.TryAdd(new ServiceDescriptor(managerType, managerType, lifetime));
 				}
 			}
 

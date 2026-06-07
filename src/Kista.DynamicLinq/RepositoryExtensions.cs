@@ -45,6 +45,7 @@ namespace Kista {
 		/// Returns an instance of <typeparamref name="TEntity"/> that matches the given expression,
 		/// otherwise <c>null</c> if no entity is found.
 		/// </returns>
+		[Obsolete("Use DynamicLinqFilter directly with the repository's query methods instead. Query capabilities should not be exposed through the IRepository contract.", false)]
 		public static ValueTask<TEntity?> FindFirstAsync<TEntity>(this IRepository<TEntity> repository, string paramName, string expression, CancellationToken cancellationToken = default)
 			where TEntity : class
 			=> repository.FindFirstAsync(new DynamicLinqFilter(paramName, expression), cancellationToken);
@@ -74,6 +75,7 @@ namespace Kista {
 		/// Returns an instance of <typeparamref name="TEntity"/> that matches the given expression,
 		/// otherwise <c>null</c> if no entity is found.
 		/// </returns>
+		[Obsolete("Use DynamicLinqFilter directly with the repository's query methods instead. Query capabilities should not be exposed through the IRepository contract.", false)]
 		public static ValueTask<TEntity?> FindFirstAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, string paramName, string expression, CancellationToken cancellationToken = default)
 			where TEntity : class
 			=> repository.FindFirstAsync(new DynamicLinqFilter(paramName, expression), cancellationToken);
@@ -98,6 +100,7 @@ namespace Kista {
 		/// Returns an instance of <typeparamref name="TEntity"/> that matches the given expression,
 		/// otherwise <c>null</c> if no entity is found.
 		/// </returns>
+		[Obsolete("Use DynamicLinqFilter directly with the repository's query methods instead. Query capabilities should not be exposed through the IRepository contract.", false)]
 		public static ValueTask<TEntity?> FindFirstAsync<TEntity>(this IRepository<TEntity> repository, string expression, CancellationToken cancellationToken = default)
 			where TEntity : class
 			=> repository.FindFirstAsync(new DynamicLinqFilter(expression), cancellationToken);
@@ -124,6 +127,7 @@ namespace Kista {
 		/// Returns an instance of <typeparamref name="TEntity"/> that matches the given expression,
 		/// otherwise <c>null</c> if no entity is found.
 		/// </returns>
+		[Obsolete("Use DynamicLinqFilter directly with the repository's query methods instead. Query capabilities should not be exposed through the IRepository contract.", false)]
 		public static ValueTask<TEntity?> FindFirstAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, string expression, CancellationToken cancellationToken = default)
 			where TEntity : class
 			=> repository.FindFirstAsync(new DynamicLinqFilter(expression), cancellationToken);
@@ -156,6 +160,7 @@ namespace Kista {
 		/// Returns a list of <typeparamref name="TEntity"/> that match the 
 		/// given expression.
 		/// </returns>
+		[Obsolete("Use DynamicLinqFilter directly with the repository's query methods instead. Query capabilities should not be exposed through the IRepository contract.", false)]
 		public static ValueTask<IList<TEntity>> FindAllAsync<TEntity>(this IRepository<TEntity> repository, string paramName, string expression, CancellationToken cancellationToken = default)
 			where TEntity : class
 			=> repository.FindAllAsync(new DynamicLinqFilter(paramName, expression), cancellationToken);
@@ -186,6 +191,7 @@ namespace Kista {
 		/// Returns a list of <typeparamref name="TEntity"/> that match the 
 		/// given expression.
 		/// </returns>
+		[Obsolete("Use DynamicLinqFilter directly with the repository's query methods instead. Query capabilities should not be exposed through the IRepository contract.", false)]
 		public static ValueTask<IList<TEntity>> FindAllAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, string paramName, string expression, CancellationToken cancellationToken = default)
 			where TEntity : class
 			=> repository.FindAllAsync(new DynamicLinqFilter(paramName, expression), cancellationToken);
@@ -211,6 +217,7 @@ namespace Kista {
 		/// Returns a list of <typeparamref name="TEntity"/> that match the
 		/// given expression.
 		/// </returns>
+		[Obsolete("Use DynamicLinqFilter directly with the repository's query methods instead. Query capabilities should not be exposed through the IRepository contract.", false)]
 		public static ValueTask<IList<TEntity>> FindAllAsync<TEntity>(this IRepository<TEntity> repository, string expression, CancellationToken cancellationToken = default)
 			where TEntity : class
 			=> repository.FindAllAsync(new DynamicLinqFilter(expression), cancellationToken);
@@ -238,6 +245,7 @@ namespace Kista {
 		/// Returns a list of <typeparamref name="TEntity"/> that match the
 		/// given expression.
 		/// </returns>
+		[Obsolete("Use DynamicLinqFilter directly with the repository's query methods instead. Query capabilities should not be exposed through the IRepository contract.", false)]
 		public static ValueTask<IList<TEntity>> FindAllAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, string expression, CancellationToken cancellationToken = default)
 			where TEntity : class
 			=> repository.FindAllAsync(new DynamicLinqFilter(expression), cancellationToken);
@@ -270,6 +278,7 @@ namespace Kista {
 		/// <returns>
 		/// Returns the number of entities that match the given expression.
 		/// </returns>
+		[Obsolete("Use DynamicLinqFilter directly with the repository's query methods instead. Query capabilities should not be exposed through the IRepository contract.", false)]
 		public static ValueTask<long> CountAsync<TEntity>(this IRepository<TEntity> repository, string paramName, string expression, CancellationToken cancellationToken = default)
 			where TEntity : class
 			=> repository.AsFilterable().CountAsync(new DynamicLinqFilter(paramName, expression), cancellationToken);
@@ -300,6 +309,7 @@ namespace Kista {
 		/// <returns>
 		/// Returns the number of entities that match the given expression.
 		/// </returns>
+		[Obsolete("Use DynamicLinqFilter directly with the repository's query methods instead. Query capabilities should not be exposed through the IRepository contract.", false)]
 		public static ValueTask<long> CountAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, string paramName, string expression, CancellationToken cancellationToken = default)
 			where TEntity : class
 			=> repository.AsFilterable().CountAsync(new DynamicLinqFilter(paramName, expression), cancellationToken);
@@ -325,6 +335,7 @@ namespace Kista {
 		/// <returns>
 		/// Returns the number of entities that match the given expression.
 		/// </returns>
+		[Obsolete("Use DynamicLinqFilter directly with the repository's query methods instead. Query capabilities should not be exposed through the IRepository contract.", false)]
 		public static ValueTask<long> CountAsync<TEntity>(this IRepository<TEntity> repository, string expression, CancellationToken cancellationToken = default)
 			where TEntity : class
 			=> repository.AsFilterable().CountAsync(new DynamicLinqFilter(expression), cancellationToken);
@@ -352,6 +363,7 @@ namespace Kista {
 		/// <returns>
 		/// Returns the number of entities that match the given expression.
 		/// </returns>
+		[Obsolete("Use DynamicLinqFilter directly with the repository's query methods instead. Query capabilities should not be exposed through the IRepository contract.", false)]
 		public static ValueTask<long> CountAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, string expression, CancellationToken cancellationToken = default)
 			where TEntity : class
 			=> repository.AsFilterable().CountAsync(new DynamicLinqFilter(expression), cancellationToken);
@@ -387,6 +399,7 @@ namespace Kista {
 		/// Returns <c>true</c> if the repository contains at least one entity
 		/// that matches the given expression, otherwise <c>false</c>.
 		/// </returns>
+		[Obsolete("Use DynamicLinqFilter directly with the repository's query methods instead. Query capabilities should not be exposed through the IRepository contract.", false)]
 		public static ValueTask<bool> ExistsAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, string paramName, string expression, CancellationToken cancellationToken = default)
 			where TEntity : class
 			=> repository.ExistsAsync<TEntity, TKey>(new DynamicLinqFilter(paramName, expression), cancellationToken);
@@ -418,6 +431,7 @@ namespace Kista {
 		/// Returns <c>true</c> if the repository contains at least one entity
 		/// that matches the given expression, otherwise <c>false</c>.
 		/// </returns>
+		[Obsolete("Use DynamicLinqFilter directly with the repository's query methods instead. Query capabilities should not be exposed through the IRepository contract.", false)]
 		public static ValueTask<bool> ExistsAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, string expression, CancellationToken cancellationToken = default)
 			where TEntity : class
 			=> repository.ExistsAsync<TEntity, TKey>(DynamicLinqFilter.DefaultParameterName, expression, cancellationToken);

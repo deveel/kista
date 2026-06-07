@@ -42,6 +42,24 @@ builder.Services.AddRepositoryContext()
         .WithInitialData(new[] { new MyEntity { /* ... */ } }));
 ```
 
+### Bulk vs Per-Entity
+
+`.UseInMemory()` registers the **open generic** `InMemoryRepository<>` so that `IRepository<Person>`, `IRepository<Order>`, and any other entity type resolve to `InMemoryRepository` automatically — no per-entity class is needed:
+
+```csharp
+builder.Services.AddRepositoryContext()
+    .UseInMemory();   // IRepository<Person>, IRepository<Order>, etc. all work
+```
+
+For entities that need custom query methods or overrides, create a concrete repository class and register it with `AddRepository<T>()`. The concrete type overrides the open generic for that entity only:
+
+```csharp
+builder.Services.AddRepositoryContext()
+    .UseInMemory()
+    .AddRepository<PersonRepository>();   // PersonRepository used for Person
+                                          // InMemoryRepository used for everything else
+```
+
 ### Pre-seeding Data
 
 You can seed initial data using the `WithInitialData` method:

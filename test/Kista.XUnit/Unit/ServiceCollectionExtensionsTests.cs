@@ -212,7 +212,7 @@ public class ServiceCollectionExtensionsTests
 	private sealed class TestLifecycleProfile : IRepositoryLifecycleProfile {
 		public bool AutoCreate => true;
 		public bool AutoDrop => false;
-		public SeedStrategy GetSeedStrategy(string? environmentName = null) => SeedStrategy.IfEmpty;
+		public SeedStrategy GetSeedStrategy(string? environmentName = null) => SeedStrategy.Never;
 		public object? GetSeedData(Type entityType) => null;
 	}
 

@@ -17,7 +17,7 @@ const config: Config = {
   organizationName: 'deveel',
   projectName: 'kista',
 
-  onBrokenLinks: 'throw',
+  onBrokenLinks: 'warn',
 
   headTags: [
     {
@@ -87,7 +87,7 @@ const config: Config = {
   ],
 
   themeConfig: {
-    image: 'img/kista-full-logo.png',
+    image: '/img/kista-full-logo.png',
     algolia: {
       appId: 'JYSR40O1I0',
       apiKey: '479261bc4e1a490dec72ff2d553c229b',

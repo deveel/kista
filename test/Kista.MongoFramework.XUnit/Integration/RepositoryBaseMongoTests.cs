@@ -124,7 +124,7 @@ public class RepositoryBaseMongoTests : IAsyncLifetime {
 		public ValueTask<PageQueryResult<MongoPerson>> PublicQueryPageAsync(PageQuery<MongoPerson> request, CancellationToken ct = default) =>
 			base.QueryPageAsync(request, ct);
 
-		public ValueTask<IList<MongoPerson>> PublicFindAsync(IQuery query, CancellationToken ct = default) =>
+		public ValueTask<IReadOnlyList<MongoPerson>> PublicFindAsync(IQuery query, CancellationToken ct = default) =>
 			base.FindAsync(query, ct);
 	}
 }

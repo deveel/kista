@@ -70,7 +70,7 @@ namespace Kista {
 		[ExcludeFromCodeCoverage]
 		public new IQueryable<TEntity> AsQueryable() => base.AsQueryable();
 
-		IQueryable<TEntity> IQueryableRepository<TEntity, object>.AsQueryable() => Query();
+		IQueryable<TEntity> IQueryableRepository<TEntity, object>.AsQueryable() => Queryable();
 
 		object? IRepository<TEntity, object>.GetEntityKey(TEntity entity) => GetEntityKey(entity);
 
@@ -83,7 +83,7 @@ namespace Kista {
 		ValueTask<TEntity?> IFilterableRepository<TEntity, object>.FindFirstAsync(IQuery query, CancellationToken cancellationToken)
 			=> FindFirstAsync(query, cancellationToken);
 
-		ValueTask<IList<TEntity>> IFilterableRepository<TEntity, object>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
+		ValueTask<IReadOnlyList<TEntity>> IFilterableRepository<TEntity, object>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
 			=> FindAllAsync(query, cancellationToken);
 	}
 }

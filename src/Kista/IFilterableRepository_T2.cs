@@ -103,9 +103,9 @@ namespace Kista {
 		/// A token used to cancel the operation
 		/// </param>
 		/// <returns>
-		/// Returns a list of items in the repository that match the given query,
+		/// Returns a read-only list of items in the repository that match the given query,
 		/// or an empty list if none of the items matches the condition.
 		/// </returns>
-		ValueTask<IList<TEntity>> FindAllAsync(IQuery query, CancellationToken cancellationToken = default);
+		ValueTask<IReadOnlyList<TEntity>> FindAllAsync(IQuery query, CancellationToken cancellationToken = default);
 	}
 }

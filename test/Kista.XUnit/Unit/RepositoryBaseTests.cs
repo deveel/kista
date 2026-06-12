@@ -482,19 +482,32 @@ public class RepositoryTests {
 
 	#endregion
 
-	#region Negative coverage — Query() hatch is protected
+	#region Negative coverage — Queryable() hatch is protected
 
 	[Fact]
-	public void QueryHatch_IsProtected() {
-		// The Query() declared on Repository<,> must be protected so the
+	public void QueryableHatch_IsProtected() {
+		// The Queryable() declared on Repository<,> must be protected so the
 		// IQueryable hatch is hidden from consumer code.
 		var declared = typeof(Repository<Person, string>)
-			.GetMethod("Query", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+			.GetMethod("Queryable", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
 		Assert.NotNull(declared);
-		Assert.False(declared!.IsPublic, "Query() hatch must not be public");
-		Assert.False(declared.IsPrivate, "Query() hatch must not be private");
+		Assert.False(declared!.IsPublic, "Queryable() hatch must not be public");
+		Assert.False(declared.IsPrivate, "Queryable() hatch must not be private");
 		Assert.True(declared.IsFamily || declared.IsFamilyOrAssembly || declared.IsFamilyAndAssembly,
-			"Query() hatch must be protected (family) — at least one of: IsFamily, IsFamilyOrAssembly, IsFamilyAndAssembly");
+			"Queryable() hatch must be protected (family) — at least one of: IsFamily, IsFamilyOrAssembly, IsFamilyAndAssembly");
+	}
+
+	[Fact]
+	public void CreateQueryFactory_IsProtected() {
+		// CreateQuery() must be protected so that the only public way to
+		// obtain a query builder is via the base class's normal API.
+		var declared = typeof(Repository<Person, string>)
+			.GetMethod("CreateQuery", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+		Assert.NotNull(declared);
+		Assert.False(declared!.IsPublic, "CreateQuery() factory must not be public");
+		Assert.False(declared.IsPrivate, "CreateQuery() factory must not be private");
+		Assert.True(declared.IsFamily || declared.IsFamilyOrAssembly || declared.IsFamilyAndAssembly,
+			"CreateQuery() factory must be protected (family) — at least one of: IsFamily, IsFamilyOrAssembly, IsFamilyAndAssembly");
 	}
 
 	#endregion
@@ -527,14 +540,14 @@ public class RepositoryTests {
 		protected override string? GetEntityKey(Person entity) => entity.Id;
 
 		/// <inheritdoc />
-		protected override IQueryable<Person> Query() => _people.AsQueryable();
+		protected override IQueryable<Person> Queryable() => _people.AsQueryable();
 
 		/// <inheritdoc />
 		protected override bool IsQueryable => true;
 
 		/// <summary>Public passthrough used by tests to invoke the protected
 		/// <c>FindAsync(IQuery, CancellationToken)</c> entry point.</summary>
-		public ValueTask<IList<Person>> PublicFindAsync(IQuery query, CancellationToken cancellationToken = default)
+		public ValueTask<IReadOnlyList<Person>> PublicFindAsync(IQuery query, CancellationToken cancellationToken = default)
 			=> FindAsync(query, cancellationToken);
 
 		/// <summary>Public passthrough used by tests to invoke the protected
@@ -561,14 +574,17 @@ public class RepositoryTests {
 		public ValueTask<Person?> PublicFindFirstAsync(Expression<Func<Person, bool>> predicate, CancellationToken cancellationToken = default)
 			=> FindFirstAsync(predicate, cancellationToken);
 
-		public ValueTask<IList<Person>> PublicFindAllAsync(IQuery query, CancellationToken cancellationToken = default)
+		public ValueTask<IReadOnlyList<Person>> PublicFindAllAsync(IQuery query, CancellationToken cancellationToken = default)
 			=> FindAllAsync(query, cancellationToken);
 
-		public ValueTask<IList<Person>> PublicFindAllAsync(Expression<Func<Person, bool>> predicate, CancellationToken cancellationToken = default)
+		public ValueTask<IReadOnlyList<Person>> PublicFindAllAsync(Expression<Func<Person, bool>> predicate, CancellationToken cancellationToken = default)
 			=> FindAllAsync(predicate, cancellationToken);
 
 		public ValueTask<PageResult<Person>> PublicGetPageAsync(PageRequest request, CancellationToken cancellationToken = default)
 			=> GetPageAsync(request, cancellationToken);
+
+		public QueryBuilder<Person> PublicQuery()
+			=> CreateQuery();
 
 		/// <inheritdoc />
 		public override ValueTask AddAsync(Person entity, CancellationToken cancellationToken = default) {
@@ -617,7 +633,7 @@ public class RepositoryTests {
 	private sealed class NonQueryableRepository : Repository<Person, string> {
 		protected override IServiceProvider? Services => null;
 		protected override string? GetEntityKey(Person entity) => entity.Id;
-		protected override IQueryable<Person> Query() => throw new NotSupportedException();
+		protected override IQueryable<Person> Queryable() => throw new NotSupportedException();
 
 		public ValueTask<bool> PublicExistsAsync(IQueryFilter filter, CancellationToken cancellationToken = default)
 			=> ExistsAsync(filter, cancellationToken);
@@ -628,7 +644,7 @@ public class RepositoryTests {
 		public ValueTask<Person?> PublicFindFirstAsync(IQuery query, CancellationToken cancellationToken = default)
 			=> FindFirstAsync(query, cancellationToken);
 
-		public ValueTask<IList<Person>> PublicFindAllAsync(IQuery query, CancellationToken cancellationToken = default)
+		public ValueTask<IReadOnlyList<Person>> PublicFindAllAsync(IQuery query, CancellationToken cancellationToken = default)
 			=> FindAllAsync(query, cancellationToken);
 
 		public override ValueTask AddAsync(Person entity, CancellationToken cancellationToken = default) => throw new NotSupportedException();
@@ -637,6 +653,74 @@ public class RepositoryTests {
 		public override ValueTask<bool> RemoveAsync(Person entity, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 		public override ValueTask RemoveRangeAsync(IEnumerable<Person> entities, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 		public override ValueTask<Person?> FindAsync(string key, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+	}
+
+	#endregion
+
+	#region CreateQuery override
+
+	private sealed class CountingQueryBuilder : QueryBuilder<Person> {
+		public int WhereCallCount { get; private set; }
+
+		public override QueryBuilder<Person> Where(Expression<Func<Person, bool>> filter) {
+			WhereCallCount++;
+			return base.Where(filter);
+		}
+	}
+
+	private sealed class CustomQueryBuilderRepository : Repository<Person, string> {
+		public int CreateQueryInvocations { get; private set; }
+
+		protected override IServiceProvider? Services => null;
+		protected override string? GetEntityKey(Person entity) => entity.Id;
+		protected override IQueryable<Person> Queryable() => Array.Empty<Person>().AsQueryable();
+		protected override bool IsQueryable => true;
+
+		public override ValueTask AddAsync(Person entity, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
+		public override ValueTask AddRangeAsync(IEnumerable<Person> entities, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
+		public override ValueTask<bool> UpdateAsync(Person entity, CancellationToken cancellationToken = default) => ValueTask.FromResult(true);
+		public override ValueTask<bool> RemoveAsync(Person entity, CancellationToken cancellationToken = default) => ValueTask.FromResult(true);
+		public override ValueTask RemoveRangeAsync(IEnumerable<Person> entities, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
+		public override ValueTask<Person?> FindAsync(string key, CancellationToken cancellationToken = default) => ValueTask.FromResult<Person?>(null);
+
+		protected override QueryBuilder<Person> CreateQuery() {
+			CreateQueryInvocations++;
+			return new CountingQueryBuilder();
+		}
+
+		public QueryBuilder<Person> PublicQuery() => CreateQuery();
+	}
+
+	[Fact]
+	public void CreateQuery_CanBeOverridden_ToReturnCustomBuilder() {
+		var repo = new CustomQueryBuilderRepository();
+		Assert.Equal(0, repo.CreateQueryInvocations);
+
+		_ = repo.PublicQuery();
+
+		Assert.Equal(1, repo.CreateQueryInvocations);
+	}
+
+	[Fact]
+	public async Task CreateQuery_Default_ReturnsBoundBuilder_ThatExecutesAgainstRepository() {
+		var repo = new TestRepository(seedCount: 5);
+		var builder = repo.PublicQuery();
+
+		// The default CreateQuery() returns the private nested QueryBuilder
+		// which is bound to the repository. Its terminal methods should
+		// dispatch to the protected repository pipeline without throwing.
+		var result = await builder.ToListAsync();
+		Assert.Equal(5, result.Count);
+	}
+
+	[Fact]
+	public void CreateQuery_CustomBuilder_OverridesFluentMethods() {
+		var repo = new CustomQueryBuilderRepository();
+		var builder = (CountingQueryBuilder)repo.PublicQuery();
+
+		builder.Where(p => p.FirstName == "Alice");
+
+		Assert.Equal(1, builder.WhereCallCount);
 	}
 
 	#endregion

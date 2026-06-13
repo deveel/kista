@@ -1,29 +1,9 @@
 # The Repository Pattern
-> **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project purpose as a data access framework.
-
 The `IRepository<TEntity>` interface is the core contract of the framework. All repositories — whether provided by a driver or implemented by you — implement this interface.
 
 The full, strongly-typed form of the contract is `IRepository<TEntity, TKey>`, where `TKey` is the type of the entity's unique identifier. The single-type-parameter shorthand `IRepository<TEntity>` is a convenience alias where `TKey` defaults to `object`.
 
-```csharp
-public interface IRepository<TEntity, TKey> where TEntity : class {
-    // Retrieve the unique identifier of an entity
-    TKey? GetEntityKey(TEntity entity);
-
-    // Write operations
-    ValueTask AddAsync(TEntity entity, CancellationToken cancellationToken = default);
-    ValueTask AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
-    ValueTask<bool> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default);
-    ValueTask<bool> RemoveAsync(TEntity entity, CancellationToken cancellationToken = default);
-    ValueTask RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
-
-    // Key-based look-up
-    ValueTask<TEntity?> FindAsync(TKey key, CancellationToken cancellationToken = default);
-
-    // Unsorted pagination
-    ValueTask<PageResult<TEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default);
-}
-```
+The interface exposes mutations (`AddAsync`, `UpdateAsync`, `RemoveAsync`), key-based look-up (`FindAsync`), and unsorted pagination (`GetPageAsync`). See the [Getting Started](index.md) guide for the full interface definition.
 
 ## Design Rationale
 
@@ -110,67 +90,7 @@ Subclasses can override `CreateQuery()` to return a custom query builder that ad
 
 Because the base repository contract does not expose generic query capabilities, the recommended approach for domain-specific queries is the **Specification Pattern**: define purpose-built query methods on your own repository interface.
 
-### Example: Product Repository
-
-```csharp
-// Domain interface
-public interface IProductRepository : IRepository<Product, Guid> {
-    // Specific, safe queries
-    Task<Product?> FindByCodeAsync(string productCode, CancellationToken ct = default);
-    Task<IReadOnlyList<Product>> FindByNameAsync(string name, CancellationToken ct = default);
-    Task<IReadOnlyList<Product>> FindByCategoryAsync(string category, CancellationToken ct = default);
-    Task<bool> CodeExistsAsync(string productCode, CancellationToken ct = default);
-}
-```
-
-The implementation extends `Repository` and uses the protected `Queryable()` hatch internally:
-
-```csharp
-public class ProductRepository : Repository<Product, Guid>, IProductRepository {
-    private readonly AppDbContext _context;
-
-    public ProductRepository(AppDbContext context) {
-        _context = context;
-    }
-
-    protected override IQueryable<Product> Queryable() => _context.Set<Product>().AsQueryable();
-    protected override Guid? GetEntityKey(Product entity) => entity.Id;
-    protected override IServiceProvider? Services => null;
-
-    // Mutation implementations delegate to the ORM
-    public override ValueTask AddAsync(Product entity, CancellationToken ct = default) {
-        _context.Add(entity);
-        return ValueTask.CompletedTask;
-    }
-    // ... other mutations ...
-
-    public override ValueTask<Product?> FindAsync(Guid key, CancellationToken ct = default) {
-        return new ValueTask<Product?>(_context.Set<Product>().FindAsync(key).Result);
-    }
-
-    // Domain-specific queries using the protected Queryable() hatch
-    public async Task<Product?> FindByCodeAsync(string productCode, CancellationToken ct = default) {
-        return await Queryable()
-            .FirstOrDefaultAsync(p => p.Code == productCode, ct);
-    }
-
-    public async Task<IReadOnlyList<Product>> FindByNameAsync(string name, CancellationToken ct = default) {
-        return (await Queryable()
-            .Where(p => p.Name.Contains(name))
-            .ToListAsync(ct)).AsReadOnly();
-    }
-
-    public async Task<IReadOnlyList<Product>> FindByCategoryAsync(string category, CancellationToken ct = default) {
-        return (await Queryable()
-            .Where(p => p.Category == category)
-            .ToListAsync(ct)).AsReadOnly();
-    }
-
-    public async Task<bool> CodeExistsAsync(string productCode, CancellationToken ct = default) {
-        return await Queryable().AnyAsync(p => p.Code == productCode, ct);
-    }
-}
-```
+See [Interface Design](custom-repository/design.md) for a full guide on defining custom repository interfaces, and [Implementation](custom-repository/implementation.md) for how to implement them using the protected `Queryable()` hatch.
 
 ### Trade-offs: Specific vs. Generic Methods
 
@@ -179,31 +99,7 @@ public class ProductRepository : Repository<Product, Guid>, IProductRepository {
 | **Specific method** | Low — query is encapsulated, tested, and versioned | Low — each new query needs a new method | `FindByCodeAsync(string)` |
 | **Generic page query** | Higher — consumer composes arbitrary filters/sorts | High — one method covers many scenarios | `FindProductsPageAsync(PageQuery<Product>)` |
 
-You can expose a generic paginated query method on your repository if the use case justifies it:
-
-```csharp
-public interface IProductRepository : IRepository<Product, Guid> {
-    // Specific queries
-    Task<Product?> FindByCodeAsync(string productCode, CancellationToken ct = default);
-
-    // Generic paginated query — risk accepted by domain owner
-    Task<PageQueryResult<Product>> FindProductsPageAsync(PageQuery<Product> request, CancellationToken ct = default);
-}
-```
-
-The implementation uses the protected `QueryPageAsync` method:
-
-```csharp
-public class ProductRepository : Repository<Product, Guid>, IProductRepository {
-    // ...
-
-    public async Task<PageQueryResult<Product>> FindProductsPageAsync(PageQuery<Product> request, CancellationToken ct = default) {
-        return await QueryPageAsync(request, ct);
-    }
-}
-```
-
-This approach keeps the `IQueryable<T>` leak contained within the repository — the consumer never sees `AsQueryable()`, only the domain-specific methods you choose to expose.
+See [Query Methods](custom-repository/query-methods.md) for a detailed decision guide.
 
 ## Query Types
 
@@ -264,14 +160,13 @@ public class PageRequest {
 
 ### `PageResult<TEntity>`
 
-The result returned by `GetPageAsync`:
+The result returned by `GetPageAsync` includes pagination metadata:
 
 ```csharp
 public class PageResult<TEntity> where TEntity : class {
     public PageRequest Request { get; }
     public int TotalItems { get; }
     public IReadOnlyList<TEntity>? Items { get; }
-
     public int TotalPages { get; }
     public bool IsFirstPage { get; }
     public bool IsLastPage { get; }
@@ -292,13 +187,6 @@ var query = new PageQuery<Product>(page: 1, size: 20)
     .OrderBy(p => p.Name);
 ```
 
-| Property | Description |
-| -------- | ----------- |
-| `Page` | 1-based page number. |
-| `Size` | Maximum number of items per page. |
-| `Offset` | Computed zero-based offset: `(Page - 1) * Size`. |
-| `Query` | The inner `IQuery` composed by the fluent builder. |
-
 The result is `PageQueryResult<TEntity>`:
 
 ```csharp
@@ -308,6 +196,8 @@ public class PageQueryResult<TEntity> where TEntity : class {
     public IReadOnlyList<TEntity> Items { get; }
 }
 ```
+
+See the [driver-specific documentation](repository-implementations/) for pagination behavior per data source.
 
 ## `ITrackingRepository<TEntity>`
 

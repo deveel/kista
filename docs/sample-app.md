@@ -1,6 +1,4 @@
 # Sample Application
-> **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project purpose as a data access framework.
-
 The `Kista.SampleApp` is a reference ASP.NET Core application that demonstrates how to use the Kista framework with lifecycle management, custom repositories, and minimal API endpoints.
 
 ## Project Structure

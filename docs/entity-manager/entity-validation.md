@@ -1,7 +1,5 @@
 # Entity Validation
 
-> **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project purpose as a data access framework.
-
 The `EntityManager<TEntity>` validates entities before creating or updating them. Validation is pluggable: implement a validator interface, register it via the fluent builder, and the manager invokes it automatically on every `AddAsync` and `UpdateAsync` call.
 
 ## How Validation Works

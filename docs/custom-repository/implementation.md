@@ -49,8 +49,8 @@ protected override IQueryable<Product> Queryable() => _context.Set<Product>().As
 
     // --- Key-based look-up ---
 
-    public override ValueTask<Product?> FindAsync(Guid key, CancellationToken ct = default) {
-        return new ValueTask<Product?>(_context.Set<Product>().FindAsync(key, cancellationToken: ct).Result);
+    public override async ValueTask<Product?> FindAsync(Guid key, CancellationToken ct = default) {
+        return await _context.Set<Product>().FindAsync(key, cancellationToken: ct);
     }
 
     // --- Domain-specific queries ---

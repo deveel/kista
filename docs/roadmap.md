@@ -1,6 +1,4 @@
 # Roadmap
-> **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project purpose as a data access framework.
-
 The Kista framework provides a pragmatic, DDD-aligned abstraction for multi-source data access in .NET. Below is the planned roadmap of future releases.
 
 See the [full roadmap](https://github.com/deveel/kista/blob/main/ROADMAP.md) for detailed feature descriptions, timelines, and architectural decisions.

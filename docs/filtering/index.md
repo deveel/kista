@@ -1,6 +1,4 @@
 # Filtering
-> **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project purpose as a data access framework.
-
 The _Kista_ framework provides a flexible filtering system that allows you to query repositories using a variety of filter types, from strongly-typed lambda expressions to runtime string-based Dynamic LINQ predicates.
 
 ## Filter Types

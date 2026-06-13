@@ -102,7 +102,7 @@ namespace Kista {
 		/// </returns>
 		[ExcludeFromCodeCoverage]
 		[Obsolete("Use DynamicLinqFilter directly with EntityManager's query methods instead. Query capabilities should not be exposed through the EntityManager contract.", false)]
-		public static ValueTask<IList<TEntity>> FindAllAsync<TEntity>(this EntityManager<TEntity> manager, string expression, CancellationToken? cancellationToken = null)
+		public static ValueTask<IReadOnlyList<TEntity>> FindAllAsync<TEntity>(this EntityManager<TEntity> manager, string expression, CancellationToken? cancellationToken = null)
 			where TEntity : class
 			=> manager.FindAllAsync(new Query(new DynamicLinqFilter(expression)), cancellationToken);
 
@@ -130,7 +130,7 @@ namespace Kista {
 		/// </returns>
 		[ExcludeFromCodeCoverage]
 		[Obsolete("Use DynamicLinqFilter directly with EntityManager's query methods instead. Query capabilities should not be exposed through the EntityManager contract.", false)]
-		public static ValueTask<IList<TEntity>> FindAllAsync<TEntity, TKey>(this EntityManager<TEntity, TKey> manager, string expression, CancellationToken? cancellationToken = null)
+		public static ValueTask<IReadOnlyList<TEntity>> FindAllAsync<TEntity, TKey>(this EntityManager<TEntity, TKey> manager, string expression, CancellationToken? cancellationToken = null)
 			where TEntity : class
 			where TKey : notnull
 			=> manager.FindAllAsync(new Query(new DynamicLinqFilter(expression)), cancellationToken);

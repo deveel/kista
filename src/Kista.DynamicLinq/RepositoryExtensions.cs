@@ -167,7 +167,7 @@ namespace Kista {
 		/// </returns>
 		[ExcludeFromCodeCoverage]
 		[Obsolete("Use DynamicLinqFilter directly with the repository's query methods instead. Query capabilities should not be exposed through the IRepository contract.", false)]
-		public static ValueTask<IList<TEntity>> FindAllAsync<TEntity>(this IRepository<TEntity> repository, string paramName, string expression, CancellationToken cancellationToken = default)
+		public static ValueTask<IReadOnlyList<TEntity>> FindAllAsync<TEntity>(this IRepository<TEntity> repository, string paramName, string expression, CancellationToken cancellationToken = default)
 			where TEntity : class
 			=> repository.FindAllAsync(new DynamicLinqFilter(paramName, expression), cancellationToken);
 
@@ -199,7 +199,7 @@ namespace Kista {
 		/// </returns>
 		[ExcludeFromCodeCoverage]
 		[Obsolete("Use DynamicLinqFilter directly with the repository's query methods instead. Query capabilities should not be exposed through the IRepository contract.", false)]
-		public static ValueTask<IList<TEntity>> FindAllAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, string paramName, string expression, CancellationToken cancellationToken = default)
+		public static ValueTask<IReadOnlyList<TEntity>> FindAllAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, string paramName, string expression, CancellationToken cancellationToken = default)
 			where TEntity : class
 			=> repository.FindAllAsync(new DynamicLinqFilter(paramName, expression), cancellationToken);
 
@@ -226,7 +226,7 @@ namespace Kista {
 		/// </returns>
 		[ExcludeFromCodeCoverage]
 		[Obsolete("Use DynamicLinqFilter directly with the repository's query methods instead. Query capabilities should not be exposed through the IRepository contract.", false)]
-		public static ValueTask<IList<TEntity>> FindAllAsync<TEntity>(this IRepository<TEntity> repository, string expression, CancellationToken cancellationToken = default)
+		public static ValueTask<IReadOnlyList<TEntity>> FindAllAsync<TEntity>(this IRepository<TEntity> repository, string expression, CancellationToken cancellationToken = default)
 			where TEntity : class
 			=> repository.FindAllAsync(new DynamicLinqFilter(expression), cancellationToken);
 
@@ -255,7 +255,7 @@ namespace Kista {
 		/// </returns>
 		[ExcludeFromCodeCoverage]
 		[Obsolete("Use DynamicLinqFilter directly with the repository's query methods instead. Query capabilities should not be exposed through the IRepository contract.", false)]
-		public static ValueTask<IList<TEntity>> FindAllAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, string expression, CancellationToken cancellationToken = default)
+		public static ValueTask<IReadOnlyList<TEntity>> FindAllAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, string expression, CancellationToken cancellationToken = default)
 			where TEntity : class
 			=> repository.FindAllAsync(new DynamicLinqFilter(expression), cancellationToken);
 

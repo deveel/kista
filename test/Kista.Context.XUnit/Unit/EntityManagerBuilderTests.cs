@@ -114,6 +114,34 @@ public class EntityManagerBuilderTests {
 		Assert.NotNull(manager);
 	}
 
+	#region Validation — Abstract Type
+
+	[Fact]
+	public void WithValidator_Throws_When_TypeIsAbstract() {
+		var services = new ServiceCollection();
+		services.AddRepositoryContext()
+			.AddRepository<TestPersonRepository>(repo => repo
+				.WithManagement(mgmt => {
+					var ex = Assert.Throws<ArgumentException>(() =>
+						mgmt.WithValidator<AbstractValidator>());
+					Assert.Contains("is not a concrete class", ex.Message);
+				}));
+	}
+
+	[Fact]
+	public void WithCacheKeyGenerator_Throws_When_TypeIsAbstract() {
+		var services = new ServiceCollection();
+		services.AddRepositoryContext()
+			.AddRepository<TestPersonRepository>(repo => repo
+				.WithManagement(mgmt => {
+					var ex = Assert.Throws<ArgumentException>(() =>
+						mgmt.WithCacheKeyGenerator<AbstractKeyGenerator>());
+					Assert.Contains("is not a concrete class", ex.Message);
+				}));
+	}
+
+	#endregion
+
 	#region Test Types
 
 	public class TestPersonEntity {
@@ -178,6 +206,18 @@ public class EntityManagerBuilderTests {
 	}
 
 	public class TestPersonErrorFactory : OperationErrorFactory {
+	}
+
+	public abstract class AbstractValidator : IEntityValidator<TestPersonEntity> {
+		public abstract IAsyncEnumerable<ValidationResult> ValidateAsync(
+			EntityManager<TestPersonEntity> manager,
+			TestPersonEntity entity,
+			CancellationToken cancellationToken = default);
+	}
+
+	public abstract class AbstractKeyGenerator : IEntityCacheKeyGenerator<TestPersonEntity> {
+		public abstract string GenerateKey(object key);
+		public abstract string[] GenerateAllKeys(TestPersonEntity entity);
 	}
 
 	#endregion

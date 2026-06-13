@@ -110,12 +110,12 @@ namespace Kista
 		/// Returns the <see cref="IQueryable{T}"/> produced by
 		/// <see cref="Entities"/>.AsQueryable().
 		/// </returns>
-		protected override IQueryable<TEntity> Query() => Entities.AsQueryable();
+		protected override IQueryable<TEntity> Queryable() => Entities.AsQueryable();
 
 		/// <inheritdoc />
 		protected override bool IsQueryable => true;
 
-		IQueryable<TEntity> IQueryableRepository<TEntity, TKey>.AsQueryable() => Query();
+		IQueryable<TEntity> IQueryableRepository<TEntity, TKey>.AsQueryable() => Queryable();
 
 		ValueTask<bool> IFilterableRepository<TEntity, TKey>.ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken)
 			=> ExistsAsync(filter, cancellationToken);
@@ -126,7 +126,7 @@ namespace Kista
 		ValueTask<TEntity?> IFilterableRepository<TEntity, TKey>.FindFirstAsync(IQuery query, CancellationToken cancellationToken)
 			=> FindFirstAsync(query, cancellationToken);
 
-		ValueTask<IList<TEntity>> IFilterableRepository<TEntity, TKey>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
+		ValueTask<IReadOnlyList<TEntity>> IFilterableRepository<TEntity, TKey>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
 			=> FindAllAsync(query, cancellationToken);
 
 		/// <summary>
@@ -135,7 +135,7 @@ namespace Kista
 		/// before materialisation.
 		/// </summary>
 		/// <param name="queryable">
-		/// The queryable produced by <see cref="Query"/>.
+		/// The queryable produced by <see cref="Repository{TEntity,TKey}.Queryable"/>.
 		/// </param>
 		/// <returns>
 		/// Returns the normalised queryable.
@@ -174,9 +174,9 @@ namespace Kista
 		/// A token used to cancel the operation.
 		/// </param>
 		/// <returns>
-		/// Returns the list of entities matched by the queryable.
+		/// Returns the read-only list of entities matched by the queryable.
 		/// </returns>
-		protected override async ValueTask<IList<TEntity>> ToListAsync(IQueryable<TEntity> queryable, CancellationToken cancellationToken = default) {
+		protected override async ValueTask<IReadOnlyList<TEntity>> ToListAsync(IQueryable<TEntity> queryable, CancellationToken cancellationToken = default) {
 			ArgumentNullException.ThrowIfNull(queryable);
 			return await queryable.ToListAsync(cancellationToken).ConfigureAwait(false);
 		}
@@ -461,7 +461,7 @@ namespace Kista
 
 			try {
 				InitializeFilter(filter);
-				var query = Query().AsNoTracking();
+				var query = Queryable().AsNoTracking();
 				query = ApplyFilter(query, filter);
 
 				return await query.AnyAsync(cancellationToken);
@@ -489,7 +489,7 @@ namespace Kista
 
 			try {
 				InitializeFilter(filter);
-				var query = Query().AsNoTracking();
+				var query = Queryable().AsNoTracking();
 				query = ApplyFilter(query, filter);
 
 				return await query.LongCountAsync(cancellationToken);
@@ -503,7 +503,7 @@ namespace Kista
 		protected override async ValueTask<TEntity?> FindFirstAsync(IQuery query, CancellationToken cancellationToken = default) {
 			try {
 				InitializeFilter(query.Filter);
-				var result = EfQueryNormalizer.Normalize(query.Apply(Query()));
+				var result = EfQueryNormalizer.Normalize(query.Apply(Queryable()));
 
 				return await result.FirstOrDefaultAsync(cancellationToken);
 			} catch (Exception ex) {
@@ -552,10 +552,10 @@ namespace Kista
 		}
 
 		/// <inheritdoc/>
-		protected override async ValueTask<IList<TEntity>> FindAllAsync(IQuery query, CancellationToken cancellationToken = default) {
+		protected override async ValueTask<IReadOnlyList<TEntity>> FindAllAsync(IQuery query, CancellationToken cancellationToken = default) {
 			try {
 				InitializeFilter(query.Filter);
-				var result = EfQueryNormalizer.Normalize(query.Apply(Query()));
+				var result = EfQueryNormalizer.Normalize(query.Apply(Queryable()));
 				return await result.ToListAsync(cancellationToken);
 			} catch (Exception ex) {
 				Logger.LogUnknownError(ex, typeof(TEntity));
@@ -603,7 +603,7 @@ namespace Kista
 			ThrowIfDisposed();
 
 			try {
-				var querySet = EfQueryNormalizer.Normalize(request.ApplyQuery(Query()));
+				var querySet = EfQueryNormalizer.Normalize(request.ApplyQuery(Queryable()));
 				var total = await querySet.CountAsync(cancellationToken);
 
 				var items = await querySet
@@ -627,7 +627,7 @@ namespace Kista
 				if (request is PageQuery<TEntity> pageQuery)
 					return await ((IPageableRepository<TEntity, TKey>)this).GetPageAsync(pageQuery, cancellationToken).ConfigureAwait(false);
 
-				var querySet = EfQueryNormalizer.Normalize(Query());
+				var querySet = EfQueryNormalizer.Normalize(Queryable());
 				var total = await querySet.CountAsync(cancellationToken);
 
 				var items = await querySet

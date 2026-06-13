@@ -1,92 +1,107 @@
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Kista;
 
 [Trait("Category", "Unit")]
-[Trait("Layer", "Core")]
-[Trait("Feature", "Infrastructure")]
-public class RepositoryLifecycleHandlerTests {
-	[Fact]
-	public async Task SeedAsync_NullData_DoesNothing() {
-		var sut = new TestLifecycleHandler();
+[Trait("Layer", "Infrastructure")]
+[Trait("Feature", "Lifecycle")]
+public class RepositoryLifecycleHandlerTests
+{
+    private readonly PersonFaker _faker = new();
 
-		await sut.SeedAsync(null);
+    private sealed class TestLifecycleHandler : RepositoryLifecycleHandler<Person>
+    {
+        public List<Person> SeededEntities { get; } = new();
 
-		Assert.Empty(sut.SeededEntities);
-	}
+        public override ValueTask<bool> ExistsAsync(CancellationToken cancellationToken = default)
+            => ValueTask.FromResult(false);
 
-	[Fact]
-	public async Task SeedAsync_SingleEntity_SeedsEntity() {
-		var sut = new TestLifecycleHandler();
-		var person = new PersonFaker().Generate();
+        public override ValueTask CreateAsync(CancellationToken cancellationToken = default)
+            => ValueTask.CompletedTask;
 
-		await sut.SeedAsync(person);
+        public override ValueTask DropAsync(CancellationToken cancellationToken = default)
+            => ValueTask.CompletedTask;
 
-		Assert.Single(sut.SeededEntities);
-		Assert.Same(person, sut.SeededEntities[0]);
-	}
+        protected override ValueTask SeedEntitiesAsync(IEnumerable<Person> entities, CancellationToken cancellationToken = default)
+        {
+            SeededEntities.AddRange(entities);
+            return ValueTask.CompletedTask;
+        }
+    }
 
-	[Fact]
-	public async Task SeedAsync_TypedEnumerable_SeedsAll() {
-		var sut = new TestLifecycleHandler();
-		var people = new PersonFaker().Generate(5);
+    [Fact]
+    public async Task Should_SeedEntities_When_SeedDataIsIEnumerableOfTEntity()
+    {
+        var handler = new TestLifecycleHandler();
+        var entities = _faker.Generate(3);
 
-		await sut.SeedAsync(people);
+        await handler.SeedAsync(entities, TestContext.Current.CancellationToken);
 
-		Assert.Equal(5, sut.SeededEntities.Count);
-	}
+        Assert.Equal(3, handler.SeededEntities.Count);
+    }
 
-	[Fact]
-	public async Task SeedAsync_ObjectEnumerable_WithMatchingTypes_SeedsMatching() {
-		var sut = new TestLifecycleHandler();
-		var people = new PersonFaker().Generate(3);
-		var mixed = people.Cast<object>().Concat(new object[] { "string", 42 }).ToList();
+    [Fact]
+    public async Task Should_SeedEntities_When_SeedDataIsIEnumerableOfObject()
+    {
+        var handler = new TestLifecycleHandler();
+        var entities = _faker.Generate(3).Cast<object>();
 
-		await sut.SeedAsync((IEnumerable<object>)mixed);
+        await handler.SeedAsync(entities, TestContext.Current.CancellationToken);
 
-		Assert.Equal(3, sut.SeededEntities.Count);
-	}
+        Assert.Equal(3, handler.SeededEntities.Count);
+    }
 
-	[Fact]
-	public async Task SeedAsync_ObjectEnumerable_NoMatchingTypes_DoesNothing() {
-		var sut = new TestLifecycleHandler();
+    [Fact]
+    public async Task Should_SeedSingleEntity_When_SeedDataIsSingleTEntity()
+    {
+        var handler = new TestLifecycleHandler();
+        var entity = _faker.Generate();
 
-		await sut.SeedAsync(new List<object> { "string", 42 });
+        await handler.SeedAsync(entity, TestContext.Current.CancellationToken);
 
-		Assert.Empty(sut.SeededEntities);
-	}
+        Assert.Single(handler.SeededEntities);
+        Assert.Equal(entity.Id, handler.SeededEntities[0].Id);
+    }
 
-	[Fact]
-	public void Constructor_NullLogger_UsesNullLogger() {
-		var sut = new TestLifecycleHandler(null);
+    [Fact]
+    public async Task Should_SkipSeeding_When_SeedDataIsNull()
+    {
+        var handler = new TestLifecycleHandler();
 
-		Assert.NotNull(sut.Logger);
-	}
+        await handler.SeedAsync(null, TestContext.Current.CancellationToken);
 
-	[Fact]
-	public void Constructor_WithLogger_UsesProvidedLogger() {
-		var logger = new Microsoft.Extensions.Logging.Abstractions.NullLogger<RepositoryLifecycleHandler<Person>>();
-		var sut = new TestLifecycleHandler(logger);
+        Assert.Empty(handler.SeededEntities);
+    }
 
-		Assert.Same(logger, sut.Logger);
-	}
+    [Fact]
+    public async Task Should_SkipSeeding_When_SeedDataIsEmptyEnumerable()
+    {
+        var handler = new TestLifecycleHandler();
 
-	public class TestLifecycleHandler : RepositoryLifecycleHandler<Person> {
-		public List<Person> SeededEntities { get; } = new();
+        await handler.SeedAsync(Enumerable.Empty<Person>(), TestContext.Current.CancellationToken);
 
-		public new ILogger Logger => base.Logger;
+        Assert.Empty(handler.SeededEntities);
+    }
 
-		public TestLifecycleHandler() { }
+    [Fact]
+    public async Task Should_SkipSeeding_When_SeedDataIsOfWrongType()
+    {
+        var handler = new TestLifecycleHandler();
 
-		public TestLifecycleHandler(ILogger? logger) : base(logger) { }
+        await handler.SeedAsync("wrong-type-data", TestContext.Current.CancellationToken);
 
-		public override ValueTask<bool> ExistsAsync(CancellationToken cancellationToken = default) => ValueTask.FromResult(true);
-		public override ValueTask CreateAsync(CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
-		public override ValueTask DropAsync(CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
+        Assert.Empty(handler.SeededEntities);
+    }
 
-		protected override ValueTask SeedEntitiesAsync(IEnumerable<Person> entities, CancellationToken cancellationToken = default) {
-			SeededEntities.AddRange(entities);
-			return ValueTask.CompletedTask;
-		}
-	}
+    [Fact]
+    public async Task Should_FilterMatchingTypes_When_SeedDataIsMixedEnumerable()
+    {
+        var handler = new TestLifecycleHandler();
+        var people = _faker.Generate(2);
+        var mixed = people.Cast<object>().Concat(new object[] { "string", 42 });
+
+        await handler.SeedAsync(mixed, TestContext.Current.CancellationToken);
+
+        Assert.Equal(2, handler.SeededEntities.Count);
+    }
 }

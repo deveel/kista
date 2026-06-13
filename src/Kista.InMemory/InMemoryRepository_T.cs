@@ -68,7 +68,7 @@ namespace Kista {
 		[ExcludeFromCodeCoverage]
 		public new IQueryable<TEntity> AsQueryable() => base.AsQueryable();
 
-		IQueryable<TEntity> IQueryableRepository<TEntity, object>.AsQueryable() => Query();
+		IQueryable<TEntity> IQueryableRepository<TEntity, object>.AsQueryable() => Queryable();
 
 		IServiceProvider? IRepository<TEntity, object>.Services => Services;
 
@@ -89,7 +89,7 @@ namespace Kista {
 		ValueTask<TEntity?> IFilterableRepository<TEntity, object>.FindFirstAsync(IQuery query, CancellationToken cancellationToken)
 			=> FindFirstAsync(query, cancellationToken);
 
-		ValueTask<IList<TEntity>> IFilterableRepository<TEntity, object>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
+		ValueTask<IReadOnlyList<TEntity>> IFilterableRepository<TEntity, object>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
 			=> FindAllAsync(query, cancellationToken);
 
 #pragma warning disable CS0618 // Type or member is obsolete

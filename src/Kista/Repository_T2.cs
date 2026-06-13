@@ -32,9 +32,13 @@ namespace Kista {
 	/// <para>
 	/// Unlike the obsolete <see cref="IQueryableRepository{TEntity, TKey}"/> contract,
 	/// this base class does not expose an <c>AsQueryable()</c> entry point to consumers.
-	/// The hatch is the <see cref="Query"/> method, which is <c>protected</c> and only
-	/// available to subclasses that need to translate <see cref="IQuery"/> and
-	/// <see cref="PageQuery{TEntity}"/> instances into provider-specific queries.
+	/// The data-access hatch is the <see cref="Queryable"/> method, which is
+	/// <c>protected</c> and only available to subclasses that need to translate
+	/// <see cref="IQuery"/> and <see cref="PageQuery{TEntity}"/> instances into
+	/// provider-specific queries. The public-facing surface for query composition
+	/// and execution is <see cref="global::Kista.QueryBuilder{TEntity}"/>,
+	/// which is bound to this repository and returned by the
+	/// <see cref="CreateQuery"/> factory.
 	/// </para>
 	/// <para>
 	/// Subclasses inherit ready-made implementations of the protected
@@ -49,7 +53,16 @@ namespace Kista {
 	/// <c>Expression&lt;Func&lt;TEntity, bool&gt;&gt;</c>-based overload that
 	/// automatically wraps the predicate in the appropriate filter or query. Engine-specific async execution can be
 	/// customised by overriding <see cref="CountAsync(IQueryable{TEntity}, CancellationToken)"/> and
-	/// <see cref="ToListAsync"/>.
+	/// <see cref="ToListAsync(IQueryable{TEntity}, CancellationToken)"/>.
+	/// </para>
+	/// <para>
+	/// This class also provides a <see cref="CreateQuery"/> factory that returns a
+	/// <see cref="global::Kista.QueryBuilder{TEntity}"/> instance bound to this repository,
+	/// allowing fluent construction and execution of queries without exposing
+	/// the underlying <see cref="IQueryable{T}"/> hatch to consumer code. The
+	/// nested <see cref="QueryBuilder"/> type also implements
+	/// <see cref="IQueryBuilder{TEntity}"/> for code that prefers programming
+	/// against the interface.
 	/// </para>
 	/// </remarks>
 	public abstract class Repository<TEntity, TKey> : IRepository<TEntity, TKey>, IFilterableRepository<TEntity, TKey>
@@ -128,11 +141,11 @@ namespace Kista {
 		/// <c>FindAllAsync(IQuery, CancellationToken)</c> methods
 		/// route the queryable returned here through
 		/// <see cref="NormalizeQuery"/>, the engine async hooks
-		/// (<see cref="CountAsync(IQueryable{TEntity}, CancellationToken)"/>, <see cref="ToListAsync"/>) and finally
+		/// (<see cref="CountAsync(IQueryable{TEntity}, CancellationToken)"/>, <see cref="ToListAsync(IQueryable{TEntity}, CancellationToken)"/>) and finally
 		/// the unpacking primitives.
 		/// </para>
 		/// </remarks>
-		protected abstract IQueryable<TEntity> Query();
+		protected abstract IQueryable<TEntity> Queryable();
 
 		/// <summary>
 		/// Gets a value indicating whether this repository supports
@@ -145,7 +158,7 @@ namespace Kista {
 		/// <see cref="CountAsync(IQueryFilter, CancellationToken)"/>,
 		/// <see cref="FindFirstAsync(IQuery, CancellationToken)"/>,
 		/// <see cref="FindAllAsync(IQuery, CancellationToken)"/>) use the
-		/// <see cref="Query"/> hatch and apply filters as
+		/// <see cref="Queryable"/> hatch and apply filters as
 		/// <see cref="IQueryable{T}"/> operations.
 		/// </para>
 		/// <para>
@@ -165,7 +178,7 @@ namespace Kista {
 		/// in Entity Framework).
 		/// </summary>
 		/// <param name="queryable">
-		/// The queryable produced by <see cref="Query"/> and the unpacking
+		/// The queryable produced by <see cref="Queryable"/> and the unpacking
 		/// pipeline.
 		/// </param>
 		/// <returns>
@@ -200,8 +213,8 @@ namespace Kista {
 		}
 
 		/// <summary>
-		/// Materialises the given queryable to a list, honouring the engine's
-		/// preferred async execution model.
+		/// Materialises the given queryable to a read-only list, honouring the
+		/// engine's preferred async execution model.
 		/// </summary>
 		/// <param name="queryable">
 		/// The queryable to materialise.
@@ -210,17 +223,17 @@ namespace Kista {
 		/// A token used to cancel the operation.
 		/// </param>
 		/// <returns>
-		/// Returns the list of entities matched by the queryable.
+		/// Returns the read-only list of entities matched by the queryable.
 		/// </returns>
 		/// <remarks>
 		/// The default implementation materialises the list synchronously via
 		/// <c>Queryable.ToList&lt;TSource&gt;(IQueryable{TSource})</c>.
 		/// Subclasses backed by a true async provider should override this hook.
 		/// </remarks>
-		protected virtual ValueTask<IList<TEntity>> ToListAsync(IQueryable<TEntity> queryable, CancellationToken cancellationToken = default) {
+		protected virtual ValueTask<IReadOnlyList<TEntity>> ToListAsync(IQueryable<TEntity> queryable, CancellationToken cancellationToken = default) {
 			ArgumentNullException.ThrowIfNull(queryable);
 
-			return new ValueTask<IList<TEntity>>(queryable.ToList());
+			return new ValueTask<IReadOnlyList<TEntity>>(queryable.ToList());
 		}
 
 		/// <summary>
@@ -229,14 +242,14 @@ namespace Kista {
 		/// </summary>
 		/// <param name="query">
 		/// The query to execute. Filter and order are unpacked and applied
-		/// inside the data layer through the protected <see cref="Query"/>
+		/// inside the data layer through the protected <see cref="Queryable"/>
 		/// hatch.
 		/// </param>
 		/// <param name="cancellationToken">
 		/// A token used to cancel the operation.
 		/// </param>
 		/// <returns>
-		/// Returns the list of entities that match the query.
+		/// Returns the read-only list of entities that match the query.
 		/// </returns>
 		/// <exception cref="ArgumentNullException">
 		/// Thrown when <paramref name="query"/> is <c>null</c>.
@@ -245,9 +258,9 @@ namespace Kista {
 		/// <para>
 		/// The unpacking and execution of the query is performed by this base
 		/// class; subclasses only contribute the provider-specific
-		/// <see cref="IQueryable{T}"/> through <see cref="Query"/> and may
+		/// <see cref="IQueryable{T}"/> through <see cref="Queryable"/> and may
 		/// override <see cref="NormalizeQuery"/>, <see cref="CountAsync(IQueryable{TEntity}, CancellationToken)"/>
-		/// and <see cref="ToListAsync"/> to plug engine-specific behaviour.
+		/// and <see cref="ToListAsync(IQueryable{TEntity}, CancellationToken)"/> to plug engine-specific behaviour.
 		/// </para>
 		/// <para>
 		/// Exposed as <c>protected</c> so that the translation pipeline stays
@@ -257,11 +270,11 @@ namespace Kista {
 		/// contract.
 		/// </para>
 		/// </remarks>
-		protected virtual ValueTask<IList<TEntity>> FindAsync(IQuery query, CancellationToken cancellationToken = default) {
+		protected virtual ValueTask<IReadOnlyList<TEntity>> FindAsync(IQuery query, CancellationToken cancellationToken = default) {
 			ArgumentNullException.ThrowIfNull(query);
 			cancellationToken.ThrowIfCancellationRequested();
 
-			var queryable = NormalizeQuery(query.Apply(Query()));
+			var queryable = NormalizeQuery(query.Apply(Queryable()));
 			return ToListAsync(queryable, cancellationToken);
 		}
 
@@ -288,9 +301,9 @@ namespace Kista {
 		/// <para>
 		/// The unpacking, count and slice are performed by this base class;
 		/// subclasses contribute the provider-specific
-		/// <see cref="IQueryable{T}"/> through <see cref="Query"/> and may
+		/// <see cref="IQueryable{T}"/> through <see cref="Queryable"/> and may
 		/// override <see cref="NormalizeQuery"/>, <see cref="CountAsync(IQueryable{TEntity}, CancellationToken)"/>
-		/// and <see cref="ToListAsync"/> to plug engine-specific behaviour.
+		/// and <see cref="ToListAsync(IQueryable{TEntity}, CancellationToken)"/> to plug engine-specific behaviour.
 		/// </para>
 		/// <para>
 		/// Exposed as <c>protected</c> so that the translation pipeline stays
@@ -304,7 +317,7 @@ namespace Kista {
 			ArgumentNullException.ThrowIfNull(request);
 			cancellationToken.ThrowIfCancellationRequested();
 
-			var queryable = NormalizeQuery(request.ApplyQuery(Query()));
+			var queryable = NormalizeQuery(request.ApplyQuery(Queryable()));
 			var total = await CountAsync(queryable, cancellationToken).ConfigureAwait(false);
 			var items = await ToListAsync(queryable.Skip(request.Offset).Take(request.Size), cancellationToken).ConfigureAwait(false);
 			return new PageQueryResult<TEntity>(request, (int)total, items);
@@ -318,7 +331,7 @@ namespace Kista {
 			if (request is PageQuery<TEntity> pageQuery)
 				return await QueryPageAsync(pageQuery, cancellationToken).ConfigureAwait(false);
 
-			var queryable = NormalizeQuery(Query());
+			var queryable = NormalizeQuery(Queryable());
 			var total = await CountAsync(queryable, cancellationToken).ConfigureAwait(false);
 			var items = await ToListAsync(queryable.Skip(request.Offset).Take(request.Size), cancellationToken).ConfigureAwait(false);
 			return new PageResult<TEntity>(request, (int)total, items);
@@ -343,12 +356,12 @@ namespace Kista {
 		/// has not overridden this method.
 		/// </exception>
 		/// <remarks>
-		/// The default implementation uses the <see cref="Query"/> hatch when
+		/// The default implementation uses the <see cref="Queryable"/> hatch when
 		/// <see cref="IsQueryable"/> is <c>true</c>.
 		/// </remarks>
 		protected virtual ValueTask<bool> ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken = default) {
 			if (IsQueryable) {
-				var queryable = filter != null ? filter.Apply(Query()) : Query();
+				var queryable = filter != null ? filter.Apply(Queryable()) : Queryable();
 				return new ValueTask<bool>(queryable.Any());
 			}
 			throw new NotSupportedException("Filtering requires IQueryable support or a subclass override.");
@@ -397,13 +410,13 @@ namespace Kista {
 		/// argument is equivalent to ask the repository not to use any filter, returning the
 		/// total count of all items in the inventory.
 		/// <para>
-		/// The default implementation uses the <see cref="Query"/> hatch when
+		/// The default implementation uses the <see cref="Queryable"/> hatch when
 		/// <see cref="IsQueryable"/> is <c>true</c>.
 		/// </para>
 		/// </remarks>
 		protected virtual ValueTask<long> CountAsync(IQueryFilter filter, CancellationToken cancellationToken = default) {
 			if (IsQueryable) {
-				var queryable = filter != null ? filter.Apply(Query()) : Query();
+				var queryable = filter != null ? filter.Apply(Queryable()) : Queryable();
 				return CountAsync(queryable, cancellationToken);
 			}
 			throw new NotSupportedException("Filtering requires IQueryable support or a subclass override.");
@@ -448,12 +461,12 @@ namespace Kista {
 		/// has not overridden this method.
 		/// </exception>
 		/// <remarks>
-		/// The default implementation uses the <see cref="Query"/> hatch when
+		/// The default implementation uses the <see cref="Queryable"/> hatch when
 		/// <see cref="IsQueryable"/> is <c>true</c>.
 		/// </remarks>
 		protected virtual ValueTask<TEntity?> FindFirstAsync(IQuery query, CancellationToken cancellationToken = default) {
 			if (IsQueryable) {
-				var queryable = NormalizeQuery(query.Apply(Query()));
+				var queryable = NormalizeQuery(query.Apply(Queryable()));
 				return new ValueTask<TEntity?>(queryable.FirstOrDefault());
 			}
 			throw new NotSupportedException("Querying requires IQueryable support or a subclass override.");
@@ -491,7 +504,7 @@ namespace Kista {
 		/// A token used to cancel the operation.
 		/// </param>
 		/// <returns>
-		/// Returns a list of items in the repository that match the given query,
+		/// Returns a read-only list of items in the repository that match the given query,
 		/// or an empty list if none of the items matches the condition.
 		/// </returns>
 		/// <exception cref="NotSupportedException">
@@ -499,12 +512,12 @@ namespace Kista {
 		/// has not overridden this method.
 		/// </exception>
 		/// <remarks>
-		/// The default implementation uses the <see cref="Query"/> hatch when
+		/// The default implementation uses the <see cref="Queryable"/> hatch when
 		/// <see cref="IsQueryable"/> is <c>true</c>.
 		/// </remarks>
-		protected virtual ValueTask<IList<TEntity>> FindAllAsync(IQuery query, CancellationToken cancellationToken = default) {
+		protected virtual ValueTask<IReadOnlyList<TEntity>> FindAllAsync(IQuery query, CancellationToken cancellationToken = default) {
 			if (IsQueryable) {
-				var queryable = NormalizeQuery(query.Apply(Query()));
+				var queryable = NormalizeQuery(query.Apply(Queryable()));
 				return ToListAsync(queryable, cancellationToken);
 			}
 			throw new NotSupportedException("Querying requires IQueryable support or a subclass override.");
@@ -521,14 +534,14 @@ namespace Kista {
 		/// A token used to cancel the operation.
 		/// </param>
 		/// <returns>
-		/// Returns a list of items in the repository that match the given predicate,
+		/// Returns a read-only list of items in the repository that match the given predicate,
 		/// or an empty list if none of the items matches the condition.
 		/// </returns>
 		/// <exception cref="NotSupportedException">
 		/// Thrown when <see cref="IsQueryable"/> is <c>false</c> and the subclass
 		/// has not overridden this method.
 		/// </exception>
-		protected virtual ValueTask<IList<TEntity>> FindAllAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+		protected virtual ValueTask<IReadOnlyList<TEntity>> FindAllAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
 			=> FindAllAsync(Kista.Query.Where(predicate), cancellationToken);
 
 		/// <inheritdoc />
@@ -560,7 +573,7 @@ namespace Kista {
 		ValueTask<TEntity?> IFilterableRepository<TEntity, TKey>.FindFirstAsync(IQuery query, CancellationToken cancellationToken)
 			=> FindFirstAsync(query, cancellationToken);
 
-		ValueTask<IList<TEntity>> IFilterableRepository<TEntity, TKey>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
+		ValueTask<IReadOnlyList<TEntity>> IFilterableRepository<TEntity, TKey>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
 			=> FindAllAsync(query, cancellationToken);
 
 		#endregion
@@ -570,7 +583,7 @@ namespace Kista {
 		/// </summary>
 		/// <returns>
 		/// Returns the <see cref="IQueryable{T}"/> produced by
-		/// <see cref="Query"/>.
+		/// <see cref="Queryable"/>.
 		/// </returns>
 		/// <remarks>
 		/// <para>
@@ -578,13 +591,130 @@ namespace Kista {
 		/// <see cref="IQueryableRepository{TEntity, TKey}"/> contract and is
 		/// expected to be removed in a future major version. New code should
 		/// not call this method: the data-access translation pipeline is
-		/// intentionally hidden behind the protected <see cref="Query"/>
+		/// intentionally hidden behind the protected <see cref="Queryable"/>
 		/// hatch so that LINQ expressions cannot leak into the application
 		/// layer and break at runtime far from the repository.
 		/// </para>
 		/// </remarks>
 		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
 		[ExcludeFromCodeCoverage]
-		public virtual IQueryable<TEntity> AsQueryable() => Query();
+		public virtual IQueryable<TEntity> AsQueryable() => Queryable();
+
+		/// <summary>
+		/// Creates a new <see cref="global::Kista.QueryBuilder{TEntity}"/>
+		/// instance bound to this repository, allowing fluent
+		/// construction and execution of queries.
+		/// </summary>
+		/// <returns>
+		/// Returns a <see cref="global::Kista.QueryBuilder{TEntity}"/>
+		/// that wraps this repository and provides terminal methods
+		/// to execute the built query.
+		/// </returns>
+		/// <remarks>
+		/// <para>
+		/// The default implementation returns a <c>private</c> nested
+		/// builder that inherits from
+		/// <see cref="global::Kista.QueryBuilder{TEntity}"/> and
+		/// dispatches the terminal methods to the protected
+		/// <c>FindAsync</c>/<c>FindAllAsync</c>/<c>CountAsync</c>/
+		/// <c>ExistsAsync</c>/<c>GetPageAsync</c> entry points of
+		/// this repository.
+		/// </para>
+		/// <para>
+		/// Subclasses can override this method to return a custom
+		/// <see cref="global::Kista.QueryBuilder{TEntity}"/> subclass
+		/// (declared at the call site) that overrides the
+		/// <c>virtual</c> terminal methods to add cross-cutting
+		/// concerns such as logging, caching, or authorization before
+		/// query execution.
+		/// </para>
+		/// <para>
+		/// The returned builder is not thread-safe: build a new
+		/// instance per logical operation. See
+		/// <see cref="IQueryBuilder{TEntity}"/> for the full contract.
+		/// </para>
+		/// </remarks>
+		protected virtual global::Kista.QueryBuilder<TEntity> CreateQuery() => new QueryBuilder(this);
+
+		/// <summary>
+		/// A private, repository-bound query builder that inherits the
+		/// fluent composition and the <see cref="IQueryBuilder{TEntity}"/>
+		/// contract from the public <see cref="QueryBuilder{TEntity}"/>
+		/// base class and overrides the terminal methods to dispatch
+		/// through this repository's protected pipeline.
+		/// </summary>
+		/// <remarks>
+		/// <para>
+		/// This class is the single, well-known bridge between
+		/// <see cref="CreateQuery"/> and the protected
+		/// <c>FindAsync</c>/<c>FindAllAsync</c>/<c>CountAsync</c>/
+		/// <c>ExistsAsync</c>/<c>GetPageAsync</c> methods. It is
+		/// declared <c>private</c> so that consumer code cannot
+		/// directly construct a bound instance: the only way to obtain
+		/// one is through <see cref="CreateQuery"/>.
+		/// </para>
+		/// <para>
+		/// Subclasses of <see cref="Repository{TEntity, TKey}"/> that
+		/// want to add cross-cutting concerns (logging, caching,
+		/// authorization) to every query can override
+		/// <see cref="CreateQuery"/> to return a custom
+		/// <see cref="QueryBuilder{TEntity}"/> subclass that overrides
+		/// the <c>virtual</c> terminal methods. Such a subclass is
+		/// declared at the call site and does not need to be a member
+		/// of this assembly.
+		/// </para>
+		/// </remarks>
+		private sealed class QueryBuilder : QueryBuilder<TEntity> {
+			private readonly Repository<TEntity, TKey> _repository;
+
+			/// <summary>
+			/// Creates a new query builder bound to the given repository.
+			/// </summary>
+			/// <param name="repository">
+			/// The repository instance that will execute the built query.
+			/// </param>
+			internal QueryBuilder(Repository<TEntity, TKey> repository)
+				: base() {
+				ArgumentNullException.ThrowIfNull(repository);
+
+				_repository = repository;
+			}
+
+			/// <inheritdoc />
+			public override ValueTask<TEntity?> FirstOrDefaultAsync(CancellationToken cancellationToken = default) {
+				cancellationToken.ThrowIfCancellationRequested();
+
+				return _repository.FindFirstAsync(Query, cancellationToken);
+			}
+
+			/// <inheritdoc />
+			public override ValueTask<IReadOnlyList<TEntity>> ToListAsync(CancellationToken cancellationToken = default) {
+				cancellationToken.ThrowIfCancellationRequested();
+
+				return _repository.FindAllAsync(Query, cancellationToken);
+			}
+
+			/// <inheritdoc />
+			public override ValueTask<long> CountAsync(CancellationToken cancellationToken = default) {
+				cancellationToken.ThrowIfCancellationRequested();
+
+				return _repository.CountAsync(Query.Filter, cancellationToken);
+			}
+
+			/// <inheritdoc />
+			public override ValueTask<bool> AnyAsync(CancellationToken cancellationToken = default) {
+				cancellationToken.ThrowIfCancellationRequested();
+
+				return _repository.ExistsAsync(Query.Filter, cancellationToken);
+			}
+
+			/// <inheritdoc />
+			public override ValueTask<PageResult<TEntity>> GetPageAsync(int page, int size, CancellationToken cancellationToken = default) {
+				cancellationToken.ThrowIfCancellationRequested();
+
+				var pageQuery = new PageQuery<TEntity>(page, size) { Query = Query };
+				return _repository.GetPageAsync(pageQuery, cancellationToken);
+			}
+		}
 	}
 }

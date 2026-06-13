@@ -2,9 +2,9 @@ import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 
 const sidebars: SidebarsConfig = {
   docs: [
+    'index',
     'introduction',
     'repository-pattern',
-    'index',
     {
       type: 'category',
       label: 'Customize the Repository',
@@ -16,8 +16,23 @@ const sidebars: SidebarsConfig = {
         'custom-repository/registration',
       ],
     },
-    'repository-lifecycle',
-    'user-entities',
+    {
+      type: 'category',
+      label: 'Repository Lifecycle',
+      link: {type: 'doc', id: 'repository-lifecycle/README'},
+      items: [
+        'repository-lifecycle/seeding',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'User Entities',
+      link: {type: 'doc', id: 'user-entities/README'},
+      items: [
+        'user-entities/user-identifier-resolution',
+        'user-entities/automatic-timestamps',
+      ],
+    },
     'multi-tenancy',
     {
       type: 'category',

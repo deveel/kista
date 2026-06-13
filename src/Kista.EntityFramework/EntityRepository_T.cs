@@ -57,7 +57,7 @@ namespace Kista {
 		ValueTask<TEntity?> IFilterableRepository<TEntity, object>.FindFirstAsync(IQuery query, CancellationToken cancellationToken)
 			=> FindFirstAsync(query, cancellationToken);
 
-		ValueTask<IList<TEntity>> IFilterableRepository<TEntity, object>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
+		ValueTask<IReadOnlyList<TEntity>> IFilterableRepository<TEntity, object>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
 			=> FindAllAsync(query, cancellationToken);
 	}
 }

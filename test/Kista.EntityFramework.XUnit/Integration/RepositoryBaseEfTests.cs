@@ -11,7 +11,7 @@ namespace Kista;
 /// hosted on top of an Entity Framework Core provider. The tests verify that
 /// the new translation pipeline binds <see cref="IQuery"/> and
 /// <see cref="PageQuery{TEntity}"/> parameters correctly through the protected
-/// <c>Query()</c> hatch without breaking the underlying ORM provider's
+/// <c>Queryable()</c> hatch without breaking the underlying ORM provider's
 /// change-tracking behaviour.
 /// </summary>
 [Collection(nameof(SqlConnectionCollection))]
@@ -129,7 +129,7 @@ public class RepositoryBaseEfTests {
 
 	/// <summary>
 	/// A thin <see cref="Repository{TEntity,TKey}"/> that
-	/// implements the abstract <c>Query()</c> hatch by returning the EF
+	/// implements the abstract <c>Queryable()</c> hatch by returning the EF
 	/// <see cref="DbSet{TEntity}"/> as <see cref="IQueryable{T}"/>.
 	/// </summary>
 	private class TestEfRepository : Repository<DbPerson, Guid> {
@@ -148,7 +148,7 @@ public class RepositoryBaseEfTests {
 			return entity.Id;
 		}
 
-		protected override IQueryable<DbPerson> Query() => context.Set<DbPerson>();
+		protected override IQueryable<DbPerson> Queryable() => context.Set<DbPerson>();
 
 		protected override bool IsQueryable => true;
 
@@ -198,20 +198,20 @@ public class RepositoryBaseEfTests {
 		/// Public wrapper around the protected <c>FindAsync(IQuery)</c> from the
 		/// base class so that tests can exercise the filtered query pipeline.
 		/// </summary>
-		public ValueTask<IList<DbPerson>> PublicFindAsync(IQuery query, CancellationToken ct = default) =>
+		public ValueTask<IReadOnlyList<DbPerson>> PublicFindAsync(IQuery query, CancellationToken ct = default) =>
 			base.FindAsync(query, ct);
 	}
 
 	/// <summary>
 	/// Variant that disables EF change tracking by applying
-	/// <c>AsNoTracking()</c> inside the <c>Query()</c> hatch. This is the
+	/// <c>AsNoTracking()</c> inside the <c>Queryable()</c> hatch. This is the
 	/// pattern engine authors should follow when they need read-only
 	/// materialisation.
 	/// </summary>
 	private sealed class NoTrackingEfRepository : TestEfRepository {
 		public NoTrackingEfRepository(PersonDbContext context) : base(context) { }
 
-		protected override IQueryable<DbPerson> Query() => Context.Set<DbPerson>().AsNoTracking();
+		protected override IQueryable<DbPerson> Queryable() => Context.Set<DbPerson>().AsNoTracking();
 	}
 
 	private sealed class EfFixture : IAsyncDisposable {

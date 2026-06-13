@@ -221,7 +221,7 @@ namespace Kista {
 		}
 
 		/// <inheritdoc/>
-		public ValueTask<IList<TEntity>> FindAllAsync(IQuery query, CancellationToken cancellationToken = default) {
+		public ValueTask<IReadOnlyList<TEntity>> FindAllAsync(IQuery query, CancellationToken cancellationToken = default) {
 			IEnumerable<TEntity> result;
 
 			if (entities is IQueryable<TEntity> queryable) {
@@ -238,7 +238,7 @@ namespace Kista {
 				}
 			}
 
-			return new ValueTask<IList<TEntity>>(result.ToList());
+			return new ValueTask<IReadOnlyList<TEntity>>(result.ToList());
 		}
 
 		/// <inheritdoc/>

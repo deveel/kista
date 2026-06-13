@@ -1,5 +1,4 @@
 # Repository Lifecycle
-> **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project purpose as a data access framework.
 
 The repository lifecycle feature provides a formalized mechanism to **create**, **drop**, and **seed** repositories during application startup. It replaces the obsolete `IRepositoryController` / `RepositoryControllerAdapter` model with a cleaner handler-based abstraction.
 
@@ -28,13 +27,15 @@ builder.Services.AddRepositoryContext()
     });
 ```
 
-Or register the lifecycle service directly:
+Or register the lifecycle service directly (if you are not using the builder):
 
 ```csharp
 builder.Services.AddRepositoryLifecycleOrchestrator(options => {
     options.FailFast = true;
 });
 ```
+
+> The builder approach via `ConfigureLifecycle()` is recommended for new code. The direct `AddRepositoryLifecycleOrchestrator()` method is kept for backward compatibility.
 
 ### Registering Lifecycle Handlers
 
@@ -84,162 +85,13 @@ builder.Services.AddRepositoryContext()
 | `DeleteIfExists` | `true` | Drop and re-create if the repository already exists. |
 | `DontCreateExisting` | `true` | Skip creation if the repository already exists. |
 | `FailFast` | `false` | Throw if no lifecycle handler is found. |
-| `SeedStrategy` | `Never` | Determines when seeding occurs (see below). |
+| `SeedStrategy` | `Never` | Determines when seeding occurs. |
 | `EnvironmentName` | `null` | Overrides the hosting environment name. |
 | `SeedAction` | `null` | Custom action invoked instead of the handler's `SeedAsync`. |
 
 ### Conflict Resolution
 
 When both `DeleteIfExists` and `DontCreateExisting` are `false` and the repository exists, `CreateRepositoryAsync` throws `RepositoryException`.
-
-## Seed Strategies
-
-The `SeedStrategy` enum controls when seed data is applied:
-
-| Value | Behavior |
-| ----- | -------- |
-| `Never` | No seeding is performed. |
-| `Always` | Seeding is always performed. |
-| `IfMissing` | Seeding is performed only when the repository does not exist. |
-| `ByEnvironment` | The strategy is delegated to an `IRepositoryLifecycleProfile`. |
-
-### Environment-Aware Seeding
-
-When `SeedStrategy` is `ByEnvironment`, the service:
-
-1. Reads `EnvironmentName` from options (or resolves it from `IHostEnvironment`).
-2. Queries the registered `IRepositoryLifecycleProfile` for the effective strategy.
-3. Falls back to `Always` if no profile is registered.
-
-### Seed Data Sources
-
-Seed data can come from three sources (evaluated in order):
-
-1. **Explicit data** passed to `SeedRepositoryAsync(data)`.
-2. An **`IRepositorySeedDataProvider<TEntity>`** registered in DI.
-3. A **`SeedAction`** callback on `RepositoryLifecycleOptions`.
-
-If no source provides data, seeding is silently skipped.
-
-### Automatic Discovery
-
-When you call `ConfigureLifecycle()`, the builder **automatically scans the entry assembly** for any class implementing `IRepositorySeedDataProvider<TEntity>` and registers it with `TryAdd` — so explicit registrations always take priority.
-
-```csharp
-// This provider is auto-discovered — no explicit registration needed
-public class ProductSeedProvider : IRepositorySeedDataProvider<Product> {
-    public IEnumerable<Product> GetSeedData() {
-        yield return new Product { Name = "Widget", Price = 9.99m };
-    }
-}
-
-// ConfigureLifecycle triggers the auto-scan
-builder.Services.AddRepositoryContext()
-    .UseEntityFramework<AppDbContext>(...)
-    .ConfigureLifecycle(options => {
-        options.SeedStrategy = SeedStrategy.Always;
-    });
-```
-
-### Explicit Registration
-
-When you need to register providers from multiple assemblies or want to be explicit, use `WithSeedDataFrom()`:
-
-```csharp
-builder.Services.AddRepositoryContext()
-    .UseInMemory(b => b.WithLifecycle())
-    .ConfigureLifecycle(options => { ... })
-    .WithSeedDataFrom(typeof(ProductSeedProvider).Assembly,
-                           typeof(OtherSeedProvider).Assembly);
-```
-
-### Seeding Examples
-
-#### Via `WithSeedData` (Recommended)
-
-The `RepositoryContextBuilder` provides two overloads:
-
-**Using a provider class:**
-
-```csharp
-public class MyEntitySeedProvider : IRepositorySeedDataProvider<MyEntity> {
-    public IEnumerable<MyEntity> GetSeedData() {
-        yield return new MyEntity { Name = "Default Item", IsActive = true };
-        yield return new MyEntity { Name = "Another Item", IsActive = true };
-    }
-
-    IEnumerable<object> IRepositorySeedDataProvider.GetSeedData()
-        => GetSeedData().Cast<object>();
-}
-
-// Program.cs
-builder.Services.AddRepositoryContext()
-    .UseEntityFramework<AppDbContext>(...)
-    .ConfigureLifecycle(options => {
-        options.SeedStrategy = SeedStrategy.Always;
-    })
-    .WithSeedData<MyEntity, MyEntitySeedProvider>();
-```
-
-**Using inline data (no provider class needed):**
-
-```csharp
-builder.Services.AddRepositoryContext()
-    .UseEntityFramework<AppDbContext>(...)
-    .ConfigureLifecycle(options => {
-        options.SeedStrategy = SeedStrategy.Always;
-    })
-    .WithSeedData<MyEntity>(new[] {
-        new MyEntity { Name = "Default Item", IsActive = true },
-        new MyEntity { Name = "Another Item", IsActive = true }
-    });
-```
-
-All overloads register an `IRepositorySeedDataProvider<TEntity>` in DI behind the scenes. The service resolves it during `SeedRepositoryAsync<TEntity>` and the driver's lifecycle handler inserts the data.
-
-> Explicit `WithSeedData` calls use `Add` (always registers). Auto-discovered providers use `TryAdd` — so explicit wins if both are present.
-
-#### Via `SeedAction` Callback
-
-Override the default seeding behavior with a custom action:
-
-```csharp
-builder.Services.AddRepositoryContext()
-    .UseEntityFramework<AppDbContext>(...)
-    .ConfigureLifecycle(options => {
-        options.SeedStrategy = SeedStrategy.Always;
-        options.SeedAction = (sp, entityType, seedData) => {
-            if (entityType == typeof(MyEntity) && seedData is IEnumerable<MyEntity> entities) {
-                var context = sp.GetRequiredService<AppDbContext>();
-                context.Set<MyEntity>().AddRange(entities);
-                context.SaveChanges();
-            }
-        };
-    });
-```
-
-The `SeedAction` receives the service provider, the entity type being seeded, and the resolved seed data (or `null`).
-
-#### Via Explicit Call
-
-Trigger lifecycle operations explicitly from your application:
-
-```csharp
-var lifecycleService = app.Services.GetRequiredService<IRepositoryLifecycleService>();
-
-// Create the repository and seed in one flow
-await lifecycleService.CreateRepositoryAsync<MyEntity>();
-await lifecycleService.SeedRepositoryAsync<MyEntity>(new[] {
-    new MyEntity { Name = "Startup Item" }
-});
-
-// Or use the combined lifecycle flow (create + seed)
-await lifecycleService.SeedRepositoryAsync<MyEntity>(new[] {
-    new MyEntity { Name = "Startup Item" }
-});
-```
-
-> When `SeedRepositoryAsync` is called with explicit data and `SeedStrategy` is not `Never`, the data is passed directly to the driver's lifecycle handler without consulting `IRepositorySeedDataProvider` or `SeedAction`.
 
 ## Lifecycle Handlers
 
@@ -288,31 +140,23 @@ Inside `ResolveHandler<TEntity>()` (and its `TEntity, TKey` variant), the servic
 4. If neither exists and `FailFast` is `true`, throws `RepositoryException`. Otherwise returns `null` (operation is silently skipped).
 
 ```csharp
-// Pseudocode of the fallback logic
 var handler = serviceProvider.GetService<IRepositoryLifecycleHandler<TEntity>>();
 if (handler != null) return handler;
 
 var repository = serviceProvider.GetService<IRepository<TEntity>>();
 if (repository is IControllableRepository controllable)
     return new ControllableRepositoryHandler<TEntity>(controllable);
-
-// No handler, no controllable repository — skip or fail
 ```
 
 #### Seeding Note
 
-`ControllableRepositoryHandler<TEntity>.SeedAsync` is a **no-op** — the controllable interface has no seed operation. When using the controllable-repository fallback, seeding must be done either:
-- Via an `IRepositorySeedDataProvider<TEntity>` (auto-discovered or explicit)
-- Via a `SeedAction` callback in `RepositoryLifecycleOptions`
-- By passing explicit data to `SeedRepositoryAsync(data)`
-
-The service's `SeedRepository` method itself handles data resolution (provider → service → explicit), so seed data flows normally even though the handler's `SeedAsync` is a no-op.
+`ControllableRepositoryHandler<TEntity>.SeedAsync` is a **no-op** — the controllable interface has no seed operation. When using the controllable-repository fallback, seeding must be done via one of the methods described in [Seeding](seeding.md).
 
 #### Handler vs Controllable
 
 | Approach | When to Use |
 | -------- | ----------- |
-| `IRepositoryLifecycleHandler<TEntity>` | Custom lifecycle logic that is separate from the repository (e.g., creating a database schema, running migrations). Also required when seeding data. |
+| `IRepositoryLifecycleHandler<TEntity>` | Custom lifecycle logic separate from the repository (e.g., creating a database schema, running migrations). Required when seeding data. |
 | `IControllableRepository` on the repository class | The repository **is** the storage and can create/drop itself. Common when the repository directly wraps a database collection or table. |
 
 #### Driver Support
@@ -356,7 +200,7 @@ The `Kista.SampleApp` demonstrates a complete ASP.NET Core application using lif
 - **Lifecycle Handler**: `ContactLifecycleHandler` for create/drop/seed operations
 - **Lifecycle Profile**: `SampleLifecycleProfile` for environment-aware seeding
 - **Seed Data**: `DefaultContactSeedData` implementing `IRepositorySeedDataProvider<Contact>`
-- **Endpoints**: 
+- **Endpoints**:
   - `/api/lifecycle/create` — Create the repository
   - `/api/lifecycle/drop` — Drop the repository
   - `/api/lifecycle/seed` — Seed the repository
@@ -366,7 +210,6 @@ The `Kista.SampleApp` demonstrates a complete ASP.NET Core application using lif
 ### Registration
 
 ```csharp
-// Extension method (see sample for full implementation)
 builder.Services.AddContactRepository(builder.Configuration);
 ```
 

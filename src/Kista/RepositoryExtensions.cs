@@ -1826,12 +1826,12 @@ namespace Kista {
 		/// </exception>
 		[ExcludeFromCodeCoverage]
 		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. Filtering is now provided directly by the base class.", false)]
-		public static ValueTask<IList<TEntity>> FindAllAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, IQuery query, CancellationToken cancellationToken = default)
+		public static ValueTask<IReadOnlyList<TEntity>> FindAllAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, IQuery query, CancellationToken cancellationToken = default)
 			where TEntity : class {
 			if (repository.IsFilterable())
 				return repository.AsFilterable().FindAllAsync(query, cancellationToken);
 			if (repository.IsQueryable())
-				return new ValueTask<IList<TEntity>>(query.Apply(repository.AsQueryable().AsQueryable()).ToList());
+				return new ValueTask<IReadOnlyList<TEntity>>(query.Apply(repository.AsQueryable().AsQueryable()).ToList());
 
 			throw new NotSupportedException("The repository does not support querying");
 		}
@@ -1861,7 +1861,7 @@ namespace Kista {
 		/// </returns>
 		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
-		public static ValueTask<IList<TEntity>> FindAllAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, IQueryFilter filter, CancellationToken cancellationToken = default)
+		public static ValueTask<IReadOnlyList<TEntity>> FindAllAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, IQueryFilter filter, CancellationToken cancellationToken = default)
 			where TEntity : class
 			=> repository.FindAllAsync(new Query(filter), cancellationToken);
 
@@ -1890,7 +1890,7 @@ namespace Kista {
 		/// </returns>
 		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
-		public static ValueTask<IList<TEntity>> FindAllAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken = default)
+		public static ValueTask<IReadOnlyList<TEntity>> FindAllAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken = default)
             where TEntity : class
             => repository.FindAllAsync(Query.Where(filter), cancellationToken);
 
@@ -1918,7 +1918,7 @@ namespace Kista {
 		/// </exception>
 		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
-		public static ValueTask<IList<TEntity>> FindAllAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, CancellationToken cancellationToken = default)
+		public static ValueTask<IReadOnlyList<TEntity>> FindAllAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, CancellationToken cancellationToken = default)
             where TEntity : class
             => repository.FindAllAsync(Query.Empty, cancellationToken);
 
@@ -1943,7 +1943,7 @@ namespace Kista {
 		/// </exception>
 		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
-		public static IList<TEntity> FindAll<TEntity, TKey>(this IRepository<TEntity, TKey> repository)
+		public static IReadOnlyList<TEntity> FindAll<TEntity, TKey>(this IRepository<TEntity, TKey> repository)
             where TEntity : class
             => repository.FindAll(QueryFilter.Empty);
 
@@ -1969,7 +1969,7 @@ namespace Kista {
 		/// </returns>
 		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
-		public static IList<TEntity> FindAll<TEntity, TKey>(this IRepository<TEntity, TKey> repository, IQueryFilter filter)
+		public static IReadOnlyList<TEntity> FindAll<TEntity, TKey>(this IRepository<TEntity, TKey> repository, IQueryFilter filter)
             where TEntity : class
             => repository.FindAllAsync(filter).ConfigureAwait(false).GetAwaiter().GetResult();
 
@@ -2006,7 +2006,7 @@ namespace Kista {
 		/// </exception>
 		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
-		public static IList<TEntity> FindAll<TEntity, TKey>(this IRepository<TEntity, TKey> repository, IQuery query)
+		public static IReadOnlyList<TEntity> FindAll<TEntity, TKey>(this IRepository<TEntity, TKey> repository, IQuery query)
 			where TEntity : class
 			=> repository.FindAllAsync(query).ConfigureAwait(false).GetAwaiter().GetResult();
 
@@ -2040,7 +2040,7 @@ namespace Kista {
 		/// </remarks>
 		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
-		public static IList<TEntity> FindAll<TEntity, TKey>(this IRepository<TEntity, TKey> repository, Expression<Func<TEntity, bool>> filter)
+		public static IReadOnlyList<TEntity> FindAll<TEntity, TKey>(this IRepository<TEntity, TKey> repository, Expression<Func<TEntity, bool>> filter)
 			where TEntity : class
 			=> repository.FindAllAsync(filter).ConfigureAwait(false).GetAwaiter().GetResult();
 
@@ -2071,7 +2071,7 @@ namespace Kista {
 		/// </remarks>
 		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
-		public static IList<TEntity> FindAll<TEntity>(this IRepository<TEntity> repository, IQueryFilter filter)
+		public static IReadOnlyList<TEntity> FindAll<TEntity>(this IRepository<TEntity> repository, IQueryFilter filter)
 			where TEntity : class
 			=> repository.FindAllAsync(filter).ConfigureAwait(false).GetAwaiter().GetResult();
 
@@ -2100,7 +2100,7 @@ namespace Kista {
 		/// </exception>
 		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
-		public static ValueTask<IList<TEntity>> FindAllAsync<TEntity>(this IRepository<TEntity> repository, IQuery query, CancellationToken cancellationToken = default)
+		public static ValueTask<IReadOnlyList<TEntity>> FindAllAsync<TEntity>(this IRepository<TEntity> repository, IQuery query, CancellationToken cancellationToken = default)
 			where TEntity : class
 			=> FindAllAsync<TEntity, object>(repository, query, cancellationToken);
 
@@ -2126,7 +2126,7 @@ namespace Kista {
 		/// </returns>
 		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
-		public static ValueTask<IList<TEntity>> FindAllAsync<TEntity>(this IRepository<TEntity> repository, IQueryFilter filter, CancellationToken cancellationToken = default)
+		public static ValueTask<IReadOnlyList<TEntity>> FindAllAsync<TEntity>(this IRepository<TEntity> repository, IQueryFilter filter, CancellationToken cancellationToken = default)
 			where TEntity : class
 			=> FindAllAsync<TEntity, object>(repository, filter, cancellationToken);
 
@@ -2152,7 +2152,7 @@ namespace Kista {
 		/// </returns>
 		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
-		public static ValueTask<IList<TEntity>> FindAllAsync<TEntity>(this IRepository<TEntity> repository, Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken = default)
+		public static ValueTask<IReadOnlyList<TEntity>> FindAllAsync<TEntity>(this IRepository<TEntity> repository, Expression<Func<TEntity, bool>> filter, CancellationToken cancellationToken = default)
 			where TEntity : class
 			=> FindAllAsync<TEntity, object>(repository, filter, cancellationToken);
 
@@ -2178,7 +2178,7 @@ namespace Kista {
 		/// </exception>
 		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
-		public static ValueTask<IList<TEntity>> FindAllAsync<TEntity>(this IRepository<TEntity> repository, CancellationToken cancellationToken = default)
+		public static ValueTask<IReadOnlyList<TEntity>> FindAllAsync<TEntity>(this IRepository<TEntity> repository, CancellationToken cancellationToken = default)
 			where TEntity : class
 			=> FindAllAsync<TEntity, object>(repository, cancellationToken);
 
@@ -2209,7 +2209,7 @@ namespace Kista {
 		/// </remarks>
 		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
-		public static IList<TEntity> FindAll<TEntity>(this IRepository<TEntity> repository, IQuery query)
+		public static IReadOnlyList<TEntity> FindAll<TEntity>(this IRepository<TEntity> repository, IQuery query)
 			where TEntity : class
 			=> repository.FindAllAsync(query).ConfigureAwait(false).GetAwaiter().GetResult();
 
@@ -2240,7 +2240,7 @@ namespace Kista {
 		/// </remarks>
 		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
-		public static IList<TEntity> FindAll<TEntity>(this IRepository<TEntity> repository, Expression<Func<TEntity, bool>> filter)
+		public static IReadOnlyList<TEntity> FindAll<TEntity>(this IRepository<TEntity> repository, Expression<Func<TEntity, bool>> filter)
 			where TEntity : class
 			=> repository.FindAllAsync(filter).ConfigureAwait(false).GetAwaiter().GetResult();
 
@@ -2268,7 +2268,7 @@ namespace Kista {
 		/// </remarks>
 		[ExcludeFromCodeCoverage]
 		[Obsolete("Query capabilities should not be exposed through the IRepository contract. Use the abstract Repository<TEntity, TKey> base class instead.", false)]
-		public static IList<TEntity> FindAll<TEntity>(this IRepository<TEntity> repository)
+		public static IReadOnlyList<TEntity> FindAll<TEntity>(this IRepository<TEntity> repository)
 			where TEntity : class
 			=> repository.FindAllAsync().ConfigureAwait(false).GetAwaiter().GetResult();
 

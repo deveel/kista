@@ -129,7 +129,7 @@ namespace Kista {
 		/// <exception cref="ArgumentException">
 		/// Thrown when the given repository is not a <see cref="MongoRepository{TEntity}"/>.
 		/// </exception>
-		public static ValueTask<IList<TEntity>> FindAllByGeoDistanceAsync<TEntity>(this IRepository<TEntity> repository, Expression<Func<TEntity, object>> field, GeoPoint point, double? maxDistance = null)
+		public static ValueTask<IReadOnlyList<TEntity>> FindAllByGeoDistanceAsync<TEntity>(this IRepository<TEntity> repository, Expression<Func<TEntity, object>> field, GeoPoint point, double? maxDistance = null)
 			where TEntity : class {
 			ArgumentNullException.ThrowIfNull(repository);
 
@@ -169,7 +169,7 @@ namespace Kista {
 		/// <exception cref="ArgumentException">
 		/// Thrown when the given repository is not a <see cref="MongoRepository{TEntity, TKey}"/>.
 		/// </exception>
-		public static ValueTask<IList<TEntity>> FindAllByGeoDistanceAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, Expression<Func<TEntity, object>> field, GeoPoint point, double? maxDistance = null)
+		public static ValueTask<IReadOnlyList<TEntity>> FindAllByGeoDistanceAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, Expression<Func<TEntity, object>> field, GeoPoint point, double? maxDistance = null)
 			where TEntity : class {
 			ArgumentNullException.ThrowIfNull(repository);
 

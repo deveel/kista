@@ -156,7 +156,7 @@ For driver-specific configuration, multi-tenancy, and guidance on writing a cust
 | [Entity Manager](docs/entity-manager/) | Business layer with validation, caching, and events |
 | [Custom repositories](docs/custom-repository/) | Write your own driver |
 | [Multi-Tenancy](docs/multi-tenancy.md) | Tenant-isolated repositories |
-| [User Entities](docs/user-entities.md) | User-scoped entities with owner filtering |
+| [User Entities](docs/user-entities/) | User-scoped entities with owner filtering |
 
 Full documentation is also available on [GitBook](https://deveel.gitbook.io/kista/).
 

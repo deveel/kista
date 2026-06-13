@@ -1244,7 +1244,7 @@ namespace Kista {
 		/// <exception cref="OperationException">
 		/// Thrown when an unknown error occurs while looking for the entities.
 		/// </exception>
-		public virtual async ValueTask<IList<TEntity>> FindAllAsync(IQuery query, CancellationToken? cancellationToken = null) {
+		public virtual async ValueTask<IReadOnlyList<TEntity>> FindAllAsync(IQuery query, CancellationToken? cancellationToken = null) {
 			ThrowIfDisposed();
 
 			if (!SupportsFilters)
@@ -1284,7 +1284,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository does not support filters.
 		/// </exception>
-		public ValueTask<IList<TEntity>> FindAllAsync(Expression<Func<TEntity, bool>>? filter = null, CancellationToken? cancellationToken = null)
+		public ValueTask<IReadOnlyList<TEntity>> FindAllAsync(Expression<Func<TEntity, bool>>? filter = null, CancellationToken? cancellationToken = null)
 			=> FindAllAsync(Query.Where(filter), cancellationToken);
 
 		/// <summary>

@@ -1,0 +1,140 @@
+using System.ComponentModel.DataAnnotations;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+
+namespace Kista;
+
+[Trait("Category", "Integration")]
+[Trait("Layer", "Infrastructure")]
+[Trait("Feature", "EntityRepository")]
+public class EntityRepositoryNonKeyedTests : IDisposable
+{
+    private readonly SqliteConnection _connection;
+    private bool _disposed;
+
+    public EntityRepositoryNonKeyedTests()
+    {
+        _connection = new SqliteConnection("Data Source=:memory:");
+        _connection.Open();
+    }
+
+    public void Dispose()
+    {
+        if (!_disposed)
+        {
+            _disposed = true;
+            _connection?.Close();
+            _connection?.Dispose();
+        }
+    }
+
+    [Fact]
+    public async Task Should_DelegateExists_When_CalledThroughNonKeyedInterface()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        using var dbContext = CreateDbContext();
+        await dbContext.Database.EnsureCreatedAsync(ct);
+
+        dbContext.Set<SimpleEntity>().Add(new SimpleEntity { Name = "Existing" });
+        await dbContext.SaveChangesAsync(ct);
+
+        var repo = new EntityRepository<SimpleEntity>(dbContext);
+        var nonKeyed = (IFilterableRepository<SimpleEntity, object>)repo;
+
+        var exists = await nonKeyed.ExistsAsync(
+            new ExpressionQueryFilter<SimpleEntity>(x => x.Name == "Existing"), ct);
+
+        Assert.True(exists);
+    }
+
+    [Fact]
+    public async Task Should_DelegateCount_When_CalledThroughNonKeyedInterface()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        using var dbContext = CreateDbContext();
+        await dbContext.Database.EnsureCreatedAsync(ct);
+
+        dbContext.Set<SimpleEntity>().AddRange(
+            new SimpleEntity { Name = "A" },
+            new SimpleEntity { Name = "B" });
+        await dbContext.SaveChangesAsync(ct);
+
+        var repo = new EntityRepository<SimpleEntity>(dbContext);
+        var nonKeyed = (IFilterableRepository<SimpleEntity, object>)repo;
+
+        var count = await nonKeyed.CountAsync(
+            new ExpressionQueryFilter<SimpleEntity>(x => x.Name != ""), ct);
+
+        Assert.Equal(2, count);
+    }
+
+    [Fact]
+    public async Task Should_DelegateFindFirst_When_CalledThroughNonKeyedInterface()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        using var dbContext = CreateDbContext();
+        await dbContext.Database.EnsureCreatedAsync(ct);
+
+        dbContext.Set<SimpleEntity>().AddRange(
+            new SimpleEntity { Name = "First" },
+            new SimpleEntity { Name = "Second" });
+        await dbContext.SaveChangesAsync(ct);
+
+        var repo = new EntityRepository<SimpleEntity>(dbContext);
+        var nonKeyed = (IFilterableRepository<SimpleEntity, object>)repo;
+
+        var found = await nonKeyed.FindFirstAsync(
+            new Query(new ExpressionQueryFilter<SimpleEntity>(x => x.Name == "First"), null), ct);
+
+        Assert.NotNull(found);
+        Assert.Equal("First", found.Name);
+    }
+
+    [Fact]
+    public async Task Should_DelegateFindAll_When_CalledThroughNonKeyedInterface()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        using var dbContext = CreateDbContext();
+        await dbContext.Database.EnsureCreatedAsync(ct);
+
+        dbContext.Set<SimpleEntity>().AddRange(
+            new SimpleEntity { Name = "X" },
+            new SimpleEntity { Name = "Y" });
+        await dbContext.SaveChangesAsync(ct);
+
+        var repo = new EntityRepository<SimpleEntity>(dbContext);
+        var nonKeyed = (IFilterableRepository<SimpleEntity, object>)repo;
+
+        var all = await nonKeyed.FindAllAsync(
+            new Query(new ExpressionQueryFilter<SimpleEntity>(x => x.Name != ""), null), ct);
+
+        Assert.Collection(all.OrderBy(x => x.Name),
+            x => Assert.Equal("X", x.Name),
+            x => Assert.Equal("Y", x.Name));
+    }
+
+    private SimpleDbContext CreateDbContext()
+    {
+        var options = new DbContextOptionsBuilder<SimpleDbContext>()
+            .UseSqlite(_connection)
+            .Options;
+        return new SimpleDbContext(options);
+    }
+
+    public class SimpleEntity
+    {
+        [Key]
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+    }
+
+    public class SimpleDbContext : DbContext
+    {
+        public SimpleDbContext(DbContextOptions<SimpleDbContext> options) : base(options)
+        {
+        }
+
+        public DbSet<SimpleEntity> Entities => Set<SimpleEntity>();
+    }
+}

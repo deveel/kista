@@ -1,6 +1,4 @@
 # Roadmap
-> **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project purpose as a data access framework.
-
 The Kista framework provides a pragmatic, DDD-aligned abstraction for multi-source data access in .NET. Below is the planned roadmap of future releases.
 
 See the [full roadmap](https://github.com/deveel/kista/blob/main/ROADMAP.md) for detailed feature descriptions, timelines, and architectural decisions.
@@ -29,10 +27,11 @@ Features: Package Namespace Correction, Thread-Safe In-Memory Repository, Expres
 **Release Target:** Q3 2026  
 **Theme:** Unified setup, executable queries, seamless DI
 
-Features: Unified Repository Setup Builder, QueryBuilder Execution Extensions, Pluggable Cache Provider Abstraction, Automatic Timestamp and Ownership Management, Repository Health Checks, Repository Controller Lifecycle Redesign.
+Features: Unified Repository Setup Builder, Pluggable Cache Provider Abstraction, Automatic Timestamp and Ownership Management, Repository Health Checks, Repository Controller Lifecycle Redesign.
 
 ### Completed in v1.6.0
 
+- **QueryBuilder Execution Extensions**: `QueryBuilder<TEntity>` now implements `IQueryBuilder<TEntity>` with terminal methods (`FirstOrDefaultAsync`, `ToListAsync`, `CountAsync`, `AnyAsync`, `GetPageAsync`). `Repository.CreateQuery()` returns a repository-bound builder that dispatches through the protected pipeline.
 - **Lifecycle Service Renamed**: `IRepositoryLifecycleOrchestrator` → `IRepositoryLifecycleService` (clearer naming)
 - **Builder Extensions**: `WithLifecycleHandler<TEntity, THandler>()` and `WithLifecycleProfile<TProfile>()` for fluent registration
 - **Default Lifecycle Profile**: `ConfigureLifecycle()` now auto-registers `DefaultRepositoryLifecycleProfile`

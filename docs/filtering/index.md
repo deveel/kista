@@ -1,6 +1,4 @@
 # Filtering
-> **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project purpose as a data access framework.
-
 The _Kista_ framework provides a flexible filtering system that allows you to query repositories using a variety of filter types, from strongly-typed lambda expressions to runtime string-based Dynamic LINQ predicates.
 
 ## Filter Types
@@ -63,15 +61,30 @@ Repositories that implement `IFilterableRepository<TEntity, TKey>` expose these 
 | `FindFirstAsync(IQuery, CancellationToken)` | Returns the first matching entity |
 | `FindAllAsync(IQuery, CancellationToken)` | Returns all matching entities |
 
-The `IQuery` interface (used by `FindFirstAsync` and `FindAllAsync`) combines a filter with optional sorting:
+The `IQuery` interface (used by `FindFirstAsync` and `FindAllAsync`) combines a filter with optional sorting. You can build queries using the fluent `QueryBuilder<TEntity>`, typically obtained from a repository via `CreateQuery()`:
 
 ```csharp
+// Inside a Repository subclass (recommended)
+public async Task<IReadOnlyList<Order>> FindActiveOrdersAsync(CancellationToken ct = default) {
+    return await CreateQuery()
+        .Where(x => x.Status == "Active")
+        .OrderBy(x => x.CreatedDate)
+        .ToListAsync(ct);
+}
+```
+
+The builder's terminal methods dispatch through the repository's protected pipeline. Alternatively, you can construct a standalone query object and pass it to the protected methods:
+
+```csharp
+// Standalone query passed to a protected method
 var query = new QueryBuilder<Order>()
     .Where(x => x.Status == "Active")
     .OrderBy(x => x.CreatedDate);
 
-var results = await repository.FindAllAsync(query);
+var results = await FindAllAsync(query, ct);
 ```
+
+> `QueryBuilder<TEntity>` implements `IQueryBuilder<TEntity>` (which extends `IQuery`), so a standalone builder can be passed to methods that accept `IQuery`. Terminal methods on an unbound builder throw `InvalidOperationException`.
 
 ## Filter Context and Automatic Service Resolution
 

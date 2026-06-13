@@ -203,12 +203,12 @@ namespace Kista {
 		/// Returns a snapshot <see cref="IQueryable{T}"/> of the entities
 		/// currently in the repository.
 		/// </returns>
-		protected override IQueryable<TEntity> Query() => Entities.AsQueryable();
+		protected override IQueryable<TEntity> Queryable() => Entities.AsQueryable();
 
 		/// <inheritdoc />
 		protected override bool IsQueryable => true;
 
-		IQueryable<TEntity> IQueryableRepository<TEntity, TKey>.AsQueryable() => Query();
+		IQueryable<TEntity> IQueryableRepository<TEntity, TKey>.AsQueryable() => Queryable();
 
 		ValueTask<bool> IFilterableRepository<TEntity, TKey>.ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken)
 			=> ExistsAsync(filter, cancellationToken);
@@ -219,7 +219,7 @@ namespace Kista {
 		ValueTask<TEntity?> IFilterableRepository<TEntity, TKey>.FindFirstAsync(IQuery query, CancellationToken cancellationToken)
 			=> FindFirstAsync(query, cancellationToken);
 
-		ValueTask<IList<TEntity>> IFilterableRepository<TEntity, TKey>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
+		ValueTask<IReadOnlyList<TEntity>> IFilterableRepository<TEntity, TKey>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
 			=> FindAllAsync(query, cancellationToken);
 
 		/// <summary>
@@ -514,7 +514,7 @@ namespace Kista {
 
 
 		/// <inheritdoc/>
-		protected override ValueTask<IList<TEntity>> FindAllAsync(IQuery query, CancellationToken cancellationToken = default) {
+		protected override ValueTask<IReadOnlyList<TEntity>> FindAllAsync(IQuery query, CancellationToken cancellationToken = default) {
 			cancellationToken.ThrowIfCancellationRequested();
 
 			try {
@@ -522,7 +522,7 @@ namespace Kista {
 				_lock.EnterReadLock();
 				try {
 					var result = query.Apply(GetEntityQueryable()).ToList();
-					return new ValueTask<IList<TEntity>>(result);
+					return new ValueTask<IReadOnlyList<TEntity>>(result);
 				} finally {
 					_lock.ExitReadLock();
 				}

@@ -14,10 +14,10 @@ To learn about the specific usage of the framework, you can read the following d
 | [_Filtering_](filtering/) | Expression-based and Dynamic LINQ filtering with automatic service resolution |
 | [_Filter Cache_](filtering/filter-cache.md) | Bounded expression caching for high-throughput Dynamic LINQ queries |
 | [_The Entity Manager_](entity-manager/) | Provide your application with a business layer on top of the Repository for additional functions (_logging_, _validation_, _caching_, _event sourcing_, etc.) |
-| [_Repository Lifecycle_](repository-lifecycle.md) | Automate repository creation, teardown, and seeding during application startup |
+| [_Repository Lifecycle_](repository-lifecycle/) | Automate repository creation, teardown, and seeding during application startup |
 | [_Extending the Repository_](custom-repository/) | Learn how to create a custom repository to access your data source, according to your specific data logic |
 | [_Multi-Tenancy_](multi-tenancy.md) | Learn how to use the framework in a multi-tenant application |
-| [_User Entities_](user-entities.md) | Learn how to define and query entities that are scoped to a specific user |
+| [_User Entities_](user-entities/) | Learn how to define and query entities that are scoped to a specific user |
 | [_Sample Application_](sample-app.md) | A complete ASP.NET Core reference app with lifecycle management and CRUD endpoints |
 
 ## Installation
@@ -59,7 +59,7 @@ dotnet add package Kista
 | [_Entity Manager_](entity-manager/) | `Kista.Manager` | Business layer with validation, normalization, caching, and event sourcing. |
 | [_Entity Manager EasyCaching_](entity-manager/caching-entities.md) | `Kista.Manager.EasyCaching` | Second-level caching for EntityManager via [EasyCaching](https://github.com/dotnetcore/EasyCaching). |
 | [_Entity Manager ASP.NET Core_](entity-manager/http-request-cancellation.md) | `Kista.Manager.AspNetCore` | ASP.NET Core integration for automatic HTTP request cancellation. |
-| [_User Entities / Owner Scoping_](user-entities.md) | `Kista.Owners` | Decorator-based user scoping with automatic owner assignment and query filtering. |
+| [_User Entities / Owner Scoping_](user-entities/) | `Kista.Owners` | Decorator-based user scoping with automatic owner assignment and query filtering. |
 | [_Entity States_](#) | `Kista.States.Core` | Entity state management abstractions (experimental). |
 
 ## Instrumentation
@@ -132,3 +132,38 @@ After registration, the following service types become available in the DI conta
 | `ITrackingRepository<MyEntity>` | Change-tracking queries (if implemented). |
 
 > **Note:** The legacy extension interfaces `IQueryableRepository`, `IPageableRepository`, and `IFilterableRepository` are deprecated. Query capabilities are now provided through `protected` members of `Repository<TEntity, TKey>` and should be exposed via domain-specific methods on your custom repository interface. See [The Repository Pattern](repository-pattern.md) and [Customize the Repository](custom-repository/) for details.
+
+### Quick Example
+
+After registration, inject `IRepository<TEntity>` into your application code. Here is a minimal ASP.NET Core API that manages a `Person` entity:
+
+```csharp
+// Entity
+public class Person {
+    public Guid Id { get; set; }
+    public string Name { get; set; }
+    public string Email { get; set; }
+}
+
+// Registration in Program.cs
+builder.Services.AddRepositoryContext()
+    .UseInMemory();
+
+// Minimal API endpoint
+app.MapGet("/people", async (IRepository<Person> repo) => {
+    var people = await repo.FindAllAsync();
+    return Results.Ok(people);
+});
+
+app.MapPost("/people", async (Person person, IRepository<Person> repo) => {
+    await repo.AddAsync(person);
+    return Results.Created($"/people/{person.Id}", person);
+});
+
+app.MapGet("/people/{id}", async (Guid id, IRepository<Person> repo) => {
+    var person = await repo.FindAsync(id);
+    return person is not null ? Results.Ok(person) : Results.NotFound();
+});
+```
+
+The repository handles all CRUD operations — no `DbContext`, no `IMongoCollection`, no SQL. The underlying driver translates calls into the appropriate storage commands.

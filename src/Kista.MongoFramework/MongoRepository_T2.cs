@@ -118,12 +118,12 @@ namespace Kista {
 		/// Returns the <see cref="IQueryable{T}"/> produced by
 		/// <see cref="DbSet"/>.AsQueryable().
 		/// </returns>
-		protected override IQueryable<TEntity> Query() => DbSet.AsQueryable();
+		protected override IQueryable<TEntity> Queryable() => DbSet.AsQueryable();
 
 		/// <inheritdoc />
 		protected override bool IsQueryable => true;
 
-		IQueryable<TEntity> IQueryableRepository<TEntity, TKey>.AsQueryable() => Query();
+		IQueryable<TEntity> IQueryableRepository<TEntity, TKey>.AsQueryable() => Queryable();
 
 		ValueTask<bool> IFilterableRepository<TEntity, TKey>.ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken)
 			=> ExistsAsync(filter, cancellationToken);
@@ -134,7 +134,7 @@ namespace Kista {
 		ValueTask<TEntity?> IFilterableRepository<TEntity, TKey>.FindFirstAsync(IQuery query, CancellationToken cancellationToken)
 			=> FindFirstAsync(query, cancellationToken);
 
-		ValueTask<IList<TEntity>> IFilterableRepository<TEntity, TKey>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
+		ValueTask<IReadOnlyList<TEntity>> IFilterableRepository<TEntity, TKey>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
 			=> FindAllAsync(query, cancellationToken);
 
 		/// <summary>
@@ -637,7 +637,7 @@ namespace Kista {
 		protected override async ValueTask<TEntity?> FindFirstAsync(IQuery query, CancellationToken cancellationToken = default) {
 			try {
 				InitializeFilter(query.Filter);
-				var entities = query.Apply(Query());
+				var entities = query.Apply(Queryable());
 				return await entities.FirstOrDefaultAsync(cancellationToken);
 			} catch (Exception ex) {
 				throw new RepositoryException("Unable to find the entity", ex);
@@ -645,10 +645,10 @@ namespace Kista {
 		}
 
 		/// <inheritdoc/>
-		protected override async ValueTask<IList<TEntity>> FindAllAsync(IQuery query, CancellationToken cancellationToken = default) {
+		protected override async ValueTask<IReadOnlyList<TEntity>> FindAllAsync(IQuery query, CancellationToken cancellationToken = default) {
 			try {
 				InitializeFilter(query.Filter);
-				var entities = query.Apply(Query());
+				var entities = query.Apply(Queryable());
 				return await entities.ToListAsync(cancellationToken);
 			} catch (Exception ex) {
 
@@ -660,7 +660,7 @@ namespace Kista {
 		async ValueTask<PageQueryResult<TEntity>> IPageableRepository<TEntity, TKey>.GetPageAsync(PageQuery<TEntity> query, CancellationToken cancellationToken) {
 			try {
 				InitializeFilter(((IQuery)query).Filter);
-				var entitySet = query.ApplyQuery(Query());
+				var entitySet = query.ApplyQuery(Queryable());
 
 				var totalCount = await entitySet.CountAsync(cancellationToken);
 
@@ -676,17 +676,21 @@ namespace Kista {
 
 		/// <inheritdoc/>
 		public override async ValueTask<PageResult<TEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) {
+			ThrowIfDisposed();
+			ArgumentNullException.ThrowIfNull(request);
+			cancellationToken.ThrowIfCancellationRequested();
+
 			try {
 				if (request is PageQuery<TEntity> pageQuery)
 					return await ((IPageableRepository<TEntity, TKey>)this).GetPageAsync(pageQuery, cancellationToken).ConfigureAwait(false);
 
-				var entitySet = Query();
-
+				var entitySet = Queryable();
 				var totalCount = await entitySet.CountAsync(cancellationToken);
 
 				entitySet = entitySet.Skip(request.Offset).Take(request.Size);
 
 				var items = await entitySet.ToListAsync(cancellationToken);
+
 				return new PageResult<TEntity>(request, totalCount, items);
 			} catch (Exception ex) {
 
@@ -698,7 +702,7 @@ namespace Kista {
 		protected override ValueTask<bool> ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken = default) {
 			try {
 				InitializeFilter(filter);
-				var query = Query();
+				var query = Queryable();
 				if (filter != null) {
 					query = filter.Apply(query);
 				}
@@ -714,7 +718,7 @@ namespace Kista {
 		protected override async ValueTask<long> CountAsync(IQueryFilter filter, CancellationToken cancellationToken = default) {
 			try {
 				InitializeFilter(filter);
-				var query = Query();
+				var query = Queryable();
 				if (filter != null) {
 					query = filter.Apply(query);
 				}

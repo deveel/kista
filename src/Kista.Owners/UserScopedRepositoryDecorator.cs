@@ -138,7 +138,7 @@ namespace Kista
 		public IServiceProvider? Services => _inner.Services;
 
 		/// <inheritdoc />
-		public ValueTask<IList<TEntity>> FindAllAsync(IQuery query, CancellationToken cancellationToken = default)
+		public ValueTask<IReadOnlyList<TEntity>> FindAllAsync(IQuery query, CancellationToken cancellationToken = default)
 			=> ApplyOwnerFilterAndCallAsync(query, q => _inner.FindAllAsync(q, cancellationToken));
 
 		/// <inheritdoc />
@@ -180,8 +180,8 @@ namespace Kista
 			return action();
 		}
 
-		private async ValueTask<IList<TEntity>> ApplyOwnerFilterAndCallAsync(
-			IQuery query, Func<IQuery, ValueTask<IList<TEntity>>> action)
+		private async ValueTask<IReadOnlyList<TEntity>> ApplyOwnerFilterAndCallAsync(
+			IQuery query, Func<IQuery, ValueTask<IReadOnlyList<TEntity>>> action)
 		{
 			var userId = _userAccessor.GetUserId();
 			if (EqualityComparer<TUserKey>.Default.Equals(userId, default))

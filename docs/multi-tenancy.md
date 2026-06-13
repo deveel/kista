@@ -1,6 +1,4 @@
 # Multi-Tenancy of Data Sources
-> **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project purpose as a data access framework.
-
 Software-as-a-Service (SaaS) applications and Enterprise-level applications often need to segregate data between different _tenants_ of the application, that could be different customers or different departments of the same company.
 
 The preferred approach of the library is to use the [Finbuckle.MultiTenant](https://www.finbuckle.com/MultiTenant) framework to implement multi-tenant applications, and to use the `ITenantInfo` interface to retrieve the current tenant information: this is obtained by scanning the current HTTP request, and retrieving the tenant information from the request.
@@ -115,13 +113,14 @@ builder.Services.AddMultiTenant<MongoDbTenantInfo>()
     .WithRouteStrategy("tenant");
 ```
 
-Then register a tenant-aware MongoDB context (derived from `MongoDbTenantContext`) and the repository:
+Then register a tenant-aware MongoDB context (derived from `MongoDbTenantContext`) and the repository using the modern builder API:
 
 ```csharp
-builder.Services.AddMongoDbContext<MyMongoTenantContext>(connectionBuilder =>
-    connectionBuilder.UseConnection("mongodb://..."));
-
-builder.Services.AddRepository<MongoRepository<MyEntity>>();
+builder.Services.AddRepositoryContext()
+    .UseMongoDB<MyMongoTenantContext>(b => b
+        .WithConnection(connectionBuilder =>
+            connectionBuilder.UseConnection("mongodb://...")))
+    .AddRepository<MongoRepository<MyEntity>>();
 ```
 
 The tenant context resolves the correct database connection for each tenant automatically.

@@ -1,6 +1,4 @@
 # Repository Implementations
-> **Renamed:** This project was renamed from **Deveel.Repository** to **Kista** on **May 26, 2025**. The name *Kista* is Old Norse for "chest" or "repository", better reflecting the project purpose as a data access framework.
-
 The _Kista_ framework ships with a set of ready-to-use repository implementations for the most common data sources.
 
 | Data Source | Package | Version |
@@ -18,7 +16,7 @@ All driver implementations inherit from `Repository<TEntity, TKey>`, which provi
 | Capability | In-Memory | EF Core | MongoDB |
 | ---------- | :-------: | :-----: | :-----: |
 | Base Repository (`IRepository`) | ✅ | ✅ | ✅ |
-| Protected query hatch (`Query()`) | ✅ | ✅ | ✅ |
+| Protected query hatch (`Queryable()`) | ✅ | ✅ | ✅ |
 | Protected filter/sort methods | ✅ | ✅ | ✅ |
 | Protected pagination (`QueryPageAsync`) | ✅ | ✅ | ✅ |
 | Tracking (`ITrackingRepository`) | ❌ | ✅ | ✅ |

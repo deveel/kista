@@ -210,6 +210,72 @@ public class UserScopedRepositoryDecoratorEdgeTests
 
     #endregion
 
+    #region PageRequest — Owner Scoping
+
+    [Fact]
+    public void Should_FilterPageRequest_When_UserIsSet()
+    {
+        var services = CreateDefaultServices("alice");
+        var repo = services.GetRequiredService<IRepository<StringKeyEntity, string>>();
+
+        for (int i = 0; i < 3; i++)
+            repo.AddAsync(new StringKeyEntity { Name = $"Item {i}" }).GetAwaiter().GetResult();
+
+        var pageable = Assert.IsAssignableFrom<IPageableRepository<StringKeyEntity, string>>(repo);
+        var page = pageable.GetPageAsync(new PageRequest(1, 10)).GetAwaiter().GetResult();
+        Assert.Equal(3, page.TotalItems);
+    }
+
+    [Fact]
+    public void Should_Throw_When_PageQueryAndNoUserAndThrowWhenUserNotSet()
+    {
+        var services = CreateServices<StringKeyEntity, string>(null, true);
+        var repo = services.GetRequiredService<IRepository<StringKeyEntity, string>>();
+
+        var pageable = Assert.IsAssignableFrom<IPageableRepository<StringKeyEntity, string>>(repo);
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            pageable.GetPageAsync(new PageQuery<StringKeyEntity>(1, 10)).GetAwaiter().GetResult());
+        Assert.Contains("User context is not set", ex.Message);
+    }
+
+    [Fact]
+    public void Should_Throw_When_PageRequestAndNoUserAndThrowWhenUserNotSet()
+    {
+        var services = CreateServices<StringKeyEntity, string>(null, true);
+        var repo = services.GetRequiredService<IRepository<StringKeyEntity, string>>();
+
+        var pageable = Assert.IsAssignableFrom<IPageableRepository<StringKeyEntity, string>>(repo);
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            pageable.GetPageAsync(new PageRequest(1, 10)).GetAwaiter().GetResult());
+        Assert.Contains("User context is not set", ex.Message);
+    }
+
+    [Fact]
+    public void Should_ReturnEmptyPage_When_PageQueryAndNoUserAndNotThrowing()
+    {
+        var services = CreateServices<StringKeyEntity, string>(null, false);
+        var repo = services.GetRequiredService<IRepository<StringKeyEntity, string>>();
+
+        var pageable = Assert.IsAssignableFrom<IPageableRepository<StringKeyEntity, string>>(repo);
+        var page = pageable.GetPageAsync(new PageQuery<StringKeyEntity>(1, 10)).GetAwaiter().GetResult();
+        Assert.Equal(0, page.TotalItems);
+        Assert.Empty(page.Items);
+    }
+
+    [Fact]
+    public void Should_ReturnEmptyPage_When_PageRequestAndNoUserAndNotThrowing()
+    {
+        var services = CreateServices<StringKeyEntity, string>(null, false);
+        var repo = services.GetRequiredService<IRepository<StringKeyEntity, string>>();
+
+        var pageable = Assert.IsAssignableFrom<IPageableRepository<StringKeyEntity, string>>(repo);
+        var page = pageable.GetPageAsync(new PageRequest(1, 10)).GetAwaiter().GetResult();
+        Assert.Equal(0, page.TotalItems);
+        Assert.Empty(page.Items);
+    }
+
+    #endregion
+
     #region AddRange — NotFound Cases
 
     [Fact]
@@ -282,6 +348,27 @@ public class UserScopedRepositoryDecoratorEdgeTests
         services.AddRepositoryContext()
             .AddRepository<GenericInMemoryRepo<TEntity, TKey>>(repo => repo
                 .WithOwnerScoping(), ServiceLifetime.Singleton);
+
+        var strategy = new StaticUserIdentifierStrategy<string>(userId);
+        var composite = new CompositeUserIdentifierStrategy<string>();
+        if (userId != null)
+            composite.Add(strategy);
+        services.AddSingleton(composite);
+        services.AddSingleton<IUserAccessor<string>>(
+            sp => new StrategyBasedUserAccessor<string>(composite, sp));
+
+        return services.BuildServiceProvider();
+    }
+
+    private static ServiceProvider CreateServices<TEntity, TKey>(string? userId, bool throwWhenNotSet)
+        where TEntity : class, IHaveOwner<string>, new()
+        where TKey : notnull
+    {
+        var services = new ServiceCollection();
+        services.AddRepositoryContext()
+            .AddRepository<GenericInMemoryRepo<TEntity, TKey>>(repo => repo
+                .WithOwnerScoping(opts => opts.ThrowWhenUserNotSet = throwWhenNotSet),
+                ServiceLifetime.Singleton);
 
         var strategy = new StaticUserIdentifierStrategy<string>(userId);
         var composite = new CompositeUserIdentifierStrategy<string>();

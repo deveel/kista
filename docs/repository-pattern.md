@@ -41,8 +41,8 @@ If you need richer queries, you have two options:
 All driver implementations (`EntityRepository`, `MongoRepository`, `InMemoryRepository`) inherit from `Repository<TEntity, TKey>`. This base class provides:
 
 - Ready-made implementations of the `IRepository<TEntity, TKey>` mutation and look-up methods
-- A `protected` `Query()` method that returns the underlying `IQueryable<TEntity>` — accessible **only** to subclasses
-- Protected query methods that use the `Query()` hatch internally
+- A `protected` `Queryable()` method that returns the underlying `IQueryable<TEntity>` — accessible **only** to subclasses
+- Protected query methods that use the `Queryable()` hatch internally
 - Protected hooks for engine-specific async behavior
 
 ### Protected Query Hatch
@@ -50,25 +50,28 @@ All driver implementations (`EntityRepository`, `MongoRepository`, `InMemoryRepo
 ```csharp
 public abstract class Repository<TEntity, TKey> : IRepository<TEntity, TKey> {
     // The IQueryable hatch — protected, never exposed to consumers
-    protected abstract IQueryable<TEntity> Query();
+    protected abstract IQueryable<TEntity> Queryable();
 
     // Protected query methods available to subclasses
-    protected virtual ValueTask<IList<TEntity>> FindAsync(IQuery query, CancellationToken ct = default);
+    protected virtual ValueTask<IReadOnlyList<TEntity>> FindAsync(IQuery query, CancellationToken ct = default);
     protected virtual ValueTask<PageQueryResult<TEntity>> QueryPageAsync(PageQuery<TEntity> request, CancellationToken ct = default);
     protected virtual ValueTask<bool> ExistsAsync(IQueryFilter filter, CancellationToken ct = default);
     protected virtual ValueTask<long> CountAsync(IQueryFilter filter, CancellationToken ct = default);
     protected virtual ValueTask<TEntity?> FindFirstAsync(IQuery query, CancellationToken ct = default);
-    protected virtual ValueTask<IList<TEntity>> FindAllAsync(IQuery query, CancellationToken ct = default);
+    protected virtual ValueTask<IReadOnlyList<TEntity>> FindAllAsync(IQuery query, CancellationToken ct = default);
 
     // Protected hooks for engine-specific behavior
     protected virtual bool IsQueryable => false;
     protected virtual IQueryable<TEntity> NormalizeQuery(IQueryable<TEntity> queryable) => queryable;
     protected virtual ValueTask<long> CountAsync(IQueryable<TEntity> queryable, CancellationToken ct = default);
-    protected virtual ValueTask<IList<TEntity>> ToListAsync(IQueryable<TEntity> queryable, CancellationToken ct = default);
+    protected virtual ValueTask<IReadOnlyList<TEntity>> ToListAsync(IQueryable<TEntity> queryable, CancellationToken ct = default);
+
+    // Protected factory for a repository-bound query builder
+    protected virtual QueryBuilder<TEntity> CreateQuery();
 }
 ```
 
-The `Query()` method is the single entry point into the data layer. Subclasses return the engine-native queryable (e.g., `DbSet<TEntity>.AsQueryable()` for EF Core, `IMongoCollection<TEntity>.AsQueryable()` for MongoDB). All query translation — filter application, sorting, pagination — happens **inside** the data layer through the protected methods above.
+The `Queryable()` method is the single entry point into the data layer. Subclasses return the engine-native queryable (e.g., `DbSet<TEntity>.AsQueryable()` for EF Core, `IMongoCollection<TEntity>.AsQueryable()` for MongoDB). All query translation — filter application, sorting, pagination — happens **inside** the data layer through the protected methods above.
 
 ### Public Surface
 
@@ -80,6 +83,28 @@ The only query methods exposed to consumer code by `Repository` are:
 | `GetPageAsync(PageRequest request)` | Simple unsorted pagination (no filter, no sort) |
 
 All other query capabilities are `protected` and available only to subclasses.
+
+### The `CreateQuery()` Factory
+
+The `Repository<TEntity, TKey>` base class provides a protected `CreateQuery()` factory method that returns a `QueryBuilder<TEntity>` instance **bound** to the repository. The bound builder exposes terminal methods that dispatch through the repository's protected pipeline:
+
+```csharp
+protected virtual QueryBuilder<TEntity> CreateQuery();
+```
+
+The returned builder inherits from `QueryBuilder<TEntity>` and overrides the terminal methods to call:
+
+| Builder Terminal | Repository Pipeline |
+|-----------------|---------------------|
+| `FirstOrDefaultAsync()` | `FindFirstAsync(IQuery, ...)` |
+| `ToListAsync()` | `FindAllAsync(IQuery, ...)` |
+| `CountAsync()` | `CountAsync(IQueryFilter, ...)` |
+| `AnyAsync()` | `ExistsAsync(IQueryFilter, ...)` |
+| `GetPageAsync(page, size)` | `GetPageAsync(PageQuery<TEntity>, ...)` |
+
+Subclasses can override `CreateQuery()` to return a custom query builder that adds cross-cutting concerns (logging, caching, authorization) before query execution.
+
+> **Thread-safety:** The builder is not thread-safe. Create a new instance per logical operation.
 
 ## The Specification Pattern
 
@@ -98,7 +123,7 @@ public interface IProductRepository : IRepository<Product, Guid> {
 }
 ```
 
-The implementation extends `Repository` and uses the protected `Query()` hatch internally:
+The implementation extends `Repository` and uses the protected `Queryable()` hatch internally:
 
 ```csharp
 public class ProductRepository : Repository<Product, Guid>, IProductRepository {
@@ -108,7 +133,7 @@ public class ProductRepository : Repository<Product, Guid>, IProductRepository {
         _context = context;
     }
 
-    protected override IQueryable<Product> Query() => _context.Set<Product>().AsQueryable();
+    protected override IQueryable<Product> Queryable() => _context.Set<Product>().AsQueryable();
     protected override Guid? GetEntityKey(Product entity) => entity.Id;
     protected override IServiceProvider? Services => null;
 
@@ -123,26 +148,26 @@ public class ProductRepository : Repository<Product, Guid>, IProductRepository {
         return new ValueTask<Product?>(_context.Set<Product>().FindAsync(key).Result);
     }
 
-    // Domain-specific queries using the protected Query() hatch
+    // Domain-specific queries using the protected Queryable() hatch
     public async Task<Product?> FindByCodeAsync(string productCode, CancellationToken ct = default) {
-        return await Query()
+        return await Queryable()
             .FirstOrDefaultAsync(p => p.Code == productCode, ct);
     }
 
     public async Task<IReadOnlyList<Product>> FindByNameAsync(string name, CancellationToken ct = default) {
-        return (await Query()
+        return (await Queryable()
             .Where(p => p.Name.Contains(name))
             .ToListAsync(ct)).AsReadOnly();
     }
 
     public async Task<IReadOnlyList<Product>> FindByCategoryAsync(string category, CancellationToken ct = default) {
-        return (await Query()
+        return (await Queryable()
             .Where(p => p.Category == category)
             .ToListAsync(ct)).AsReadOnly();
     }
 
     public async Task<bool> CodeExistsAsync(string productCode, CancellationToken ct = default) {
-        return await Query().AnyAsync(p => p.Code == productCode, ct);
+        return await Queryable().AnyAsync(p => p.Code == productCode, ct);
     }
 }
 ```
@@ -199,7 +224,7 @@ The library provides helper types to construct queries:
 | ---- | ----------- |
 | `Query` | A simple immutable query struct wrapping a filter and an optional sort. |
 | `PageQuery<TEntity>` | A paginated query with page number, page size, and optional filter / sort via a fluent builder. |
-| `QueryBuilder<TEntity>` | A fluent builder to compose filters and sort rules for a specific entity type. |
+| `QueryBuilder<TEntity>` | A fluent builder to compose filters and sort rules for a specific entity type. Implements `IQueryBuilder<TEntity>` and provides terminal methods (`FirstOrDefaultAsync`, `ToListAsync`, `CountAsync`, `AnyAsync`, `GetPageAsync`). When obtained via `Repository.CreateQuery()`, the terminal methods are bound to the repository and execute the built query. |
 
 ### The `IQueryFilter` Interface
 

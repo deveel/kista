@@ -29,10 +29,11 @@ Features: Package Namespace Correction, Thread-Safe In-Memory Repository, Expres
 **Release Target:** Q3 2026  
 **Theme:** Unified setup, executable queries, seamless DI
 
-Features: Unified Repository Setup Builder, QueryBuilder Execution Extensions, Pluggable Cache Provider Abstraction, Automatic Timestamp and Ownership Management, Repository Health Checks, Repository Controller Lifecycle Redesign.
+Features: Unified Repository Setup Builder, Pluggable Cache Provider Abstraction, Automatic Timestamp and Ownership Management, Repository Health Checks, Repository Controller Lifecycle Redesign.
 
 ### Completed in v1.6.0
 
+- **QueryBuilder Execution Extensions**: `QueryBuilder<TEntity>` now implements `IQueryBuilder<TEntity>` with terminal methods (`FirstOrDefaultAsync`, `ToListAsync`, `CountAsync`, `AnyAsync`, `GetPageAsync`). `Repository.CreateQuery()` returns a repository-bound builder that dispatches through the protected pipeline.
 - **Lifecycle Service Renamed**: `IRepositoryLifecycleOrchestrator` → `IRepositoryLifecycleService` (clearer naming)
 - **Builder Extensions**: `WithLifecycleHandler<TEntity, THandler>()` and `WithLifecycleProfile<TProfile>()` for fluent registration
 - **Default Lifecycle Profile**: `ConfigureLifecycle()` now auto-registers `DefaultRepositoryLifecycleProfile`

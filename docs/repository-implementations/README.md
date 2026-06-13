@@ -18,7 +18,7 @@ All driver implementations inherit from `Repository<TEntity, TKey>`, which provi
 | Capability | In-Memory | EF Core | MongoDB |
 | ---------- | :-------: | :-----: | :-----: |
 | Base Repository (`IRepository`) | ✅ | ✅ | ✅ |
-| Protected query hatch (`Query()`) | ✅ | ✅ | ✅ |
+| Protected query hatch (`Queryable()`) | ✅ | ✅ | ✅ |
 | Protected filter/sort methods | ✅ | ✅ | ✅ |
 | Protected pagination (`QueryPageAsync`) | ✅ | ✅ | ✅ |
 | Tracking (`ITrackingRepository`) | ❌ | ✅ | ✅ |

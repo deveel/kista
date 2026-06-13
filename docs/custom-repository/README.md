@@ -34,7 +34,7 @@ public interface IProductRepository : IRepository<Product, Guid> {
 
 // 2. Implement using Repository
 public class ProductRepository : Repository<Product, Guid>, IProductRepository {
-    protected override IQueryable<Product> Query() => _context.Set<Product>().AsQueryable();
+    protected override IQueryable<Product> Queryable() => _context.Set<Product>().AsQueryable();
     // ... implementation details ...
 }
 

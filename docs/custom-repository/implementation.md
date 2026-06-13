@@ -16,7 +16,7 @@ public class ProductRepository : Repository<Product, Guid>, IProductRepository {
 
     // --- Required abstract members ---
 
-    protected override IQueryable<Product> Query() => _context.Set<Product>().AsQueryable();
+protected override IQueryable<Product> Queryable() => _context.Set<Product>().AsQueryable();
     protected override Guid? GetEntityKey(Product entity) => entity.Id;
     protected override IServiceProvider? Services => null;
 
@@ -56,12 +56,12 @@ public class ProductRepository : Repository<Product, Guid>, IProductRepository {
     // --- Domain-specific queries ---
 
     public async Task<Product?> FindByCodeAsync(string productCode, CancellationToken ct = default) {
-        return await Query()
+        return await Queryable()
             .FirstOrDefaultAsync(p => p.Code == productCode, ct);
     }
 
     public async Task<IReadOnlyList<Product>> FindByNameAsync(string name, CancellationToken ct = default) {
-        return (await Query()
+        return (await Queryable()
             .Where(p => p.Name.Contains(name))
             .ToListAsync(ct)).AsReadOnly();
     }
@@ -74,26 +74,26 @@ Every `Repository` subclass must implement three members:
 
 | Member | Purpose |
 |--------|---------|
-| `Query()` | Returns the `IQueryable<TEntity>` for the entity set |
+| `Queryable()` | Returns the `IQueryable<TEntity>` for the entity set |
 | `GetEntityKey(TEntity)` | Extracts the unique identifier from an entity |
 | `Services` | Returns the `IServiceProvider` for filter resolution (or `null`) |
 
-### `Query()`
+### `Queryable()`
 
 This is the protected hatch. It returns the engine-native queryable:
 
 ```csharp
 // Entity Framework Core
-protected override IQueryable<Product> Query() => _context.Set<Product>().AsQueryable();
+protected override IQueryable<Product> Queryable() => _context.Set<Product>().AsQueryable();
 
 // MongoDB (MongoFramework)
-protected override IQueryable<Product> Query() => _collection.AsQueryable();
+protected override IQueryable<Product> Queryable() => _collection.AsQueryable();
 
 // In-Memory
-protected override IQueryable<Product> Query() => _data.AsQueryable();
+protected override IQueryable<Product> Queryable() => _data.AsQueryable();
 ```
 
-The `Query()` method is **never** exposed to consumers. It is used internally by the protected query methods and by your domain-specific query methods.
+The `Queryable()` method is **never** exposed to consumers. It is used internally by the protected query methods and by your domain-specific query methods.
 
 ### `GetEntityKey(TEntity)`
 
@@ -130,7 +130,7 @@ Note that `Repository` does **not** call `SaveChanges()` — that is the respons
 
 ## Using Protected Query Methods
 
-`Repository` provides ready-made query methods that use the `Query()` hatch internally. You can call these from your domain-specific methods:
+`Repository` provides ready-made query methods that use the `Queryable()` hatch internally. You can call these from your domain-specific methods:
 
 ### `FindAsync(IQuery)`
 
@@ -199,6 +199,44 @@ public async Task<IReadOnlyList<Product>> FindProductsSortedAsync(CancellationTo
 }
 ```
 
+## Using `CreateQuery()` (Fluent Builder)
+
+As an alternative to constructing `IQuery`/`IQueryFilter` objects manually, you can use `CreateQuery()` to obtain a `QueryBuilder<TEntity>` bound to this repository. The builder provides a fluent API and dispatches terminal methods through the repository's protected pipeline:
+
+```csharp
+public async Task<Product?> FindByNameAndCategoryAsync(string name, string category, CancellationToken ct = default) {
+    return await CreateQuery()
+        .Where(p => p.Name.Contains(name))
+        .Where(p => p.Category == category)
+        .FirstOrDefaultAsync(ct);
+}
+
+public async Task<IReadOnlyList<Product>> FindActiveSortedAsync(CancellationToken ct = default) {
+    return await CreateQuery()
+        .Where(p => p.IsActive)
+        .OrderBy(p => p.CreatedAt)
+        .ToListAsync(ct);
+}
+
+public async Task<PageResult<Product>> FindActivePagedAsync(int page, int size, CancellationToken ct = default) {
+    return await CreateQuery()
+        .Where(p => p.IsActive)
+        .GetPageAsync(page, size, ct);
+}
+```
+
+The available terminal methods are:
+
+| Method | Dispatches To |
+|--------|---------------|
+| `FirstOrDefaultAsync()` | `FindFirstAsync(IQuery, ...)` |
+| `ToListAsync()` | `FindAllAsync(IQuery, ...)` |
+| `CountAsync()` | `CountAsync(IQueryFilter, ...)` |
+| `AnyAsync()` | `ExistsAsync(IQueryFilter, ...)` |
+| `GetPageAsync(page, size)` | `GetPageAsync(PageQuery<TEntity>, ...)` |
+
+> The builder is **not thread-safe**. Create a new instance per logical operation.
+
 ## Overriding Protected Hooks
 
 You can override protected hooks to customize engine-specific behavior:
@@ -211,7 +249,7 @@ Controls whether the repository supports `IQueryable`-based filtering:
 protected override bool IsQueryable => true; // default is false
 ```
 
-When `true`, the protected filterable methods use `Query()` and apply filters as `IQueryable` operations. When `false`, subclasses must override the filterable methods to provide their own filter expansion.
+When `true`, the protected filterable methods use `Queryable()` and apply filters as `IQueryable` operations. When `false`, subclasses must override the filterable methods to provide their own filter expansion.
 
 ### `NormalizeQuery(IQueryable<TEntity>)`
 
@@ -233,7 +271,7 @@ protected override async ValueTask<long> CountAsync(IQueryable<Product> queryabl
     return await queryable.LongCountAsync(ct);
 }
 
-protected override async ValueTask<IList<Product>> ToListAsync(IQueryable<Product> queryable, CancellationToken ct = default) {
+protected override async ValueTask<IReadOnlyList<Product>> ToListAsync(IQueryable<Product> queryable, CancellationToken ct = default) {
     return await queryable.ToListAsync(ct);
 }
 ```

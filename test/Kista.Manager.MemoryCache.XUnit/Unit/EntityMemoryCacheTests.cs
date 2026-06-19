@@ -12,6 +12,7 @@ public class EntityMemoryCacheTests : IDisposable
 {
     private readonly IMemoryCache _memoryCache;
     private readonly PersonFaker _faker = new();
+    private bool _disposed;
 
     public EntityMemoryCacheTests()
     {
@@ -20,7 +21,12 @@ public class EntityMemoryCacheTests : IDisposable
 
     public void Dispose()
     {
-        _memoryCache.Dispose();
+        if (!_disposed)
+        {
+            _memoryCache.Dispose();
+            _disposed = true;
+        }
+        GC.SuppressFinalize(this);
     }
 
     [Fact]

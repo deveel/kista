@@ -337,15 +337,15 @@ namespace Kista {
 			}
 
 			/// <inheritdoc/>
-			public ValueTask<bool> ExistsAsync(CancellationToken cancellationToken)
+			public ValueTask<bool> ExistsAsync(CancellationToken cancellationToken = default)
 				=> repository.ExistsAsync(cancellationToken);
 
 			/// <inheritdoc/>
-			public ValueTask CreateAsync(CancellationToken cancellationToken)
+			public ValueTask CreateAsync(CancellationToken cancellationToken = default)
 				=> repository.CreateAsync(cancellationToken);
 
 			/// <inheritdoc/>
-			public ValueTask DropAsync(CancellationToken cancellationToken)
+			public ValueTask DropAsync(CancellationToken cancellationToken = default)
 				=> repository.DropAsync(cancellationToken);
 
 			/// <inheritdoc/>

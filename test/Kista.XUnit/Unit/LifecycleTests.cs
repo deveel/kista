@@ -1387,13 +1387,13 @@ public class LifecycleTests {
 			this.repository = repository;
 		}
 
-		public ValueTask<bool> ExistsAsync(CancellationToken cancellationToken)
+		public ValueTask<bool> ExistsAsync(CancellationToken cancellationToken = default)
 			=> repository.ExistsAsync(cancellationToken);
 
-		public ValueTask CreateAsync(CancellationToken cancellationToken)
+		public ValueTask CreateAsync(CancellationToken cancellationToken = default)
 			=> repository.CreateAsync(cancellationToken);
 
-		public ValueTask DropAsync(CancellationToken cancellationToken)
+		public ValueTask DropAsync(CancellationToken cancellationToken = default)
 			=> repository.DropAsync(cancellationToken);
 
 		public ValueTask SeedAsync(object? seedData = null, CancellationToken cancellationToken = default)

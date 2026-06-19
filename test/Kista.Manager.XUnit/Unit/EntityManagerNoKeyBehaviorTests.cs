@@ -55,7 +55,7 @@ public class EntityManagerNoKeyBehaviorTests
     {
         var repository = new InMemoryRepository<Person>();
         var manager = new EntityManager<Person>(repository);
-        manager.Dispose();
+        await manager.DisposeAsync();
 
         await Assert.ThrowsAsync<ObjectDisposedException>(() =>
             manager.AddAsync(_faker.Generate(), TestContext.Current.CancellationToken).AsTask());
@@ -66,7 +66,7 @@ public class EntityManagerNoKeyBehaviorTests
     {
         var repository = new InMemoryRepository<Person>();
         var manager = new EntityManager<Person>(repository);
-        manager.Dispose();
+        await manager.DisposeAsync();
 
         await Assert.ThrowsAsync<ObjectDisposedException>(() =>
             manager.FindAsync("test", TestContext.Current.CancellationToken).AsTask());
@@ -77,7 +77,7 @@ public class EntityManagerNoKeyBehaviorTests
     {
         var repository = new InMemoryRepository<Person>();
         var manager = new EntityManager<Person>(repository);
-        manager.Dispose();
+        await manager.DisposeAsync();
 
         await Assert.ThrowsAsync<ObjectDisposedException>(() =>
             manager.UpdateAsync(_faker.Generate(), TestContext.Current.CancellationToken).AsTask());
@@ -88,7 +88,7 @@ public class EntityManagerNoKeyBehaviorTests
     {
         var repository = new InMemoryRepository<Person>();
         var manager = new EntityManager<Person>(repository);
-        manager.Dispose();
+        await manager.DisposeAsync();
 
         await Assert.ThrowsAsync<ObjectDisposedException>(() =>
             manager.RemoveAsync(_faker.Generate(), TestContext.Current.CancellationToken).AsTask());

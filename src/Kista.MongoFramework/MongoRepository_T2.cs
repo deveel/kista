@@ -657,17 +657,17 @@ namespace Kista {
 		}
 
 		/// <inheritdoc/>
-		async ValueTask<PageQueryResult<TEntity>> IPageableRepository<TEntity, TKey>.GetPageAsync(PageQuery<TEntity> query, CancellationToken cancellationToken) {
+		async ValueTask<PageQueryResult<TEntity>> IPageableRepository<TEntity, TKey>.GetPageAsync(PageQuery<TEntity> request, CancellationToken cancellationToken) {
 			try {
-				InitializeFilter(((IQuery)query).Filter);
-				var entitySet = query.ApplyQuery(Queryable());
+				InitializeFilter(((IQuery)request).Filter);
+				var entitySet = request.ApplyQuery(Queryable());
 
 				var totalCount = await entitySet.CountAsync(cancellationToken);
 
-				entitySet = entitySet.Skip(query.Offset).Take(query.Size);
+				entitySet = entitySet.Skip(request.Offset).Take(request.Size);
 
 				var items = await entitySet.ToListAsync(cancellationToken);
-				return new PageQueryResult<TEntity>(query, totalCount, items);
+				return new PageQueryResult<TEntity>(request, totalCount, items);
 			} catch (Exception ex) {
 
 				throw new RepositoryException("Unable to execute the query", ex);

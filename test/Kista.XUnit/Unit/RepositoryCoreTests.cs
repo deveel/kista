@@ -184,38 +184,38 @@ public class RepositoryCoreTests {
     }
 
     [Fact]
-    public void RepositoryExtension_ExistsAsync_WithExpression_DelToTKey() {
+    public async Task RepositoryExtension_ExistsAsync_WithExpression_DelToTKey() {
         var repo = new List<Person> { new() { FirstName = "Alice" } }.AsRepository();
-        var result = repo.ExistsAsync((Expression<Func<Person, bool>>)(x => x.FirstName == "Alice"));
-        Assert.True(result.Result);
+        var result = await repo.ExistsAsync((Expression<Func<Person, bool>>)(x => x.FirstName == "Alice"));
+        Assert.True(result);
     }
 
     [Fact]
-    public void RepositoryExtension_CountAsync_WithExpression_DelToTKey() {
+    public async Task RepositoryExtension_CountAsync_WithExpression_DelToTKey() {
         var repo = new List<Person> { new() { FirstName = "Alice" }, new() { FirstName = "Bob" } }.AsRepository();
-        var result = repo.CountAsync((Expression<Func<Person, bool>>)(x => x.FirstName == "Alice"));
-        Assert.Equal(1, result.Result);
+        var result = await repo.CountAsync((Expression<Func<Person, bool>>)(x => x.FirstName == "Alice"));
+        Assert.Equal(1, result);
     }
 
     [Fact]
-    public void RepositoryExtension_CountAllAsync_SingleTParam() {
+    public async Task RepositoryExtension_CountAllAsync_SingleTParam() {
         var repo = new List<Person> { new(), new() }.AsRepository();
-        var result = repo.CountAllAsync();
-        Assert.Equal(2, result.Result);
+        var result = await repo.CountAllAsync();
+        Assert.Equal(2, result);
     }
 
     [Fact]
-    public void RepositoryExtension_RemoveByKey_TKey_NotFound_ReturnsFalse() {
+    public async Task RepositoryExtension_RemoveByKey_TKey_NotFound_ReturnsFalse() {
         IRepository<Person, object> repo = new List<Person> { new() { Id = "1" } }.AsRepository();
-        var result = repo.RemoveByKeyAsync((object)"nonexistent");
-        Assert.False(result.Result);
+        var result = await repo.RemoveByKeyAsync((object)"nonexistent");
+        Assert.False(result);
     }
 
     [Fact]
-    public void RepositoryExtension_RemoveByKey_TKey_Found_ReturnsTrue() {
+    public async Task RepositoryExtension_RemoveByKey_TKey_Found_ReturnsTrue() {
         IRepository<Person, object> repo = new List<Person> { new() { Id = "1" } }.AsRepository();
-        var result = repo.RemoveByKeyAsync((object)"1");
-        Assert.True(result.Result);
+        var result = await repo.RemoveByKeyAsync((object)"1");
+        Assert.True(result);
     }
 
     [Fact]
@@ -285,45 +285,45 @@ public class RepositoryCoreTests {
     }
 
     [Fact]
-    public void RepositoryExtension_ExistsAsync_TKey_WithExpression() {
+    public async Task RepositoryExtension_ExistsAsync_TKey_WithExpression() {
         IRepository<Person, object> repo = new List<Person> { new() { FirstName = "A" } }.AsRepository();
-        var result = repo.ExistsAsync((Expression<Func<Person, bool>>)(x => x.FirstName == "A"));
-        Assert.True(result.Result);
+        var result = await repo.ExistsAsync((Expression<Func<Person, bool>>)(x => x.FirstName == "A"));
+        Assert.True(result);
     }
 
     [Fact]
-    public void RepositoryExtension_ExistsAsync_TKey_WithFilter() {
+    public async Task RepositoryExtension_ExistsAsync_TKey_WithFilter() {
         IRepository<Person, object> repo = new List<Person> { new() { FirstName = "A" } }.AsRepository();
-        var result = repo.ExistsAsync(QueryFilter.Where<Person>(x => x.FirstName == "A"));
-        Assert.True(result.Result);
+        var result = await repo.ExistsAsync(QueryFilter.Where<Person>(x => x.FirstName == "A"));
+        Assert.True(result);
     }
 
     [Fact]
-    public void RepositoryExtension_ExistsAsync_TKey_WithFilter_NoMatch() {
+    public async Task RepositoryExtension_ExistsAsync_TKey_WithFilter_NoMatch() {
         IRepository<Person, object> repo = new List<Person> { new() { FirstName = "A" } }.AsRepository();
-        var result = repo.ExistsAsync(QueryFilter.Where<Person>(x => x.FirstName == "Z"));
-        Assert.False(result.Result);
+        var result = await repo.ExistsAsync(QueryFilter.Where<Person>(x => x.FirstName == "Z"));
+        Assert.False(result);
     }
 
     [Fact]
-    public void RepositoryExtension_CountAsync_TKey_WithExpression() {
+    public async Task RepositoryExtension_CountAsync_TKey_WithExpression() {
         IRepository<Person, object> repo = new List<Person> { new() { FirstName = "A" }, new() { FirstName = "A" } }.AsRepository();
-        var result = repo.CountAsync((Expression<Func<Person, bool>>)(x => x.FirstName == "A"));
-        Assert.Equal(2, result.Result);
+        var result = await repo.CountAsync((Expression<Func<Person, bool>>)(x => x.FirstName == "A"));
+        Assert.Equal(2, result);
     }
 
     [Fact]
-    public void RepositoryExtension_CountAsync_TKey_WithFilter() {
+    public async Task RepositoryExtension_CountAsync_TKey_WithFilter() {
         IRepository<Person, object> repo = new List<Person> { new() { FirstName = "A" }, new() { FirstName = "B" } }.AsRepository();
-        var result = repo.CountAsync(QueryFilter.Where<Person>(x => x.FirstName == "A"));
-        Assert.Equal(1, result.Result);
+        var result = await repo.CountAsync(QueryFilter.Where<Person>(x => x.FirstName == "A"));
+        Assert.Equal(1, result);
     }
 
     [Fact]
-    public void RepositoryExtension_CountAllAsync_TKey() {
+    public async Task RepositoryExtension_CountAllAsync_TKey() {
         IRepository<Person, object> repo = new List<Person> { new(), new(), new() }.AsRepository();
-        var result = repo.CountAllAsync();
-        Assert.Equal(3, result.Result);
+        var result = await repo.CountAllAsync();
+        Assert.Equal(3, result);
     }
 
     [Fact]
@@ -944,13 +944,13 @@ interface IScanRepo : IRepository<ScanEntity> { }
 class ScanTestRepo : List<ScanEntity>, IScanRepo {
     public object? GetEntityKey(ScanEntity entity) => entity.Id;
     public IServiceProvider? Services => null;
-    public ValueTask AddAsync(ScanEntity entity, CancellationToken ct = default) { Add(entity); return ValueTask.CompletedTask; }
-    public ValueTask AddRangeAsync(IEnumerable<ScanEntity> entities, CancellationToken ct = default) { AddRange(entities); return ValueTask.CompletedTask; }
-    public ValueTask<bool> UpdateAsync(ScanEntity entity, CancellationToken ct = default) => throw new NotSupportedException();
-    public ValueTask<bool> RemoveAsync(ScanEntity entity, CancellationToken ct = default) { var r = Remove(entity); return new ValueTask<bool>(r); }
-    public ValueTask RemoveRangeAsync(IEnumerable<ScanEntity> entities, CancellationToken ct = default) { foreach (var e in entities.ToList()) Remove(e); return ValueTask.CompletedTask; }
-    public ValueTask<ScanEntity?> FindAsync(object key, CancellationToken ct = default) => new ValueTask<ScanEntity?>(this.FirstOrDefault(x => x.Id == (string)key));
-    public ValueTask<PageResult<ScanEntity>> GetPageAsync(PageRequest request, CancellationToken ct = default) {
+    public ValueTask AddAsync(ScanEntity entity, CancellationToken cancellationToken = default) { Add(entity); return ValueTask.CompletedTask; }
+    public ValueTask AddRangeAsync(IEnumerable<ScanEntity> entities, CancellationToken cancellationToken = default) { AddRange(entities); return ValueTask.CompletedTask; }
+    public ValueTask<bool> UpdateAsync(ScanEntity entity, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+    public ValueTask<bool> RemoveAsync(ScanEntity entity, CancellationToken cancellationToken = default) { var r = Remove(entity); return new ValueTask<bool>(r); }
+    public ValueTask RemoveRangeAsync(IEnumerable<ScanEntity> entities, CancellationToken cancellationToken = default) { foreach (var e in entities.ToList()) Remove(e); return ValueTask.CompletedTask; }
+    public ValueTask<ScanEntity?> FindAsync(object key, CancellationToken cancellationToken = default) => new ValueTask<ScanEntity?>(this.FirstOrDefault(x => x.Id == (string)key));
+    public ValueTask<PageResult<ScanEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) {
         var items = this.Skip(request.Offset).Take(request.Size).ToList();
         return new ValueTask<PageResult<ScanEntity>>(new PageResult<ScanEntity>(request, this.Count, items));
     }
@@ -970,13 +970,13 @@ class ExcludedRepo : ScanTestRepo { }
 class OpenScanRepo<TEntity> : List<TEntity>, IRepository<TEntity> where TEntity : class {
     public IServiceProvider? Services => null;
     public object? GetEntityKey(TEntity entity) => null;
-    public ValueTask AddAsync(TEntity entity, CancellationToken ct = default) { Add(entity); return ValueTask.CompletedTask; }
-    public ValueTask AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken ct = default) { AddRange(entities); return ValueTask.CompletedTask; }
-    public ValueTask<bool> UpdateAsync(TEntity entity, CancellationToken ct = default) => throw new NotSupportedException();
-    public ValueTask<bool> RemoveAsync(TEntity entity, CancellationToken ct = default) { var r = Remove(entity); return new ValueTask<bool>(r); }
-    public ValueTask RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken ct = default) { foreach (var e in entities.ToList()) Remove(e); return ValueTask.CompletedTask; }
-    public ValueTask<TEntity?> FindAsync(object key, CancellationToken ct = default) => throw new NotSupportedException();
-    public ValueTask<PageResult<TEntity>> GetPageAsync(PageRequest request, CancellationToken ct = default) {
+    public ValueTask AddAsync(TEntity entity, CancellationToken cancellationToken = default) { Add(entity); return ValueTask.CompletedTask; }
+    public ValueTask AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) { AddRange(entities); return ValueTask.CompletedTask; }
+    public ValueTask<bool> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+    public ValueTask<bool> RemoveAsync(TEntity entity, CancellationToken cancellationToken = default) { var r = Remove(entity); return new ValueTask<bool>(r); }
+    public ValueTask RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) { foreach (var e in entities.ToList()) Remove(e); return ValueTask.CompletedTask; }
+    public ValueTask<TEntity?> FindAsync(object key, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+    public ValueTask<PageResult<TEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) {
         var items = this.Skip(request.Offset).Take(request.Size).ToList();
         return new ValueTask<PageResult<TEntity>>(new PageResult<TEntity>(request, this.Count, items));
     }
@@ -990,14 +990,14 @@ class OpenScanRepo<TEntity> : List<TEntity>, IRepository<TEntity> where TEntity 
 /// </summary>
 class NonFilterableRepo<TEntity> : IRepository<TEntity> where TEntity : class {
     public IServiceProvider? Services => null;
-    public ValueTask AddAsync(TEntity entity, CancellationToken ct = default) => throw new NotSupportedException();
-    public ValueTask AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken ct = default) => throw new NotSupportedException();
-    public ValueTask<TEntity?> FindAsync(object key, CancellationToken ct = default) => throw new NotSupportedException();
+    public ValueTask AddAsync(TEntity entity, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+    public ValueTask AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+    public ValueTask<TEntity?> FindAsync(object key, CancellationToken cancellationToken = default) => throw new NotSupportedException();
     public object? GetEntityKey(TEntity entity) => null;
-    public ValueTask<bool> RemoveAsync(TEntity entity, CancellationToken ct = default) => throw new NotSupportedException();
-    public ValueTask RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken ct = default) => throw new NotSupportedException();
-    public ValueTask<bool> UpdateAsync(TEntity entity, CancellationToken ct = default) => throw new NotSupportedException();
-    public ValueTask<PageResult<TEntity>> GetPageAsync(PageRequest request, CancellationToken ct = default) => throw new NotSupportedException();
+    public ValueTask<bool> RemoveAsync(TEntity entity, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+    public ValueTask RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+    public ValueTask<bool> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+    public ValueTask<PageResult<TEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 }
 
 /// <summary>

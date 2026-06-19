@@ -91,3 +91,43 @@ jobs:
         package-type: 'nuget'
         min-versions-to-keep: 10
         delete-only-pre-release-versions: "true"
+
+    - name: Remove the Old Kista.HealthChecks Package
+      uses: actions/delete-package-versions@v4
+      with:
+        package-name: 'Kista.HealthChecks'
+        package-type: 'nuget'
+        min-versions-to-keep: 10
+        delete-only-pre-release-versions: "true"
+
+    - name: Remove the Old Kista.HealthChecks.EntityFramework Package
+      uses: actions/delete-package-versions@v4
+      with:
+        package-name: 'Kista.HealthChecks.EntityFramework'
+        package-type: 'nuget'
+        min-versions-to-keep: 10
+        delete-only-pre-release-versions: "true"
+
+    - name: Remove the Old Kista.HealthChecks.InMemory Package
+      uses: actions/delete-package-versions@v4
+      with:
+        package-name: 'Kista.HealthChecks.InMemory'
+        package-type: 'nuget'
+        min-versions-to-keep: 10
+        delete-only-pre-release-versions: "true"
+
+    - name: Remove the Old Kista.HealthChecks.MongoFramework Package
+      uses: actions/delete-package-versions@v4
+      with:
+        package-name: 'Kista.HealthChecks.MongoFramework'
+        package-type: 'nuget'
+        min-versions-to-keep: 10
+        delete-only-pre-release-versions: "true"
+
+    - name: Remove the Old Kista.Manager.AspNetCore.HealthChecks Package
+      uses: actions/delete-package-versions@v4
+      with:
+        package-name: 'Kista.Manager.AspNetCore.HealthChecks'
+        package-type: 'nuget'
+        min-versions-to-keep: 10
+        delete-only-pre-release-versions: "true"

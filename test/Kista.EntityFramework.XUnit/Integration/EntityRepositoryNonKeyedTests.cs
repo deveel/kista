@@ -11,7 +11,6 @@ namespace Kista;
 public class EntityRepositoryNonKeyedTests : IDisposable
 {
     private readonly SqliteConnection _connection;
-    private bool _disposed;
 
     public EntityRepositoryNonKeyedTests()
     {
@@ -21,12 +20,8 @@ public class EntityRepositoryNonKeyedTests : IDisposable
 
     public void Dispose()
     {
-        if (!_disposed)
-        {
-            _disposed = true;
-            _connection?.Close();
-            _connection?.Dispose();
-        }
+        _connection?.Close();
+        _connection?.Dispose();
     }
 
     [Fact]

@@ -13,6 +13,7 @@ public class EntityFrameworkRepositoryLifecycleHandlerTests : IDisposable
 {
     private readonly SqliteConnection _connection;
     private readonly DbContextOptions<SimpleDbContext> _options;
+    private bool _disposed;
 
     private sealed class SimpleEntity
     {
@@ -38,8 +39,13 @@ public class EntityFrameworkRepositoryLifecycleHandlerTests : IDisposable
 
     public void Dispose()
     {
-        _connection.Close();
-        _connection.Dispose();
+        if (!_disposed)
+        {
+            _connection.Close();
+            _connection.Dispose();
+            _disposed = true;
+        }
+        GC.SuppressFinalize(this);
     }
 
     private SimpleDbContext CreateContext()

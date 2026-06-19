@@ -54,6 +54,17 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
+      label: 'Health Checks',
+      link: {type: 'doc', id: 'health-checks/overview'},
+      items: [
+        'health-checks/configuration',
+        'health-checks/driver-specific',
+        'health-checks/advanced-scenarios',
+        'health-checks/troubleshooting',
+      ],
+    },
+    {
+      type: 'category',
       label: 'The Entity Manager',
       link: {type: 'doc', id: 'entity-manager/README'},
       items: [

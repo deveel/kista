@@ -69,6 +69,11 @@ The framework is organized into a _kernel_ package (providing interfaces and abs
 | `Kista.Manager.DynamicLinq` | Dynamic LINQ query extensions for the Entity Manager                                                          | [![NuGet](https://img.shields.io/nuget/v/Kista.Manager.DynamicLinq.svg)](https://www.nuget.org/packages/Kista.Manager.DynamicLinq/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.Manager.DynamicLinq.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.Manager.DynamicLinq) |
 | `Kista.Manager.EasyCaching` | Second-level caching for the Entity Manager via [EasyCaching](https://github.com/dotnetcore/EasyCaching)      | [![NuGet](https://img.shields.io/nuget/v/Kista.Manager.EasyCaching.svg)](https://www.nuget.org/packages/Kista.Manager.EasyCaching/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.Manager.EasyCaching.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.Manager.EasyCaching) |
 | `Kista.Manager.AspNetCore` | ASP.NET Core integration for automatic HTTP request cancellation                                              | [![NuGet](https://img.shields.io/nuget/v/Kista.Manager.AspNetCore.svg)](https://www.nuget.org/packages/Kista.Manager.AspNetCore/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.Manager.AspNetCore.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.Manager.AspNetCore) |
+| `Kista.HealthChecks` | Health check abstractions for repository connectivity monitoring | [![NuGet](https://img.shields.io/nuget/v/Kista.HealthChecks.svg)](https://www.nuget.org/packages/Kista.HealthChecks/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.HealthChecks.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.HealthChecks) |
+| `Kista.HealthChecks.EntityFramework` | Entity Framework Core health checks | [![NuGet](https://img.shields.io/nuget/v/Kista.HealthChecks.EntityFramework.svg)](https://www.nuget.org/packages/Kista.HealthChecks.EntityFramework/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.HealthChecks.EntityFramework.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.HealthChecks.EntityFramework) |
+| `Kista.HealthChecks.MongoFramework` | MongoDB health checks | [![NuGet](https://img.shields.io/nuget/v/Kista.HealthChecks.MongoFramework.svg)](https://www.nuget.org/packages/Kista.HealthChecks.MongoFramework/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.HealthChecks.MongoFramework.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.HealthChecks.MongoFramework) |
+| `Kista.HealthChecks.InMemory` | In-Memory health checks | [![NuGet](https://img.shields.io/nuget/v/Kista.HealthChecks.InMemory.svg)](https://www.nuget.org/packages/Kista.HealthChecks.InMemory/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.HealthChecks.InMemory.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.HealthChecks.InMemory) |
+| `Kista.Manager.AspNetCore.HealthChecks` | ASP.NET Core endpoint integration for health checks | [![NuGet](https://img.shields.io/nuget/v/Kista.Manager.AspNetCore.HealthChecks.svg)](https://www.nuget.org/packages/Kista.Manager.AspNetCore.HealthChecks/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.Manager.AspNetCore.HealthChecks.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.Manager.AspNetCore.HealthChecks) |
 | `Kista.Owners`             | Decorator-based user scoping with automatic owner assignment and query filtering                                   | [![NuGet](https://img.shields.io/nuget/v/Kista.Owners.svg)](https://www.nuget.org/packages/Kista.Owners/) | [![GitHub](https://img.shields.io/nuget/vpre/Kista.Owners.svg?label=pre&color=blueviolet)](https://github.com/deveel/kista/packages/nuget/Kista.Owners) |
 
 ---
@@ -141,6 +146,31 @@ public class OrderService(IRepository<Order> orders)
 }
 ```
 
+### 4. Add Health Checks (Optional)
+
+Monitor repository connectivity with built-in health checks:
+
+```csharp
+// Install health check packages
+dotnet add package Kista.HealthChecks
+dotnet add package Kista.HealthChecks.EntityFramework  # or MongoFramework, InMemory
+
+// Configure in Program.cs
+builder.Services
+    .AddRepositoryContext()
+    .UseEntityFramework<MyDbContext>(ef => ef.WithHealthChecks());
+
+builder.Services
+    .AddHealthChecks()
+    .AddKistaRepositories();
+
+var app = builder.Build();
+app.MapHealthChecks("/health");
+app.Run();
+```
+
+For more details, see the [Health Checks documentation](docs/health-checks/overview.md).
+
 For driver-specific configuration, multi-tenancy, and guidance on writing a custom repository, refer to the [full documentation](docs/index.md) or browse it online at [GitBook](https://deveel.gitbook.io/kista/).
 
 ---
@@ -157,6 +187,7 @@ For driver-specific configuration, multi-tenancy, and guidance on writing a cust
 | [Custom repositories](docs/custom-repository/) | Write your own driver |
 | [Multi-Tenancy](docs/multi-tenancy.md) | Tenant-isolated repositories |
 | [User Entities](docs/user-entities/) | User-scoped entities with owner filtering |
+| [Health Checks](docs/health-checks/overview.md) | Repository connectivity monitoring |
 
 Full documentation is also available on [GitBook](https://deveel.gitbook.io/kista/).
 
@@ -182,7 +213,7 @@ We are actively building Kista toward a comprehensive, production-ready framewor
   - [ ] QueryBuilder Execution Extensions
   - [x] Pluggable Cache Provider Abstraction
   - [x] Automatic Timestamp and Ownership Management
-  - [ ] Repository Health Checks
+  - [x] Repository Health Checks
   - [x] Repository Controller Lifecycle Redesign
 
 - [ ] **v1.7.0** — "Entity Lifecycle"

@@ -87,8 +87,10 @@ namespace Kista {
 		internal void TrackRepositoryType(Type repositoryType) {
 			if (_registeredRepositoryTypes.Add(repositoryType)) {
 				var entityType = RepositoryRegistrationUtil.GetEntityType(repositoryType);
-				if (entityType != null)
+				if (entityType != null) {
 					_registeredEntityTypes.Add(entityType);
+					_services.RegisterRepositoryForHealthCheck(repositoryType, entityType);
+				}
 			}
 		}
 

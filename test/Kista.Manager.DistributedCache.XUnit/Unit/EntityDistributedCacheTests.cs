@@ -15,6 +15,7 @@ public class EntityDistributedCacheTests : IDisposable
 {
     private readonly IDistributedCache _distributedCache;
     private readonly PersonFaker _faker = new();
+    private bool _disposed;
 
     public EntityDistributedCacheTests()
     {
@@ -23,8 +24,13 @@ public class EntityDistributedCacheTests : IDisposable
 
     public void Dispose()
     {
-        if (_distributedCache is IDisposable disposable)
-            disposable.Dispose();
+        if (!_disposed)
+        {
+            if (_distributedCache is IDisposable disposable)
+                disposable.Dispose();
+            _disposed = true;
+        }
+        GC.SuppressFinalize(this);
     }
 
     [Fact]

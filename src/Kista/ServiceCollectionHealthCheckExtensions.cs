@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Linq;
 using Kista.HealthChecks.Internal;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -51,12 +52,10 @@ internal static class ServiceCollectionHealthCheckExtensions {
         
         // Extract key type from repository type
         Type? keyType = null;
-        foreach (var iface in repositoryType.GetInterfaces()) {
-            if (iface.IsGenericType && iface.GetGenericTypeDefinition() == typeof(IRepository<,>)) {
-                var genericArgs = iface.GetGenericArguments();
-                keyType = genericArgs[1];
-                break;
-            }
+        foreach (var iface in repositoryType.GetInterfaces().Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IRepository<,>))) {
+            var genericArgs = iface.GetGenericArguments();
+            keyType = genericArgs[1];
+            break;
         }
         
         if (keyType != null)

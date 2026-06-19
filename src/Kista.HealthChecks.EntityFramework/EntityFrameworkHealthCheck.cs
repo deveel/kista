@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -75,6 +76,25 @@ public class EntityFrameworkHealthCheck<TEntity, TKey> : RepositoryHealthCheckBa
                 data: CreateDiagnosticData(
                     KeyValuePair.Create<string, object?>("DbContextType", context.GetType().FullName),
                     KeyValuePair.Create<string, object?>("ResponseType", "Healthy")));
+        }
+        catch (DbUpdateException ex) {
+            return HealthCheckResult.Unhealthy(
+                $"Database update failed: {ex.Message}",
+                exception: ex,
+                data: CreateDiagnosticData(
+                    KeyValuePair.Create<string, object?>("DbContextType", context.GetType().FullName),
+                    KeyValuePair.Create<string, object?>("ExceptionType", ex.GetType().FullName)));
+        }
+        catch (InvalidOperationException ex) {
+            return HealthCheckResult.Unhealthy(
+                $"Database operation invalid: {ex.Message}",
+                exception: ex,
+                data: CreateDiagnosticData(
+                    KeyValuePair.Create<string, object?>("DbContextType", context.GetType().FullName),
+                    KeyValuePair.Create<string, object?>("ExceptionType", ex.GetType().FullName)));
+        }
+        catch (OperationCanceledException) {
+            throw;
         }
         catch (Exception ex) {
             return HealthCheckResult.Unhealthy(

@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Linq;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace Kista.HealthChecks;
@@ -54,7 +55,7 @@ public abstract class RepositoryHealthCheckBase<TEntity, TKey> : IRepositoryHeal
                 exception: ex,
                 data: CreateDiagnosticData(KeyValuePair.Create<string, object?>("ErrorType", "Timeout")));
         }
-        catch (Exception ex) {
+        catch (SystemException ex) {
             return HealthCheckResult.Unhealthy(
                 $"Health check failed: {ex.Message}",
                 exception: ex,
@@ -79,9 +80,8 @@ public abstract class RepositoryHealthCheckBase<TEntity, TKey> : IRepositoryHeal
             ["ResponseType"] = "Healthy"
         };
         
-        foreach (var kvp in additionalData) {
-            if (kvp.Value != null)
-                data[kvp.Key] = kvp.Value;
+        foreach (var kvp in additionalData.Where(kvp => kvp.Value != null)) {
+            data[kvp.Key] = kvp.Value!;
         }
         
         return data;

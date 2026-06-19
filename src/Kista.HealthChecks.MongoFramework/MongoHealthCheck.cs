@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
@@ -55,7 +56,7 @@ public class MongoHealthCheck<TEntity, TKey> : RepositoryHealthCheckBase<TEntity
             
             var pingCommand = new BsonDocument("ping", 1);
             var database = context.Connection.GetDatabase();
-            var result = await database.RunCommandAsync<BsonDocument>(
+            await database.RunCommandAsync<BsonDocument>(
                 pingCommand, 
                 cancellationToken: pingCts.Token);
             
@@ -63,6 +64,30 @@ public class MongoHealthCheck<TEntity, TKey> : RepositoryHealthCheckBase<TEntity
                 "MongoDB connection successful",
                 data: CreateDiagnosticData(
                     KeyValuePair.Create<string, object?>("ResponseType", "Healthy")));
+        }
+        catch (MongoException ex) {
+            return HealthCheckResult.Unhealthy(
+                $"MongoDB operation failed: {ex.Message}",
+                exception: ex,
+                data: CreateDiagnosticData(
+                    KeyValuePair.Create<string, object?>("ExceptionType", ex.GetType().FullName)));
+        }
+        catch (TimeoutException ex) {
+            return HealthCheckResult.Unhealthy(
+                $"MongoDB operation timed out: {ex.Message}",
+                exception: ex,
+                data: CreateDiagnosticData(
+                    KeyValuePair.Create<string, object?>("ExceptionType", ex.GetType().FullName)));
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested) {
+            return HealthCheckResult.Unhealthy(
+                "MongoDB ping timed out",
+                exception: null,
+                data: CreateDiagnosticData(
+                    KeyValuePair.Create<string, object?>("ErrorType", "Timeout")));
+        }
+        catch (OperationCanceledException) {
+            throw;
         }
         catch (Exception ex) {
             return HealthCheckResult.Unhealthy(

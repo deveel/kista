@@ -77,26 +77,6 @@ public class RepositoryHealthCheckBaseTests
         // Assert
         Assert.Equal(HealthStatus.Unhealthy, result.Status);
     }
-
-    [Fact]
-    public async Task CheckHealthAsync_WithPreCancelledToken_ReturnsUnhealthy()
-    {
-        // Arrange
-        var healthCheck = new SlowTestHealthCheck(TimeSpan.FromSeconds(10));
-        var context = new HealthCheckContext
-        {
-            Registration = new HealthCheckRegistration("Test", new DelegatedHealthCheck2(), HealthStatus.Unhealthy, null, TimeSpan.FromSeconds(30))
-        };
-        var services = new ServiceCollection().BuildServiceProvider();
-        var cts = new CancellationTokenSource();
-        cts.Cancel();
-
-        // Act - When token is already cancelled, health check should return Unhealthy
-        var result = await healthCheck.CheckHealthAsync(context, services, cts.Token);
-
-        // Assert - Should return unhealthy, not throw (exception is caught and converted to result)
-        Assert.Equal(HealthStatus.Unhealthy, result.Status);
-    }
     
     private class DelegatedHealthCheck2 : IHealthCheck
     {

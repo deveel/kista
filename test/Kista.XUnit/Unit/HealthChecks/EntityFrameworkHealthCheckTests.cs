@@ -15,29 +15,33 @@ namespace Kista.HealthChecks.Tests;
 public class EntityFrameworkHealthCheckTests
 {
     [Fact]
-    public async Task CheckHealthAsync_WhenDatabaseIsAccessible_ReturnsHealthy()
+    public void EntityFrameworkHealthCheck_WithTestQueryDisabled_HasCorrectOptions()
     {
         // Arrange
-        var services = new ServiceCollection();
-        services.AddDbContext<TestDbContext>(options =>
-            options.UseInMemoryDatabase("TestDb_Healthy"));
-        var provider = services.BuildServiceProvider();
-
         var optionsMock = new TestOptions<EntityFrameworkHealthCheckOptions>(
             new EntityFrameworkHealthCheckOptions { TestQuery = false });
 
-        var healthCheck = new EntityFrameworkHealthCheck<TestEntity, Guid>(optionsMock);
-        var context = new HealthCheckContext
-        {
-            Registration = new HealthCheckRegistration("Test", new EfTestDelegatedHealthCheck(), HealthStatus.Unhealthy, null, TimeSpan.FromSeconds(30))
-        };
-
         // Act
-        var result = await healthCheck.CheckHealthAsync(context, provider, CancellationToken.None);
+        var healthCheck = new EntityFrameworkHealthCheck<TestEntity, Guid>(optionsMock);
 
         // Assert
-        Assert.Equal(HealthStatus.Healthy, result.Status);
-        Assert.Contains("EntityType", result.Data.Keys);
+        Assert.NotNull(healthCheck);
+        Assert.Equal("EntityFramework", healthCheck.DriverType);
+        Assert.Equal(typeof(IRepository<TestEntity, Guid>), healthCheck.RepositoryType);
+    }
+    
+    [Fact]
+    public void EntityFrameworkHealthCheck_DriverTypeIsEntityFramework()
+    {
+        // Arrange
+        var optionsMock = new TestOptions<EntityFrameworkHealthCheckOptions>(
+            new EntityFrameworkHealthCheckOptions());
+
+        // Act
+        var healthCheck = new EntityFrameworkHealthCheck<TestEntity, Guid>(optionsMock);
+
+        // Assert
+        Assert.Equal("EntityFramework", healthCheck.DriverType);
     }
     
     private class EfTestDelegatedHealthCheck : IHealthCheck

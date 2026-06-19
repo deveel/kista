@@ -79,7 +79,7 @@ public class RepositoryHealthCheckBaseTests
     }
 
     [Fact]
-    public async Task CheckHealthAsync_WithPreCancelledToken_ThrowsOperationCanceledException()
+    public async Task CheckHealthAsync_WithPreCancelledToken_ThrowsTaskCanceledException()
     {
         // Arrange
         var healthCheck = new SlowTestHealthCheck(TimeSpan.FromSeconds(10));
@@ -91,8 +91,8 @@ public class RepositoryHealthCheckBaseTests
         var cts = new CancellationTokenSource();
         cts.Cancel();
 
-        // Act & Assert
-        await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+        // Act & Assert - TaskCanceledException is thrown when cancellation token is already cancelled
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
             await healthCheck.CheckHealthAsync(context, services, cts.Token));
     }
     

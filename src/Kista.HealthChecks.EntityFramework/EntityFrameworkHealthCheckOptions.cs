@@ -1,0 +1,44 @@
+// Copyright 2023-2026 Antonello Provenzano
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Options;
+
+namespace Kista.HealthChecks;
+
+/// <summary>
+/// Configuration options for Entity Framework health checks.
+/// </summary>
+public class EntityFrameworkHealthCheckOptions {
+    /// <summary>
+    /// Timeout for the health check.
+    /// </summary>
+    public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(5);
+    
+    /// <summary>
+    /// Whether to run a test query in addition to connection check.
+    /// </summary>
+    public bool TestQuery { get; set; } = false;
+    
+    /// <summary>
+    /// Tags to apply to the health check.
+    /// </summary>
+    public string[] Tags { get; set; } = ["kista", "entityframework", "repository"];
+    
+    /// <summary>
+    /// Failure status to report when health check fails.
+    /// </summary>
+    public HealthStatus FailureStatus { get; set; } = HealthStatus.Degraded;
+}

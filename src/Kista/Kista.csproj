@@ -23,4 +23,19 @@
   <ItemGroup>
     <PackageReference Include="Deveel.Filters" Version="2.0.1" />
   </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>Kista.HealthChecks</_Parameter1>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>Kista.HealthChecks.EntityFramework</_Parameter1>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>Kista.HealthChecks.MongoFramework</_Parameter1>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>Kista.HealthChecks.InMemory</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
 </Project>

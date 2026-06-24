@@ -129,11 +129,7 @@ namespace Kista {
 				return queryable;
 
 			if (filter is CombinedQueryFilter combined) {
-				foreach (var f in combined) {
-					queryable = f.Apply(queryable);
-				}
-
-				return queryable;
+				return queryable.Where(combined.AsLambda<TEntity>());
 			}
 
 			if (filter is IQueryableFilter<TEntity> filterQueryable)

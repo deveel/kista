@@ -548,12 +548,19 @@ public class RepositoryCoreTests {
     }
 
     [Fact]
-    public void CombinedQueryFilter_AsLambda_DifferentParamNames_Throws() {
+    public void CombinedQueryFilter_AsLambda_DifferentParamNames_RebindsCorrectly() {
         var f1 = QueryFilter.Where<Person>(x => x.FirstName == "A");
         var f2 = new ExpressionQueryFilter<Person>(p => p.LastName == "B"); // different param name
         var combined = QueryFilter.Combine(new[] { f1, f2 }) as CombinedQueryFilter;
 
-        Assert.Throws<InvalidOperationException>(() => combined!.AsLambda<Person>());
+        var lambda = combined!.AsLambda<Person>();
+        var compiled = lambda.Compile();
+
+        var match = new Person { FirstName = "A", LastName = "B" };
+        var noMatch = new Person { FirstName = "A", LastName = "C" };
+
+        Assert.True(compiled(match));
+        Assert.False(compiled(noMatch));
     }
 
     [Fact]

@@ -468,6 +468,32 @@ Repository writes are fire-and-forget from the framework's perspective. Teams ne
 
 ---
 
+### Feature — Specification Pattern Support
+
+**Title:** Domain-Driven Querying via Composable Specifications
+
+**Intent**  
+> "Let teams encapsulate business rules into reusable, named specification objects that compose with AND/OR/NOT and produce driver-agnostic queries — bridging domain language and data access without coupling to LINQ or any specific query engine."
+
+**The Problem Today**  
+Kista's query pipeline is built on `IQueryFilter` and `IQuery` — infrastructure-level abstractions that carry no business meaning. A filter like `customer => customer.IsActive && customer.CreatedAt > cutoff` lives inline in service code, duplicated across methods, with no way to name, reuse, or compose it. Teams practicing Domain-Driven Design have no natural place to put domain rules that drive data retrieval, and the framework offers no abstraction between the domain layer and the query infrastructure.
+
+**What We Are Building**  
+- An `ISpecification<TEntity>` interface that produces an `IQuery` — Kista's driver-agnostic query contract — keeping specs decoupled from LINQ, EF Core, or any specific engine
+- An abstract `Specification<TEntity>` base class with `&` (AND), `|` (OR), and `!` (NOT) operator overloads returning typed composite specifications
+- `AndSpecification<TEntity>`, `OrSpecification<TEntity>`, and `NotSpecification<TEntity>` composite types that combine inner specs' queries at the filter level
+- Extension methods on `IRepository<TEntity, TKey>` and `EntityManager<TEntity, TKey>` accepting `ISpecification<TEntity>` directly, calling `ToQuery()` internally and delegating to the existing query pipeline
+- An optional `IsSatisfiedBy(TEntity)` method on the base class for in-memory evaluation (testing, validation rules) — not on the interface, so drivers never need it
+
+**Benefits**
+- Domain language appears in repository calls: `repository.FindAllAsync(new ActiveCustomerSpec())` instead of inline lambdas
+- Specifications are reusable, testable, and composable — `activeCustomer & fromEurope` works out of the box
+- Zero driver changes: specs produce `IQuery`, which every driver already understands
+- Clean separation: the domain owns the spec, the infrastructure owns the query — no LINQ leaks into domain code
+- Natural companion to soft-delete and state machine in the v1.7 lifecycle theme
+
+---
+
 ## Milestone 4: v1.8.0 — "Scale & Throughput"
 
 **Release Target:** Q4 2026 (late)  
@@ -747,6 +773,35 @@ Creating a custom repository — even a trivial one adding two domain-specific q
 - All generated repositories are idiomatic and consistent — copy-paste drift across a codebase is eliminated
 - The `dotnet new` template gives new team members a correct, working starting point in one command
 - Generated code is fully auditable, debuggable, and ejectable — developers always remain in control
+
+---
+
+### Feature — Specification Extension Code Generator
+
+**Title:** Compile-Time Named Repository Extensions from Specification Classes
+
+**Intent**  
+> "Eliminate the boilerplate of wiring specification classes to repository calls by generating named, strongly-typed extension methods at compile time — so `ActiveCustomerSpecification` automatically produces `repository.FindAllActiveCustomersAsync()`."
+
+**The Problem Today**  
+The v1.7.0 specification pattern lets teams write `repository.FindAllAsync(new ActiveCustomerSpec())`, which is already an improvement over inline filters. However, calling code still constructs the specification object explicitly at every call site. For frequently-used specifications, teams naturally want a shorthand — but writing and maintaining `FindAllActiveCustomersAsync()` extension methods by hand for every specification is repetitive and drifts over time.
+
+**What We Are Building**  
+- A `[GenerateRepositoryExtensions]` attribute that can be placed on any class implementing `ISpecification<TEntity>`
+- A Roslyn incremental source generator that detects decorated specification classes and emits a static extension class targeting `IRepository<TEntity>` (and optionally `EntityManager<TEntity, TKey>`)
+- Generated method names derived from the specification class name: `ActiveCustomerSpecification` → `FindAllActiveCustomersAsync()`, `FindFirstActiveCustomerAsync()`, `CountActiveCustomersAsync()`, `ExistsActiveCustomerAsync()`
+- Each generated method internally calls `new ActiveCustomerSpecification().ToQuery()` and delegates to the corresponding repository method
+- The generator ships in the `Kista.SourceGenerators` package alongside the repository scaffolding generator from the previous feature
+- Generated code is transparent, visible in IDE navigation, and fully overridable — consumers can always fall back to the generic API
+
+**Benefits**
+- Frequently-used specifications get a one-line call site: `await repository.FindAllActiveCustomersAsync()`
+- No hand-written extension methods to maintain — the source of truth is the specification class itself
+- Consistent naming convention across the entire codebase
+- Opt-in per specification: only classes with the attribute trigger generation
+- Complements the repository scaffolding generator — both ship in the same package
+
+---
 
 ## Milestone 7: v2.1.0 — "New Database Drivers"
 

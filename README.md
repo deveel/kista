@@ -220,6 +220,7 @@ We are actively building Kista toward a comprehensive, production-ready framewor
   - [ ] Soft Delete Support
   - [ ] Entity State Machine
   - [ ] Domain Event Emission from EntityManager
+  - [ ] Specification Pattern Support
 
 - [ ] **v1.8.0** — "Scale & Throughput"
   - [ ] Batch Operations in EntityManager
@@ -236,6 +237,7 @@ We are actively building Kista toward a comprehensive, production-ready framewor
   - [ ] Simplified Repository Interface Hierarchy
   - [ ] Remove Obsolete Capability Interfaces
   - [ ] Repository Source Generators
+  - [ ] Specification Extension Code Generator
 
 - [ ] **v2.1.0** — "New Database Drivers"
   - [ ] PostgreSQL Native Driver

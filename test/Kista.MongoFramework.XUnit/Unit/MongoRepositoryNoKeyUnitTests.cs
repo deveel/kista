@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using MongoFramework;
 
@@ -22,7 +23,7 @@ public class MongoRepositoryNoKeyUnitTests
 		var context = provider.GetRequiredService<TestMongoContext>();
 
 		// Act
-		var repository = new MongoRepository<TestEntity>(context);
+		var repository = new MongoRepository<TestEntity>(context, (ILogger<MongoRepository<TestEntity>>?)null);
 
 		// Assert
 		Assert.NotNull(repository);
@@ -39,7 +40,7 @@ public class MongoRepositoryNoKeyUnitTests
 
 		var provider = services.BuildServiceProvider();
 		var context = provider.GetRequiredService<TestMongoContext>();
-		var repository = new MongoRepository<TestEntity>(context);
+		var repository = new MongoRepository<TestEntity>(context, (ILogger<MongoRepository<TestEntity>>?)null);
 
 		// Act
 #pragma warning disable CS0618
@@ -61,7 +62,7 @@ public class MongoRepositoryNoKeyUnitTests
 
 		var provider = services.BuildServiceProvider();
 		var context = provider.GetRequiredService<TestMongoContext>();
-		var repository = new MongoRepository<TestEntity>(context);
+		var repository = new MongoRepository<TestEntity>(context, (ILogger<MongoRepository<TestEntity>>?)null);
 		var keyedRepo = (IRepository<TestEntity, object>)repository;
 		var entity = new TestEntity { Id = ObjectId.GenerateNewId(), Name = "Test" };
 

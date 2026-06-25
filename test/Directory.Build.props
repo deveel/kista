@@ -27,6 +27,8 @@
     <ItemGroup>
         <!-- Bogus is needed in support libraries (fixtures, fakers) too -->
         <PackageReference Include="Bogus" Version="35.*" />
+        <!-- NSubstitute for mocking in unit tests -->
+        <PackageReference Include="NSubstitute" Version="5.*" />
     </ItemGroup>
 
     <!-- Microsoft.Extensions.DependencyInjection — TFM-matched versions -->

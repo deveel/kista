@@ -44,6 +44,10 @@
       "last 5 safari version"
     ]
   },
+  "overrides": {
+    "serialize-javascript": "7.0.6",
+    "uuid": "11.1.1"
+  },
   "engines": {
     "node": ">=20.0"
   }

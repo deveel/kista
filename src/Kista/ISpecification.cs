@@ -21,7 +21,9 @@ namespace Kista {
 	/// <typeparam name="TEntity">
 	/// The type of entity the specification applies to.
 	/// </typeparam>
+#pragma warning disable S2326 // TEntity is used for type safety in extension methods
 	public interface ISpecification<TEntity> where TEntity : class {
+#pragma warning restore S2326
 		/// <summary>
 		/// Converts the specification to a driver-agnostic <see cref="IQuery"/>
 		/// that can be executed against any repository.

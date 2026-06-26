@@ -10,6 +10,7 @@ namespace Kista;
 [Trait("Feature", "UserIdentifier")]
 public class ClaimUserIdentifierStrategyTests
 {
+    const string TestUserId = "user123";
     [Fact]
     public void Should_ReturnDefault_When_ServiceProviderIsNull()
     {
@@ -53,7 +54,7 @@ public class ClaimUserIdentifierStrategyTests
     public void Should_ReturnUserId_When_ClaimFound()
     {
         var httpContext = Substitute.For<HttpContext>();
-        var identity = new ClaimsIdentity(new[] { new Claim("sub", "user123") });
+        var identity = new ClaimsIdentity(new[] { new Claim("sub", TestUserId) });
         var user = new ClaimsPrincipal(identity);
         httpContext.User.Returns(user);
         var accessor = Substitute.For<IHttpContextAccessor>();
@@ -65,7 +66,7 @@ public class ClaimUserIdentifierStrategyTests
 
         var result = strategy.GetUserId(provider);
 
-        Assert.Equal("user123", result);
+        Assert.Equal(TestUserId, result);
     }
 
     [Fact]
@@ -84,7 +85,7 @@ public class ClaimUserIdentifierStrategyTests
     public void Should_ConvertToString_When_TKeyIsString()
     {
         var httpContext = Substitute.For<HttpContext>();
-        var identity = new ClaimsIdentity(new[] { new Claim("sub", "user123") });
+        var identity = new ClaimsIdentity(new[] { new Claim("sub", TestUserId) });
         httpContext.User.Returns(new ClaimsPrincipal(identity));
         var accessor = Substitute.For<IHttpContextAccessor>();
         accessor.HttpContext.Returns(httpContext);
@@ -95,7 +96,7 @@ public class ClaimUserIdentifierStrategyTests
 
         var result = strategy.GetUserId(provider);
 
-        Assert.Equal("user123", result);
+        Assert.Equal(TestUserId, result);
     }
 
     [Fact]

@@ -52,7 +52,7 @@ public class NotQueryFilterTests {
         Assert.True(inner.WasInitialized);
     }
 
-    private class TestFilter : IExpressionQueryFilter {
+    private sealed class TestFilter : IExpressionQueryFilter {
         public bool WasInitialized { get; private set; }
 
         public void Initialize(IFilterContext context) {
@@ -64,7 +64,7 @@ public class NotQueryFilterTests {
         }
     }
 
-    private class TestFilterContext : IFilterContext {
+    private sealed class TestFilterContext : IFilterContext {
         public IServiceProvider Services => null!;
     }
 }

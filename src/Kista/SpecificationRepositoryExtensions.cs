@@ -18,6 +18,7 @@ namespace Kista {
 	/// that accept <see cref="ISpecification{TEntity}"/> instances for domain-driven querying.
 	/// </summary>
 	public static class SpecificationRepositoryExtensions {
+		const string NotFilterableMessage = "The repository does not support filtering";
 		/// <summary>
 		/// Finds the first entity matching the given specification.
 		/// </summary>
@@ -48,7 +49,7 @@ namespace Kista {
 			ArgumentNullException.ThrowIfNull(specification);
 
 			if (!(repository is IFilterableRepository<TEntity, TKey> filterable))
-				throw new NotSupportedException("The repository does not support filtering");
+				throw new NotSupportedException(NotFilterableMessage);
 
 			var query = specification.ToQuery();
 			return filterable.FindFirstAsync(query, cancellationToken);
@@ -84,7 +85,7 @@ namespace Kista {
 			ArgumentNullException.ThrowIfNull(specification);
 
 			if (!(repository is IFilterableRepository<TEntity, TKey> filterable))
-				throw new NotSupportedException("The repository does not support filtering");
+				throw new NotSupportedException(NotFilterableMessage);
 
 			var query = specification.ToQuery();
 			return filterable.FindAllAsync(query, cancellationToken);
@@ -120,7 +121,7 @@ namespace Kista {
 			ArgumentNullException.ThrowIfNull(specification);
 
 			if (!(repository is IFilterableRepository<TEntity, TKey> filterable))
-				throw new NotSupportedException("The repository does not support filtering");
+				throw new NotSupportedException(NotFilterableMessage);
 
 			var query = specification.ToQuery();
 			return filterable.CountAsync(query.Filter ?? QueryFilter.Empty, cancellationToken);
@@ -157,7 +158,7 @@ namespace Kista {
 			ArgumentNullException.ThrowIfNull(specification);
 
 			if (!(repository is IFilterableRepository<TEntity, TKey> filterable))
-				throw new NotSupportedException("The repository does not support filtering");
+				throw new NotSupportedException(NotFilterableMessage);
 
 			var query = specification.ToQuery();
 			return await filterable.ExistsAsync(query.Filter ?? QueryFilter.Empty, cancellationToken);

@@ -4,6 +4,7 @@ namespace Kista;
 [Trait("Layer", "Core")]
 [Trait("Feature", "QueryFilter")]
 public class CombinedQueryFilterOperatorTests {
+    const string SmithLastName = "Smith";
     [Fact]
     public void Should_DefaultToAnd_When_NoOperatorSpecified() {
         var filter = new CombinedQueryFilter(new IQueryFilter[] {
@@ -45,7 +46,7 @@ public class CombinedQueryFilterOperatorTests {
         var compiled = lambda.Compile();
 
         var match = new Person { FirstName = "John", LastName = "Doe" };
-        var noMatch = new Person { FirstName = "John", LastName = "Smith" };
+        var noMatch = new Person { FirstName = "John", LastName = SmithLastName };
 
         Assert.True(compiled(match));
         Assert.False(compiled(noMatch));
@@ -61,9 +62,9 @@ public class CombinedQueryFilterOperatorTests {
         var lambda = filter.AsLambda<Person>();
         var compiled = lambda.Compile();
 
-        var matchFirst = new Person { FirstName = "John", LastName = "Smith" };
+        var matchFirst = new Person { FirstName = "John", LastName = SmithLastName };
         var matchLast = new Person { FirstName = "Jane", LastName = "Doe" };
-        var noMatch = new Person { FirstName = "Jane", LastName = "Smith" };
+        var noMatch = new Person { FirstName = "Jane", LastName = SmithLastName };
 
         Assert.True(compiled(matchFirst));
         Assert.True(compiled(matchLast));
@@ -90,9 +91,9 @@ public class CombinedQueryFilterOperatorTests {
         }, FilterLogicalOperator.Or);
 
         var people = new List<Person> {
-            new Person { FirstName = "John", LastName = "Smith" },
+            new Person { FirstName = "John", LastName = SmithLastName },
             new Person { FirstName = "Jane", LastName = "Doe" },
-            new Person { FirstName = "Jane", LastName = "Smith" }
+            new Person { FirstName = "Jane", LastName = SmithLastName }
         };
 
         var result = filter.Apply(people.AsQueryable()).ToList();
@@ -111,7 +112,7 @@ public class CombinedQueryFilterOperatorTests {
 
         var people = new List<Person> {
             new Person { FirstName = "John", LastName = "Doe" },
-            new Person { FirstName = "John", LastName = "Smith" },
+            new Person { FirstName = "John", LastName = SmithLastName },
             new Person { FirstName = "Jane", LastName = "Doe" }
         };
 

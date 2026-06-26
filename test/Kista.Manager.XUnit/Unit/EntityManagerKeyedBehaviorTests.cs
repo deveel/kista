@@ -11,6 +11,7 @@ namespace Kista;
 public class EntityManagerKeyedBehaviorTests
 {
     private readonly PersonFaker _faker = new();
+    const string DbErrorMessage = "db error";
 
     public class TestEntity
     {
@@ -423,7 +424,7 @@ public class EntityManagerKeyedBehaviorTests
     {
         var repo = Substitute.For<IRepository<Person, string>>();
         repo.When(x => x.AddAsync(Arg.Any<Person>(), Arg.Any<CancellationToken>()))
-            .Throw(new InvalidOperationException("db error"));
+            .Throw(new InvalidOperationException(DbErrorMessage));
         var manager = new EntityManager<Person, string>(repo);
 
         var result = await manager.AddAsync(new Person(), TestContext.Current.CancellationToken);
@@ -450,7 +451,7 @@ public class EntityManagerKeyedBehaviorTests
     {
         var repo = Substitute.For<IRepository<Person, string>>();
         repo.When(x => x.AddRangeAsync(Arg.Any<IEnumerable<Person>>(), Arg.Any<CancellationToken>()))
-            .Throw(new InvalidOperationException("db error"));
+            .Throw(new InvalidOperationException(DbErrorMessage));
         var manager = new EntityManager<Person, string>(repo);
 
         var result = await manager.AddRangeAsync(new[] { new Person() }, TestContext.Current.CancellationToken);
@@ -522,7 +523,7 @@ public class EntityManagerKeyedBehaviorTests
         var existing = new Person { Id = "1", FirstName = "Old" };
         repo.FindAsync("1", Arg.Any<CancellationToken>()).Returns(new ValueTask<Person?>(existing));
         repo.UpdateAsync(Arg.Any<Person>(), Arg.Any<CancellationToken>())
-            .Returns(ValueTask.FromException<bool>(new InvalidOperationException("db error")));
+            .Returns(ValueTask.FromException<bool>(new InvalidOperationException(DbErrorMessage)));
         var manager = new EntityManager<Person, string>(repo);
 
         var result = await manager.UpdateAsync(new Person { Id = "1", FirstName = "New" }, TestContext.Current.CancellationToken);
@@ -579,7 +580,7 @@ public class EntityManagerKeyedBehaviorTests
         var existing = new Person { Id = "1" };
         repo.FindAsync("1", Arg.Any<CancellationToken>()).Returns(new ValueTask<Person?>(existing));
         repo.RemoveAsync(existing, Arg.Any<CancellationToken>())
-            .Returns(ValueTask.FromException<bool>(new InvalidOperationException("db error")));
+            .Returns(ValueTask.FromException<bool>(new InvalidOperationException(DbErrorMessage)));
         var manager = new EntityManager<Person, string>(repo);
 
         var result = await manager.RemoveAsync(new Person { Id = "1" }, TestContext.Current.CancellationToken);
@@ -592,7 +593,7 @@ public class EntityManagerKeyedBehaviorTests
     {
         var repo = Substitute.For<IRepository<Person, string>>();
         repo.When(x => x.RemoveRangeAsync(Arg.Any<IEnumerable<Person>>(), Arg.Any<CancellationToken>()))
-            .Throw(new InvalidOperationException("db error"));
+            .Throw(new InvalidOperationException(DbErrorMessage));
         var manager = new EntityManager<Person, string>(repo);
 
         var result = await manager.RemoveRangeAsync(new[] { new Person() }, TestContext.Current.CancellationToken);
@@ -618,7 +619,7 @@ public class EntityManagerKeyedBehaviorTests
     {
         var repo = Substitute.For<IRepository<Person, string>>();
         repo.FindAsync("1", Arg.Any<CancellationToken>())
-            .Returns(ValueTask.FromException<Person?>(new InvalidOperationException("db error")));
+            .Returns(ValueTask.FromException<Person?>(new InvalidOperationException(DbErrorMessage)));
         var manager = new EntityManager<Person, string>(repo);
 
         var result = await manager.FindAsync("1", TestContext.Current.CancellationToken);
@@ -642,7 +643,10 @@ public class EntityManagerKeyedBehaviorTests
     public async Task Should_FindFirstAsync_WithNullResult()
     {
         var filterable = Substitute.For<IRepository<Person, string>, IFilterableRepository<Person, string>>();
-        ((IFilterableRepository<Person, string>)filterable).FindFirstAsync(Arg.Any<IQuery>(), Arg.Any<CancellationToken>())
+#pragma warning disable S1944 // NSubstitute creates the type dynamically at runtime
+        var filterableRepo = (IFilterableRepository<Person, string>)filterable;
+#pragma warning restore S1944
+        filterableRepo.FindFirstAsync(Arg.Any<IQuery>(), Arg.Any<CancellationToken>())
             .Returns(new ValueTask<Person?>((Person?)null));
         var manager = new EntityManager<Person, string>(filterable);
 
@@ -656,8 +660,11 @@ public class EntityManagerKeyedBehaviorTests
     public async Task Should_FindFirstAsync_WithException()
     {
         var filterable = Substitute.For<IRepository<Person, string>, IFilterableRepository<Person, string>>();
-        ((IFilterableRepository<Person, string>)filterable).FindFirstAsync(Arg.Any<IQuery>(), Arg.Any<CancellationToken>())
-            .Returns(ValueTask.FromException<Person?>(new InvalidOperationException("db error")));
+#pragma warning disable S1944 // NSubstitute creates the type dynamically at runtime
+        var filterableRepo = (IFilterableRepository<Person, string>)filterable;
+#pragma warning restore S1944
+        filterableRepo.FindFirstAsync(Arg.Any<IQuery>(), Arg.Any<CancellationToken>())
+            .Returns(ValueTask.FromException<Person?>(new InvalidOperationException(DbErrorMessage)));
         var manager = new EntityManager<Person, string>(filterable);
 
         var result = await manager.FindFirstAsync(Query.Empty, TestContext.Current.CancellationToken);
@@ -679,8 +686,11 @@ public class EntityManagerKeyedBehaviorTests
     public async Task Should_FindAllAsync_WithException()
     {
         var filterable = Substitute.For<IRepository<Person, string>, IFilterableRepository<Person, string>>();
-        ((IFilterableRepository<Person, string>)filterable).FindAllAsync(Arg.Any<IQuery>(), Arg.Any<CancellationToken>())
-            .Returns(ValueTask.FromException<IReadOnlyList<Person>>(new InvalidOperationException("db error")));
+#pragma warning disable S1944 // NSubstitute creates the type dynamically at runtime
+        var filterableRepo = (IFilterableRepository<Person, string>)filterable;
+#pragma warning restore S1944
+        filterableRepo.FindAllAsync(Arg.Any<IQuery>(), Arg.Any<CancellationToken>())
+            .Returns(ValueTask.FromException<IReadOnlyList<Person>>(new InvalidOperationException(DbErrorMessage)));
         var manager = new EntityManager<Person, string>(filterable);
 
         await Assert.ThrowsAsync<OperationException>(() =>
@@ -731,7 +741,7 @@ public class EntityManagerKeyedBehaviorTests
     public void Should_GetCancellationToken_FromSource()
     {
         var repo = Substitute.For<IRepository<Person, string>>();
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var cancellationSource = Substitute.For<IOperationCancellationSource>();
         cancellationSource.Token.Returns(cts.Token);
         var services = new ServiceCollection();
@@ -749,7 +759,7 @@ public class EntityManagerKeyedBehaviorTests
     {
         var repo = Substitute.For<IRepository<Person, string>>();
         var manager = new ExposedEntityManager(repo);
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
 
         var token = manager.ExposedGetCancellationToken(cts.Token);
 
@@ -810,7 +820,7 @@ public class EntityManagerKeyedBehaviorTests
         public bool ExposedAreEqual(TEntity existing, TEntity other) => AreEqual(existing, other);
     }
 
-    public class ThrowingFilterableRepo : IRepository<Person, string>, IFilterableRepository<Person, string>
+    public class ThrowingFilterableRepo : IFilterableRepository<Person, string>
     {
         public IServiceProvider? Services => null;
         public string? GetEntityKey(Person entity) => entity.Id;
@@ -819,13 +829,15 @@ public class EntityManagerKeyedBehaviorTests
         public ValueTask<bool> UpdateAsync(Person entity, CancellationToken cancellationToken = default) => ValueTask.FromResult(true);
         public ValueTask<bool> RemoveAsync(Person entity, CancellationToken cancellationToken = default) => ValueTask.FromResult(true);
         public ValueTask RemoveRangeAsync(IEnumerable<Person> entities, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
+#pragma warning disable S2325 // Interface implementation, cannot be static
         public ValueTask<Person?> FindAsync(string key, CancellationToken cancellationToken = default) => new ValueTask<Person?>((Person?)null);
         public ValueTask<Person?> FindAsync(object key, CancellationToken cancellationToken = default) => new ValueTask<Person?>((Person?)null);
+#pragma warning restore S2325
         public ValueTask<PageResult<Person>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default)
             => new ValueTask<PageResult<Person>>(new PageResult<Person>(request, 0, new List<Person>()));
         public ValueTask<Person?> FindFirstAsync(IQuery query, CancellationToken cancellationToken = default) => new ValueTask<Person?>((Person?)null);
         public ValueTask<IReadOnlyList<Person>> FindAllAsync(IQuery query, CancellationToken cancellationToken = default) => new ValueTask<IReadOnlyList<Person>>(new List<Person>());
         public ValueTask<bool> ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken = default) => ValueTask.FromResult(false);
-        public ValueTask<long> CountAsync(IQueryFilter filter, CancellationToken cancellationToken = default) => throw new InvalidOperationException("db error");
+        public ValueTask<long> CountAsync(IQueryFilter filter, CancellationToken cancellationToken = default) => throw new InvalidOperationException(DbErrorMessage);
     }
 }

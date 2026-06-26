@@ -4,14 +4,14 @@ namespace Kista;
 [Trait("Layer", "Core")]
 [Trait("Feature", "Specification")]
 public class SpecificationTests {
-    private class ActivePersonSpec : Specification<Person> {
+    private sealed class ActivePersonSpec : Specification<Person> {
         public override IQuery ToQuery() {
             var filter = QueryFilter.Where<Person>(p => p.Email != null);
             return new Query(filter);
         }
     }
 
-    private class FirstNameSpec : Specification<Person> {
+    private sealed class FirstNameSpec : Specification<Person> {
         private readonly string firstName;
         public FirstNameSpec(string firstName) => this.firstName = firstName;
 
@@ -21,7 +21,7 @@ public class SpecificationTests {
         }
     }
 
-    private class LastNameSpec : Specification<Person> {
+    private sealed class LastNameSpec : Specification<Person> {
         private readonly string lastName;
         public LastNameSpec(string lastName) => this.lastName = lastName;
 
@@ -72,7 +72,7 @@ public class SpecificationTests {
 
     [Fact]
     public void Should_ReturnEmptyQuery_When_AndSpecHasNoFilters() {
-        var spec = new EmptySpec() & new EmptySpec();
+        var spec = new EmptySpec() & new AnotherEmptySpec();
         var query = spec.ToQuery();
 
         Assert.NotNull(query.Filter);
@@ -81,7 +81,7 @@ public class SpecificationTests {
 
     [Fact]
     public void Should_ReturnEmptyQuery_When_OrSpecHasNoFilters() {
-        var spec = new EmptySpec() | new EmptySpec();
+        var spec = new EmptySpec() | new AnotherEmptySpec();
         var query = spec.ToQuery();
 
         Assert.NotNull(query.Filter);
@@ -97,7 +97,11 @@ public class SpecificationTests {
         Assert.True(query.Filter.IsEmpty());
     }
 
-    private class EmptySpec : Specification<Person> {
+    private sealed class EmptySpec : Specification<Person> {
+        public override IQuery ToQuery() => Query.Empty;
+    }
+
+    private sealed class AnotherEmptySpec : Specification<Person> {
         public override IQuery ToQuery() => Query.Empty;
     }
 }

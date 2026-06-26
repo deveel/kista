@@ -7,26 +7,26 @@ namespace Kista;
 [Trait("Feature", "Repository")]
 public class RepositoryWrapperTests
 {
-    private class KeyedEntity
+    private sealed class KeyedEntity
     {
         [Key]
         public string? Id { get; set; }
         public string? Name { get; set; }
     }
 
-    private class FieldKeyEntity
+    private sealed class FieldKeyEntity
     {
         [Key]
         public string? Id;
         public string? Name { get; set; }
     }
 
-    private class NoKeyEntity
+    private sealed class NoKeyEntity
     {
         public string? Name { get; set; }
     }
 
-    private class MultipleKeyEntity
+    private sealed class MultipleKeyEntity
     {
         [Key]
         public string? Id1;

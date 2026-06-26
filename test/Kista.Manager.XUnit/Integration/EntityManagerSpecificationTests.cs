@@ -7,7 +7,9 @@ namespace Kista;
 [Trait("Category", "Integration")]
 [Trait("Layer", "Application")]
 [Trait("Feature", "Specification")]
+#pragma warning disable S1939 // IAsyncLifetime does not implement IAsyncDisposable in this xUnit version
 public class EntityManagerSpecificationTests : IAsyncLifetime, IAsyncDisposable {
+#pragma warning restore S1939
     private readonly ITestOutputHelper testOutput;
     private AsyncServiceScope scope;
     private readonly Faker<Person> personFaker;
@@ -51,13 +53,13 @@ public class EntityManagerSpecificationTests : IAsyncLifetime, IAsyncDisposable 
         await scope.DisposeAsync();
     }
 
-    private class ActivePersonSpec : Specification<Person> {
+    private sealed class ActivePersonSpec : Specification<Person> {
         public override IQuery ToQuery() {
             return new Query(QueryFilter.Where<Person>(p => p.Email != null));
         }
     }
 
-    private class FirstNameSpec : Specification<Person> {
+    private sealed class FirstNameSpec : Specification<Person> {
         private readonly string firstName;
         public FirstNameSpec(string firstName) => this.firstName = firstName;
         public override IQuery ToQuery() {

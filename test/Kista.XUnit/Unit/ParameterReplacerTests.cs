@@ -11,7 +11,7 @@ public class ParameterReplacerTests
     public void Should_CombineTwoExpressions_When_UsingCombine()
     {
         Expression<Func<string, bool>> left = x => x.Length > 3;
-        Expression<Func<string, bool>> right = y => y.StartsWith("A");
+        Expression<Func<string, bool>> right = y => y.StartsWith('A');
 
         var combined = ParameterReplacer.Combine(left, right);
         var compiled = combined.Compile();

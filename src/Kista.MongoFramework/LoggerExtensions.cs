@@ -14,16 +14,18 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 using Microsoft.Extensions.Logging;
 
-namespace Kista {
-/// <summary>
+namespace Kista { 
+    /// <summary>
 	/// Extension methods for logging MongoDB repository events.
 	/// </summary>
+	[ExcludeFromCodeCoverage]
 	static partial class LoggerExtensions {
 		/// <summary>
 		/// Logs an unknown error during a repository operation.

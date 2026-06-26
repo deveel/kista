@@ -12,12 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Diagnostics.CodeAnalysis;
+
 using Microsoft.Extensions.Logging;
 
 namespace Kista {
 /// <summary>
 	/// Extension methods for logging entity manager events.
 	/// </summary>
+	[ExcludeFromCodeCoverage]
 	static partial class LoggerExtensions {
         /// <summary>
         /// Logs an unknown error during a management operation.

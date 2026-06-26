@@ -1,9 +1,12 @@
+using System.Diagnostics.CodeAnalysis;
+
 using Microsoft.Extensions.Logging;
 
 namespace Kista {
 	/// <summary>
 	/// Extension methods for logging repository lifecycle events.
 	/// </summary>
+	[ExcludeFromCodeCoverage]
 	static partial class LifecycleLoggerExtensions {
 		/// <summary>
 		/// Logs that a lifecycle handler is being resolved for an entity type.

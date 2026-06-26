@@ -22,12 +22,22 @@ namespace Kista {
 	/// </summary>
 	public sealed class CombinedQueryFilter : IExpressionQueryFilter, IEnumerable<IQueryFilter> {
 		private readonly IReadOnlyList<IQueryFilter> filters;
+		private readonly FilterLogicalOperator logicalOperator;
 
 		/// <summary>
-		/// Constructs the filter by combining the given list of filters.
+		/// Gets the logical operator used to combine the filters.
+		/// </summary>
+		public FilterLogicalOperator LogicalOperator => logicalOperator;
+
+		/// <summary>
+		/// Constructs the filter by combining the given list of filters
+		/// using the specified logical operator.
 		/// </summary>
 		/// <param name="filters">
 		/// The list of filters to combine.
+		/// </param>
+		/// <param name="logicalOperator">
+		/// The logical operator to use when combining the filters.
 		/// </param>
 		/// <exception cref="ArgumentNullException">
 		/// If the given list of filters is <c>null</c>.
@@ -35,11 +45,12 @@ namespace Kista {
 		/// <exception cref="ArgumentException">
 		/// Thrown if the given list of filters is empty.
 		/// </exception>
-		public CombinedQueryFilter(ICollection<IQueryFilter> filters) {
+		public CombinedQueryFilter(ICollection<IQueryFilter> filters, FilterLogicalOperator logicalOperator = FilterLogicalOperator.And) {
             ArgumentNullException.ThrowIfNull(filters);
             ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(filters.Count, 0, nameof(filters));
             
 			this.filters = filters.ToList().AsReadOnly();
+			this.logicalOperator = logicalOperator;
 		}
 
 		IEnumerator<IQueryFilter> IEnumerable<IQueryFilter>.GetEnumerator() => filters.GetEnumerator();
@@ -70,7 +81,7 @@ namespace Kista {
 				filters.Add(filter);
 			}
 			
-			return new CombinedQueryFilter(filters);
+			return new CombinedQueryFilter(filters, logicalOperator);
 		}
 
 		/// <inheritdoc/>
@@ -99,16 +110,35 @@ namespace Kista {
 				if (result == null) {
 					result = lambda;
 				} else {
-					var lambdaParam = lambda.Parameters[0];
-					if (lambdaParam.Name != result.Parameters[0].Name)
-						throw new InvalidOperationException("The parameters of the filters are not the same");
+					var resultParam = result.Parameters[0];
+					var lambdaBody = ParameterRebinder.ReplaceParameter(lambda.Body, lambda.Parameters[0], resultParam);
 
-					var expr = Expression.AndAlso(result.Body, lambda.Body);
-					result = Expression.Lambda<Func<TEntity, bool>>(expr, lambdaParam);
+					var expr = logicalOperator == FilterLogicalOperator.Or
+						? Expression.OrElse(result.Body, lambdaBody)
+						: Expression.AndAlso(result.Body, lambdaBody);
+					result = Expression.Lambda<Func<TEntity, bool>>(expr, resultParam);
 				}
 			}
 
 			return result ?? throw new InvalidOperationException("No filters were combined");
+		}
+	}
+
+	sealed class ParameterRebinder : ExpressionVisitor {
+		private readonly ParameterExpression source;
+		private readonly ParameterExpression target;
+
+		private ParameterRebinder(ParameterExpression source, ParameterExpression target) {
+			this.source = source;
+			this.target = target;
+		}
+
+		public static Expression ReplaceParameter(Expression expression, ParameterExpression source, ParameterExpression target) {
+			return new ParameterRebinder(source, target).Visit(expression);
+		}
+
+		protected override Expression VisitParameter(ParameterExpression node) {
+			return node == source ? target : base.VisitParameter(node);
 		}
 	}
 }

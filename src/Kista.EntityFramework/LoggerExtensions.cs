@@ -13,13 +13,15 @@
 // limitations under the License.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 using Microsoft.Extensions.Logging;
 
-namespace Kista {
-/// <summary>
+namespace Kista { 
+    /// <summary>
 	/// Extension methods for logging Entity Framework repository events.
 	/// </summary>
+	[ExcludeFromCodeCoverage]
     static partial class LoggerExtensions {
         /// <summary>
         /// Logs an unknown error during an entity operation.

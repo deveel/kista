@@ -171,7 +171,7 @@ app.Run();
 
 For more details, see the [Health Checks documentation](docs/health-checks/overview.md).
 
-For driver-specific configuration, multi-tenancy, and guidance on writing a custom repository, refer to the [full documentation](docs/index.md) or browse it online at [GitBook](https://deveel.gitbook.io/kista/).
+For driver-specific configuration, multi-tenancy, and guidance on writing a custom repository, refer to the [full documentation](docs/index.md) or browse it online at [kista.deveel.org](https://kista.deveel.org/).
 
 ---
 
@@ -189,7 +189,7 @@ For driver-specific configuration, multi-tenancy, and guidance on writing a cust
 | [User Entities](docs/user-entities/) | User-scoped entities with owner filtering |
 | [Health Checks](docs/health-checks/overview.md) | Repository connectivity monitoring |
 
-Full documentation is also available on [GitBook](https://deveel.gitbook.io/kista/).
+Full documentation is also available on [kista.deveel.org](https://kista.deveel.org/).
 
 ---
 
@@ -208,9 +208,9 @@ We are actively building Kista toward a comprehensive, production-ready framewor
   - [x] Conversion to ValueTask Results for Asynchronous Methods
   - [x] General Performance Optimizations
 
-- [ ] **v1.6.0** — "Developer Flow"
+- [x] **v1.6.0** — "Developer Flow"
   - [x] Unified Repository Setup Builder
-  - [ ] QueryBuilder Execution Extensions
+  - [x] QueryBuilder Execution Extensions
   - [x] Pluggable Cache Provider Abstraction
   - [x] Automatic Timestamp and Ownership Management
   - [x] Repository Health Checks
@@ -220,7 +220,7 @@ We are actively building Kista toward a comprehensive, production-ready framewor
   - [ ] Soft Delete Support
   - [ ] Entity State Machine
   - [ ] Domain Event Emission from EntityManager
-  - [ ] Specification Pattern Support
+  - [x] Specification Pattern Support
 
 - [ ] **v1.8.0** — "Scale & Throughput"
   - [ ] Batch Operations in EntityManager

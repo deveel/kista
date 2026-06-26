@@ -50,6 +50,7 @@ const sidebars: SidebarsConfig = {
       link: {type: 'doc', id: 'filtering/index'},
       items: [
         'filtering/filter-cache',
+        'specifications/README',
       ],
     },
     {
@@ -72,6 +73,12 @@ const sidebars: SidebarsConfig = {
         'entity-manager/http-request-cancellation',
         'entity-manager/caching-entities',
       ],
+    },
+    {
+      type: 'category',
+      label: 'Specifications',
+      link: {type: 'doc', id: 'specifications/README'},
+      items: [],
     },
     'sample-app',
     'roadmap',

@@ -45,10 +45,6 @@ Features: Unified Repository Setup Builder, Pluggable Cache Provider Abstraction
 
 Features: Soft Delete Support, Entity State Machine, Domain Event Emission from EntityManager.
 
-### Completed in v1.7.0
-
-- **Specification Pattern Support**: `ISpecification<TEntity>` and `Specification<TEntity>` base class with AND/OR/NOT composition. Extension methods on `IRepository` (`FindFirstAsync`, `FindAllAsync`, `CountAsync`, `ExistsAsync`) and `EntityManager` for domain-driven querying. See [Specifications documentation](specifications/).
-
 ## Milestone 4: v1.8.0 — "Scale & Throughput"
 
 **Release Target:** Q4 2026 (late)  

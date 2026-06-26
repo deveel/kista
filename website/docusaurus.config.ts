@@ -77,6 +77,15 @@ const config: Config = {
           path: '../docs',
           sidebarPath: './sidebars.ts',
           editUrl: 'https://github.com/deveel/kista/edit/main/docs/',
+          lastVersion: '1.7.0',
+          versions: {
+            '1.7.0': {
+              label: '1.7.0',
+            },
+            '1.6.8': {
+              label: '1.6.8',
+            },
+          },
         },
         blog: false,
         theme: {
@@ -114,11 +123,8 @@ const config: Config = {
           label: 'Docs',
         },
         {
-          type: 'doc',
-          docsPluginId: 'default',
-          position: 'left',
-          label: 'Getting Started',
-          docId: 'index',
+          type: 'docsVersionDropdown',
+          position: 'right',
         },
         {
           type: 'html',

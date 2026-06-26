@@ -492,6 +492,8 @@ Kista's query pipeline is built on `IQueryFilter` and `IQuery` — infrastructur
 - Clean separation: the domain owns the spec, the infrastructure owns the query — no LINQ leaks into domain code
 - Natural companion to soft-delete and state machine in the v1.7 lifecycle theme
 
+**Status:** ✅ Completed. See [Specifications documentation](docs/specifications/).
+
 ---
 
 ## Milestone 4: v1.8.0 — "Scale & Throughput"

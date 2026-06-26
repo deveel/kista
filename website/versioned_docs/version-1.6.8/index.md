@@ -18,7 +18,6 @@ To learn about the specific usage of the framework, you can read the following d
 | [_Extending the Repository_](custom-repository/) | Learn how to create a custom repository to access your data source, according to your specific data logic |
 | [_Multi-Tenancy_](multi-tenancy.md) | Learn how to use the framework in a multi-tenant application |
 | [_User Entities_](user-entities/) | Learn how to define and query entities that are scoped to a specific user |
-| [_Specifications_](specifications/) | Encapsulate business rules into reusable, composable specification objects |
 | [_Sample Application_](sample-app.md) | A complete ASP.NET Core reference app with lifecycle management and CRUD endpoints |
 
 ## Installation
@@ -61,7 +60,6 @@ dotnet add package Kista
 | [_Entity Manager EasyCaching_](entity-manager/caching-entities.md) | `Kista.Manager.EasyCaching` | Second-level caching for EntityManager via [EasyCaching](https://github.com/dotnetcore/EasyCaching). |
 | [_Entity Manager ASP.NET Core_](entity-manager/http-request-cancellation.md) | `Kista.Manager.AspNetCore` | ASP.NET Core integration for automatic HTTP request cancellation. |
 | [_User Entities / Owner Scoping_](user-entities/) | `Kista.Owners` | Decorator-based user scoping with automatic owner assignment and query filtering. |
-| [_Specifications_](specifications/) | `Kista` (core) | Domain-driven querying via composable `ISpecification<TEntity>` with AND/OR/NOT operators. |
 
 ## Instrumentation
 

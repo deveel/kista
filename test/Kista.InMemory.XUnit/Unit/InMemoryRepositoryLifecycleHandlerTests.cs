@@ -57,8 +57,8 @@ public class InMemoryRepositoryLifecycleHandlerTests
         await handler.SeedAsync(entities, TestContext.Current.CancellationToken);
 
         var repository = services.GetRequiredService<IRepository<Person>>();
-        var allPeople = await repository.FindAllAsync(QueryFilter.Empty, TestContext.Current.CancellationToken);
-        Assert.Equal(3, allPeople.Count());
+        var allPeople = ((Repository<Person, string>)repository).Queryable().ToList();
+        Assert.Equal(3, allPeople.Count);
     }
 
     [Fact]

@@ -53,7 +53,7 @@ public class InMemoryRepositoryConcurrencyTests {
         await Task.WhenAll(tasks);
 
         // Assert — every entity must be retrievable; no writes may have been lost
-        var count = await repository.CountAsync(QueryFilter.Empty, cancellationToken);
+        var count = repository.Queryable().LongCount();
         Assert.Equal(ThreadCount, count);
     }
 
@@ -82,7 +82,7 @@ public class InMemoryRepositoryConcurrencyTests {
 
         var readTasks = Enumerable.Range(0, ThreadCount).Select(async _ => {
             try {
-                var list = await repository.FindAllAsync(Query.Empty, cancellationToken);
+                var list = repository.Queryable().ToList();
                 Assert.NotNull(list);
             } catch (Exception ex) {
                 exceptions.Add(ex);
@@ -93,7 +93,7 @@ public class InMemoryRepositoryConcurrencyTests {
 
         // Assert — no exceptions and the store contains at least the seed set
         Assert.Empty(exceptions);
-        var total = await repository.CountAsync(QueryFilter.Empty, cancellationToken);
+        var total = repository.Queryable().LongCount();
         Assert.True(total >= 50, $"Expected at least 50 entities; found {total}");
     }
 
@@ -140,7 +140,7 @@ public class InMemoryRepositoryConcurrencyTests {
         // Act — 100 concurrent FindAll calls
         var tasks = Enumerable.Range(0, ThreadCount).Select(async _ => {
             try {
-                var list = await repository.FindAllAsync(Query.Empty, cancellationToken);
+                var list = repository.Queryable().ToList();
                 Assert.NotNull(list);
             } catch (Exception ex) {
                 exceptions.Add(ex);
@@ -200,7 +200,7 @@ public class InMemoryRepositoryConcurrencyTests {
 
         // Assert — every removal must have returned true and the store must be empty
         Assert.All(results, Assert.True);
-        var count = await repository.CountAsync(QueryFilter.Empty, cancellationToken);
+        var count = repository.Queryable().LongCount();
         Assert.Equal(0, count);
     }
 
@@ -234,7 +234,7 @@ public class InMemoryRepositoryConcurrencyTests {
         // 100 readers: each counts all current entities
         var readers = Enumerable.Range(0, ThreadCount).Select(async _ => {
             try {
-                var count = await repository.CountAsync(QueryFilter.Empty, cancellationToken);
+                var count = repository.Queryable().LongCount();
                 Assert.True(count >= 0);
             } catch (Exception ex) {
                 exceptions.Add(ex);
@@ -256,7 +256,7 @@ public class InMemoryRepositoryConcurrencyTests {
 
         // Assert — no race-condition exceptions; store has at least the seeded set
         Assert.Empty(exceptions);
-        var finalCount = await repository.CountAsync(QueryFilter.Empty, cancellationToken);
+        var finalCount = repository.Queryable().LongCount();
         Assert.True(finalCount >= 50, $"Expected at least 50 entities; found {finalCount}");
     }
 
@@ -315,7 +315,7 @@ public class InMemoryRepositoryConcurrencyTests {
             $"Snapshot contained {snapshot.Count} entities but should have at least {seedCount}");
 
         // Final count must be exactly seed + extra
-        var finalCount = await repository.CountAsync(QueryFilter.Empty, cancellationToken);
+        var finalCount = repository.Queryable().LongCount();
         Assert.Equal(seedCount + extraCount, finalCount);
     }
 

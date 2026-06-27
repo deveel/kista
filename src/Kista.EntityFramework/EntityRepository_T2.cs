@@ -34,9 +34,6 @@ namespace Kista
 	/// </typeparam>
 	public class EntityRepository<TEntity, TKey> :
 		Repository<TEntity, TKey>,
-		IQueryableRepository<TEntity, TKey>,
-		IFilterableRepository<TEntity, TKey>,
-		IPageableRepository<TEntity, TKey>,
 		ITrackingRepository<TEntity, TKey>,
 		IDisposable
 		where TEntity : class {
@@ -110,24 +107,10 @@ namespace Kista
 		/// Returns the <see cref="IQueryable{T}"/> produced by
 		/// <see cref="Entities"/>.AsQueryable().
 		/// </returns>
-		protected override IQueryable<TEntity> Queryable() => Entities.AsQueryable();
+		public override IQueryable<TEntity> Queryable() => Entities.AsQueryable();
 
 		/// <inheritdoc />
 		protected override bool IsQueryable => true;
-
-		IQueryable<TEntity> IQueryableRepository<TEntity, TKey>.AsQueryable() => Queryable();
-
-		ValueTask<bool> IFilterableRepository<TEntity, TKey>.ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken)
-			=> ExistsAsync(filter, cancellationToken);
-
-		ValueTask<long> IFilterableRepository<TEntity, TKey>.CountAsync(IQueryFilter filter, CancellationToken cancellationToken)
-			=> CountAsync(filter, cancellationToken);
-
-		ValueTask<TEntity?> IFilterableRepository<TEntity, TKey>.FindFirstAsync(IQuery query, CancellationToken cancellationToken)
-			=> FindFirstAsync(query, cancellationToken);
-
-		ValueTask<IReadOnlyList<TEntity>> IFilterableRepository<TEntity, TKey>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
-			=> FindAllAsync(query, cancellationToken);
 
 		/// <summary>
 		/// Applies the Entity Framework-specific query normalisation
@@ -599,43 +582,32 @@ namespace Kista
 		}
 
 		/// <inheritdoc/>
-		async ValueTask<PageQueryResult<TEntity>> IPageableRepository<TEntity, TKey>.GetPageAsync(PageQuery<TEntity> request, CancellationToken cancellationToken) {
-			ThrowIfDisposed();
-
-			try {
-				var querySet = EfQueryNormalizer.Normalize(request.ApplyQuery(Queryable()));
-				var total = await querySet.CountAsync(cancellationToken);
-
-				var items = await querySet
-					.Skip(request.Offset)
-					.Take(request.Size)
-					.ToListAsync(cancellationToken);
-
-				return new PageQueryResult<TEntity>(request, total, items);
-			} catch (Exception ex) {
-				Logger.LogUnknownError(ex, typeof(TEntity));
-				throw new RepositoryException("Could not get the page of entities", ex);
-			}
-		}
-
-		/// <inheritdoc/>
 		public override async ValueTask<PageResult<TEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) {
 			ThrowIfDisposed();
 			ArgumentNullException.ThrowIfNull(request);
 
 			try {
-				if (request is PageQuery<TEntity> pageQuery)
-					return await ((IPageableRepository<TEntity, TKey>)this).GetPageAsync(pageQuery, cancellationToken).ConfigureAwait(false);
+				if (request is PageQuery<TEntity> pageQuery) {
+					var querySet = EfQueryNormalizer.Normalize(pageQuery.ApplyQuery(Queryable()));
+					var totalCount = await querySet.CountAsync(cancellationToken);
 
-				var querySet = EfQueryNormalizer.Normalize(Queryable());
-				var total = await querySet.CountAsync(cancellationToken);
+					var items = await querySet
+						.Skip(request.Offset)
+						.Take(request.Size)
+						.ToListAsync(cancellationToken);
 
-				var items = await querySet
+					return new PageQueryResult<TEntity>(pageQuery, totalCount, items);
+				}
+
+				var allQuerySet = EfQueryNormalizer.Normalize(Queryable());
+				var allTotalCount = await allQuerySet.CountAsync(cancellationToken);
+
+				var allItems = await allQuerySet
 					.Skip(request.Offset)
 					.Take(request.Size)
 					.ToListAsync(cancellationToken);
 
-				return new PageResult<TEntity>(request, total, items);
+				return new PageResult<TEntity>(request, allTotalCount, allItems);
 			} catch (Exception ex) {
 				Logger.LogUnknownError(ex, typeof(TEntity));
 				throw new RepositoryException("Could not get the page of entities", ex);

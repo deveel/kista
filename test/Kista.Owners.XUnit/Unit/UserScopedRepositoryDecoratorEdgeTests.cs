@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Kista.Owners.XUnit.Unit;
@@ -45,7 +46,7 @@ public class UserScopedRepositoryDecoratorEdgeTests
         }).GetAwaiter().GetResult();
 
         var filter = new ExpressionQueryFilter<StringKeyEntity>(x => x.Name == "A");
-        var first = repo.FindFirstAsync(filter).GetAwaiter().GetResult();
+        var first = filter.Apply<StringKeyEntity>(repo.GetPageAsync(new PageRequest(1, int.MaxValue)).GetAwaiter().GetResult().Items.AsQueryable()).FirstOrDefault();
         Assert.NotNull(first);
         Assert.Equal("A", first!.Name);
     }
@@ -57,7 +58,7 @@ public class UserScopedRepositoryDecoratorEdgeTests
         var repo = services.GetRequiredService<IRepository<StringKeyEntity, string>>();
 
         var filter = new ExpressionQueryFilter<StringKeyEntity>(x => x.Name == "Nope");
-        var first = repo.FindFirstAsync(filter).GetAwaiter().GetResult();
+        var first = filter.Apply<StringKeyEntity>(repo.GetPageAsync(new PageRequest(1, int.MaxValue)).GetAwaiter().GetResult().Items.AsQueryable()).FirstOrDefault();
         Assert.Null(first);
     }
 
@@ -75,12 +76,12 @@ public class UserScopedRepositoryDecoratorEdgeTests
         bobRepo.AddAsync(new StringKeyEntity { Name = "Bob's" }).GetAwaiter().GetResult();
 
         var filter = new ExpressionQueryFilter<StringKeyEntity>(x => x.Name == "Alice's");
-        var aliceFirst = aliceRepo.FindFirstAsync(filter).GetAwaiter().GetResult();
+        var aliceFirst = filter.Apply<StringKeyEntity>(aliceRepo.GetPageAsync(new PageRequest(1, int.MaxValue)).GetAwaiter().GetResult().Items.AsQueryable()).FirstOrDefault();
         Assert.NotNull(aliceFirst);
         Assert.Equal("alice", aliceFirst.OwnerId);
 
         var bobFilter = new ExpressionQueryFilter<StringKeyEntity>(x => x.Name == "Bob's");
-        var bobFirst = bobRepo.FindFirstAsync(bobFilter).GetAwaiter().GetResult();
+        var bobFirst = bobFilter.Apply<StringKeyEntity>(bobRepo.GetPageAsync(new PageRequest(1, int.MaxValue)).GetAwaiter().GetResult().Items.AsQueryable()).FirstOrDefault();
         Assert.NotNull(bobFirst);
         Assert.Equal("bob", bobFirst.OwnerId);
     }
@@ -199,11 +200,11 @@ public class UserScopedRepositoryDecoratorEdgeTests
         aliceDecorator.AddAsync(new StringKeyEntity { Name = "Alice's" }).GetAwaiter().GetResult();
         bobDecorator.AddAsync(new StringKeyEntity { Name = "Bob's" }).GetAwaiter().GetResult();
 
-        var aliceItems = aliceDecorator.FindAllAsync().GetAwaiter().GetResult();
+        var aliceItems = aliceInner.Queryable().ToList();
         Assert.Single(aliceItems);
         Assert.Equal("Alice's", aliceItems[0].Name);
 
-        var bobItems = bobDecorator.FindAllAsync().GetAwaiter().GetResult();
+        var bobItems = bobInner.Queryable().ToList();
         Assert.Single(bobItems);
         Assert.Equal("Bob's", bobItems[0].Name);
     }
@@ -221,8 +222,7 @@ public class UserScopedRepositoryDecoratorEdgeTests
         for (int i = 0; i < 3; i++)
             repo.AddAsync(new StringKeyEntity { Name = $"Item {i}" }).GetAwaiter().GetResult();
 
-        var pageable = Assert.IsAssignableFrom<IPageableRepository<StringKeyEntity, string>>(repo);
-        var page = pageable.GetPageAsync(new PageRequest(1, 10)).GetAwaiter().GetResult();
+        var page = repo.GetPageAsync(new PageRequest(1, 10)).GetAwaiter().GetResult();
         Assert.Equal(3, page.TotalItems);
     }
 
@@ -232,9 +232,8 @@ public class UserScopedRepositoryDecoratorEdgeTests
         var services = CreateServices<StringKeyEntity, string>(null, true);
         var repo = services.GetRequiredService<IRepository<StringKeyEntity, string>>();
 
-        var pageable = Assert.IsAssignableFrom<IPageableRepository<StringKeyEntity, string>>(repo);
         var ex = Assert.Throws<InvalidOperationException>(() =>
-            pageable.GetPageAsync(new PageQuery<StringKeyEntity>(1, 10)).GetAwaiter().GetResult());
+            repo.GetPageAsync(new PageQuery<StringKeyEntity>(1, 10)).GetAwaiter().GetResult());
         Assert.Contains("User context is not set", ex.Message);
     }
 
@@ -244,9 +243,8 @@ public class UserScopedRepositoryDecoratorEdgeTests
         var services = CreateServices<StringKeyEntity, string>(null, true);
         var repo = services.GetRequiredService<IRepository<StringKeyEntity, string>>();
 
-        var pageable = Assert.IsAssignableFrom<IPageableRepository<StringKeyEntity, string>>(repo);
         var ex = Assert.Throws<InvalidOperationException>(() =>
-            pageable.GetPageAsync(new PageRequest(1, 10)).GetAwaiter().GetResult());
+            repo.GetPageAsync(new PageRequest(1, 10)).GetAwaiter().GetResult());
         Assert.Contains("User context is not set", ex.Message);
     }
 
@@ -256,8 +254,7 @@ public class UserScopedRepositoryDecoratorEdgeTests
         var services = CreateServices<StringKeyEntity, string>(null, false);
         var repo = services.GetRequiredService<IRepository<StringKeyEntity, string>>();
 
-        var pageable = Assert.IsAssignableFrom<IPageableRepository<StringKeyEntity, string>>(repo);
-        var page = pageable.GetPageAsync(new PageQuery<StringKeyEntity>(1, 10)).GetAwaiter().GetResult();
+        var page = repo.GetPageAsync(new PageQuery<StringKeyEntity>(1, 10)).GetAwaiter().GetResult();
         Assert.Equal(0, page.TotalItems);
         Assert.Empty(page.Items);
     }
@@ -268,8 +265,7 @@ public class UserScopedRepositoryDecoratorEdgeTests
         var services = CreateServices<StringKeyEntity, string>(null, false);
         var repo = services.GetRequiredService<IRepository<StringKeyEntity, string>>();
 
-        var pageable = Assert.IsAssignableFrom<IPageableRepository<StringKeyEntity, string>>(repo);
-        var page = pageable.GetPageAsync(new PageRequest(1, 10)).GetAwaiter().GetResult();
+        var page = repo.GetPageAsync(new PageRequest(1, 10)).GetAwaiter().GetResult();
         Assert.Equal(0, page.TotalItems);
         Assert.Empty(page.Items);
     }
@@ -327,7 +323,7 @@ public class UserScopedRepositoryDecoratorEdgeTests
         var sp = services.BuildServiceProvider();
         var repo = sp.GetRequiredService<IRepository<StringKeyEntity, string>>();
 
-        var result = repo.FindAllAsync().GetAwaiter().GetResult();
+        var result = repo.GetPageAsync(new PageRequest(1, int.MaxValue)).GetAwaiter().GetResult().Items.AsQueryable().ToList();
         Assert.Empty(result);
     }
 

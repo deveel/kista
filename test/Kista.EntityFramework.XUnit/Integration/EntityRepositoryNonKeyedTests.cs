@@ -35,10 +35,7 @@ public class EntityRepositoryNonKeyedTests : IDisposable
         await dbContext.SaveChangesAsync(ct);
 
         var repo = new EntityRepository<SimpleEntity>(dbContext);
-        var nonKeyed = (IFilterableRepository<SimpleEntity, object>)repo;
-
-        var exists = await nonKeyed.ExistsAsync(
-            new ExpressionQueryFilter<SimpleEntity>(x => x.Name == "Existing"), ct);
+        var exists = new ExpressionQueryFilter<SimpleEntity>(x => x.Name == "Existing").Apply<SimpleEntity>(((Repository<SimpleEntity, object>)repo).Queryable()).Any();
 
         Assert.True(exists);
     }
@@ -56,10 +53,7 @@ public class EntityRepositoryNonKeyedTests : IDisposable
         await dbContext.SaveChangesAsync(ct);
 
         var repo = new EntityRepository<SimpleEntity>(dbContext);
-        var nonKeyed = (IFilterableRepository<SimpleEntity, object>)repo;
-
-        var count = await nonKeyed.CountAsync(
-            new ExpressionQueryFilter<SimpleEntity>(x => x.Name != ""), ct);
+        var count = new ExpressionQueryFilter<SimpleEntity>(x => x.Name != "").Apply<SimpleEntity>(((Repository<SimpleEntity, object>)repo).Queryable()).LongCount();
 
         Assert.Equal(2, count);
     }
@@ -77,10 +71,7 @@ public class EntityRepositoryNonKeyedTests : IDisposable
         await dbContext.SaveChangesAsync(ct);
 
         var repo = new EntityRepository<SimpleEntity>(dbContext);
-        var nonKeyed = (IFilterableRepository<SimpleEntity, object>)repo;
-
-        var found = await nonKeyed.FindFirstAsync(
-            new Query(new ExpressionQueryFilter<SimpleEntity>(x => x.Name == "First"), null), ct);
+        var found = new Query(new ExpressionQueryFilter<SimpleEntity>(x => x.Name == "First"), null).Apply(((Repository<SimpleEntity, object>)repo).Queryable()).FirstOrDefault();
 
         Assert.NotNull(found);
         Assert.Equal("First", found.Name);
@@ -99,10 +90,7 @@ public class EntityRepositoryNonKeyedTests : IDisposable
         await dbContext.SaveChangesAsync(ct);
 
         var repo = new EntityRepository<SimpleEntity>(dbContext);
-        var nonKeyed = (IFilterableRepository<SimpleEntity, object>)repo;
-
-        var all = await nonKeyed.FindAllAsync(
-            new Query(new ExpressionQueryFilter<SimpleEntity>(x => x.Name != ""), null), ct);
+        var all = new Query(new ExpressionQueryFilter<SimpleEntity>(x => x.Name != ""), null).Apply(((Repository<SimpleEntity, object>)repo).Queryable()).ToList();
 
         Assert.Collection(all.OrderBy(x => x.Name),
             x => Assert.Equal("X", x.Name),

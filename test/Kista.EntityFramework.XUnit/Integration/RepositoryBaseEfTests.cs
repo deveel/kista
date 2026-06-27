@@ -148,7 +148,7 @@ public class RepositoryBaseEfTests {
 			return entity.Id;
 		}
 
-		protected override IQueryable<DbPerson> Queryable() => context.Set<DbPerson>();
+		public override IQueryable<DbPerson> Queryable() => context.Set<DbPerson>();
 
 		protected override bool IsQueryable => true;
 
@@ -211,7 +211,7 @@ public class RepositoryBaseEfTests {
 	private sealed class NoTrackingEfRepository : TestEfRepository {
 		public NoTrackingEfRepository(PersonDbContext context) : base(context) { }
 
-		protected override IQueryable<DbPerson> Queryable() => Context.Set<DbPerson>().AsNoTracking();
+		public override IQueryable<DbPerson> Queryable() => Context.Set<DbPerson>().AsNoTracking();
 	}
 
 	private sealed class EfFixture : IAsyncDisposable {

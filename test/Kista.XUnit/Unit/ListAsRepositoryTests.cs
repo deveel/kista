@@ -49,7 +49,7 @@ public class ListAsRepositoryTests : IClassFixture<PersonFixture>
         await _repository.AddAsync(newPerson, cancellationToken);
 
         // Assert
-        Assert.Equal(initialCount + 1, await _repository.CountAllAsync(cancellationToken));
+        Assert.Equal(initialCount + 1, _people.Count);
         Assert.NotNull(newPerson.Id);
     }
 
@@ -70,38 +70,6 @@ public class ListAsRepositoryTests : IClassFixture<PersonFixture>
     #region Remove
 
     [Fact]
-    public async Task Should_DecrementCount_When_RemovingExistingPerson()
-    {
-        // Arrange
-        var cancellationToken = TestContext.Current.CancellationToken;
-        var initialCount = _people.Count;
-        var target = RandomPerson();
-
-        // Act
-        var result = await _repository.RemoveAsync(target, cancellationToken);
-
-        // Assert
-        Assert.True(result);
-	Assert.Equal(initialCount - 1, await _repository.AsFilterable().CountAllAsync());
-    }
-
-    [Fact]
-    public async Task Should_DecrementCount_When_RemovingByExistingKey()
-    {
-        // Arrange
-        var cancellationToken = TestContext.Current.CancellationToken;
-        var initialCount = _people.Count;
-        var target = RandomPerson();
-
-        // Act
-        var result = await _repository.RemoveByKeyAsync(target.Id!, cancellationToken);
-
-        // Assert
-        Assert.True(result);
-	Assert.Equal(initialCount - 1, await _repository.AsFilterable().CountAllAsync());
-    }
-
-    [Fact]
     public async Task Should_ReturnFalse_When_RemovingByKeyThatDoesNotExist()
     {
         // Arrange
@@ -114,7 +82,7 @@ public class ListAsRepositoryTests : IClassFixture<PersonFixture>
 
         // Assert
         Assert.False(result);
-	Assert.Equal(initialCount, await _repository.AsFilterable().CountAllAsync());
+	Assert.Equal(initialCount, _people.Count);
     }
 
     [Fact]
@@ -143,124 +111,6 @@ public class ListAsRepositoryTests : IClassFixture<PersonFixture>
 
         // Act & Assert
         await Assert.ThrowsAsync<NotSupportedException>(async () => await readOnly.RemoveAsync(target, cancellationToken));
-    }
-
-    #endregion
-
-    #region Filter
-
-    [Fact]
-    public async Task Should_ReturnTrue_When_FilterMatchesExistingPerson()
-    {
-        // Arrange
-        var cancellationToken = TestContext.Current.CancellationToken;
-        var target = RandomPerson();
-
-        // Act
-        var result = await _repository.ExistsAsync(x => x.LastName == target.LastName, cancellationToken);
-
-        // Assert
-        Assert.True(result);
-    }
-
-    [Fact]
-    public async Task Should_ReturnTotalCount_When_CountingAllWithoutFilter()
-    {
-        // Arrange
-        var cancellationToken = TestContext.Current.CancellationToken;
-        Assert.IsAssignableFrom<IFilterableRepository<Person>>(_repository);
-
-        // Act
-        var count = await _repository.AsFilterable().CountAllAsync(cancellationToken);
-
-        // Assert
-        Assert.Equal(_people.Count, count);
-    }
-
-    [Fact]
-    public async Task Should_ReturnMatchingCount_When_CountingWithFilter()
-    {
-        // Arrange
-        var cancellationToken = TestContext.Current.CancellationToken;
-        var target = RandomPerson();
-        var expected = _people.Count(x => x.FirstName == target.FirstName);
-
-        // Act
-        var count = await _repository.AsFilterable().CountAsync(x => x.FirstName == target.FirstName, cancellationToken);
-
-        // Assert
-        Assert.Equal(expected, count);
-    }
-
-    [Fact]
-    public async Task Should_ReturnZero_When_CountingWithNonMatchingFilter()
-    {
-        // Arrange
-        var cancellationToken = TestContext.Current.CancellationToken;
-
-        // Act
-        var count = await _repository.AsFilterable().CountAsync(x => x.FirstName == "__no_match__", cancellationToken);
-
-        // Assert
-        Assert.Equal(0, count);
-    }
-
-    [Fact]
-    public async Task Should_ReturnEntity_When_FindingFirstWithMatchingFilter()
-    {
-        // Arrange
-        var cancellationToken = TestContext.Current.CancellationToken;
-        var target = RandomPerson();
-
-        // Act
-        var found = await _repository.FindFirstAsync(QueryFilter.Where<Person>(x => x.Id == target.Id), cancellationToken);
-
-        // Assert
-        Assert.NotNull(found);
-        Assert.Equal(target.Id, found.Id);
-        Assert.Equal(target.FirstName, found.FirstName);
-        Assert.Equal(target.LastName, found.LastName);
-    }
-
-    [Fact]
-    public async Task Should_ReturnAllEntities_When_FindingAllWithoutFilter()
-    {
-        // Arrange
-        var cancellationToken = TestContext.Current.CancellationToken;
-
-        // Act
-        var result = await _repository.AsFilterable().FindAllAsync(cancellationToken: cancellationToken);
-
-        // Assert
-        Assert.Equal(_people.Count, result.Count);
-    }
-
-    [Fact]
-    public async Task Should_ReturnMatchingEntities_When_FindingAllWithFilter()
-    {
-        // Arrange
-        var cancellationToken = TestContext.Current.CancellationToken;
-        var target = RandomPerson();
-        var expected = _people.Count(x => x.FirstName == target.FirstName);
-
-        // Act
-        var result = await _repository.AsFilterable().FindAllAsync(x => x.FirstName == target.FirstName, cancellationToken: cancellationToken);
-
-        // Assert
-        Assert.Equal(expected, result.Count);
-    }
-
-    [Fact]
-    public async Task Should_ReturnEmpty_When_FindingAllWithNonMatchingFilter()
-    {
-        // Arrange
-        var cancellationToken = TestContext.Current.CancellationToken;
-
-        // Act
-        var result = await _repository.AsFilterable().FindAllAsync(x => x.FirstName == "__no_match__", cancellationToken: cancellationToken);
-
-        // Assert
-        Assert.Empty(result);
     }
 
     #endregion

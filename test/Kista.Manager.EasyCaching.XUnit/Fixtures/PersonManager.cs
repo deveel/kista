@@ -18,8 +18,8 @@ namespace Kista {
 			var token = GetCancellationToken(cancellationToken);
 
 			return await GetOrSetAsync($"person:{email}", async () => {
-				var result = await FindFirstAsync(x => x.Email == email, token);
-				return result.IsSuccess() ? result.Value : null;
+				var page = await Repository.GetPageAsync(new PageRequest(1, 10000), token);
+				return page.Items.FirstOrDefault(x => x.Email == email);
 			}, token);
 		}
 	}

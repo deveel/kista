@@ -10,6 +10,7 @@
     <ProjectReference Include="..\..\src\Kista.HealthChecks.EntityFramework\Kista.HealthChecks.EntityFramework.csproj" />
     <ProjectReference Include="..\..\src\Kista.HealthChecks.MongoFramework\Kista.HealthChecks.MongoFramework.csproj" />
     <ProjectReference Include="..\..\src\Kista.HealthChecks.InMemory\Kista.HealthChecks.InMemory.csproj" />
+    <ProjectReference Include="..\..\src\Kista.InMemory\Kista.InMemory.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">

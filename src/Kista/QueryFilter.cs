@@ -23,7 +23,7 @@ namespace Kista {
 	public static class QueryFilter {
 		/// <summary>
 		/// Identifies an empty query filter, that implementations
-		/// of the <see cref="IFilterableRepository{TEntity}"/> can use to
+		/// of the repository can use to
 		/// convert to a default query.
 		/// </summary>
 		public static readonly IQueryFilter Empty = new EmptyQueryFilter();
@@ -92,7 +92,7 @@ namespace Kista {
 		/// The lambda expression that defines the filter.
 		/// </param>
 		/// <remarks>
-		/// Various implementations of <see cref="IFilterableRepository{TEntity}"/> can support
+		/// Various implementations of the repository can support
 		/// LINQ expressions to define the filter to apply to the query, and this
 		/// method provides a factory to create a default implementation of
 		/// this kind of filter.

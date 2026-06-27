@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq.Expressions;
 
@@ -39,9 +38,6 @@ namespace Kista {
 	/// The type of the key of the entity that is stored in the repository.
 	/// </typeparam>
 	public class MongoRepository<TEntity, TKey> : Repository<TEntity, TKey>,
-		IQueryableRepository<TEntity, TKey>,
-		IFilterableRepository<TEntity, TKey>,
-		IPageableRepository<TEntity, TKey>,
 		IControllableRepository,
 		IAsyncDisposable,
 		IDisposable
@@ -104,10 +100,6 @@ namespace Kista {
 		/// <inheritdoc />
 		protected override IServiceProvider? Services { get; }
 
-			[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
-			[ExcludeFromCodeCoverage]
-		public virtual IQueryable<TEntity> AsQueryable() => DbSet.AsQueryable();
-
 		/// <summary>
 		/// Returns the <see cref="IQueryable{T}"/> that backs the entity set
 		/// exposed by this repository. The hatch is intentionally
@@ -118,24 +110,10 @@ namespace Kista {
 		/// Returns the <see cref="IQueryable{T}"/> produced by
 		/// <see cref="DbSet"/>.AsQueryable().
 		/// </returns>
-		protected override IQueryable<TEntity> Queryable() => DbSet.AsQueryable();
+		public override IQueryable<TEntity> Queryable() => DbSet.AsQueryable();
 
 		/// <inheritdoc />
 		protected override bool IsQueryable => true;
-
-		IQueryable<TEntity> IQueryableRepository<TEntity, TKey>.AsQueryable() => Queryable();
-
-		ValueTask<bool> IFilterableRepository<TEntity, TKey>.ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken)
-			=> ExistsAsync(filter, cancellationToken);
-
-		ValueTask<long> IFilterableRepository<TEntity, TKey>.CountAsync(IQueryFilter filter, CancellationToken cancellationToken)
-			=> CountAsync(filter, cancellationToken);
-
-		ValueTask<TEntity?> IFilterableRepository<TEntity, TKey>.FindFirstAsync(IQuery query, CancellationToken cancellationToken)
-			=> FindFirstAsync(query, cancellationToken);
-
-		ValueTask<IReadOnlyList<TEntity>> IFilterableRepository<TEntity, TKey>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
-			=> FindAllAsync(query, cancellationToken);
 
 		/// <summary>
 		/// Gets the <see cref="IMongoCollection{TEntity}"/> instance that is used
@@ -657,41 +635,32 @@ namespace Kista {
 		}
 
 		/// <inheritdoc/>
-		async ValueTask<PageQueryResult<TEntity>> IPageableRepository<TEntity, TKey>.GetPageAsync(PageQuery<TEntity> request, CancellationToken cancellationToken) {
-			try {
-				InitializeFilter(((IQuery)request).Filter);
-				var entitySet = request.ApplyQuery(Queryable());
-
-				var totalCount = await entitySet.CountAsync(cancellationToken);
-
-				entitySet = entitySet.Skip(request.Offset).Take(request.Size);
-
-				var items = await entitySet.ToListAsync(cancellationToken);
-				return new PageQueryResult<TEntity>(request, totalCount, items);
-			} catch (Exception ex) {
-
-				throw new RepositoryException("Unable to execute the query", ex);
-			}
-		}
-
-		/// <inheritdoc/>
 		public override async ValueTask<PageResult<TEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) {
 			ThrowIfDisposed();
 			ArgumentNullException.ThrowIfNull(request);
 			cancellationToken.ThrowIfCancellationRequested();
 
 			try {
-				if (request is PageQuery<TEntity> pageQuery)
-					return await ((IPageableRepository<TEntity, TKey>)this).GetPageAsync(pageQuery, cancellationToken).ConfigureAwait(false);
+				if (request is PageQuery<TEntity> pageQuery) {
+					InitializeFilter(((IQuery)pageQuery).Filter);
+					var querySet = pageQuery.ApplyQuery(Queryable());
+
+					var totalCount = await querySet.CountAsync(cancellationToken);
+
+					querySet = querySet.Skip(request.Offset).Take(request.Size);
+
+					var items = await querySet.ToListAsync(cancellationToken);
+					return new PageQueryResult<TEntity>(pageQuery, totalCount, items);
+				}
 
 				var entitySet = Queryable();
-				var totalCount = await entitySet.CountAsync(cancellationToken);
+				var allTotalCount = await entitySet.CountAsync(cancellationToken);
 
 				entitySet = entitySet.Skip(request.Offset).Take(request.Size);
 
-				var items = await entitySet.ToListAsync(cancellationToken);
+				var allItems = await entitySet.ToListAsync(cancellationToken);
 
-				return new PageResult<TEntity>(request, totalCount, items);
+				return new PageResult<TEntity>(request, allTotalCount, allItems);
 			} catch (Exception ex) {
 
 				throw new RepositoryException("Unable to retrieve the page", ex);

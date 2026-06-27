@@ -25,9 +25,6 @@ namespace Kista {
 	/// </typeparam>
 	public class EntityRepository<TEntity> : EntityRepository<TEntity, object>,
         IRepository<TEntity>,
-        IFilterableRepository<TEntity>,
-        IQueryableRepository<TEntity>,
-		IPageableRepository<TEntity>,
 		ITrackingRepository<TEntity>
         where TEntity : class {
 
@@ -47,17 +44,5 @@ namespace Kista {
         public EntityRepository(DbContext context, IServiceProvider? services = null, ILogger<EntityRepository<TEntity>>? logger = null)
             : base(context, services, logger) {
         }
-
-		ValueTask<bool> IFilterableRepository<TEntity, object>.ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken)
-			=> ExistsAsync(filter, cancellationToken);
-
-		ValueTask<long> IFilterableRepository<TEntity, object>.CountAsync(IQueryFilter filter, CancellationToken cancellationToken)
-			=> CountAsync(filter, cancellationToken);
-
-		ValueTask<TEntity?> IFilterableRepository<TEntity, object>.FindFirstAsync(IQuery query, CancellationToken cancellationToken)
-			=> FindFirstAsync(query, cancellationToken);
-
-		ValueTask<IReadOnlyList<TEntity>> IFilterableRepository<TEntity, object>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
-			=> FindAllAsync(query, cancellationToken);
 	}
 }

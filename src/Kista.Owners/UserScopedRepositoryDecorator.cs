@@ -31,9 +31,7 @@ namespace Kista
 	/// <typeparam name="TKey">The type of the entity's primary key.</typeparam>
 	/// <typeparam name="TUserKey">The type of the user identifier.</typeparam>
 	public class UserScopedRepositoryDecorator<TEntity, TKey, TUserKey>
-		: IUserRepository<TEntity, TKey, TUserKey>,
-		  IFilterableRepository<TEntity, TKey>,
-		  IPageableRepository<TEntity, TKey>
+		: IUserRepository<TEntity, TKey, TUserKey>
 		where TEntity : class, IHaveOwner<TUserKey>
 		where TKey : notnull
 	{
@@ -139,27 +137,43 @@ namespace Kista
 
 		/// <inheritdoc />
 		public ValueTask<IReadOnlyList<TEntity>> FindAllAsync(IQuery query, CancellationToken cancellationToken = default)
-			=> ApplyOwnerFilterAndCallAsync(query, q => _inner.FindAllAsync(q, cancellationToken));
+			=> ApplyOwnerFilterAndCallAsync(query, q => {
+				if (!(_inner is Repository<TEntity, TKey> repo))
+					throw new NotSupportedException("The inner repository does not support filtering");
+				var result = q.Apply(repo.Queryable()).ToList();
+				return new ValueTask<IReadOnlyList<TEntity>>(result);
+			});
 
 		/// <inheritdoc />
 		public ValueTask<TEntity?> FindFirstAsync(IQuery query, CancellationToken cancellationToken = default)
-			=> ApplyOwnerFilterAndCallAsync(query, q => _inner.FindFirstAsync(q, cancellationToken));
+			=> ApplyOwnerFilterAndCallAsync(query, q => {
+				if (!(_inner is Repository<TEntity, TKey> repo))
+					throw new NotSupportedException("The inner repository does not support filtering");
+				var result = q.Apply(repo.Queryable()).FirstOrDefault();
+				return new ValueTask<TEntity?>(result);
+			});
 
 		/// <inheritdoc />
 		public ValueTask<long> CountAsync(IQueryFilter filter, CancellationToken cancellationToken = default)
-			=> ApplyOwnerFilterAndCallAsync(filter, f => _inner.CountAsync(f, cancellationToken));
+			=> ApplyOwnerFilterAndCallAsync(filter, f => {
+				if (!(_inner is Repository<TEntity, TKey> repo))
+					throw new NotSupportedException("The inner repository does not support filtering");
+				var result = f.Apply(repo.Queryable()).LongCount();
+				return new ValueTask<long>(result);
+			});
 
 		/// <inheritdoc />
 		public ValueTask<bool> ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken = default)
-			=> ApplyOwnerFilterAndCallAsync(filter, f => _inner.ExistsAsync(f, cancellationToken));
+			=> ApplyOwnerFilterAndCallAsync(filter, f => {
+				if (!(_inner is Repository<TEntity, TKey> repo))
+					throw new NotSupportedException("The inner repository does not support filtering");
+				var result = f.Apply(repo.Queryable()).Any();
+				return new ValueTask<bool>(result);
+			});
 
 		/// <inheritdoc />
 		public ValueTask<PageResult<TEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default)
 			=> ApplyOwnerFilterAndCallAsyncPage(request, r => _inner.GetPageAsync(r, cancellationToken));
-
-		/// <inheritdoc />
-		ValueTask<PageQueryResult<TEntity>> IPageableRepository<TEntity, TKey>.GetPageAsync(PageQuery<TEntity> request, CancellationToken cancellationToken)
-			=> ApplyOwnerFilterAndCallAsync(request, r => ((IPageableRepository<TEntity, TKey>)_inner).GetPageAsync(r, cancellationToken));
 
 		// === Helpers ===
 
@@ -226,19 +240,6 @@ namespace Kista
 			var ownerFilter = BuildOwnerFilter(userId);
 			var combined = CombineFilters(filter, ownerFilter);
 			return await action(combined);
-		}
-
-		private async ValueTask<PageQueryResult<TEntity>> ApplyOwnerFilterAndCallAsync(
-			PageQuery<TEntity> request, Func<PageQuery<TEntity>, ValueTask<PageQueryResult<TEntity>>> action)
-		{
-			var userId = _userAccessor.GetUserId();
-			if (EqualityComparer<TUserKey>.Default.Equals(userId, default))
-				return Options.ThrowWhenUserNotSet
-					? throw new System.InvalidOperationException(UserContextNotSetMessage)
-					: new PageQueryResult<TEntity>(request, 0, Array.Empty<TEntity>());
-
-			var scopedRequest = ApplyOwnerToRequest(request, userId);
-			return await action(scopedRequest);
 		}
 
 		private async ValueTask<PageResult<TEntity>> ApplyOwnerFilterAndCallAsyncPage(

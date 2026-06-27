@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using Kista.Caching;
 using Microsoft.Extensions.Logging;
 using ValidationResult = System.ComponentModel.DataAnnotations.ValidationResult;
@@ -48,43 +49,7 @@ public class EntityManagerKeyedBehaviorTests
     }
 
     [Fact]
-    public void Should_ReturnTrue_When_SupportsQueriesForQueryableRepo()
-    {
-        var repo = Substitute.For<IRepository<Person, string>, IQueryableRepository<Person, string>>();
-        var manager = new EntityManager<Person, string>(repo);
-
-        Assert.True(manager.SupportsQueries);
-    }
-
-    [Fact]
-    public void Should_ReturnFalse_When_SupportsQueriesForNonQueryableRepo()
-    {
-        var repo = Substitute.For<IRepository<Person, string>>();
-        var manager = new EntityManager<Person, string>(repo);
-
-        Assert.False(manager.SupportsQueries);
-    }
-
-    [Fact]
-    public void Should_ReturnTrue_When_SupportsFiltersForFilterableRepo()
-    {
-        var repo = Substitute.For<IRepository<Person, string>, IFilterableRepository<Person, string>>();
-        var manager = new EntityManager<Person, string>(repo);
-
-        Assert.True(manager.SupportsFilters);
-    }
-
-    [Fact]
-    public void Should_ReturnFalse_When_SupportsFiltersForNonFilterableRepo()
-    {
-        var repo = Substitute.For<IRepository<Person, string>>();
-        var manager = new EntityManager<Person, string>(repo);
-
-        Assert.False(manager.SupportsFilters);
-    }
-
-    [Fact]
-    public void Should_ReturnTrue_When_SupportsTrackingForTrackingRepo()
+    public void Should_ThrowNotSupported_When_TrackingRepositoryAccessedForNonTrackingRepo()
     {
         var repo = Substitute.For<IRepository<Person, string>, ITrackingRepository<Person, string>>();
         var manager = new EntityManager<Person, string>(repo);
@@ -118,33 +83,6 @@ public class EntityManagerKeyedBehaviorTests
         var manager = new EntityManager<Person, string>(repo);
 
         Assert.False(manager.IsTrackingChanges);
-    }
-
-    [Fact]
-    public void Should_ThrowNotSupported_When_EntitiesAccessedForNonQueryableRepo()
-    {
-        var repo = Substitute.For<IRepository<Person, string>>();
-        var manager = new ExposedEntityManager(repo);
-
-        Assert.Throws<NotSupportedException>(() => manager.ExposedEntities);
-    }
-
-    [Fact]
-    public void Should_ThrowNotSupported_When_FilterableRepositoryAccessedForNonFilterableRepo()
-    {
-        var repo = Substitute.For<IRepository<Person, string>>();
-        var manager = new ExposedEntityManager(repo);
-
-        Assert.Throws<NotSupportedException>(() => manager.ExposedFilterableRepository);
-    }
-
-    [Fact]
-    public void Should_ThrowNotSupported_When_TrackingRepositoryAccessedForNonTrackingRepo()
-    {
-        var repo = Substitute.For<IRepository<Person, string>>();
-        var manager = new ExposedEntityManager(repo);
-
-        Assert.Throws<NotSupportedException>(() => manager.ExposedTrackingRepository);
     }
 
     [Fact]
@@ -628,96 +566,6 @@ public class EntityManagerKeyedBehaviorTests
     }
 
     [Fact]
-    public async Task Should_FindFirstAsync_WithUnsupportedFilter()
-    {
-        var repo = Substitute.For<IRepository<Person, string>>();
-        var manager = new EntityManager<Person, string>(repo);
-
-        var result = await manager.FindFirstAsync(Query.Empty, TestContext.Current.CancellationToken);
-
-        Assert.False(result.IsSuccess());
-        Assert.Equal(EntityErrorCodes.NotSupported, result.Error?.Code);
-    }
-
-    [Fact]
-    public async Task Should_FindFirstAsync_WithNullResult()
-    {
-        var filterable = Substitute.For<IRepository<Person, string>, IFilterableRepository<Person, string>>();
-#pragma warning disable S1944 // NSubstitute creates the type dynamically at runtime
-        var filterableRepo = (IFilterableRepository<Person, string>)filterable;
-#pragma warning restore S1944
-        filterableRepo.FindFirstAsync(Arg.Any<IQuery>(), Arg.Any<CancellationToken>())
-            .Returns(new ValueTask<Person?>((Person?)null));
-        var manager = new EntityManager<Person, string>(filterable);
-
-        var result = await manager.FindFirstAsync(Query.Empty, TestContext.Current.CancellationToken);
-
-        Assert.False(result.IsSuccess());
-        Assert.Equal(EntityErrorCodes.NotFound, result.Error?.Code);
-    }
-
-    [Fact]
-    public async Task Should_FindFirstAsync_WithException()
-    {
-        var filterable = Substitute.For<IRepository<Person, string>, IFilterableRepository<Person, string>>();
-#pragma warning disable S1944 // NSubstitute creates the type dynamically at runtime
-        var filterableRepo = (IFilterableRepository<Person, string>)filterable;
-#pragma warning restore S1944
-        filterableRepo.FindFirstAsync(Arg.Any<IQuery>(), Arg.Any<CancellationToken>())
-            .Returns(ValueTask.FromException<Person?>(new InvalidOperationException(DbErrorMessage)));
-        var manager = new EntityManager<Person, string>(filterable);
-
-        var result = await manager.FindFirstAsync(Query.Empty, TestContext.Current.CancellationToken);
-
-        Assert.False(result.IsSuccess());
-    }
-
-    [Fact]
-    public async Task Should_FindAllAsync_WithUnsupportedFilter()
-    {
-        var repo = Substitute.For<IRepository<Person, string>>();
-        var manager = new EntityManager<Person, string>(repo);
-
-        await Assert.ThrowsAsync<NotSupportedException>(() =>
-            manager.FindAllAsync(Query.Empty, TestContext.Current.CancellationToken).AsTask());
-    }
-
-    [Fact]
-    public async Task Should_FindAllAsync_WithException()
-    {
-        var filterable = Substitute.For<IRepository<Person, string>, IFilterableRepository<Person, string>>();
-#pragma warning disable S1944 // NSubstitute creates the type dynamically at runtime
-        var filterableRepo = (IFilterableRepository<Person, string>)filterable;
-#pragma warning restore S1944
-        filterableRepo.FindAllAsync(Arg.Any<IQuery>(), Arg.Any<CancellationToken>())
-            .Returns(ValueTask.FromException<IReadOnlyList<Person>>(new InvalidOperationException(DbErrorMessage)));
-        var manager = new EntityManager<Person, string>(filterable);
-
-        await Assert.ThrowsAsync<OperationException>(() =>
-            manager.FindAllAsync(Query.Empty, TestContext.Current.CancellationToken).AsTask());
-    }
-
-    [Fact]
-    public async Task Should_CountAsync_WithUnsupportedFilter()
-    {
-        var repo = Substitute.For<IRepository<Person, string>>();
-        var manager = new EntityManager<Person, string>(repo);
-
-        await Assert.ThrowsAsync<NotSupportedException>(() =>
-            manager.CountAsync(QueryFilter.Empty, TestContext.Current.CancellationToken).AsTask());
-    }
-
-    [Fact]
-    public async Task Should_CountAsync_WithException()
-    {
-        var repo = new ThrowingFilterableRepo();
-        var manager = new EntityManager<Person, string>(repo);
-
-        await Assert.ThrowsAsync<OperationException>(() =>
-            manager.CountAsync(QueryFilter.Empty, TestContext.Current.CancellationToken).AsTask());
-    }
-
-    [Fact]
     public void Should_Dispose_WithDisposedFlag()
     {
         var repo = Substitute.For<IRepository<Person, string>>();
@@ -786,8 +634,6 @@ public class EntityManagerKeyedBehaviorTests
             IServiceProvider? services = null)
             : base(repository, validator, cache, systemTime, errorFactory, services) { }
 
-        public IQueryable<Person> ExposedEntities => Entities;
-        public IFilterableRepository<Person, string> ExposedFilterableRepository => FilterableRepository;
         public ITrackingRepository<Person, string> ExposedTrackingRepository => TrackingRepository;
         public IEqualityComparer<Person> ExposedEntityComparer => EntityComparer;
         public string ExposedGenerateCacheKey(string key) => GenerateCacheKey(key);
@@ -820,24 +666,22 @@ public class EntityManagerKeyedBehaviorTests
         public bool ExposedAreEqual(TEntity existing, TEntity other) => AreEqual(existing, other);
     }
 
-    public class ThrowingFilterableRepo : IFilterableRepository<Person, string>
+    public class ThrowingFilterableRepo : Repository<Person, string>
     {
-        public IServiceProvider? Services => null;
-        public string? GetEntityKey(Person entity) => entity.Id;
-        public ValueTask AddAsync(Person entity, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
-        public ValueTask AddRangeAsync(IEnumerable<Person> entities, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
-        public ValueTask<bool> UpdateAsync(Person entity, CancellationToken cancellationToken = default) => ValueTask.FromResult(true);
-        public ValueTask<bool> RemoveAsync(Person entity, CancellationToken cancellationToken = default) => ValueTask.FromResult(true);
-        public ValueTask RemoveRangeAsync(IEnumerable<Person> entities, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
-#pragma warning disable S2325 // Interface implementation, cannot be static
-        public ValueTask<Person?> FindAsync(string key, CancellationToken cancellationToken = default) => new ValueTask<Person?>((Person?)null);
-        public ValueTask<Person?> FindAsync(object key, CancellationToken cancellationToken = default) => new ValueTask<Person?>((Person?)null);
-#pragma warning restore S2325
-        public ValueTask<PageResult<Person>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default)
+        protected override IServiceProvider? Services => null;
+        protected override string? GetEntityKey(Person entity) => entity.Id;
+        public override IQueryable<Person> Queryable() => throw new NotSupportedException();
+
+        public override ValueTask AddAsync(Person entity, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
+        public override ValueTask AddRangeAsync(IEnumerable<Person> entities, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
+        public override ValueTask<bool> UpdateAsync(Person entity, CancellationToken cancellationToken = default) => ValueTask.FromResult(true);
+        public override ValueTask<bool> RemoveAsync(Person entity, CancellationToken cancellationToken = default) => ValueTask.FromResult(true);
+        public override ValueTask RemoveRangeAsync(IEnumerable<Person> entities, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
+        public override ValueTask<Person?> FindAsync(string key, CancellationToken cancellationToken = default) => new ValueTask<Person?>((Person?)null);
+        public override ValueTask<PageResult<Person>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default)
             => new ValueTask<PageResult<Person>>(new PageResult<Person>(request, 0, new List<Person>()));
-        public ValueTask<Person?> FindFirstAsync(IQuery query, CancellationToken cancellationToken = default) => new ValueTask<Person?>((Person?)null);
-        public ValueTask<IReadOnlyList<Person>> FindAllAsync(IQuery query, CancellationToken cancellationToken = default) => new ValueTask<IReadOnlyList<Person>>(new List<Person>());
-        public ValueTask<bool> ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken = default) => ValueTask.FromResult(false);
-        public ValueTask<long> CountAsync(IQueryFilter filter, CancellationToken cancellationToken = default) => throw new InvalidOperationException(DbErrorMessage);
+        protected override ValueTask<long> CountAsync(IQueryFilter? filter, CancellationToken cancellationToken = default)
+            => throw new InvalidOperationException(DbErrorMessage);
     }
+
 }

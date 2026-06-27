@@ -15,8 +15,8 @@ namespace Kista {
 		}
 
 		public async Task<Person?> FindByEmailAsync(string email, CancellationToken? cancellationToken = null) {
-			var result = await FindFirstAsync(x => x.Email == email, cancellationToken);
-			return result.IsSuccess() ? result.Value : null;
+			var all = await Repository.GetPageAsync(new PageRequest(1, int.MaxValue), cancellationToken ?? CancellationToken.None);
+			return all.Items.FirstOrDefault(x => x.Email == email);
 		}
 	}
 }

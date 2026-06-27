@@ -160,51 +160,6 @@ public class RepositoryCoreTests {
     }
 
     [Fact]
-    public void RepositoryWrapper_AsFilterable_ReturnsSelf() {
-        var repo = new List<Person> { new() }.AsRepository();
-        Assert.IsAssignableFrom<IFilterableRepository<Person>>(repo);
-    }
-
-    [Fact]
-    public void RepositoryWrapper_CountAll_ReturnsCorrectCount() {
-        var repo = new List<Person> { new(), new() }.AsRepository();
-        Assert.Equal(2, repo.AsFilterable().CountAll());
-    }
-
-    [Fact]
-    public void RepositoryExtension_AsFilterable_NonFilterable_Throws() {
-        var repo = new NonFilterableRepo<Person>();
-        Assert.Throws<NotSupportedException>(() => repo.AsFilterable());
-    }
-
-    [Fact]
-    public void RepositoryExtension_AsQueryable_NonQueryable_Throws() {
-        var repo = new NonFilterableRepo<Person>();
-        Assert.Throws<NotSupportedException>(() => repo.AsQueryable());
-    }
-
-    [Fact]
-    public async Task RepositoryExtension_ExistsAsync_WithExpression_DelToTKey() {
-        var repo = new List<Person> { new() { FirstName = "Alice" } }.AsRepository();
-        var result = await repo.ExistsAsync((Expression<Func<Person, bool>>)(x => x.FirstName == "Alice"));
-        Assert.True(result);
-    }
-
-    [Fact]
-    public async Task RepositoryExtension_CountAsync_WithExpression_DelToTKey() {
-        var repo = new List<Person> { new() { FirstName = "Alice" }, new() { FirstName = "Bob" } }.AsRepository();
-        var result = await repo.CountAsync((Expression<Func<Person, bool>>)(x => x.FirstName == "Alice"));
-        Assert.Equal(1, result);
-    }
-
-    [Fact]
-    public async Task RepositoryExtension_CountAllAsync_SingleTParam() {
-        var repo = new List<Person> { new(), new() }.AsRepository();
-        var result = await repo.CountAllAsync();
-        Assert.Equal(2, result);
-    }
-
-    [Fact]
     public async Task RepositoryExtension_RemoveByKey_TKey_NotFound_ReturnsFalse() {
         IRepository<Person, object> repo = new List<Person> { new() { Id = "1" } }.AsRepository();
         var result = await repo.RemoveByKeyAsync((object)"nonexistent");
@@ -216,39 +171,6 @@ public class RepositoryCoreTests {
         IRepository<Person, object> repo = new List<Person> { new() { Id = "1" } }.AsRepository();
         var result = await repo.RemoveByKeyAsync((object)"1");
         Assert.True(result);
-    }
-
-    [Fact]
-    public void RepositoryExtension_Exists_Sync_TKey() {
-        IRepository<Person, object> repo = new List<Person> { new() { FirstName = "A" } }.AsRepository();
-        Assert.True(repo.Exists(QueryFilter.Where<Person>(x => x.FirstName == "A")));
-        Assert.False(repo.Exists(QueryFilter.Where<Person>(x => x.FirstName == "Z")));
-    }
-
-    [Fact]
-    public void RepositoryExtension_Count_Sync_TKey() {
-        IRepository<Person, object> repo = new List<Person> {
-            new() { FirstName = "A" }, new() { FirstName = "A" }, new() { FirstName = "B" }
-        }.AsRepository();
-        Assert.Equal(2, repo.Count(QueryFilter.Where<Person>(x => x.FirstName == "A")));
-    }
-
-    [Fact]
-    public void RepositoryExtension_CountAll_Sync_TKey() {
-        IRepository<Person, object> repo = new List<Person> { new(), new(), new() }.AsRepository();
-        Assert.Equal(3, repo.CountAll());
-    }
-
-    [Fact]
-    public void RepositoryExtension_CountAll_Sync_SingleT() {
-        var repo = new List<Person> { new(), new(), new() }.AsRepository();
-        Assert.Equal(3, repo.CountAll());
-    }
-
-    [Fact]
-    public void RepositoryExtension_Count_Sync_TEntity() {
-        var repo = new List<Person> { new() { FirstName = "A" }, new() { FirstName = "A" } }.AsRepository();
-        Assert.Equal(2, repo.Count(x => x.FirstName == "A"));
     }
 
     [Fact]
@@ -264,102 +186,10 @@ public class RepositoryCoreTests {
     }
 
     [Fact]
-    public async Task RepositoryExtension_GetPageAsync_NonPageable_NonQueryable_Throws() {
-        IRepository<Person, object> repo = new NonFilterableRepo<Person>();
-        await Assert.ThrowsAsync<NotSupportedException>(
-            () => repo.GetPageAsync(new PageQuery<Person>(1, 10)).AsTask()
-        );
-    }
-
-    [Fact]
-    public void RepositoryExtension_GetPage_Sync_NonPageable_NonQueryable_Throws() {
-        IRepository<Person, object> repo = new NonFilterableRepo<Person>();
-        Assert.Throws<NotSupportedException>(() => repo.GetPage(new PageQuery<Person>(1, 10)));
-    }
-
-    [Fact]
     public void RepositoryExtension_GetPage_Sync_WithPageAndSize() {
         IRepository<Person, object> repo = new List<Person> { new(), new(), new() }.AsRepository();
         var page = repo.GetPage(1, 2);
         Assert.Equal(2, page.Items.Count);
-    }
-
-    [Fact]
-    public async Task RepositoryExtension_ExistsAsync_TKey_WithExpression() {
-        IRepository<Person, object> repo = new List<Person> { new() { FirstName = "A" } }.AsRepository();
-        var result = await repo.ExistsAsync((Expression<Func<Person, bool>>)(x => x.FirstName == "A"));
-        Assert.True(result);
-    }
-
-    [Fact]
-    public async Task RepositoryExtension_ExistsAsync_TKey_WithFilter() {
-        IRepository<Person, object> repo = new List<Person> { new() { FirstName = "A" } }.AsRepository();
-        var result = await repo.ExistsAsync(QueryFilter.Where<Person>(x => x.FirstName == "A"));
-        Assert.True(result);
-    }
-
-    [Fact]
-    public async Task RepositoryExtension_ExistsAsync_TKey_WithFilter_NoMatch() {
-        IRepository<Person, object> repo = new List<Person> { new() { FirstName = "A" } }.AsRepository();
-        var result = await repo.ExistsAsync(QueryFilter.Where<Person>(x => x.FirstName == "Z"));
-        Assert.False(result);
-    }
-
-    [Fact]
-    public async Task RepositoryExtension_CountAsync_TKey_WithExpression() {
-        IRepository<Person, object> repo = new List<Person> { new() { FirstName = "A" }, new() { FirstName = "A" } }.AsRepository();
-        var result = await repo.CountAsync((Expression<Func<Person, bool>>)(x => x.FirstName == "A"));
-        Assert.Equal(2, result);
-    }
-
-    [Fact]
-    public async Task RepositoryExtension_CountAsync_TKey_WithFilter() {
-        IRepository<Person, object> repo = new List<Person> { new() { FirstName = "A" }, new() { FirstName = "B" } }.AsRepository();
-        var result = await repo.CountAsync(QueryFilter.Where<Person>(x => x.FirstName == "A"));
-        Assert.Equal(1, result);
-    }
-
-    [Fact]
-    public async Task RepositoryExtension_CountAllAsync_TKey() {
-        IRepository<Person, object> repo = new List<Person> { new(), new(), new() }.AsRepository();
-        var result = await repo.CountAllAsync();
-        Assert.Equal(3, result);
-    }
-
-    [Fact]
-    public async Task RepositoryExtension_ExistsAsync_TKey_NonFilterable_NonQueryable_Throws() {
-        IRepository<Person, object> repo = new NonFilterableRepo<Person>();
-        await Assert.ThrowsAsync<NotSupportedException>(
-            () => repo.ExistsAsync(QueryFilter.Where<Person>(x => x.FirstName == "A")).AsTask()
-        );
-    }
-
-    [Fact]
-    public async Task RepositoryExtension_CountAsync_TKey_NonFilterable_NonQueryable_Throws() {
-        IRepository<Person, object> repo = new NonFilterableRepo<Person>();
-        await Assert.ThrowsAsync<NotSupportedException>(
-            () => repo.CountAsync(QueryFilter.Where<Person>(x => x.FirstName == "A")).AsTask()
-        );
-    }
-
-    [Fact]
-    public async Task RepositoryExtension_CountAllAsync_TKey_NonFilterable_NonQueryable_Throws() {
-        IRepository<Person, object> repo = new NonFilterableRepo<Person>();
-        await Assert.ThrowsAsync<NotSupportedException>(
-            () => repo.CountAllAsync().AsTask()
-        );
-    }
-
-    [Fact]
-    public void RepositoryExtension_Exists_Sync_TKey_WithExpression() {
-        IRepository<Person, object> repo = new List<Person> { new() { FirstName = "A" } }.AsRepository();
-        Assert.True(repo.Exists((Expression<Func<Person, bool>>)(x => x.FirstName == "A")));
-    }
-
-    [Fact]
-    public void RepositoryExtension_Exists_Sync_TEntity_WithExpression() {
-        var repo = new List<Person> { new() { FirstName = "A" } }.AsRepository();
-        Assert.True(repo.Exists((Expression<Func<Person, bool>>)(x => x.FirstName == "A")));
     }
 
     [Fact]
@@ -436,12 +266,6 @@ public class RepositoryCoreTests {
     public void RepositoryExtension_AddRange_Sync_TKey() {
         IRepository<Person, object> repo = new List<Person> { new() { Id = "1" } }.AsRepository();
         repo.AddRange(new List<Person> { new() });
-    }
-
-    [Fact]
-    public void RepositoryExtension_CountAll_Sync_KnownLifetime() {
-        var repo = new NonFilterableRepo<Person>();
-        Assert.Throws<NotSupportedException>(() => repo.CountAll());
     }
 
     [Fact]
@@ -564,18 +388,6 @@ public class RepositoryCoreTests {
     }
 
     [Fact]
-    public void RepositoryExtension_AsFilterable_TKey_NonFilterable_Throws() {
-        IRepository<Person, object> repo = new NonFilterableRepo<Person>();
-        Assert.Throws<NotSupportedException>(() => repo.AsFilterable());
-    }
-
-    [Fact]
-    public void RepositoryExtension_AsQueryable_TKey_NonQueryable_Throws() {
-        IRepository<Person, object> repo = new NonFilterableRepo<Person>();
-        Assert.Throws<NotSupportedException>(() => repo.AsQueryable());
-    }
-
-    [Fact]
     public void RepositoryExtension_GetPageAsync_QueryablePath_Works() {
         IRepository<Person, object> repo = new List<Person> { new() { FirstName = "A" }, new() { FirstName = "B" } }.AsRepository();
         var page = repo.GetPageAsync(new PageQuery<Person>(1, 10));
@@ -619,26 +431,6 @@ public class RepositoryCoreTests {
         var found = repo.FindAsync((object)"1");
         Assert.NotNull(found.Result);
         Assert.Equal("Alice", found.Result!.FirstName);
-    }
-
-    [Fact]
-    public void RepositoryWrapper_FindAll_EmptyFilter_ReturnsAll() {
-        var repo = new List<Person> { new() { Id = "1" }, new() { Id = "2" } }.AsRepository();
-        var filterable = (IFilterableRepository<Person>)repo;
-        var result = filterable.FindAllAsync(QueryFilter.Empty);
-        Assert.Equal(2, result.Result.Count);
-    }
-
-    [Fact]
-    public void RepositoryWrapper_CountAsync_WithFilter_Works() {
-        var repo = new List<Person> {
-            new() { FirstName = "A" },
-            new() { FirstName = "B" },
-            new() { FirstName = "A" }
-        }.AsRepository();
-        var filterable = (IFilterableRepository<Person>)repo;
-        var result = filterable.CountAsync(QueryFilter.Where<Person>(x => x.FirstName == "A"));
-        Assert.Equal(2, result.Result);
     }
 
     [Fact]
@@ -838,39 +630,6 @@ public class RepositoryCoreTests {
     }
 
     [Fact]
-    public async Task RepositoryWrapper_FindAll_WithFilter_FromFilterable() {
-        var repo = new List<Person> { new Person { FirstName = "A" }, new Person { FirstName = "B" } }.AsRepository();
-        var filterable = (IFilterableRepository<Person>)repo;
-        var result = await filterable.FindAllAsync(QueryFilter.Where<Person>(x => x.FirstName == "A"));
-        Assert.Single(result);
-    }
-
-    [Fact]
-    public async Task RepositoryWrapper_FindFirst_WithFilter() {
-        var repo = new List<Person> {
-            new Person { FirstName = "A", LastName = "X" },
-            new Person { FirstName = "B", LastName = "Y" }
-        }.AsRepository();
-        var filterable = (IFilterableRepository<Person>)repo;
-        var found = await filterable.FindFirstAsync(QueryFilter.Where<Person>(x => x.FirstName == "B"));
-        Assert.NotNull(found);
-    }
-
-    [Fact]
-    public async Task RepositoryExtensions_Count_TKey_Async_WithExpression() {
-        IRepository<Person, object> repo = new List<Person> { new Person { FirstName = "A" }, new Person { FirstName = "A" } }.AsRepository();
-        var count = await repo.CountAsync((Expression<Func<Person, bool>>)(x => x.FirstName == "A"));
-        Assert.Equal(2, count);
-    }
-
-    [Fact]
-    public async Task RepositoryExtensions_ExistsAsync_SingleT_IQueryFilter() {
-        var repo = new List<Person> { new Person { FirstName = "A" } }.AsRepository();
-        var result = await repo.ExistsAsync(QueryFilter.Where<Person>(x => x.FirstName == "A"));
-        Assert.True(result);
-    }
-
-    [Fact]
     public async Task RepositoryWrapper_RemoveRange_WithMultipleItems() {
         var list = new List<Person> { new Person { Id = "1" }, new Person { Id = "2" }, new Person { Id = "3" }, new Person { Id = "4" } };
         var repo = list.AsRepository();
@@ -893,20 +652,6 @@ public class RepositoryCoreTests {
         Assert.Null(result);
     }
 
-    [Fact]
-    public void RepositoryExtensions_AsQueryable_TKey_Success() {
-        var list = new List<Person> { new Person() };
-        IRepository<Person, object> repo = list.AsRepository();
-        var queryable = repo.AsQueryable();
-        Assert.NotNull(queryable);
-    }
-
-    [Fact]
-    public void RepositoryExtensions_AsQueryable_SingleTypeParam_Success() {
-        var repo = new List<Person> { new Person() }.AsRepository();
-        var queryable = repo.AsQueryable();
-        Assert.NotNull(queryable);
-    }
 }
 
 #region Test types
@@ -989,23 +734,7 @@ class OpenScanRepo<TEntity> : List<TEntity>, IRepository<TEntity> where TEntity 
     }
 }
 
-/// <summary>
-/// A repository that implements only <see cref="IRepository{TEntity}"/> without
-/// <see cref="IFilterableRepository{TEntity}"/>, <see cref="IQueryableRepository{TEntity}"/>,
-/// or <see cref="IPageableRepository{TEntity}"/>. Used to test error paths in
-/// queryable, filterable, and pageable extension methods.
-/// </summary>
-class NonFilterableRepo<TEntity> : IRepository<TEntity> where TEntity : class {
-    public IServiceProvider? Services => null;
-    public ValueTask AddAsync(TEntity entity, CancellationToken cancellationToken = default) => throw new NotSupportedException();
-    public ValueTask AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) => throw new NotSupportedException();
-    public ValueTask<TEntity?> FindAsync(object key, CancellationToken cancellationToken = default) => throw new NotSupportedException();
-    public object? GetEntityKey(TEntity entity) => null;
-    public ValueTask<bool> RemoveAsync(TEntity entity, CancellationToken cancellationToken = default) => throw new NotSupportedException();
-    public ValueTask RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) => throw new NotSupportedException();
-    public ValueTask<bool> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default) => throw new NotSupportedException();
-    public ValueTask<PageResult<TEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
-}
+
 
 /// <summary>
 /// An entity used in seed data provider scanning tests.

@@ -31,26 +31,6 @@ public class EntityManagerNoKeyBehaviorTests
     }
 
     [Fact]
-    public void Should_ThrowObjectDisposed_When_AccessingSupportsQueriesAfterDispose()
-    {
-        var repository = new InMemoryRepository<Person>();
-        var manager = new EntityManager<Person>(repository);
-        manager.Dispose();
-
-        Assert.Throws<ObjectDisposedException>(() => manager.SupportsQueries);
-    }
-
-    [Fact]
-    public void Should_ThrowObjectDisposed_When_AccessingSupportsFiltersAfterDispose()
-    {
-        var repository = new InMemoryRepository<Person>();
-        var manager = new EntityManager<Person>(repository);
-        manager.Dispose();
-
-        Assert.Throws<ObjectDisposedException>(() => manager.SupportsFilters);
-    }
-
-    [Fact]
     public async Task Should_ThrowObjectDisposed_When_AddingAfterDispose()
     {
         var repository = new InMemoryRepository<Person>();
@@ -100,8 +80,6 @@ public class EntityManagerNoKeyBehaviorTests
         var repository = new InMemoryRepository<Person>();
         var manager = new EntityManager<Person>(repository);
 
-        Assert.True(manager.SupportsQueries);
-        Assert.True(manager.SupportsFilters);
         Assert.True(manager.SupportsPaging);
     }
 

@@ -22,9 +22,7 @@ namespace Kista {
 	/// </summary>
 	/// <typeparam name="TEntity">The type of entity handled by the repository.</typeparam>
 	class RepositoryWrapper<TEntity> : 
-		IRepository<TEntity>,
-		IFilterableRepository<TEntity>,
-		IQueryableRepository<TEntity>
+		IRepository<TEntity>
 		where TEntity : class {
 		private readonly IEnumerable<TEntity> entities;
 		private MemberInfo? idMember;
@@ -53,6 +51,9 @@ namespace Kista {
 
 		/// <inheritdoc/>
 		public IQueryable<TEntity> AsQueryable() => entities.AsQueryable();
+
+		/// <inheritdoc/>
+		public IQueryable<TEntity> Queryable() => AsQueryable();
 
 		private MemberInfo DiscoverKeyMember() {
 			if (idMember == null) {

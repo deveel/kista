@@ -132,9 +132,7 @@ namespace Kista {
 		var person = await RandomPersonAsync(x => x.Location != null);
 
 		// Act
-		var found = await PersonRepository.FindAllAsync(
-			x => x.Location!.Distance(person.Location) <= 1000,
-			cancellationToken: cancellationToken);
+		var found = QueryFilter.Where<DbPerson>(x => x.Location!.Distance(person.Location) <= 1000).Apply<DbPerson>(((Repository<DbPerson, Guid>)PersonRepository).Queryable()).ToList();
 
 		// Assert
 		Assert.NotNull(found);

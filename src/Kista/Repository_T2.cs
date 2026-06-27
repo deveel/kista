@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 
 using System;
@@ -30,42 +29,27 @@ namespace Kista {
 	/// </typeparam>
 	/// <remarks>
 	/// <para>
-	/// Unlike the obsolete <see cref="IQueryableRepository{TEntity, TKey}"/> contract,
-	/// this base class does not expose an <c>AsQueryable()</c> entry point to consumers.
 	/// The data-access hatch is the <see cref="Queryable"/> method, which is
-	/// <c>protected</c> and only available to subclasses that need to translate
-	/// <see cref="IQuery"/> and <see cref="PageQuery{TEntity}"/> instances into
-	/// provider-specific queries. The public-facing surface for query composition
-	/// and execution is <see cref="global::Kista.QueryBuilder{TEntity}"/>,
-	/// which is bound to this repository and returned by the
-	/// <see cref="CreateQuery"/> factory.
-	/// </para>
-	/// <para>
-	/// Subclasses inherit ready-made implementations of the protected
-	/// <c>FindAsync(IQuery, CancellationToken)</c>,
+	/// <c>public</c> so that companion assemblies (e.g. EntityManager,
+	/// decorators) can access the queryable, but consumer code should
+	/// use <see cref="CreateQuery"/> instead. Subclasses return the
+	/// engine-native queryable and the default implementations of the
+	/// protected <c>FindAsync(IQuery, CancellationToken)</c>,
 	/// <c>QueryPageAsync(PageQuery{TEntity}, CancellationToken)</c>,
 	/// <c>ExistsAsync(IQueryFilter, CancellationToken)</c>,
 	/// <c>CountAsync(IQueryFilter, CancellationToken)</c>,
 	/// <c>FindFirstAsync(IQuery, CancellationToken)</c> and
-	/// <c>FindAllAsync(IQuery, CancellationToken)</c> methods that
-	/// unpack the query, apply sorting/filtering/pagination through the engine
-	/// hatch, and surface the result. For convenience, each method also has a
-	/// <c>Expression&lt;Func&lt;TEntity, bool&gt;&gt;</c>-based overload that
-	/// automatically wraps the predicate in the appropriate filter or query. Engine-specific async execution can be
-	/// customised by overriding <see cref="CountAsync(IQueryable{TEntity}, CancellationToken)"/> and
-	/// <see cref="ToListAsync(IQueryable{TEntity}, CancellationToken)"/>.
+	/// <c>FindAllAsync(IQuery, CancellationToken)</c> methods
+	/// route the queryable returned here through
+	/// <see cref="NormalizeQuery"/>, the engine async hooks
+	/// (<see cref="CountAsync(IQueryable{TEntity}, CancellationToken)"/>,
+	/// <see cref="ToListAsync(IQueryable{TEntity}, CancellationToken)"/>)
+	/// and finally the unpacking primitives.
 	/// </para>
 	/// <para>
 	/// This class also provides a <see cref="CreateQuery"/> factory that returns a
 	/// <see cref="global::Kista.QueryBuilder{TEntity}"/> instance bound to this repository,
-	/// allowing fluent construction and execution of queries without exposing
-	/// the underlying <see cref="IQueryable{T}"/> hatch to consumer code. The
-	/// nested <see cref="QueryBuilder"/> type also implements
-	/// <see cref="IQueryBuilder{TEntity}"/> for code that prefers programming
-	/// against the interface.
-	/// </para>
-	/// </remarks>
-	public abstract class Repository<TEntity, TKey> : IRepository<TEntity, TKey>, IFilterableRepository<TEntity, TKey>
+	public abstract class Repository<TEntity, TKey> : IRepository<TEntity, TKey>
 		where TEntity : class {
 
 		/// <summary>
@@ -120,9 +104,9 @@ namespace Kista {
 		/// <returns>
 		/// Returns an <see cref="IQueryable{T}"/> that can be used by the
 		/// repository's own query translation pipeline. This hatch is
-		/// <c>protected</c> and never exposed to consumer code: deferring the
-		/// execution of LINQ expressions outside the data layer is the very
-		/// leak this base class is designed to close.
+		/// <c>public</c> so that companion assemblies (e.g. EntityManager,
+		/// decorators) can access the queryable, but consumer code should
+		/// use <see cref="CreateQuery"/> instead.
 		/// </returns>
 		/// <remarks>
 		/// <para>
@@ -145,7 +129,7 @@ namespace Kista {
 		/// the unpacking primitives.
 		/// </para>
 		/// </remarks>
-		protected abstract IQueryable<TEntity> Queryable();
+		public abstract IQueryable<TEntity> Queryable();
 
 		/// <summary>
 		/// Gets a value indicating whether this repository supports
@@ -561,44 +545,6 @@ namespace Kista {
 
 		/// <inheritdoc />
 		public abstract ValueTask<TEntity?> FindAsync(TKey key, CancellationToken cancellationToken = default);
-
-		#region IFilterableRepository explicit implementations
-
-		ValueTask<bool> IFilterableRepository<TEntity, TKey>.ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken)
-			=> ExistsAsync(filter, cancellationToken);
-
-		ValueTask<long> IFilterableRepository<TEntity, TKey>.CountAsync(IQueryFilter filter, CancellationToken cancellationToken)
-			=> CountAsync(filter, cancellationToken);
-
-		ValueTask<TEntity?> IFilterableRepository<TEntity, TKey>.FindFirstAsync(IQuery query, CancellationToken cancellationToken)
-			=> FindFirstAsync(query, cancellationToken);
-
-		ValueTask<IReadOnlyList<TEntity>> IFilterableRepository<TEntity, TKey>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
-			=> FindAllAsync(query, cancellationToken);
-
-		#endregion
-
-		/// <summary>
-		/// Returns a queryable view of the entity set.
-		/// </summary>
-		/// <returns>
-		/// Returns the <see cref="IQueryable{T}"/> produced by
-		/// <see cref="Queryable"/>.
-		/// </returns>
-		/// <remarks>
-		/// <para>
-		/// This method is kept as a back-compat bridge for the obsolete
-		/// <see cref="IQueryableRepository{TEntity, TKey}"/> contract and is
-		/// expected to be removed in a future major version. New code should
-		/// not call this method: the data-access translation pipeline is
-		/// intentionally hidden behind the protected <see cref="Queryable"/>
-		/// hatch so that LINQ expressions cannot leak into the application
-		/// layer and break at runtime far from the repository.
-		/// </para>
-		/// </remarks>
-		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
-		[ExcludeFromCodeCoverage]
-		public virtual IQueryable<TEntity> AsQueryable() => Queryable();
 
 		/// <summary>
 		/// Creates a new <see cref="global::Kista.QueryBuilder{TEntity}"/>

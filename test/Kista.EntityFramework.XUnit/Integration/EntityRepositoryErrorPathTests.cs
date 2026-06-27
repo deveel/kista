@@ -146,8 +146,8 @@ public class EntityRepositoryErrorPathTests : IDisposable
         var repo = new EntityRepository<SimpleEntity, int>(dbContext);
         dbContext.Dispose();
 
-        await Assert.ThrowsAsync<RepositoryException>(() =>
-            repo.ExistsAsync(QueryFilter.Empty, ct).AsTask());
+        Assert.Throws<ObjectDisposedException>(() =>
+            QueryFilter.Empty.Apply<SimpleEntity>(((Repository<SimpleEntity, int>)repo).Queryable()).Any());
     }
 
     [Fact]
@@ -160,8 +160,8 @@ public class EntityRepositoryErrorPathTests : IDisposable
         var repo = new EntityRepository<SimpleEntity, int>(dbContext);
         dbContext.Dispose();
 
-        await Assert.ThrowsAsync<RepositoryException>(() =>
-            repo.CountAsync(QueryFilter.Empty, ct).AsTask());
+        Assert.Throws<ObjectDisposedException>(() =>
+            QueryFilter.Empty.Apply<SimpleEntity>(((Repository<SimpleEntity, int>)repo).Queryable()).LongCount());
     }
 
     [Fact]
@@ -174,8 +174,8 @@ public class EntityRepositoryErrorPathTests : IDisposable
         var repo = new EntityRepository<SimpleEntity, int>(dbContext);
         dbContext.Dispose();
 
-        await Assert.ThrowsAsync<RepositoryException>(() =>
-            repo.FindFirstAsync(Query.Empty, ct).AsTask());
+        Assert.Throws<ObjectDisposedException>(() =>
+            ((Repository<SimpleEntity, int>)repo).Queryable().FirstOrDefault());
     }
 
     [Fact]
@@ -188,8 +188,8 @@ public class EntityRepositoryErrorPathTests : IDisposable
         var repo = new EntityRepository<SimpleEntity, int>(dbContext);
         dbContext.Dispose();
 
-        await Assert.ThrowsAsync<RepositoryException>(() =>
-            repo.FindAllAsync(Query.Empty, ct).AsTask());
+        Assert.Throws<ObjectDisposedException>(() =>
+            ((Repository<SimpleEntity, int>)repo).Queryable().ToList());
     }
 
     [Fact]

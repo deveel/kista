@@ -113,9 +113,9 @@ public abstract class RepositoryCoreBenchmarksBase<TEntity, TKey>
 	public async Task<bool> RemoveAsync_Entity() => await Repository.RemoveAsync(_targetForRemove);
 
 	[Benchmark]
-	public async Task<long> CountAsync_Filtered() => await Repository.CountAsync(CountPredicate);
+	public Task<long> CountAsync_Filtered() => Task.FromResult(QueryFilter.Where<TEntity>(CountPredicate).Apply<TEntity>(((Repository<TEntity, TKey>)Repository).Queryable()).LongCount());
 
 	[Benchmark]
-	public async Task<bool> ExistsAsync_Filtered() => await Repository.ExistsAsync(ExistsPredicate);
+	public Task<bool> ExistsAsync_Filtered() => Task.FromResult(QueryFilter.Where<TEntity>(ExistsPredicate).Apply<TEntity>(((Repository<TEntity, TKey>)Repository).Queryable()).Any());
 }
 

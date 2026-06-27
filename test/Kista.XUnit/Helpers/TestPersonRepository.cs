@@ -13,7 +13,7 @@ internal sealed class TestPersonRepository : Repository<Person, string> {
 
 	protected override IServiceProvider? Services => null;
 	protected override string? GetEntityKey(Person entity) => entity.Id;
-	protected override IQueryable<Person> Queryable() => _people.AsQueryable();
+	public override IQueryable<Person> Queryable() => _people.AsQueryable();
 	protected override bool IsQueryable => true;
 
 	public QueryBuilder<Person> PublicQuery() => CreateQuery();

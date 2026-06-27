@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 
 using MongoDB.Driver;
@@ -28,10 +27,7 @@ namespace Kista {
 	/// The type of the entity that is stored in the repository.
 	/// </typeparam>
 	public class MongoRepository<TEntity> : MongoRepository<TEntity, object>,
-		IQueryableRepository<TEntity>,
-		IRepository<TEntity>,
-		IPageableRepository<TEntity>,
-		IFilterableRepository<TEntity>
+		IRepository<TEntity>
 		where TEntity : class {
 		/// <summary>
 		/// Constructs the repository with the given context and logger.
@@ -66,24 +62,6 @@ namespace Kista {
 			: base(context, logger, services) {
 		}
 
-		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
-		[ExcludeFromCodeCoverage]
-		public new IQueryable<TEntity> AsQueryable() => base.AsQueryable();
-
-		IQueryable<TEntity> IQueryableRepository<TEntity, object>.AsQueryable() => Queryable();
-
 		object? IRepository<TEntity, object>.GetEntityKey(TEntity entity) => GetEntityKey(entity);
-
-		ValueTask<bool> IFilterableRepository<TEntity, object>.ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken)
-			=> ExistsAsync(filter, cancellationToken);
-
-		ValueTask<long> IFilterableRepository<TEntity, object>.CountAsync(IQueryFilter filter, CancellationToken cancellationToken)
-			=> CountAsync(filter, cancellationToken);
-
-		ValueTask<TEntity?> IFilterableRepository<TEntity, object>.FindFirstAsync(IQuery query, CancellationToken cancellationToken)
-			=> FindFirstAsync(query, cancellationToken);
-
-		ValueTask<IReadOnlyList<TEntity>> IFilterableRepository<TEntity, object>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
-			=> FindAllAsync(query, cancellationToken);
 	}
 }

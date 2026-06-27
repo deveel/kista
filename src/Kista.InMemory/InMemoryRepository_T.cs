@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System.Diagnostics.CodeAnalysis;
-
 namespace Kista {
 	/// <summary>
 	/// A repository that uses the memory of the process to store
@@ -24,10 +22,7 @@ namespace Kista {
 	/// </typeparam>
 	public class InMemoryRepository<TEntity> :
 		InMemoryRepository<TEntity, string>,
-		IQueryableRepository<TEntity>,
 		IRepository<TEntity>,
-		IPageableRepository<TEntity>,
-		IFilterableRepository<TEntity>,
 		IDisposable
 		where TEntity : class {
 		/// <summary>
@@ -64,12 +59,6 @@ namespace Kista {
 			GC.SuppressFinalize(this);
 		}
 
-		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
-		[ExcludeFromCodeCoverage]
-		public new IQueryable<TEntity> AsQueryable() => base.AsQueryable();
-
-		IQueryable<TEntity> IQueryableRepository<TEntity, object>.AsQueryable() => Queryable();
-
 		IServiceProvider? IRepository<TEntity, object>.Services => Services;
 
 		object? IRepository<TEntity, object>.GetEntityKey(TEntity entity) {
@@ -79,23 +68,6 @@ namespace Kista {
 		ValueTask<TEntity?> IRepository<TEntity, object>.FindAsync(object key, CancellationToken cancellationToken) {
 			return FindAsync(NormalizeKey(key), cancellationToken);
 		}
-
-		ValueTask<bool> IFilterableRepository<TEntity, object>.ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken)
-			=> ExistsAsync(filter, cancellationToken);
-
-		ValueTask<long> IFilterableRepository<TEntity, object>.CountAsync(IQueryFilter filter, CancellationToken cancellationToken)
-			=> CountAsync(filter, cancellationToken);
-
-		ValueTask<TEntity?> IFilterableRepository<TEntity, object>.FindFirstAsync(IQuery query, CancellationToken cancellationToken)
-			=> FindFirstAsync(query, cancellationToken);
-
-		ValueTask<IReadOnlyList<TEntity>> IFilterableRepository<TEntity, object>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
-			=> FindAllAsync(query, cancellationToken);
-
-#pragma warning disable CS0618 // Type or member is obsolete
-		ValueTask<PageQueryResult<TEntity>> IPageableRepository<TEntity, object>.GetPageAsync(PageQuery<TEntity> request, CancellationToken cancellationToken)
-			=> ((IPageableRepository<TEntity, string>)this).GetPageAsync(request, cancellationToken);
-#pragma warning restore CS0618 // Type or member is obsolete
 
 		private string NormalizeKey(object key) {
 			ArgumentNullException.ThrowIfNull(key);

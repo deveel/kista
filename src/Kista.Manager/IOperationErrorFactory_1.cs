@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-namespace Kista {
 using Deveel;
+
+namespace Kista {
 	/// <summary>
 	/// A service that creates instances of <see cref="IOperationError"/>
 	/// that can be used to report errors in an operation

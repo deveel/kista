@@ -4,7 +4,7 @@
     <PackageTags>repository;manager;entitymanager;entity;cache;caching;distributedcache;redis</PackageTags>
     <Description>Extends the Entity Manager with an implementation of the entity cache backed by IDistributedCache</Description>
   </PropertyGroup>
-    
+
   <ItemGroup>
     <ProjectReference Include="..\Kista.Manager\Kista.Manager.csproj" />
   </ItemGroup>

@@ -14,8 +14,6 @@
 
 using System.Linq.Expressions;
 
-using System;
-
 namespace Kista {
 	/// <summary>
 	/// An abstract repository base class that hides the underlying
@@ -49,6 +47,9 @@ namespace Kista {
 	/// <para>
 	/// This class also provides a <see cref="CreateQuery"/> factory that returns a
 	/// <see cref="global::Kista.QueryBuilder{TEntity}"/> instance bound to this repository,
+	/// to build type-safe queries against the entity set.
+	/// </para>
+	/// </remarks>
 	public abstract class Repository<TEntity, TKey> : IRepository<TEntity, TKey>
 		where TEntity : class {
 

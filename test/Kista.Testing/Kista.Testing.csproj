@@ -7,9 +7,9 @@
 
   <ItemGroup>
     <!-- xunit.v3 extensibility and assert for abstract test suite base classes -->
-    <PackageReference Include="xunit.v3.extensibility.core" Version="3.*" />
-    <PackageReference Include="xunit.v3.assert" Version="3.*" />
-    <PackageReference Include="MartinCostello.Logging.XUnit.v3" Version="0.7.*" />
+    <PackageReference Include="xunit.v3.extensibility.core" />
+    <PackageReference Include="xunit.v3.assert" />
+    <PackageReference Include="MartinCostello.Logging.XUnit.v3" />
   </ItemGroup>
 
   <ItemGroup>

@@ -21,9 +21,9 @@ namespace Kista {
 	/// for lifecycle management and service registration.
 	/// </summary>
 	/// <remarks>
-	/// This base class extracts the common patterns shared by
-	/// <see cref="EntityFrameworkRepositoryBuilder"/>, <see cref="MongoRepositoryBuilder"/>,
-	/// and <see cref="InMemoryRepositoryBuilder"/> to reduce code duplication.
+	/// This base class extracts the common patterns shared by the
+	/// <c>EntityFrameworkRepositoryBuilder</c>, <c>MongoRepositoryBuilder</c>,
+	/// and <c>InMemoryRepositoryBuilder</c> driver builders to reduce code duplication.
 	/// </remarks>
 	public abstract class RepositoryDriverBuilder {
 		/// <summary>

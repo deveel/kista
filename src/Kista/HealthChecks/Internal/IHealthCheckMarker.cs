@@ -28,6 +28,7 @@ public interface IHealthCheckMarker {
 /// Marker for Entity Framework health checks.
 /// </summary>
 public sealed class EntityFrameworkHealthCheckMarker : IHealthCheckMarker {
+    /// <inheritdoc/>
     public string DriverType => "EntityFramework";
 }
 
@@ -35,6 +36,7 @@ public sealed class EntityFrameworkHealthCheckMarker : IHealthCheckMarker {
 /// Marker for MongoDB health checks.
 /// </summary>
 public sealed class MongoHealthCheckMarker : IHealthCheckMarker {
+    /// <inheritdoc/>
     public string DriverType => "MongoDB";
 }
 
@@ -42,6 +44,7 @@ public sealed class MongoHealthCheckMarker : IHealthCheckMarker {
 /// Marker for In-Memory health checks.
 /// </summary>
 public sealed class InMemoryHealthCheckMarker : IHealthCheckMarker {
+    /// <inheritdoc/>
     public string DriverType => "InMemory";
 }
 
@@ -50,4 +53,8 @@ public sealed class InMemoryHealthCheckMarker : IHealthCheckMarker {
 /// </summary>
 public interface IKistaHealthChecksRegistered { }
 
+/// <summary>
+/// A sealed marker type used to register the
+/// <see cref="IKistaHealthChecksRegistered"/> marker in the service collection.
+/// </summary>
 public sealed class KistaHealthChecksRegisteredMarker : IKistaHealthChecksRegistered { }

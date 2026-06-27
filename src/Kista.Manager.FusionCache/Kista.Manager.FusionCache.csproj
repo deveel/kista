@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ZiggyCreatures.FusionCache" Version="2.*" />
+    <PackageReference Include="ZiggyCreatures.FusionCache" />
   </ItemGroup>
 
   <ItemGroup>

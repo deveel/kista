@@ -1,31 +1,31 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <ItemGroup>
-        <PackageReference Include="Testcontainers" Version="4.12.0" />
-        <PackageReference Include="Testcontainers.PostgreSql" Version="4.12.0" />
+        <PackageReference Include="Testcontainers" />
+        <PackageReference Include="Testcontainers.PostgreSql" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="8.0.26" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.NetTopologySuite" Version="8.0.26" />
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite" Version="8.0.11" />
-        <PackageReference Include="Finbuckle.MultiTenant.EntityFrameworkCore" Version="8.1.14" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.NetTopologySuite" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite" />
+        <PackageReference Include="Finbuckle.MultiTenant.EntityFrameworkCore" />
     </ItemGroup>
     <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="9.0.15" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.NetTopologySuite" Version="9.0.15" />
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite" Version="9.0.4" />
-        <PackageReference Include="Finbuckle.MultiTenant.EntityFrameworkCore" Version="9.4.9" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.NetTopologySuite" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite" />
+        <PackageReference Include="Finbuckle.MultiTenant.EntityFrameworkCore" />
     </ItemGroup>
     <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
-        <PackageReference Include="Finbuckle.MultiTenant" Version="10.1.0" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="10.0.5" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.NetTopologySuite" Version="10.0.5" />
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite" Version="10.0.1" />
-        <PackageReference Include="Finbuckle.MultiTenant.EntityFrameworkCore" Version="10.0.4" />
+        <PackageReference Include="Finbuckle.MultiTenant" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.NetTopologySuite" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite" />
+        <PackageReference Include="Finbuckle.MultiTenant.EntityFrameworkCore" />
     </ItemGroup>
 
     <ItemGroup>
@@ -45,15 +45,15 @@
 
           • Windows → bundle_e_sqlite3  no system SQLite; the bundled version is always used.
         -->
-        <PackageReference Include="SQLitePCLRaw.bundle_sqlite3" Version="2.1.11" Condition="$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))" />
-        <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.11" Condition="!$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))" />
+        <PackageReference Include="SQLitePCLRaw.bundle_sqlite3" Condition="$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))" />
+        <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Condition="!$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))" />
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\Kista.EntityFramework\Kista.EntityFramework.csproj" />
         <ProjectReference Include="..\..\src\Kista.EntityFramework.MultiTenant\Kista.EntityFramework.MultiTenant.csproj" />
         <ProjectReference Include="..\..\src\Kista.Owners\Kista.Owners.csproj" />
-        <ProjectReference Include="..\Kista.Management.Testing\Kista.Management.Testing.csproj" />
+        <ProjectReference Include="..\Kista.Manager.Testing\Kista.Manager.Testing.csproj" />
         <ProjectReference Include="..\Kista.Testing\Kista.Testing.csproj" />
     </ItemGroup>
 

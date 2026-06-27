@@ -49,7 +49,14 @@
     <PackageVersion Include="xunit.v3.extensibility.core" Version="3.2.2" />
     <PackageVersion Include="xunit.v3.assert" Version="3.2.2" />
     <PackageVersion Include="MartinCostello.Logging.XUnit.v3" Version="0.7.1" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.8.0" />
+    <!--
+      xunit.v3 3.2.2 hard-pins xunit.v3.mtp-v1, which targets
+      Microsoft.Testing.Platform 1.9.1. CodeCoverage 18.x requires
+      Testing.Platform 2.x (where IDataConsumer moved namespace),
+      causing a TypeLoadException at test startup. Pin to the last
+      17.x release until xunit ships an mtp-v2 metapackage default.
+    -->
+    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="17.14.2" />
   </ItemGroup>
 
   <!-- ============================================================

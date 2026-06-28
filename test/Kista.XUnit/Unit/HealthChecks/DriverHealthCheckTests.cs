@@ -38,7 +38,7 @@ public class InMemoryHealthCheckTests
     
     private class InMemoryDelegatedHealthCheck : IHealthCheck
     {
-        public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken) =>
+        public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default) =>
             Task.FromResult(HealthCheckResult.Healthy());
     }
 

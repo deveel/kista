@@ -316,7 +316,7 @@ namespace Kista {
 			try {
 				var entityDef = EntityMapping.GetOrCreateDefinition(typeof(TEntity));
 
-				// TODO: should we also create the indices here?
+				// should we also create the indices here?
 				await Context.Connection.GetDatabase()
 					.CreateCollectionAsync(entityDef.CollectionName, null, cancellationToken);
 			} catch (Exception ex) {

@@ -267,7 +267,7 @@ namespace Kista
 				var count = await Context.SaveChangesAsync(cancellationToken);
 
 				if (count > 1) {
-					// TODO: warn about this...
+					// warn about this...
 				}
 
 				var key = GetEntityKey(entity)!;
@@ -524,7 +524,7 @@ namespace Kista
 
 				var entry = Context.Entry(result);
 				
-				//TODO: find a way to get the original values
+				// find a way to get the original values
 				//      of related entities...
 
 				return (TEntity) entry.OriginalValues.ToObject();

@@ -235,7 +235,7 @@ namespace Kista {
 				}
 
 				if (query.Order != null) {
-					// TODO:
+					//
 				}
 			}
 

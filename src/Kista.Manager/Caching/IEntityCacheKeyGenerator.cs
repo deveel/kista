@@ -46,7 +46,7 @@ namespace Kista.Caching {
 		/// </returns>
 		string[] GenerateAllKeys(TEntity entity);
 
-		// TODO: We should provide a mechanism to generate a key
+		// We should provide a mechanism to generate a key
 		//       form a filter expression
 	}
 }

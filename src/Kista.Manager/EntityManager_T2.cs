@@ -257,7 +257,7 @@ namespace Kista {
 
 		private static string GenerateCacheKeyFrom(TKey key) {
 			var typeName = typeof(TEntity).Name.ToLowerInvariant();
-			// TODO: support combined keys
+			// support combined keys
 			return $"{typeName}:{key}";
 		}
 
@@ -300,7 +300,7 @@ namespace Kista {
 		protected virtual void Dispose(bool disposing) {
 			if (!disposedValue) {
 				if (disposing) {
-					// TODO: dispose managed state (managed objects)
+					// dispose managed state (managed objects)
 				}
 
 				Repository = null;
@@ -534,7 +534,7 @@ namespace Kista {
 				return;
 
 			try {
-				// TODO: optimize this
+				// optimize this
 				var keys = GenerateCacheKeys(entity);
 				await EntityCache.SetAsync(keys, entity, cancellationToken);
 			} catch (Exception ex) {
@@ -975,7 +975,7 @@ namespace Kista {
 
 				var token = GetCancellationToken(cancellationToken);
 
-				// TODO: should we check for the entities to be valid?
+				// should we check for the entities to be valid?
 
 				await Repository.RemoveRangeAsync(entities, token);
 
@@ -1080,7 +1080,7 @@ namespace Kista {
 			ThrowIfDisposed();
 
 			try {
-				// TODO: log this operation
+				// log this operation
 
 				var result = await Repository.GetPageAsync(query, GetCancellationToken(cancellationToken));
 				return (PageQueryResult<TEntity>)result;

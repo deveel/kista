@@ -281,7 +281,7 @@ namespace Kista {
 		}
 
 		private TKey GenerateNewKey() {
-			// TODO: make this generator configurable ...
+			// make this generator configurable ...
 			if (typeof(TKey) == typeof(Guid))
 				return (TKey)(object)(Guid.NewGuid());
 			if (typeof(TKey) == typeof(string))

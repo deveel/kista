@@ -22,8 +22,7 @@ namespace Kista {
 	/// </typeparam>
 	public class InMemoryRepository<TEntity> :
 		InMemoryRepository<TEntity, string>,
-		IRepository<TEntity>,
-		IDisposable
+		IRepository<TEntity>
 		where TEntity : class {
 		/// <summary>
 		/// Constructs the repository with the given list of
@@ -54,7 +53,7 @@ namespace Kista {
 		}
 
 		/// <inheritdoc/>
-		public new void Dispose() {
+		public override void Dispose() {
 			base.Dispose();
 			GC.SuppressFinalize(this);
 		}

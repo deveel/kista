@@ -11,7 +11,7 @@ namespace Kista;
 [Trait("Category", "Unit")]
 [Trait("Layer", "Application")]
 [Trait("Feature", "Caching")]
-public class EntityDistributedCacheTests : IDisposable
+public sealed class EntityDistributedCacheTests : IDisposable
 {
     private readonly IDistributedCache _distributedCache;
     private readonly PersonFaker _faker = new();

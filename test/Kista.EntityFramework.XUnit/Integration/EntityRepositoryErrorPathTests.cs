@@ -8,7 +8,7 @@ namespace Kista;
 [Trait("Category", "Integration")]
 [Trait("Layer", "Infrastructure")]
 [Trait("Feature", "EntityRepository")]
-public class EntityRepositoryErrorPathTests : IDisposable
+public sealed class EntityRepositoryErrorPathTests : IDisposable
 {
     private readonly SqliteConnection _connection;
 
@@ -22,6 +22,7 @@ public class EntityRepositoryErrorPathTests : IDisposable
     {
         _connection?.Close();
         _connection?.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     private TestDbContext CreateDbContext()

@@ -8,7 +8,7 @@ namespace Kista;
 [Trait("Category", "Unit")]
 [Trait("Layer", "Application")]
 [Trait("Feature", "Caching")]
-public class EntityMemoryCacheTests : IDisposable
+public sealed class EntityMemoryCacheTests : IDisposable
 {
     private readonly IMemoryCache _memoryCache;
     private readonly PersonFaker _faker = new();

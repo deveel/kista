@@ -714,12 +714,11 @@ namespace Kista {
 			Dispose(disposing: false);
 		}
 
-		void IDisposable.Dispose() {
-			if (!disposed) {
-				Dispose(disposing: true);
-				GC.SuppressFinalize(this);
-				disposed = true;
-			}
+		/// <inheritdoc/>
+		public void Dispose() {
+			Dispose(disposing: true);
+			GC.SuppressFinalize(this);
+			disposed = true;
 		}
 
 		/// <summary>

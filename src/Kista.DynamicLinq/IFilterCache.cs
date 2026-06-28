@@ -51,7 +51,7 @@ namespace Kista {
 		/// The expression string used as the cache key. This should match the string
 		/// that was originally passed to <see cref="Set"/>.
 		/// </param>
-		/// <param name="labda">
+		/// <param name="lambda">
 		/// When this method returns, contains the cached <see cref="Delegate"/> if the
 		/// key was found; otherwise, <c>null</c>.
 		/// </param>
@@ -63,7 +63,7 @@ namespace Kista {
 		/// Implementations that support LRU eviction should update the access order
 		/// of the entry when a hit occurs, promoting it to the most-recently-used position.
 		/// </remarks>
-		bool TryGet(string expression, out Delegate? labda);
+		bool TryGet(string expression, out Delegate? lambda);
 
 		/// <summary>
 		/// Stores a compiled <see cref="Delegate"/> in the cache.

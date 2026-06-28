@@ -75,7 +75,7 @@ public class FilterExpressionTests {
     private sealed class SimpleFilterCache : IFilterCache {
         private readonly Dictionary<string, Delegate> _cache = new();
 
-        public void Set(string expression, Delegate func) => _cache[expression] = func;
+        public void Set(string expression, Delegate lambda) => _cache[expression] = lambda;
 
         public bool TryGet(string expression, out Delegate? lambda) =>
             _cache.TryGetValue(expression, out lambda);

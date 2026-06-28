@@ -5,20 +5,20 @@ namespace Kista {
 		where TPerson : class, IPerson<TKey>
 		where TKey : notnull {
 
-		public bool Equals(TPerson? person, TPerson? other) {
-			if (person == null && other == null)
+		public bool Equals(TPerson? x, TPerson? y) {
+			if (x == null && y == null)
 				return true;
-			if (person == null || other == null)
+			if (x == null || y == null)
 				return false;
 
-			if (!Equals(person.Id, other.Id))
+			if (!Equals(x.Id, y.Id))
 				return false;
 
-			if (person.FirstName != other.FirstName ||
-				person.LastName != other.LastName ||
-				person.Email != other.Email ||
-				person.PhoneNumber != other.PhoneNumber ||
-				person.DateOfBirth != other.DateOfBirth)
+			if (x.FirstName != y.FirstName ||
+				x.LastName != y.LastName ||
+				x.Email != y.Email ||
+				x.PhoneNumber != y.PhoneNumber ||
+				x.DateOfBirth != y.DateOfBirth)
 				return false;
 
 

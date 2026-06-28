@@ -78,7 +78,7 @@ namespace Kista {
 		/// </summary>
 		public double? MinDistance { get; }
 
-		IQueryable<TEntity> IQueryableFilter<TEntity>.Apply(IQueryable<TEntity> dbSet) {
+		IQueryable<TEntity> IQueryableFilter<TEntity>.Apply(IQueryable<TEntity> queryable) {
 			var entitySerializer = BsonSerializer.LookupSerializer<TEntity>();
 			var keyExpressionField = new ExpressionFieldDefinition<TEntity>(LocationField);
 			var keyStringField = keyExpressionField.Render(entitySerializer, BsonSerializer.SerializerRegistry);
@@ -105,7 +105,7 @@ namespace Kista {
 				{ "$geoNear", geoNearSettings }
 			};
 
-			var originalProvider = dbSet.Provider as IMongoFrameworkQueryProvider<TEntity>;
+			var originalProvider = queryable.Provider as IMongoFrameworkQueryProvider<TEntity>;
 			var provider = new MongoFrameworkQueryProvider<TEntity>(originalProvider, stage);
 			return new MongoFrameworkQueryable<TEntity>(provider);
 		}

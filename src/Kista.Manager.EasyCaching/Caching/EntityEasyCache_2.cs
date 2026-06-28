@@ -32,7 +32,13 @@ namespace Kista.Caching {
 		where TCached : class {
 		private readonly IEasyCachingProvider cacheProvider;
 		private readonly EntityCacheOptions<TEntity>? options;
-		private readonly IEntityCacheKeyGenerator<TEntity>? keyGenerator;
+		/// <summary>
+		/// A generator to create the keys for the entities.
+		/// </summary>
+		/// <remarks>
+		/// Reserved for use by derived classes that wish to customize key generation.
+		/// </remarks>
+		protected readonly IEntityCacheKeyGenerator<TEntity>? keyGenerator;
 		private readonly IEntityEasyCacheConverter<TEntity, TCached>? converter;
 
 		/// <summary>

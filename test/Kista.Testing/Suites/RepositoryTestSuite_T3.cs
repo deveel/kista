@@ -13,7 +13,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 	where TPerson : class, IPerson<TKey>
 	where TKey : notnull
 	where TRelationship : class, IRelationship {
-	private IServiceProvider? _services;
+	private IServiceProvider? rootServiceProvider;
 	private AsyncServiceScope scope;
 
 	protected RepositoryTestSuite(ITestOutputHelper? testOutput) {
@@ -61,8 +61,8 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 
 		ConfigureServices(services);
 
-		_services = services.BuildServiceProvider();
-		scope = _services.CreateAsyncScope();
+		rootServiceProvider = services.BuildServiceProvider();
+		scope = rootServiceProvider.CreateAsyncScope();
 	}
 
 	async ValueTask IAsyncLifetime.InitializeAsync() {
@@ -84,7 +84,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 		People = null;
 
 		await scope.DisposeAsync();
-		(_services as IDisposable)?.Dispose();
+		(rootServiceProvider as IDisposable)?.Dispose();
 	}
 
 	protected virtual ValueTask DisposeAsync() {

@@ -12,7 +12,7 @@ namespace Kista;
 public abstract class RepositoryTestSuite<TPerson, TRelationship> : IAsyncLifetime
 	where TPerson : class, IPerson
 	where TRelationship : class, IRelationship {
-	private IServiceProvider? services;
+	private IServiceProvider? rootServiceProvider;
 	private AsyncServiceScope scope;
 
 	protected RepositoryTestSuite(ITestOutputHelper? testOutput) {
@@ -60,8 +60,8 @@ public abstract class RepositoryTestSuite<TPerson, TRelationship> : IAsyncLifeti
 
 		ConfigureServices(services);
 
-		this.services = services.BuildServiceProvider();
-		scope = this.services.CreateAsyncScope();
+		rootServiceProvider = services.BuildServiceProvider();
+		scope = rootServiceProvider.CreateAsyncScope();
 	}
 
 	async ValueTask IAsyncLifetime.InitializeAsync() {
@@ -83,7 +83,7 @@ public abstract class RepositoryTestSuite<TPerson, TRelationship> : IAsyncLifeti
 		People = null;
 
 		await scope.DisposeAsync();
-		(services as IDisposable)?.Dispose();
+		(rootServiceProvider as IDisposable)?.Dispose();
 	}
 
 	protected virtual ValueTask DisposeAsync() {

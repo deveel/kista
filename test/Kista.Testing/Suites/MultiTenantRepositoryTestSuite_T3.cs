@@ -18,7 +18,7 @@ public abstract class MultiTenantRepositoryTestSuite<TTenantInfo, TPerson, TKey>
 	where TTenantInfo : class, ITenantInfo, new()
 	where TPerson : class, IPerson<TKey>
 	where TKey : notnull {
-	private IServiceProvider? services;
+	private IServiceProvider? rootServiceProvider;
 	private AsyncServiceScope scope;
 
 	protected MultiTenantRepositoryTestSuite(ITestOutputHelper? testOutput) {
@@ -71,8 +71,8 @@ public abstract class MultiTenantRepositoryTestSuite<TTenantInfo, TPerson, TKey>
 
 		ConfigureServices(services);
 
-		this.services = services.BuildServiceProvider();
-		scope = this.services.CreateAsyncScope();
+		rootServiceProvider = services.BuildServiceProvider();
+		scope = rootServiceProvider.CreateAsyncScope();
 	}
 
 	async ValueTask IAsyncLifetime.InitializeAsync() {
@@ -97,7 +97,7 @@ public abstract class MultiTenantRepositoryTestSuite<TTenantInfo, TPerson, TKey>
 		People = null;
 
 		await scope.DisposeAsync();
-		(services as IDisposable)?.Dispose();
+		(rootServiceProvider as IDisposable)?.Dispose();
 	}
 
 	protected virtual ValueTask DisposeAsync() {

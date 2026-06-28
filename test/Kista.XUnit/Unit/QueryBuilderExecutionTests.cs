@@ -362,11 +362,11 @@ public class QueryBuilderExecutionTests {
 	public async Task StandaloneQueryBuilder_ThrowsOnExecute() {
 		var builder = new QueryBuilder<Person>();
 
-		await Assert.ThrowsAsync<InvalidOperationException>(() => builder.FirstOrDefaultAsync().AsTask());
-		await Assert.ThrowsAsync<InvalidOperationException>(() => builder.ToListAsync().AsTask());
-		await Assert.ThrowsAsync<InvalidOperationException>(() => builder.CountAsync().AsTask());
-		await Assert.ThrowsAsync<InvalidOperationException>(() => builder.AnyAsync().AsTask());
-		await Assert.ThrowsAsync<InvalidOperationException>(() => builder.GetPageAsync(1, 10).AsTask());
+		await Assert.ThrowsAsync<InvalidOperationException>(async () => await builder.FirstOrDefaultAsync());
+		await Assert.ThrowsAsync<InvalidOperationException>(async () => await builder.ToListAsync());
+		await Assert.ThrowsAsync<InvalidOperationException>(async () => await builder.CountAsync());
+		await Assert.ThrowsAsync<InvalidOperationException>(async () => await builder.AnyAsync());
+		await Assert.ThrowsAsync<InvalidOperationException>(async () => await builder.GetPageAsync(1, 10));
 	}
 
 	[Fact]

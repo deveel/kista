@@ -388,10 +388,10 @@ public class RepositoryCoreTests {
     }
 
     [Fact]
-    public void RepositoryExtension_GetPageAsync_QueryablePath_Works() {
+    public async Task RepositoryExtension_GetPageAsync_QueryablePath_Works() {
         IRepository<Person, object> repo = new List<Person> { new() { FirstName = "A" }, new() { FirstName = "B" } }.AsRepository();
-        var page = repo.GetPageAsync(new PageQuery<Person>(1, 10));
-        Assert.NotNull(page.Result);
+        var page = await repo.GetPageAsync(new PageQuery<Person>(1, 10));
+        Assert.NotNull(page);
     }
 
     [Fact]
@@ -409,11 +409,11 @@ public class RepositoryCoreTests {
     }
 
     [Fact]
-    public void RepositoryWrapper_Update_NonExistent_ReturnsFalse() {
+    public async Task RepositoryWrapper_Update_NonExistent_ReturnsFalse() {
         var list = new List<Person> { new() { Id = "1" } };
         var repo = list.AsRepository();
-        var result = repo.UpdateAsync(new Person { Id = "999" });
-        Assert.False(result.Result);
+        var result = await repo.UpdateAsync(new Person { Id = "999" });
+        Assert.False(result);
     }
 
     [Fact]
@@ -425,12 +425,12 @@ public class RepositoryCoreTests {
     }
 
     [Fact]
-    public void RepositoryWrapper_Find_ByKey_ReturnsEntity() {
+    public async Task RepositoryWrapper_Find_ByKey_ReturnsEntity() {
         var entity = new Person { Id = "1", FirstName = "Alice" };
         var repo = new List<Person> { entity }.AsRepository();
-        var found = repo.FindAsync((object)"1");
-        Assert.NotNull(found.Result);
-        Assert.Equal("Alice", found.Result!.FirstName);
+        var found = await repo.FindAsync((object)"1");
+        Assert.NotNull(found);
+        Assert.Equal("Alice", found!.FirstName);
     }
 
     [Fact]

@@ -31,7 +31,7 @@ public abstract class MultiTenantRepositoryTestSuite<TTenantInfo, TPerson, TKey>
 
 	protected virtual int EntitySetCount => 100;
 
-	protected virtual string[] TenantIds => Defaults.TenantIds;
+	protected virtual string[] TenantIds => new[] { "tenant1", "tenant2", "tenant3" };
 
 	protected virtual IDictionary<string, IReadOnlyList<TPerson>>? People { get; private set; }
 
@@ -46,11 +46,6 @@ public abstract class MultiTenantRepositoryTestSuite<TTenantInfo, TPerson, TKey>
 	protected abstract TKey GeneratePersonId();
 
 	protected abstract TTenantInfo CreateTenantInfo(string tenantId);
-
-	private static class Defaults
-	{
-		public static readonly string[] TenantIds = { "tenant1", "tenant2", "tenant3" };
-	}
 
 	protected virtual void ConfigureServices(IServiceCollection services) {
 		if (TestOutput != null)

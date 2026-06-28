@@ -71,8 +71,8 @@ namespace Kista {
 		/// <exception cref="ArgumentNullException">
 		/// Thrown if the given filter is <c>null</c>.
 		/// </exception>
-		public CombinedQueryFilter Combine(IQueryFilter filter) {
-            ArgumentNullException.ThrowIfNull(filter);
+	public CombinedQueryFilter Combine(IQueryFilter filter) {
+		ArgumentNullException.ThrowIfNull(filter);
 
 		var combinedFilters = new List<IQueryFilter>(this.filters);
 		if (filter is CombinedQueryFilter combined) {
@@ -82,7 +82,7 @@ namespace Kista {
 		}
 
 		return new CombinedQueryFilter(combinedFilters, logicalOperator);
-		}
+	}
 
 		/// <inheritdoc/>
 		public void Initialize(IFilterContext context) {

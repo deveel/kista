@@ -20,9 +20,9 @@ namespace Kista {
 	static class LambdaExpressionExtensions {
 		public static Expression<Func<TTarget, bool>> As<TTarget>(this LambdaExpression expression) {
 			if (expression.ReturnType != typeof(bool))
-				throw new ArgumentException();
+				throw new ArgumentException("The expression must return a boolean value.",nameof(expression));
 			if (expression.Parameters.Count != 1)
-				throw new ArgumentException();
+				throw new ArgumentException("The expression must have exactly one parameter.", nameof(expression));
 
 			var param = expression.Parameters[0];
 

@@ -532,7 +532,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 		var person = await RandomPersonAsync();
 
 		// Act
-		var result = Repository.Find(person.Id!);
+		var result = await Repository.FindAsync(person.Id!, TestContext.Current.CancellationToken);
 
 		// Assert
 		Assert.NotNull(result);

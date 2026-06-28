@@ -29,7 +29,7 @@ public class EntityManagerKeyedBehaviorTests
         public DateTimeOffset? UpdatedAtUtc { get; set; }
     }
 
-    public class EquatableEntity : IEquatable<EquatableEntity>
+    public sealed class EquatableEntity : IEquatable<EquatableEntity>
     {
         [Key]
         public string? Id { get; set; }

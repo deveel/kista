@@ -51,13 +51,11 @@ internal static class ServiceCollectionHealthCheckExtensions {
             return;
         
         // Extract key type from repository type
-        Type? keyType = null;
-        foreach (var iface in repositoryType.GetInterfaces().Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IRepository<,>))) {
-            var genericArgs = iface.GetGenericArguments();
-            keyType = genericArgs[1];
-            break;
-        }
-        
+        var keyType = repositoryType.GetInterfaces()
+            .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IRepository<,>))
+            .Select(i => i.GetGenericArguments()[1])
+            .FirstOrDefault();
+
         if (keyType != null)
             registry.Register(repositoryType, entityType, keyType);
     }

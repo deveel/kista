@@ -219,7 +219,7 @@ public class RepositoryContextBuilderExtendedTests {
 
 		var descriptor = services.FirstOrDefault(d => d.ServiceType == typeof(IRepository<ExtendedTestEntity>));
 		Assert.NotNull(descriptor);
-		Assert.Equal(ServiceLifetime.Singleton, descriptor.Lifetime);
+		Assert.Equal(ServiceLifetime.Singleton, descriptor!.Lifetime);
 	}
 
 	[Fact]

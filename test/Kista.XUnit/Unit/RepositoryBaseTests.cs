@@ -65,7 +65,7 @@ public class RepositoryTests {
 	public async Task FindAsync_CancelledToken_Throws() {
 		var sut = new TestRepository();
 		using var cts = new CancellationTokenSource();
-		cts.Cancel();
+		await cts.CancelAsync();
 
 		await Assert.ThrowsAnyAsync<OperationCanceledException>(
 			() => sut.PublicFindAsync(Query.Empty, cts.Token).AsTask());
@@ -147,7 +147,7 @@ public class RepositoryTests {
 	public async Task GetPageAsync_CancelledToken_Throws() {
 		var sut = new TestRepository();
 		using var cts = new CancellationTokenSource();
-		cts.Cancel();
+		await cts.CancelAsync();
 
 		await Assert.ThrowsAnyAsync<OperationCanceledException>(
 			() => sut.PublicQueryPageAsync(new PageQuery<Person>(1, 10), cts.Token).AsTask());
@@ -368,7 +368,7 @@ public class RepositoryTests {
 	public async Task GetPageAsync_PageRequest_Cancelled_Throws() {
 		var sut = new TestRepository();
 		using var cts = new CancellationTokenSource();
-		cts.Cancel();
+		await cts.CancelAsync();
 
 		await Assert.ThrowsAnyAsync<OperationCanceledException>(
 			() => sut.PublicGetPageAsync(new PageRequest(1, 10), cts.Token).AsTask());

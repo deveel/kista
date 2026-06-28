@@ -17,4 +17,4 @@ if (app.Environment.IsDevelopment())
 app.MapLifecycleEndpoints();
 app.MapContactEndpoints();
 
-app.Run();
+await app.RunAsync();

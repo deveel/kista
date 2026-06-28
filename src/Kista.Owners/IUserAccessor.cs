@@ -26,7 +26,7 @@ namespace Kista
 	/// <typeparam name="TKey">
 	/// The type of the key that identifies the user.
 	/// </typeparam>
-	public interface IUserAccessor<TKey>
+	public interface IUserAccessor<out TKey>
 	{
 		/// <summary>
 		/// Gets the identifier of the current user.

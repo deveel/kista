@@ -501,7 +501,7 @@ namespace Kista {
 			var id = GetEntityKey(entity);
 
 			if (id == null)
-				throw new ArgumentException(nameof(entity), "Cannot determine the identifier of the entity");
+				throw new ArgumentException("Cannot determine the identifier of the entity", nameof(entity));
 
 			Logger.TraceUpdating(id.ToString()!);
 

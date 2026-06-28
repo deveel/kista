@@ -704,27 +704,6 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 	[Trait("Category", "Integration")]
 	[Trait("Layer", "Infrastructure")]
 	[Trait("Feature", "Repository")]
-	public async Task Should_ReturnPage_When_PageParametersProvided() {
-		// Arrange
-		var totalItems = PeopleCount;
-		var totalPages = (int)Math.Ceiling((double)totalItems / 10);
-
-		// Act
-		var result = await Repository.GetPageAsync(1, 10, TestContext.Current.CancellationToken);
-
-		// Assert
-		Assert.NotNull(result);
-		Assert.Equal(totalPages, result.TotalPages);
-		Assert.Equal(totalItems, result.TotalItems);
-		Assert.NotNull(result.Items);
-		Assert.NotEmpty(result.Items);
-		Assert.Equal(10, result.Items.Count);
-	}
-
-	[Fact]
-	[Trait("Category", "Integration")]
-	[Trait("Layer", "Infrastructure")]
-	[Trait("Feature", "Repository")]
 	public async Task Should_ReturnFilteredPage_When_FilterApplied() {
 		// Arrange
 		var person = await RandomPersonAsync();

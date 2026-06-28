@@ -293,18 +293,10 @@ public sealed class EntityRepositoryErrorPathTests : IDisposable
     public async Task Should_Throw_When_EntityHasCompositeKey()
     {
         var ct = TestContext.Current.CancellationToken;
-        using var dbContext = CreateCompositeKeyDbContext();
+        using var dbContext = CreateDbContext();
         await dbContext.Database.EnsureCreatedAsync(ct);
 
         Assert.Throws<NotSupportedException>(() => new EntityRepository<CompositeKeyEntity, int>(dbContext));
-    }
-
-    private TestDbContext CreateCompositeKeyDbContext()
-    {
-        var options = new DbContextOptionsBuilder<TestDbContext>()
-            .UseSqlite(_connection)
-            .Options;
-        return new TestDbContext(options);
     }
 
     public class SimpleEntity

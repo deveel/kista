@@ -42,37 +42,33 @@ internal sealed class RepositoryHealthCheckStartupValidator : IHostedService {
         if (_options.StartupValidationMode == StartupValidationMode.None)
             return;
         
-        _logger.LogInformation("Starting repository health check validation...");
+        _logger.LogStartingValidation();
         
         try {
             var healthCheckService = _serviceProvider.GetRequiredService<HealthCheckService>();
             var report = await healthCheckService.CheckHealthAsync(cancellationToken);
             
             if (report.Status != HealthStatus.Healthy) {
-                var message = $"Repository health checks failed at startup: {report.Status}";
+                var status = report.Status.ToString();
+                var message = $"Repository health checks failed at startup: {status}";
                 
                 if (_options.StartupValidationMode == StartupValidationMode.FailFast) {
-                    _logger.LogError(message);
+                    _logger.LogFailedStartup(status);
                     throw new InvalidOperationException(message);
                 }
                 
-                _logger.LogWarning(message);
+                _logger.LogFailedWarning(status);
                 
-                // Log details for each failed check
                 foreach (var entry in report.Entries.Where(e => e.Value.Status != HealthStatus.Healthy)) {
-                    _logger.LogWarning(
-                        "Health check '{Name}' reported {Status}: {Description}",
-                        entry.Key,
-                        entry.Value.Status,
-                        entry.Value.Description);
+                    _logger.LogCheckFailed(entry.Key, entry.Value.Status, entry.Value.Description);
                 }
             }
             else {
-                _logger.LogInformation("Repository health checks passed at startup.");
+                _logger.LogPassedValidation();
             }
         }
         catch (Exception ex) {
-            _logger.LogError(ex, "Repository health check validation failed with exception.");
+            _logger.LogValidationException(ex);
             
             if (_options.StartupValidationMode == StartupValidationMode.FailFast)
                 throw;

@@ -21,25 +21,25 @@ public class ContactLifecycleHandler : IRepositoryLifecycleHandler<Contact>
 
     public ValueTask<bool> ExistsAsync(CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Checking if Contact repository exists");
+        _logger.LogCheckingRepositoryExists(nameof(Contact));
         return ValueTask.FromResult(true);
     }
 
     public ValueTask CreateAsync(CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Creating Contact repository");
+        _logger.LogCreatingRepository(nameof(Contact));
         return ValueTask.CompletedTask;
     }
 
     public ValueTask DropAsync(CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Dropping Contact repository");
+        _logger.LogDroppingRepository(nameof(Contact));
         return ValueTask.CompletedTask;
     }
 
     public async ValueTask SeedAsync(object? seedData = null, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Seeding Contact repository");
+        _logger.LogSeedingRepository(nameof(Contact));
 
         var data = seedData as IEnumerable<Contact>
             ?? _seedDataProvider.GetSeedData();
@@ -47,11 +47,11 @@ public class ContactLifecycleHandler : IRepositoryLifecycleHandler<Contact>
         if (data != null)
         {
             await _repository.AddRangeAsync(data.ToList(), cancellationToken);
-            _logger.LogInformation("Seeded {Count} contacts", data.Count());
+            _logger.LogSeededCount(data.Count());
         }
         else
         {
-            _logger.LogInformation("No seed data available for Contact repository");
+            _logger.LogNoSeedData(nameof(Contact));
         }
     }
 }

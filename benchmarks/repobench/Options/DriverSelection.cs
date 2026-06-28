@@ -39,12 +39,7 @@ internal sealed record DriverSelection(
 			var argument = args[i];
 
 			if (TryReadOption(argument, "driver", out var driverValue, out var consumesNextArgument)) {
-				if (string.IsNullOrWhiteSpace(driverValue)) {
-					if (!consumesNextArgument || i + 1 >= args.Length)
-						throw new ArgumentException("The driver option requires a value.");
-
-					driverValue = args[++i];
-				}
+				driverValue = ReadOptionValue(ref i, args, driverValue, consumesNextArgument, "driver");
 
 				if (driverValue.Equals("help", StringComparison.OrdinalIgnoreCase) ||
 					driverValue.Equals("?", StringComparison.OrdinalIgnoreCase)) {
@@ -57,12 +52,7 @@ internal sealed record DriverSelection(
 			}
 
 			if (TryReadOption(argument, "export", out var exportValue, out consumesNextArgument)) {
-				if (string.IsNullOrWhiteSpace(exportValue)) {
-					if (!consumesNextArgument || i + 1 >= args.Length)
-						throw new ArgumentException("The export option requires a value.");
-
-					exportValue = args[++i];
-				}
+				exportValue = ReadOptionValue(ref i, args, exportValue, consumesNextArgument, "export");
 
 				foreach (var exportFormat in ParseExportFormats(exportValue)) {
 					exportFormats.Add(exportFormat);
@@ -72,13 +62,7 @@ internal sealed record DriverSelection(
 			}
 
 			if (TryReadOption(argument, "output", out var outputValue, out consumesNextArgument)) {
-				if (string.IsNullOrWhiteSpace(outputValue)) {
-					if (!consumesNextArgument || i + 1 >= args.Length)
-						throw new ArgumentException("The output option requires a value.");
-
-					outputValue = args[++i];
-				}
-
+				outputValue = ReadOptionValue(ref i, args, outputValue, consumesNextArgument, "output");
 				outputPath = outputValue;
 				continue;
 			}
@@ -88,18 +72,33 @@ internal sealed record DriverSelection(
 
 		var normalizedExports = NormalizeExportFormats(exportFormats);
 
-		if (!String.IsNullOrWhiteSpace(outputPath)) {
-			if (normalizedExports.Count == 0)
-				normalizedExports.Add(InferExportFormatFromFileName(outputPath));
-
-			if (normalizedExports.Count != 1)
-				throw new ArgumentException("When output is specified, exactly one export format must be selected.");
-
-			if (driver == BenchmarkDriver.All)
-				throw new ArgumentException("When output is specified, select a single driver instead of 'all'.");
-		}
+		ValidateOutput(outputPath, normalizedExports, ref driver);
 
 		return new DriverSelection(driver, benchmarkArgs.ToArray(), normalizedExports, outputPath, showUsage);
+	}
+
+	private static string ReadOptionValue(ref int i, string[] args, string? value, bool consumesNextArgument, string optionName) {
+		if (!string.IsNullOrWhiteSpace(value))
+			return value;
+
+		if (!consumesNextArgument || i + 1 >= args.Length)
+			throw new ArgumentException($"The {optionName} option requires a value.");
+
+		return args[++i];
+	}
+
+	private static void ValidateOutput(string? outputPath, List<BenchmarkExportFormat> normalizedExports, ref BenchmarkDriver driver) {
+		if (string.IsNullOrWhiteSpace(outputPath))
+			return;
+
+		if (normalizedExports.Count == 0)
+			normalizedExports.Add(InferExportFormatFromFileName(outputPath));
+
+		if (normalizedExports.Count != 1)
+			throw new ArgumentException("When output is specified, exactly one export format must be selected.");
+
+		if (driver == BenchmarkDriver.All)
+			throw new ArgumentException("When output is specified, select a single driver instead of 'all'.");
 	}
 
 	public static void WriteUsage(TextWriter? writer = null) {

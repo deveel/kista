@@ -12,18 +12,15 @@ namespace Kista {
 	[Trait("Feature", "MongoRepository")]
 	public abstract class MongoRepositoryTestSuite<TPerson> : RepositoryTestSuite<TPerson, ObjectId, MongoPersonRelationship> 
 		where TPerson : MongoPerson {
-		private MongoSingleDatabase mongo;
+		private readonly MongoSingleDatabase mongo;
 
 		protected MongoRepositoryTestSuite(MongoSingleDatabase mongo, ITestOutputHelper? testOutput) : base(testOutput) {
 			this.mongo = mongo;
 
-			// ConnectionString = mongo.SetDatabase(DatabaseName);
 			ConnectionString = mongo.ConnectionString;
 		}
 
 		protected string ConnectionString { get; }
-
-		// protected string DatabaseName => "test_db";
 
 		protected override ObjectId GeneratePersonId() => ObjectId.GenerateNewId();
 

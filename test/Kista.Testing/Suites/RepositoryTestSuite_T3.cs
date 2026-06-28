@@ -767,9 +767,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 		var birthDate = person.DateOfBirth!.Value;
 
 		var peopleCount = People?
-			.Where(x => x.FirstName == firstName)
-			.Where(x => x.DateOfBirth >= birthDate)
-			.Count() ?? 0;
+			.Count(x => x.FirstName == firstName && x.DateOfBirth >= birthDate) ?? 0;
 
 		var totalPages = (int)Math.Ceiling((double)peopleCount / 10);
 		var perPage = Math.Min(peopleCount, 10);

@@ -54,9 +54,9 @@ namespace Kista {
 				return;
 
 			if (Connection.State != System.Data.ConnectionState.Closed)
-				Connection?.Close();
+				Connection.Close();
 
-			Connection?.Dispose();
+			Connection.Dispose();
 		}
 	}
 }

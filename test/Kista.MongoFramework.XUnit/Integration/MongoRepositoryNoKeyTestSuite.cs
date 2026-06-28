@@ -12,7 +12,7 @@ namespace Kista {
 	[Trait("Feature", "MongoRepository")]
 	public abstract class MongoRepositoryNoKeyTestSuite<TPerson> : RepositoryTestSuite<TPerson, MongoPersonRelationship>
 		where TPerson : MongoPerson {
-		private MongoSingleDatabase mongo;
+		private readonly MongoSingleDatabase mongo;
 
 		protected MongoRepositoryNoKeyTestSuite(MongoSingleDatabase mongo, ITestOutputHelper? testOutput) : base(testOutput) {
 			this.mongo = mongo;

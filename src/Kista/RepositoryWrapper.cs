@@ -212,7 +212,7 @@ namespace Kista {
 				result = query.Apply(queryable).FirstOrDefault();
 			} else {
 				if (query.HasFilter()) {
-					result = entities.Where(query.Filter!.AsLambda<TEntity>().Compile()).FirstOrDefault();
+					result = entities.FirstOrDefault(query.Filter!.AsLambda<TEntity>().Compile());
 				} else {
 					result = entities.FirstOrDefault();
 				}

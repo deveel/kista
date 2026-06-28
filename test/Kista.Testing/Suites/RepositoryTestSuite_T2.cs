@@ -822,9 +822,7 @@ public abstract class RepositoryTestSuite<TPerson, TRelationship> : IAsyncLifeti
 		var birthDate = person.DateOfBirth!.Value;
 
 		var peopleCount = People?
-			.Where(x => x.FirstName == firstName)
-			.Where(x => x.DateOfBirth >= birthDate)
-			.Count() ?? 0;
+			.Count(x => x.FirstName == firstName && x.DateOfBirth >= birthDate) ?? 0;
 
 		var totalPages = (int)Math.Ceiling((double)peopleCount / 10);
 		var perPage = Math.Min(peopleCount, 10);
@@ -952,10 +950,10 @@ public abstract class RepositoryTestSuite<TPerson, TRelationship> : IAsyncLifeti
 
 		var updated = await Repository.FindAsync(person.Id!, TestContext.Current.CancellationToken);
 		Assert.NotNull(updated);
-		Assert.Equal(toUpdate.FirstName, updated.FirstName);
-		Assert.Equal(toUpdate.LastName, updated.LastName);
-		Assert.Equal(toUpdate.Email, updated.Email);
-		Assert.Equal(toUpdate.DateOfBirth, updated.DateOfBirth);
+		Assert.Equal(toUpdate.FirstName, updated!.FirstName);
+		Assert.Equal(toUpdate.LastName, updated!.LastName);
+		Assert.Equal(toUpdate.Email, updated!.Email);
+		Assert.Equal(toUpdate.DateOfBirth, updated!.DateOfBirth);
 	}
 
 	[Fact]
@@ -977,10 +975,10 @@ public abstract class RepositoryTestSuite<TPerson, TRelationship> : IAsyncLifeti
 
 		var updated = await Repository.FindAsync(person.Id!, TestContext.Current.CancellationToken);
 		Assert.NotNull(updated);
-		Assert.Equal(toUpdate.FirstName, updated.FirstName);
-		Assert.Equal(toUpdate.LastName, updated.LastName);
-		Assert.Equal(toUpdate.Email, updated.Email);
-		Assert.Equal(toUpdate.DateOfBirth, updated.DateOfBirth);
+		Assert.Equal(toUpdate.FirstName, updated!.FirstName);
+		Assert.Equal(toUpdate.LastName, updated!.LastName);
+		Assert.Equal(toUpdate.Email, updated!.Email);
+		Assert.Equal(toUpdate.DateOfBirth, updated!.DateOfBirth);
 	}
 
 	[Fact]

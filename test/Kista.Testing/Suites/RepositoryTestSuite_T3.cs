@@ -339,37 +339,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 	[Trait("Category", "Integration")]
 	[Trait("Layer", "Infrastructure")]
 	[Trait("Feature", "Repository")]
-	public async Task Should_ReturnTotalCount_When_CountAllAsync() {
-		// Act
-		var result = await Task.FromResult(((Repository<TPerson, TKey>)Repository).Queryable().Count());
-
-		// Assert
-		Assert.NotEqual(0, result);
-		Assert.Equal(PeopleCount, result);
-	}
-
-	[Fact]
-	[Trait("Category", "Integration")]
-	[Trait("Layer", "Infrastructure")]
-	[Trait("Feature", "Repository")]
 	public async Task Should_ReturnFilteredCount_When_FilterApplied() {
-		// Arrange
-		var person = await RandomPersonAsync();
-		var firstName = person.FirstName;
-		var peopleCount = People?.Count(x => x.FirstName == firstName) ?? 0;
-
-		// Act
-		var count = await Task.FromResult(QueryFilter.Where<TPerson>(p => p.FirstName == firstName).Apply<TPerson>(((Repository<TPerson, TKey>)Repository).Queryable()).Count());
-
-		// Assert
-		Assert.Equal(peopleCount, count);
-	}
-
-	[Fact]
-	[Trait("Category", "Integration")]
-	[Trait("Layer", "Infrastructure")]
-	[Trait("Feature", "Repository")]
-	public async Task Should_ReturnFilteredCount_When_FilterAppliedSync() {
 		// Arrange
 		var person = await RandomPersonAsync();
 		var firstName = person.FirstName;
@@ -463,22 +433,6 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 	[Trait("Layer", "Infrastructure")]
 	[Trait("Feature", "Repository")]
 	public async Task Should_ReturnTrue_When_PersonExists() {
-		// Arrange
-		var person = await RandomPersonAsync();
-		var firstName = person.FirstName;
-
-		// Act
-		var result = await Task.FromResult(QueryFilter.Where<TPerson>(x => x.FirstName == firstName).Apply<TPerson>(((Repository<TPerson, TKey>)Repository).Queryable()).Any());
-
-		// Assert
-		Assert.True(result);
-	}
-
-	[Fact]
-	[Trait("Category", "Integration")]
-	[Trait("Layer", "Infrastructure")]
-	[Trait("Feature", "Repository")]
-	public async Task Should_ReturnTrue_When_PersonExistsSync() {
 		// Arrange
 		var person = await RandomPersonAsync();
 		var firstName = person.FirstName;
@@ -597,20 +551,6 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 	[Trait("Layer", "Infrastructure")]
 	[Trait("Feature", "Repository")]
 	public async Task Should_ReturnAllPeople_When_FindAll() {
-		// Act
-		var result = await Task.FromResult((IReadOnlyList<TPerson>)((Repository<TPerson, TKey>)Repository).Queryable().ToList());
-
-		// Assert
-		Assert.NotNull(result);
-		Assert.NotEmpty(result);
-		Assert.Equal(PeopleCount, result.Count);
-	}
-
-	[Fact]
-	[Trait("Category", "Integration")]
-	[Trait("Layer", "Infrastructure")]
-	[Trait("Feature", "Repository")]
-	public async Task Should_ReturnAllPeople_When_FindAllAsync() {
 		// Act
 		var result = await Task.FromResult((IReadOnlyList<TPerson>)((Repository<TPerson, TKey>)Repository).Queryable().ToList());
 

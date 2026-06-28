@@ -50,6 +50,7 @@ namespace Kista
 		where TKey : notnull
 	{
 		private const string UserContextNotSetMessage = "User context is not set";
+		private const string InnerRepositoryNoFilterMessage = "The inner repository does not support filtering";
 		private static readonly Lazy<PropertyInfo> _ownerProperty = new(DiscoverOwnerProperty);
 
 		private readonly IRepository<TEntity, TKey> _inner;
@@ -153,7 +154,7 @@ namespace Kista
 		public ValueTask<IReadOnlyList<TEntity>> FindAllAsync(IQuery query, CancellationToken cancellationToken = default)
 			=> ApplyOwnerFilterAndCallAsync(query, q => {
 				if (!(_inner is Repository<TEntity, TKey> repo))
-					throw new NotSupportedException("The inner repository does not support filtering");
+					throw new NotSupportedException(InnerRepositoryNoFilterMessage);
 				var result = q.Apply(repo.Queryable()).ToList();
 				return new ValueTask<IReadOnlyList<TEntity>>(result);
 			});
@@ -162,7 +163,7 @@ namespace Kista
 		public ValueTask<TEntity?> FindFirstAsync(IQuery query, CancellationToken cancellationToken = default)
 			=> ApplyOwnerFilterAndCallAsync(query, q => {
 				if (!(_inner is Repository<TEntity, TKey> repo))
-					throw new NotSupportedException("The inner repository does not support filtering");
+					throw new NotSupportedException(InnerRepositoryNoFilterMessage);
 				var result = q.Apply(repo.Queryable()).FirstOrDefault();
 				return new ValueTask<TEntity?>(result);
 			});
@@ -171,7 +172,7 @@ namespace Kista
 		public ValueTask<long> CountAsync(IQueryFilter filter, CancellationToken cancellationToken = default)
 			=> ApplyOwnerFilterAndCallAsync(filter, f => {
 				if (!(_inner is Repository<TEntity, TKey> repo))
-					throw new NotSupportedException("The inner repository does not support filtering");
+					throw new NotSupportedException(InnerRepositoryNoFilterMessage);
 				var result = f.Apply(repo.Queryable()).LongCount();
 				return new ValueTask<long>(result);
 			});
@@ -180,7 +181,7 @@ namespace Kista
 		public ValueTask<bool> ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken = default)
 			=> ApplyOwnerFilterAndCallAsync(filter, f => {
 				if (!(_inner is Repository<TEntity, TKey> repo))
-					throw new NotSupportedException("The inner repository does not support filtering");
+					throw new NotSupportedException(InnerRepositoryNoFilterMessage);
 				var result = f.Apply(repo.Queryable()).Any();
 				return new ValueTask<bool>(result);
 			});

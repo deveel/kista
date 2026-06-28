@@ -160,8 +160,8 @@ public class FilterCacheDependencyInjectionTests {
 	// Custom implementations for testing
 
 	private class CustomExpressionCache : IExpressionCache {
-		public bool TryGet(string expression, out System.Linq.Expressions.LambdaExpression? lambda) { lambda = null; return false; }
-		public void Set(string expression, System.Linq.Expressions.LambdaExpression lambda) { }
+		public bool TryGet(string key, out System.Linq.Expressions.LambdaExpression? expression) { expression = null; return false; }
+		public void Set(string key, System.Linq.Expressions.LambdaExpression expression) { }
 		public void Clear() { }
 		public IFilterCacheStatistics? Statistics => null;
 	}

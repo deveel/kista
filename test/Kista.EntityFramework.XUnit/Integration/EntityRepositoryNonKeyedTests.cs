@@ -36,7 +36,7 @@ public sealed class EntityRepositoryNonKeyedTests : IDisposable
         await dbContext.SaveChangesAsync(ct);
 
         var repo = new EntityRepository<SimpleEntity>(dbContext);
-        var exists = new ExpressionQueryFilter<SimpleEntity>(x => x.Name == "Existing").Apply<SimpleEntity>(((Repository<SimpleEntity, object>)repo).Queryable()).Any();
+        var exists = await new ExpressionQueryFilter<SimpleEntity>(x => x.Name == "Existing").Apply<SimpleEntity>(((Repository<SimpleEntity, object>)repo).Queryable()).AnyAsync();
 
         Assert.True(exists);
     }
@@ -54,7 +54,7 @@ public sealed class EntityRepositoryNonKeyedTests : IDisposable
         await dbContext.SaveChangesAsync(ct);
 
         var repo = new EntityRepository<SimpleEntity>(dbContext);
-        var count = new ExpressionQueryFilter<SimpleEntity>(x => x.Name != "").Apply<SimpleEntity>(((Repository<SimpleEntity, object>)repo).Queryable()).LongCount();
+        var count = await new ExpressionQueryFilter<SimpleEntity>(x => x.Name != "").Apply<SimpleEntity>(((Repository<SimpleEntity, object>)repo).Queryable()).LongCountAsync();
 
         Assert.Equal(2, count);
     }
@@ -72,7 +72,7 @@ public sealed class EntityRepositoryNonKeyedTests : IDisposable
         await dbContext.SaveChangesAsync(ct);
 
         var repo = new EntityRepository<SimpleEntity>(dbContext);
-        var found = new Query(new ExpressionQueryFilter<SimpleEntity>(x => x.Name == "First"), null).Apply(((Repository<SimpleEntity, object>)repo).Queryable()).FirstOrDefault();
+        var found = await new Query(new ExpressionQueryFilter<SimpleEntity>(x => x.Name == "First"), null).Apply(((Repository<SimpleEntity, object>)repo).Queryable()).FirstOrDefaultAsync();
 
         Assert.NotNull(found);
         Assert.Equal("First", found.Name);
@@ -91,7 +91,7 @@ public sealed class EntityRepositoryNonKeyedTests : IDisposable
         await dbContext.SaveChangesAsync(ct);
 
         var repo = new EntityRepository<SimpleEntity>(dbContext);
-        var all = new Query(new ExpressionQueryFilter<SimpleEntity>(x => x.Name != ""), null).Apply(((Repository<SimpleEntity, object>)repo).Queryable()).ToList();
+        var all = await new Query(new ExpressionQueryFilter<SimpleEntity>(x => x.Name != ""), null).Apply(((Repository<SimpleEntity, object>)repo).Queryable()).ToListAsync();
 
         Assert.Collection(all.OrderBy(x => x.Name),
             x => Assert.Equal("X", x.Name),

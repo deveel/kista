@@ -52,12 +52,6 @@ namespace Kista {
 			Dispose(disposing: false);
 		}
 
-		/// <inheritdoc/>
-		public override void Dispose() {
-			base.Dispose();
-			GC.SuppressFinalize(this);
-		}
-
 		IServiceProvider? IRepository<TEntity, object>.Services => Services;
 
 		object? IRepository<TEntity, object>.GetEntityKey(TEntity entity) {

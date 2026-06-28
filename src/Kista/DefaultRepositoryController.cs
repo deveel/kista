@@ -111,10 +111,9 @@ namespace Kista {
 			return;
 
 		try {
-			if (await repository.ExistsAsync(cancellationToken)) {
-				if (await HandleExistingRepositoryOnCreate(repository, cancellationToken))
-					return;
-			}
+			if (await repository.ExistsAsync(cancellationToken)
+				&& await HandleExistingRepositoryOnCreate(repository, cancellationToken))
+				return;
 
 			LogTrace("Creating the repository");
 

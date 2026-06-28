@@ -233,10 +233,6 @@ namespace Kista {
 				} else {
 					result = entities;
 				}
-
-				if (query.Order != null) {
-					//
-				}
 			}
 
 			return new ValueTask<IReadOnlyList<TEntity>>(result.ToList());

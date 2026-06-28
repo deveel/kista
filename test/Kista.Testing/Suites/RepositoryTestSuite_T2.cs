@@ -426,23 +426,6 @@ public abstract class RepositoryTestSuite<TPerson, TRelationship> : IAsyncLifeti
 	[Trait("Category", "Integration")]
 	[Trait("Layer", "Infrastructure")]
 	[Trait("Feature", "Repository")]
-	public async Task Should_ReturnFilteredCount_When_FilterAppliedAsync() {
-		// Arrange
-		var person = await RandomPersonAsync();
-		var firstName = person.FirstName;
-		var peopleCount = People?.Count(x => x.FirstName == firstName) ?? 0;
-
-		// Act
-		var count = await Task.FromResult(QueryFilter.Where<TPerson>(p => p.FirstName == firstName).Apply<TPerson>(Repository.GetPageAsync(new PageRequest(1, int.MaxValue)).GetAwaiter().GetResult().Items.AsQueryable()).LongCount());
-
-		// Assert
-		Assert.Equal(peopleCount, count);
-	}
-
-	[Fact]
-	[Trait("Category", "Integration")]
-	[Trait("Layer", "Infrastructure")]
-	[Trait("Feature", "Repository")]
 	public async Task Should_ReturnPerson_When_FindByKey() {
 		// Arrange
 		var person = await RandomPersonAsync();
@@ -520,22 +503,6 @@ public abstract class RepositoryTestSuite<TPerson, TRelationship> : IAsyncLifeti
 	[Trait("Layer", "Infrastructure")]
 	[Trait("Feature", "Repository")]
 	public async Task Should_ReturnTrue_When_PersonExists() {
-		// Arrange
-		var person = await RandomPersonAsync();
-		var firstName = person.FirstName;
-
-		// Act
-		var result = await Task.FromResult(QueryFilter.Where<TPerson>(x => x.FirstName == firstName).Apply<TPerson>(Repository.GetPageAsync(new PageRequest(1, int.MaxValue)).GetAwaiter().GetResult().Items.AsQueryable()).Any());
-
-		// Assert
-		Assert.True(result);
-	}
-
-	[Fact]
-	[Trait("Category", "Integration")]
-	[Trait("Layer", "Infrastructure")]
-	[Trait("Feature", "Repository")]
-	public async Task Should_ReturnTrue_When_PersonExistsAsync() {
 		// Arrange
 		var person = await RandomPersonAsync();
 		var firstName = person.FirstName;

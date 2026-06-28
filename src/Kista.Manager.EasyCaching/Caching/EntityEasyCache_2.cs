@@ -126,27 +126,26 @@ namespace Kista.Caching {
 #pragma warning disable CS8603 // Possible null reference return.
 				// EasyCaching does not support nullable explicitly
 				return null;
-#pragma warning restore CS8603 // Possible null reference return.
+#pragma warning restore CS8603 // Possible null reference return
 
-
-				return ConvertToCached(entity);
-			};
-		}
+			return ConvertToCached(entity);
+		};
+	}
 
 		/// <inheritdoc/>
 		public async ValueTask<TEntity?> GetOrSetAsync(string cacheKey, Func<ValueTask<TEntity?>> valueFactory, CancellationToken cancellationToken = default) {
 			try {
 				var factory = Factory(valueFactory);
 
-			var result = await cacheProvider.GetAsync<TCached>(cacheKey, factory, Expiration, cancellationToken);
+				var result = await cacheProvider.GetAsync<TCached>(cacheKey, factory, Expiration, cancellationToken);
 
-			if (!result.HasValue)
-				return null;
+				if (!result.HasValue)
+					return null;
 
-			if (result.IsNull)
-				return null;
+				if (result.IsNull)
+					return null;
 
-			return ConvertFromCached(result.Value);
+				return ConvertFromCached(result.Value);
 			} catch (Exception ex) {
 
 				throw new RepositoryException("Could not get or set the entity in the cache", ex);

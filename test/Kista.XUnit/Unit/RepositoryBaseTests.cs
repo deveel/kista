@@ -427,7 +427,7 @@ public class RepositoryTests {
 	public async Task FilterableInterface_ExistsAsync_Delegates() {
 		var sut = new TestRepository();
 
-        var result = await Task.FromResult(new ExpressionQueryFilter<Person>(p => p.FirstName == "Alice").Apply<Person>(((TestRepository)sut).Queryable()).Any());
+        var result = await Task.FromResult(new ExpressionQueryFilter<Person>(p => p.FirstName == "Alice").Apply<Person>(sut.Queryable()).Any());
 
         Assert.True(result);
     }
@@ -436,7 +436,7 @@ public class RepositoryTests {
     public async Task FilterableInterface_CountAsync_Delegates() {
         var sut = new TestRepository(seedCount: 10);
 
-        var result = await Task.FromResult(new ExpressionQueryFilter<Person>(p => p.FirstName == "Alice").Apply<Person>(((TestRepository)sut).Queryable()).LongCount());
+        var result = await Task.FromResult(new ExpressionQueryFilter<Person>(p => p.FirstName == "Alice").Apply<Person>(sut.Queryable()).LongCount());
 
 		Assert.True(result > 0);
 	}
@@ -445,7 +445,7 @@ public class RepositoryTests {
 	public async Task FilterableInterface_FindFirstAsync_Delegates() {
 		var sut = new TestRepository();
 
-        var result = await Task.FromResult(Query.Where<Person>(p => p.FirstName == "Alice").Apply<Person>(((TestRepository)sut).Queryable()).FirstOrDefault());
+        var result = await Task.FromResult(Query.Where<Person>(p => p.FirstName == "Alice").Apply<Person>(sut.Queryable()).FirstOrDefault());
 
         Assert.NotNull(result);
     }
@@ -454,7 +454,7 @@ public class RepositoryTests {
     public async Task FilterableInterface_FindAllAsync_Delegates() {
         var sut = new TestRepository();
 
-        var result = await Task.FromResult((IReadOnlyList<Person>)Query.Where<Person>(p => p.FirstName == "Alice").Apply<Person>(((TestRepository)sut).Queryable()).ToList());
+        var result = await Task.FromResult((IReadOnlyList<Person>)Query.Where<Person>(p => p.FirstName == "Alice").Apply<Person>(sut.Queryable()).ToList());
 
 		Assert.NotEmpty(result);
 	}

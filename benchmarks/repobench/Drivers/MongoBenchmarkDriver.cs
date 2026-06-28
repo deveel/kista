@@ -65,8 +65,6 @@ internal sealed class MongoBenchmarkDriver : IRepositoryBenchmarkDriver<MongoBen
 	private void DisposeCurrentRepository() {
 		if (_repository is IAsyncDisposable asyncDisposable) {
 			asyncDisposable.DisposeAsync().AsTask().GetAwaiter().GetResult();
-		} else if (_repository is IDisposable disposable) {
-			disposable.Dispose();
 		}
 
 		_repository = null;

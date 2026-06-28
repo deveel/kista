@@ -6,6 +6,7 @@ namespace Kista;
 [Trait("Layer", "Infrastructure")]
 [Trait("Feature", "FilterableRepository")]
 public class FilterableRepositoryTests {
+    private const string FirstNameExpression = "x.FirstName";
     private static readonly Faker<Person> PersonFaker = new Faker<Person>("en")
         .RuleFor(x => x.Id, f => f.Random.Guid().ToString())
         .RuleFor(x => x.FirstName, f => f.Name.FirstName())
@@ -49,7 +50,7 @@ public class FilterableRepositoryTests {
     [Fact]
     public void Should_ThrowInvalidOperationException_When_CountExpressionInvalid() {
         Assert.Throws<InvalidOperationException>(
-            () => new DynamicLinqFilter("x.FirstName").Apply<Person>(((Repository<Person, string>)_repository).Queryable()).LongCount());
+            () => new DynamicLinqFilter(FirstNameExpression).Apply<Person>(((Repository<Person, string>)_repository).Queryable()).LongCount());
     }
 
     #endregion
@@ -79,7 +80,7 @@ public class FilterableRepositoryTests {
     [Fact]
     public void Should_ThrowInvalidOperationException_When_ExistsExpressionInvalid() {
         Assert.Throws<InvalidOperationException>(
-            () => new DynamicLinqFilter("x.FirstName").Apply<Person>(((Repository<Person, string>)_repository).Queryable()).Any());
+            () => new DynamicLinqFilter(FirstNameExpression).Apply<Person>(((Repository<Person, string>)_repository).Queryable()).Any());
     }
 
     #endregion
@@ -109,7 +110,7 @@ public class FilterableRepositoryTests {
     [Fact]
     public void Should_ThrowInvalidOperationException_When_FindFirstExpressionInvalid() {
         Assert.Throws<InvalidOperationException>(
-            () => new DynamicLinqFilter("x.FirstName").Apply<Person>(((Repository<Person, string>)_repository).Queryable()).FirstOrDefault());
+            () => new DynamicLinqFilter(FirstNameExpression).Apply<Person>(((Repository<Person, string>)_repository).Queryable()).FirstOrDefault());
     }
 
     #endregion
@@ -139,7 +140,7 @@ public class FilterableRepositoryTests {
     [Fact]
     public void Should_ThrowInvalidOperationException_When_FindAllExpressionInvalid() {
         Assert.Throws<InvalidOperationException>(
-            () => new DynamicLinqFilter("x.FirstName").Apply<Person>(((Repository<Person, string>)_repository).Queryable()).ToList());
+            () => new DynamicLinqFilter(FirstNameExpression).Apply<Person>(((Repository<Person, string>)_repository).Queryable()).ToList());
     }
 
     #endregion

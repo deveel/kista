@@ -128,11 +128,10 @@ namespace Kista {
 		if (!sql.SpatialiteAvailable)
 			Assert.Skip("SpatiaLite is not available on this platform – skipping spatial query test.");
 
-		var cancellationToken = TestContext.Current.CancellationToken;
 		var person = await RandomPersonAsync(x => x.Location != null);
 
 		// Act
-		var found = QueryFilter.Where<DbPerson>(x => x.Location!.Distance(person.Location) <= 1000).Apply<DbPerson>(((Repository<DbPerson, Guid>)PersonRepository).Queryable()).ToList();
+		var found = await QueryFilter.Where<DbPerson>(x => x.Location!.Distance(person.Location) <= 1000).Apply<DbPerson>(((Repository<DbPerson, Guid>)PersonRepository).Queryable()).ToListAsync();
 
 		// Assert
 		Assert.NotNull(found);

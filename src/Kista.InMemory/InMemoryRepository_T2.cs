@@ -694,7 +694,7 @@ namespace Kista {
 		}
 
 		/// <inheritdoc/>
-		public virtual void Dispose() {
+		public void Dispose() {
 			Dispose(disposing: true);
 			GC.SuppressFinalize(this);
 		}

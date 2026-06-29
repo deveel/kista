@@ -131,7 +131,7 @@ After registration the following services are resolvable from the DI container (
 | `IRepository<TEntity>` | Core CRUD, single-entity look-up (`FindAsync`), and unsorted pagination (`GetPageAsync`) |
 | `ITrackingRepository<TEntity>` | Change tracking and original value look-ups |
 
-> **Note:** The legacy interfaces `IQueryableRepository`, `IPageableRepository`, and `IFilterableRepository` are deprecated. Query capabilities are now provided through `protected` members of `Repository<TEntity, TKey>`. For domain-specific queries, extend the base repository with custom methods. See the [full documentation](docs/index.md) for details.
+> **Note:** The legacy interfaces `IQueryableRepository`, `IPageableRepository`, and `IFilterableRepository` were **removed in 1.7.1**. Query capabilities are provided through `protected` members of `Repository<TEntity, TKey>`. For domain-specific queries, extend the base repository with custom methods. If you are upgrading from 1.7.0, see the [Migration from 1.7 guide](docs/migrating-from-1.7.md); for full documentation see [docs/index.md](docs/index.md).
 
 ### 3. Consume the repository in your services
 

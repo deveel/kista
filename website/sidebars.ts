@@ -81,6 +81,13 @@ const sidebars: SidebarsConfig = {
       items: [],
     },
     'sample-app',
+    {
+      type: 'category',
+      label: 'Migrate',
+      items: [
+        'migrating-from-1.7',
+      ],
+    },
     'roadmap',
   ],
 };

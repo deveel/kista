@@ -261,11 +261,11 @@ Each driver ships its own `AddRepository*` extension overloads with driver-speci
 > "Close the gap between composing a query and running it — queries built with `QueryBuilder` should execute directly against a repository without additional bridging code."
 
 **The Problem Today**  
-`QueryBuilder<TEntity>` provides fluent filter and ordering composition but stops short of execution: calling code must unwrap the built `IQuery`, pass it to `IFilterableRepository.FindAsync` or `IPageableRepository.GetPageAsync`, and handle the types separately. This imposes a two-API mental model — build here, run over there — and forces consumers to write boilerplate connecting the two sides.
+`QueryBuilder<TEntity>` provides fluent filter and ordering composition but stops short of execution: calling code must unwrap the built `IQuery`, pass it to the `Repository<TEntity, TKey>` base-class protected methods (or the `IRepository<T>` extension methods), and handle the types separately. This imposes a two-API mental model — build here, run over there — and forces consumers to write boilerplate connecting the two sides.
 
 **What We Are Building**  
 - Execution extension methods on `QueryBuilder<TEntity>` accepting a repository parameter and returning the appropriate result type (`ValueTask<TEntity?>`, `IAsyncEnumerable<TEntity>`, `ValueTask<PageResult<TEntity>>`)
-- Factory extensions directly on `IFilterableRepository` and `IPageableRepository` for starting a bound fluent chain: `repository.Query().Where(...).OrderBy(...).GetPage(1, 20)`
+- Factory extensions directly on `IRepository<TEntity>` (and the `Repository<TEntity, TKey>` base class) for starting a bound fluent chain: `repository.Query().Where(...).OrderBy(...).GetPage(1, 20)`
 - Backward-compatible with all existing `IQuery` and `PageQuery<TEntity>` usages — no existing code needs to change
 
 **Benefits**
@@ -708,12 +708,12 @@ v1.5–v1.9 delivered capabilities incrementally and carefully. v2.0 takes the s
 > "Eliminate the cognitive overhead of choosing between `IRepository<T>` and `IRepository<T, TKey>` by making one variant canonical with a sensible default, and removing the `object`-key workaround entirely."
 
 **The Problem Today**  
-The current design maintains a parallel universe of interfaces — `IRepository<T>` and `IRepository<T, TKey>`, `IFilterableRepository<T>` and `IFilterableRepository<T, TKey>`, and so on. New users face a choice that should not exist. The `object`-key variant is a historical workaround that leaks through into all capability interfaces without providing meaningful type safety.
+The current design maintains a parallel universe of interfaces — `IRepository<T>` and `IRepository<T, TKey>` — and the `Repository<TEntity, TKey>` base class carries both the protected query hatch and the public contract. New users face a choice that should not exist. The `object`-key variant is a historical workaround that leaks through into the base class without providing meaningful type safety. (The legacy `IFilterableRepository`/`IPageableRepository`/`IQueryableRepository` capability interfaces were already removed in v1.7.1; the remaining duplication is the two-arity `IRepository` tier.)
 
 **What We Are Building**  
 - A single canonical `IRepository<TEntity, TKey>` with `string` as the conventional default key type for `IRepository<TEntity>`
 - Removal of the `object`-key interface tier; a compatibility shim published as a separate package for the v1.x → v2.x upgrade window
-- Capability interfaces simplified to single-generic variants: `IFilterableRepository<TEntity>`, `IPageableRepository<TEntity>`, `IAsyncEnumerableRepository<TEntity>`
+- Query capabilities unified on the `Repository<TEntity, TKey>` base class and `IRepository<TEntity>` extension methods (no separate capability interfaces)
 - A Roslyn-based migration code-fix that renames old interface references automatically
 - Adapter base classes that ease the update of custom repository implementations
 
@@ -750,6 +750,8 @@ The current design maintains a parallel universe of interfaces — `IRepository<
 - DI registration and auto-discovery are simpler and faster
 - Consumers are guided toward the single `Repository<TEntity, TKey>` base class instead of choosing between multiple capability interfaces
 - Every `[Obsolete]` warning in v1.x codebases is resolved simply by upgrading to v2.0
+
+**Status:** ✅ Completed in v1.7.1. See the [Migration from 1.7 guide](docs/migrating-from-1.7.md) for before/after patterns and migration steps.
 
 ---
 

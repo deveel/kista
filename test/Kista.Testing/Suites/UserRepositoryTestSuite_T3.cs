@@ -12,7 +12,7 @@ namespace Kista;
 public abstract class UserRepositoryTestSuite<TBook, TKey, TUserKey> : IAsyncLifetime, IAsyncDisposable
 	where TBook : class, IBook<TKey>, IHaveOwner<TUserKey>
 	where TKey : notnull {
-	private IServiceProvider? services;
+	private IServiceProvider? rootServiceProvider;
 	private AsyncServiceScope scope;
 
 	protected UserRepositoryTestSuite(ITestOutputHelper? outputHelper) {
@@ -69,8 +69,8 @@ public abstract class UserRepositoryTestSuite<TBook, TKey, TUserKey> : IAsyncLif
 
 		ConfigureServices(services);
 
-		this.services = services.BuildServiceProvider();
-		scope = this.services.CreateAsyncScope();
+		rootServiceProvider = services.BuildServiceProvider();
+		scope = rootServiceProvider.CreateAsyncScope();
 	}
 
 	async ValueTask IAsyncLifetime.InitializeAsync() {
@@ -92,7 +92,7 @@ public abstract class UserRepositoryTestSuite<TBook, TKey, TUserKey> : IAsyncLif
 		Books = null;
 
 		await scope.DisposeAsync();
-		(services as IDisposable)?.Dispose();
+		(rootServiceProvider as IDisposable)?.Dispose();
 	}
 
 	protected virtual ValueTask DisposeAsync() {

@@ -76,7 +76,7 @@ public class MongoRepositoryTests : MongoRepositoryTestSuite<MongoPerson> {
 	public async Task Should_AsQueryable_ReturnQueryable() {
 		// Act
 #pragma warning disable CS0618
-		var queryable = ((MongoRepository<MongoPerson, ObjectId>)Repository).AsQueryable();
+		var queryable = ((MongoRepository<MongoPerson, ObjectId>)Repository).Queryable();
 #pragma warning restore CS0618
 
 		// Assert

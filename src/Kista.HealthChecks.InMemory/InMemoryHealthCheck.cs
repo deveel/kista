@@ -24,15 +24,14 @@ namespace Kista.HealthChecks;
 /// <typeparam name="TKey">The key type.</typeparam>
 public class InMemoryHealthCheck<TEntity, TKey> : RepositoryHealthCheckBase<TEntity, TKey>
     where TEntity : class {
-    
-    private readonly InMemoryHealthCheckOptions _options;
-    
+
     /// <summary>
     /// Initializes a new instance of the <see cref="InMemoryHealthCheck{TEntity, TKey}"/> class.
     /// </summary>
-    /// <param name="options">The health check options.</param>
+    /// <param name="options">The health check options (reserved for future use).</param>
     public InMemoryHealthCheck(IOptions<InMemoryHealthCheckOptions> options) {
-        _options = options?.Value ?? new InMemoryHealthCheckOptions();
+        // Options intentionally unused: in-memory is always healthy when registered.
+        _ = options;
     }
     
     /// <inheritdoc/>

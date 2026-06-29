@@ -12,7 +12,7 @@ namespace Kista
 	[Trait("Feature", "MultiTenantRepository")]
 	public class MongoTenantRepositoryTestSuite : MultiTenantRepositoryTestSuite<MongoDbTenantInfo, MongoTenantPerson, ObjectId>
 	{
-		private MongoSingleDatabase mongo;
+		private readonly MongoSingleDatabase mongo;
 
 		public MongoTenantRepositoryTestSuite(MongoSingleDatabase mongo, ITestOutputHelper? testOutput)
 			: base(testOutput)

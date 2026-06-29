@@ -28,8 +28,17 @@ public interface IRepositoryContextRegistry {
 /// Information about a registered repository.
 /// </summary>
 public sealed class RepositoryRegistration {
+    /// <summary>
+    /// Gets or initializes the registered repository type.
+    /// </summary>
     public Type RepositoryType { get; init; } = null!;
+    /// <summary>
+    /// Gets or initializes the entity type managed by the repository.
+    /// </summary>
     public Type EntityType { get; init; } = null!;
+    /// <summary>
+    /// Gets or initializes the type of the unique key of the entity.
+    /// </summary>
     public Type KeyType { get; init; } = null!;
 }
 
@@ -38,9 +47,11 @@ public sealed class RepositoryRegistration {
 /// </summary>
 public sealed class RepositoryContextRegistry : IRepositoryContextRegistry {
     private readonly List<RepositoryRegistration> _registrations = new();
-    
+
+    /// <summary>
+    /// Gets the list of repositories registered via <c>AddRepositoryContext()</c>.
+    /// </summary>
     public IReadOnlyList<RepositoryRegistration> RegisteredRepositories => _registrations.AsReadOnly();
-    
     /// <summary>
     /// Registers a repository type.
     /// </summary>

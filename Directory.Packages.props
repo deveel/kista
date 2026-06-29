@@ -1,0 +1,161 @@
+<Project>
+
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <!-- ============================================================
+       Framework-wide packages (same version for all TFMs)
+  ============================================================ -->
+  <ItemGroup>
+    <!-- Kista dependencies -->
+    <PackageVersion Include="Deveel.Filters" Version="2.0.1" />
+    <PackageVersion Include="Deveel.Results" Version="1.2.2" />
+
+    <!-- Dynamic LINQ -->
+    <PackageVersion Include="System.Linq.Dynamic.Core" Version="1.7.2" />
+
+    <!-- MongoDB ecosystem -->
+    <PackageVersion Include="MongoFramework" Version="0.29.0" />
+    <PackageVersion Include="MongoDB.Driver" Version="2.22.0" />
+    <PackageVersion Include="Snappier" Version="1.3.1" />
+    <PackageVersion Include="SharpCompress" Version="0.48.1" />
+
+    <!-- Caching providers -->
+    <PackageVersion Include="EasyCaching.Core" Version="1.9.2" />
+    <PackageVersion Include="EasyCaching.InMemory" Version="1.9.2" />
+    <PackageVersion Include="ZiggyCreatures.FusionCache" Version="2.6.0" />
+
+    <!-- DI / assembly scanning -->
+    <PackageVersion Include="Scrutor" Version="5.1.1" />
+
+    <!-- Benchmarking -->
+    <PackageVersion Include="BenchmarkDotNet" Version="0.15.2" />
+
+    <!-- Testcontainers -->
+    <PackageVersion Include="Testcontainers" Version="4.12.0" />
+    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.12.0" />
+    <PackageVersion Include="Testcontainers.MongoDb" Version="4.12.0" />
+    <PackageVersion Include="Testcontainers.MySql" Version="4.11.0" />
+
+    <!-- SQLite platform bundles -->
+    <PackageVersion Include="SQLitePCLRaw.bundle_sqlite3" Version="2.1.11" />
+    <PackageVersion Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.11" />
+
+    <!-- Test infrastructure (pinned) -->
+    <PackageVersion Include="Bogus" Version="35.6.5" />
+    <PackageVersion Include="NSubstitute" Version="5.3.0" />
+    <PackageVersion Include="xunit.v3" Version="3.2.2" />
+    <PackageVersion Include="xunit.v3.extensibility.core" Version="3.2.2" />
+    <PackageVersion Include="xunit.v3.assert" Version="3.2.2" />
+    <PackageVersion Include="MartinCostello.Logging.XUnit.v3" Version="0.7.1" />
+    <!--
+      xunit.v3 3.2.2 hard-pins xunit.v3.mtp-v1, which targets
+      Microsoft.Testing.Platform 1.9.1. CodeCoverage 18.x requires
+      Testing.Platform 2.x (where IDataConsumer moved namespace),
+      causing a TypeLoadException at test startup. Pin to the last
+      17.x release until xunit ships an mtp-v2 metapackage default.
+    -->
+    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="17.14.2" />
+  </ItemGroup>
+
+  <!-- ============================================================
+       Per-TFM packages — Microsoft.Extensions.* family
+       (pinned to the versions used by src/ libraries for
+        reproducible NuGet packages; test projects consume the
+        same central version)
+  ============================================================ -->
+
+  <!-- SourceLink (from src/Directory.Build.props) -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0' OR '$(TargetFramework)' == 'net9.0'">
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="8.0.0" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.201" />
+  </ItemGroup>
+
+  <!-- net8.0 -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.3" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="8.0.2" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.0" />
+  </ItemGroup>
+
+  <!-- net9.0 -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.16" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.16" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="9.0.16" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.16" />
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.16" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.0" />
+  </ItemGroup>
+
+  <!-- net10.0 -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.8" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.8" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.8" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.8" />
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.8" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.0" />
+  </ItemGroup>
+
+  <!-- ============================================================
+       Per-TFM packages — Entity Framework Core ecosystem
+  ============================================================ -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="8.0.27" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.27" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="8.0.26" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite.NetTopologySuite" Version="8.0.26" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite" Version="8.0.11" />
+    <PackageVersion Include="MySql.EntityFrameworkCore" Version="8.0.14" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="9.0.16" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.16" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="9.0.15" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite.NetTopologySuite" Version="9.0.15" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite" Version="9.0.4" />
+    <PackageVersion Include="MySql.EntityFrameworkCore" Version="9.0.11" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.8" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.8" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="10.0.5" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite.NetTopologySuite" Version="10.0.5" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite" Version="10.0.1" />
+    <PackageVersion Include="MySql.EntityFrameworkCore" Version="10.0.1" />
+  </ItemGroup>
+
+  <!-- ============================================================
+       Per-TFM packages — Finbuckle.MultiTenant
+       (reconciled to highest patch across src + test)
+  ============================================================ -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <PackageVersion Include="Finbuckle.MultiTenant" Version="8.1.14" />
+    <PackageVersion Include="Finbuckle.MultiTenant.EntityFrameworkCore" Version="8.1.14" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
+    <PackageVersion Include="Finbuckle.MultiTenant" Version="9.4.9" />
+    <PackageVersion Include="Finbuckle.MultiTenant.EntityFrameworkCore" Version="9.4.9" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <PackageVersion Include="Finbuckle.MultiTenant" Version="10.1.0" />
+    <PackageVersion Include="Finbuckle.MultiTenant.EntityFrameworkCore" Version="10.0.4" />
+  </ItemGroup>
+
+</Project>

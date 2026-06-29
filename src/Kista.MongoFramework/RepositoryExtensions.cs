@@ -57,7 +57,9 @@ namespace Kista {
 			if (!(repository is MongoRepository<TEntity> mongoRepository))
 				throw new ArgumentException($"The repository is not a {nameof(MongoRepository<TEntity>)}");
 
-			return mongoRepository.FindFirstAsync(new Query(new MongoGeoDistanceFilter<TEntity>(field, point, maxDistance)));
+			var query = new Query(new MongoGeoDistanceFilter<TEntity>(field, point, maxDistance));
+			var result = query.Apply<TEntity>(mongoRepository.Queryable()).FirstOrDefault();
+			return new ValueTask<TEntity?>(result);
 		}
 
 		/// <summary>
@@ -98,7 +100,9 @@ namespace Kista {
 			if (!(repository is MongoRepository<TEntity, TKey> mongoRepository))
 				throw new ArgumentException($"The repository is not a {nameof(MongoRepository<TEntity>)}");
 
-			return mongoRepository.FindFirstAsync(new Query(new MongoGeoDistanceFilter<TEntity>(field, point, maxDistance)));
+			var query = new Query(new MongoGeoDistanceFilter<TEntity>(field, point, maxDistance));
+			var result = query.Apply<TEntity>(mongoRepository.Queryable()).FirstOrDefault();
+			return new ValueTask<TEntity?>(result);
 		}
 
 
@@ -136,7 +140,9 @@ namespace Kista {
 			if (!(repository is MongoRepository<TEntity> mongoRepository))
 				throw new ArgumentException($"The repository is not a {nameof(MongoRepository<TEntity>)}");
 
-			return mongoRepository.FindAllAsync(new MongoGeoDistanceFilter<TEntity>(field, point, maxDistance));
+			var query = new Query(new MongoGeoDistanceFilter<TEntity>(field, point, maxDistance));
+			var result = query.Apply<TEntity>(mongoRepository.Queryable()).ToList();
+			return new ValueTask<IReadOnlyList<TEntity>>(result);
 		}
 
 		/// <summary>
@@ -176,7 +182,9 @@ namespace Kista {
 			if (!(repository is MongoRepository<TEntity, TKey> mongoRepository))
 				throw new ArgumentException($"The repository is not a {nameof(MongoRepository<TEntity>)}");
 
-			return mongoRepository.FindAllAsync(new MongoGeoDistanceFilter<TEntity>(field, point, maxDistance));
+			var query = new Query(new MongoGeoDistanceFilter<TEntity>(field, point, maxDistance));
+			var result = query.Apply<TEntity>(mongoRepository.Queryable()).ToList();
+			return new ValueTask<IReadOnlyList<TEntity>>(result);
 		}
 
 	}

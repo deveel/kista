@@ -18,7 +18,7 @@ public abstract class MultiTenantRepositoryTestSuite<TTenantInfo, TPerson, TKey>
 	where TTenantInfo : class, ITenantInfo, new()
 	where TPerson : class, IPerson<TKey>
 	where TKey : notnull {
-	private IServiceProvider? services;
+	private IServiceProvider? rootServiceProvider;
 	private AsyncServiceScope scope;
 
 	protected MultiTenantRepositoryTestSuite(ITestOutputHelper? testOutput) {
@@ -31,7 +31,7 @@ public abstract class MultiTenantRepositoryTestSuite<TTenantInfo, TPerson, TKey>
 
 	protected virtual int EntitySetCount => 100;
 
-	protected virtual string[] TenantIds => Defaults.TenantIds;
+	protected virtual string[] TenantIds => new[] { "tenant1", "tenant2", "tenant3" };
 
 	protected virtual IDictionary<string, IReadOnlyList<TPerson>>? People { get; private set; }
 
@@ -46,11 +46,6 @@ public abstract class MultiTenantRepositoryTestSuite<TTenantInfo, TPerson, TKey>
 	protected abstract TKey GeneratePersonId();
 
 	protected abstract TTenantInfo CreateTenantInfo(string tenantId);
-
-	private static class Defaults
-	{
-		public static readonly string[] TenantIds = { "tenant1", "tenant2", "tenant3" };
-	}
 
 	protected virtual void ConfigureServices(IServiceCollection services) {
 		if (TestOutput != null)
@@ -71,8 +66,8 @@ public abstract class MultiTenantRepositoryTestSuite<TTenantInfo, TPerson, TKey>
 
 		ConfigureServices(services);
 
-		this.services = services.BuildServiceProvider();
-		scope = this.services.CreateAsyncScope();
+		rootServiceProvider = services.BuildServiceProvider();
+		scope = rootServiceProvider.CreateAsyncScope();
 	}
 
 	async ValueTask IAsyncLifetime.InitializeAsync() {
@@ -97,7 +92,7 @@ public abstract class MultiTenantRepositoryTestSuite<TTenantInfo, TPerson, TKey>
 		People = null;
 
 		await scope.DisposeAsync();
-		(services as IDisposable)?.Dispose();
+		(rootServiceProvider as IDisposable)?.Dispose();
 	}
 
 	protected virtual ValueTask DisposeAsync() {

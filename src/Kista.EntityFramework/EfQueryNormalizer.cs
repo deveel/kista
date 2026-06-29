@@ -32,19 +32,6 @@ namespace Kista {
 			return query.Provider.CreateQuery<TEntity>(normalizedExpression);
 		}
 
-		// public static Expression<Func<TEntity, bool>> Normalize<TEntity>(Expression<Func<TEntity, bool>> predicate)
-		// 	where TEntity : class {
-		// 	ArgumentNullException.ThrowIfNull(predicate);
-		//
-		// 	var normalizedBody = StartsWithToLikeVisitor.Instance.Visit(predicate.Body)
-		// 		?? throw new InvalidOperationException("The normalized predicate body cannot be null.");
-		//
-		// 	if (ReferenceEquals(normalizedBody, predicate.Body))
-		// 		return predicate;
-		//
-		// 	return Expression.Lambda<Func<TEntity, bool>>(normalizedBody, predicate.Parameters);
-		// }
-
 		private sealed class StartsWithToLikeVisitor : ExpressionVisitor {
 			private static readonly MethodInfo LikeMethod = typeof(DbFunctionsExtensions)
 				.GetMethods(BindingFlags.Public | BindingFlags.Static)

@@ -106,45 +106,56 @@ namespace Kista {
 		}
 
 
-		private async ValueTask CreateRepository(IControllableRepository? repository, CancellationToken cancellationToken) {
-			if (repository != null) {
-				try {
-					if (await repository.ExistsAsync(cancellationToken)) {
-						if (options.DeleteIfExists) {
-							LogTrace("The repository already exists and the controller is deleting it first");
+	private async ValueTask CreateRepository(IControllableRepository? repository, CancellationToken cancellationToken) {
+		if (repository == null)
+			return;
 
-							await DropRepository(repository, cancellationToken);
-						} else if (options.DontCreateExisting) {
-							if (logger.IsEnabled(LogLevel.Warning))
-								logger.LogWarning("The repository '{RepositoryType}' already exists and the controller is not deleting it",
-									repository.GetType().FullName);
-							return;
-						} else {
-							throw new RepositoryException("The repository already exists");
-						}
-					}
+		try {
+			if (await repository.ExistsAsync(cancellationToken)
+				&& await HandleExistingRepositoryOnCreate(repository, cancellationToken))
+				return;
 
-					LogTrace("Creating the repository");
+			LogTrace("Creating the repository");
 
-					await repository.CreateAsync(cancellationToken);
+			await repository.CreateAsync(cancellationToken);
 
-					LogTrace("Repository created");
-				} catch (NotSupportedException ex) {
-					LogError(ex, "Not Supported Error while creating the repository {RepositoryType}",
-						repository.GetType().FullName);
-					throw;
-				} catch (RepositoryException ex) {
-					LogError(ex, "Not Supported Error while creating the repository {RepositoryType}",
-						repository.GetType().FullName);
-					throw;
-				} catch(Exception ex) {
-					LogError(ex, "Not Supported Error while creating the repository {RepositoryType}",
-						repository.GetType().FullName);
+			LogTrace("Repository created");
+		} catch (NotSupportedException ex) {
+			LogError(ex, "Not Supported Error while creating the repository {RepositoryType}",
+				repository.GetType().FullName);
+			throw;
+		} catch (RepositoryException ex) {
+			LogError(ex, "Not Supported Error while creating the repository {RepositoryType}",
+				repository.GetType().FullName);
+			throw;
+		} catch(Exception ex) {
+			LogError(ex, "Not Supported Error while creating the repository {RepositoryType}",
+				repository.GetType().FullName);
 
-					throw new RepositoryException($"Unable to create the repository '{repository.GetType().Name}'", ex);
-				}
-			}
+			throw new RepositoryException($"Unable to create the repository '{repository.GetType().Name}'", ex);
 		}
+	}
+
+	/// <summary>
+	/// Handles an existing repository during creation according to the controller options.
+	/// </summary>
+	/// <returns><c>true</c> if creation should be skipped; <c>false</c> if it should proceed after dropping.</returns>
+	private async ValueTask<bool> HandleExistingRepositoryOnCreate(IControllableRepository repository, CancellationToken cancellationToken) {
+		if (options.DeleteIfExists) {
+			LogTrace("The repository already exists and the controller is deleting it first");
+			await DropRepository(repository, cancellationToken);
+			return false;
+		}
+
+		if (options.DontCreateExisting) {
+			if (logger.IsEnabled(LogLevel.Warning))
+				logger.LogWarning("The repository '{RepositoryType}' already exists and the controller is not deleting it",
+					repository.GetType().FullName);
+			return true;
+		}
+
+		throw new RepositoryException("The repository already exists");
+	}
 
 		private async ValueTask DropRepository(IControllableRepository? repository, CancellationToken cancellationToken) {
 			if (repository != null) {

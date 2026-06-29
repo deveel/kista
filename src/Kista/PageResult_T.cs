@@ -1,7 +1,35 @@
+// Copyright 2023-2026 Antonello Provenzano
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 namespace Kista
 {
+    /// <summary>
+    /// Represents a page of items returned by a repository in response to a
+    /// <see cref="PageRequest"/>, together with paging metadata such as the
+    /// total item count and the available pages.
+    /// </summary>
+    /// <typeparam name="TEntity">The type of the entities in the page.</typeparam>
     public class PageResult<TEntity> where TEntity : class
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PageResult{TEntity}"/> class
+        /// from the originating request, the total item count and the items
+        /// included in the page.
+        /// </summary>
+        /// <param name="request">The request that produced this page.</param>
+        /// <param name="totalItems">The total number of items matching the request.</param>
+        /// <param name="items">The items included in the page, or <c>null</c> for an empty page.</param>
         public PageResult(PageRequest request, int totalItems, IEnumerable<TEntity>? items = null) {
             if (totalItems < 0)
                 throw new ArgumentOutOfRangeException(nameof(totalItems), "The number of total items must be zero or more");

@@ -44,7 +44,7 @@ public class MongoRepositoryNoKeyUnitTests
 
 		// Act
 #pragma warning disable CS0618
-		var queryable = repository.AsQueryable();
+		var queryable = repository.Queryable();
 #pragma warning restore CS0618
 
 		// Assert

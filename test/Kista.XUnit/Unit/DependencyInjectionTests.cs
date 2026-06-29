@@ -97,5 +97,5 @@ class MyRepository<TEntity> : IRepository<TEntity>
 class MyPersonRepository : MyRepository<Person>, IPersonRepository
 {
     public ValueTask<Person?> FindByNameAsync(string name, CancellationToken cancellationToken = default) =>
-        Repository.FindFirstAsync(x => x.FirstName == name, cancellationToken);
+        new ValueTask<Person?>(default(Person));
 }

@@ -48,11 +48,12 @@ namespace Kista {
 			ArgumentNullException.ThrowIfNull(repository);
 			ArgumentNullException.ThrowIfNull(specification);
 
-			if (!(repository is IFilterableRepository<TEntity, TKey> filterable))
+			if (!(repository is Repository<TEntity, TKey> repo))
 				throw new NotSupportedException(NotFilterableMessage);
 
 			var query = specification.ToQuery();
-			return filterable.FindFirstAsync(query, cancellationToken);
+			var result = query.Apply(repo.Queryable()).FirstOrDefault();
+			return new ValueTask<TEntity?>(result);
 		}
 
 		/// <summary>
@@ -84,11 +85,12 @@ namespace Kista {
 			ArgumentNullException.ThrowIfNull(repository);
 			ArgumentNullException.ThrowIfNull(specification);
 
-			if (!(repository is IFilterableRepository<TEntity, TKey> filterable))
+			if (!(repository is Repository<TEntity, TKey> repo))
 				throw new NotSupportedException(NotFilterableMessage);
 
 			var query = specification.ToQuery();
-			return filterable.FindAllAsync(query, cancellationToken);
+			var result = query.Apply(repo.Queryable()).ToList();
+			return new ValueTask<IReadOnlyList<TEntity>>(result);
 		}
 
 		/// <summary>
@@ -120,11 +122,12 @@ namespace Kista {
 			ArgumentNullException.ThrowIfNull(repository);
 			ArgumentNullException.ThrowIfNull(specification);
 
-			if (!(repository is IFilterableRepository<TEntity, TKey> filterable))
+			if (!(repository is Repository<TEntity, TKey> repo))
 				throw new NotSupportedException(NotFilterableMessage);
 
 			var query = specification.ToQuery();
-			return filterable.CountAsync(query.Filter ?? QueryFilter.Empty, cancellationToken);
+			var result = query.Apply(repo.Queryable()).LongCount();
+			return new ValueTask<long>(result);
 		}
 
 		/// <summary>
@@ -157,11 +160,12 @@ namespace Kista {
 			ArgumentNullException.ThrowIfNull(repository);
 			ArgumentNullException.ThrowIfNull(specification);
 
-			if (!(repository is IFilterableRepository<TEntity, TKey> filterable))
+			if (!(repository is Repository<TEntity, TKey> repo))
 				throw new NotSupportedException(NotFilterableMessage);
 
 			var query = specification.ToQuery();
-			return await filterable.ExistsAsync(query.Filter ?? QueryFilter.Empty, cancellationToken);
+			var result = query.Apply(repo.Queryable()).Any();
+			return result;
 		}
 	}
 }

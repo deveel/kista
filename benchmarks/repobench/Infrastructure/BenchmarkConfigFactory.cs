@@ -45,7 +45,7 @@ internal static class BenchmarkConfigFactory {
 				BenchmarkExportFormat.Csv => CsvExporter.Default,
 				BenchmarkExportFormat.Html => HtmlExporter.Default,
 				BenchmarkExportFormat.Plain => PlainExporter.Default,
-				_ => throw new ArgumentOutOfRangeException(nameof(exportFormat), exportFormat, "Unsupported export format")
+				_ => throw new ArgumentOutOfRangeException(nameof(exportFormat), $"Unsupported export format: {exportFormat}")
 			};
 
 			if (seen.Add(exporter.Name))

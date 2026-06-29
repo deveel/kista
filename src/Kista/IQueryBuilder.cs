@@ -26,7 +26,7 @@ namespace Kista {
 	/// <remarks>
 	/// <para>
 	/// <see cref="IQueryBuilder{TEntity}"/> is the consumer-facing surface that
-	/// replaces the obsolete <c>AsQueryable()</c> hatch. It lets callers compose
+	/// replaces the <c>AsQueryable()</c> hatch. It lets callers compose
 	/// a query (filters and ordering) and execute it through the terminal
 	/// methods (<see cref="FirstOrDefaultAsync"/>, <see cref="ToListAsync"/>,
 	/// <see cref="CountAsync"/>, <see cref="AnyAsync"/>,

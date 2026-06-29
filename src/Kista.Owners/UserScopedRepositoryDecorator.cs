@@ -1,3 +1,17 @@
+// Copyright 2023-2026 Antonello Provenzano
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -31,13 +45,12 @@ namespace Kista
 	/// <typeparam name="TKey">The type of the entity's primary key.</typeparam>
 	/// <typeparam name="TUserKey">The type of the user identifier.</typeparam>
 	public class UserScopedRepositoryDecorator<TEntity, TKey, TUserKey>
-		: IUserRepository<TEntity, TKey, TUserKey>,
-		  IFilterableRepository<TEntity, TKey>,
-		  IPageableRepository<TEntity, TKey>
+		: IUserRepository<TEntity, TKey, TUserKey>
 		where TEntity : class, IHaveOwner<TUserKey>
 		where TKey : notnull
 	{
 		private const string UserContextNotSetMessage = "User context is not set";
+		private const string InnerRepositoryNoFilterMessage = "The inner repository does not support filtering";
 		private static readonly Lazy<PropertyInfo> _ownerProperty = new(DiscoverOwnerProperty);
 
 		private readonly IRepository<TEntity, TKey> _inner;
@@ -139,27 +152,43 @@ namespace Kista
 
 		/// <inheritdoc />
 		public ValueTask<IReadOnlyList<TEntity>> FindAllAsync(IQuery query, CancellationToken cancellationToken = default)
-			=> ApplyOwnerFilterAndCallAsync(query, q => _inner.FindAllAsync(q, cancellationToken));
+			=> ApplyOwnerFilterAndCallAsync(query, q => {
+				if (!(_inner is Repository<TEntity, TKey> repo))
+					throw new NotSupportedException(InnerRepositoryNoFilterMessage);
+				var result = q.Apply(repo.Queryable()).ToList();
+				return new ValueTask<IReadOnlyList<TEntity>>(result);
+			});
 
 		/// <inheritdoc />
 		public ValueTask<TEntity?> FindFirstAsync(IQuery query, CancellationToken cancellationToken = default)
-			=> ApplyOwnerFilterAndCallAsync(query, q => _inner.FindFirstAsync(q, cancellationToken));
+			=> ApplyOwnerFilterAndCallAsync(query, q => {
+				if (!(_inner is Repository<TEntity, TKey> repo))
+					throw new NotSupportedException(InnerRepositoryNoFilterMessage);
+				var result = q.Apply(repo.Queryable()).FirstOrDefault();
+				return new ValueTask<TEntity?>(result);
+			});
 
 		/// <inheritdoc />
 		public ValueTask<long> CountAsync(IQueryFilter filter, CancellationToken cancellationToken = default)
-			=> ApplyOwnerFilterAndCallAsync(filter, f => _inner.CountAsync(f, cancellationToken));
+			=> ApplyOwnerFilterAndCallAsync(filter, f => {
+				if (!(_inner is Repository<TEntity, TKey> repo))
+					throw new NotSupportedException(InnerRepositoryNoFilterMessage);
+				var result = f.Apply(repo.Queryable()).LongCount();
+				return new ValueTask<long>(result);
+			});
 
 		/// <inheritdoc />
 		public ValueTask<bool> ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken = default)
-			=> ApplyOwnerFilterAndCallAsync(filter, f => _inner.ExistsAsync(f, cancellationToken));
+			=> ApplyOwnerFilterAndCallAsync(filter, f => {
+				if (!(_inner is Repository<TEntity, TKey> repo))
+					throw new NotSupportedException(InnerRepositoryNoFilterMessage);
+				var result = f.Apply(repo.Queryable()).Any();
+				return new ValueTask<bool>(result);
+			});
 
 		/// <inheritdoc />
 		public ValueTask<PageResult<TEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default)
 			=> ApplyOwnerFilterAndCallAsyncPage(request, r => _inner.GetPageAsync(r, cancellationToken));
-
-		/// <inheritdoc />
-		ValueTask<PageQueryResult<TEntity>> IPageableRepository<TEntity, TKey>.GetPageAsync(PageQuery<TEntity> request, CancellationToken cancellationToken)
-			=> ApplyOwnerFilterAndCallAsync(request, r => ((IPageableRepository<TEntity, TKey>)_inner).GetPageAsync(r, cancellationToken));
 
 		// === Helpers ===
 
@@ -226,19 +255,6 @@ namespace Kista
 			var ownerFilter = BuildOwnerFilter(userId);
 			var combined = CombineFilters(filter, ownerFilter);
 			return await action(combined);
-		}
-
-		private async ValueTask<PageQueryResult<TEntity>> ApplyOwnerFilterAndCallAsync(
-			PageQuery<TEntity> request, Func<PageQuery<TEntity>, ValueTask<PageQueryResult<TEntity>>> action)
-		{
-			var userId = _userAccessor.GetUserId();
-			if (EqualityComparer<TUserKey>.Default.Equals(userId, default))
-				return Options.ThrowWhenUserNotSet
-					? throw new System.InvalidOperationException(UserContextNotSetMessage)
-					: new PageQueryResult<TEntity>(request, 0, Array.Empty<TEntity>());
-
-			var scopedRequest = ApplyOwnerToRequest(request, userId);
-			return await action(scopedRequest);
 		}
 
 		private async ValueTask<PageResult<TEntity>> ApplyOwnerFilterAndCallAsyncPage(

@@ -20,7 +20,7 @@ namespace Kista.Caching {
 	/// <typeparam name="TEntity">
 	/// The type of the entity to cache.
 	/// </typeparam>
-	public interface IEntityCacheKeyGenerator<TEntity> where TEntity : class {
+	public interface IEntityCacheKeyGenerator<in TEntity> where TEntity : class {
 		/// <summary>
 		/// Generates the given cache key using the given primary
 		/// key of the entity.
@@ -46,7 +46,7 @@ namespace Kista.Caching {
 		/// </returns>
 		string[] GenerateAllKeys(TEntity entity);
 
-		// TODO: We should provide a mechanism to generate a key
+		// We should provide a mechanism to generate a key
 		//       form a filter expression
 	}
 }

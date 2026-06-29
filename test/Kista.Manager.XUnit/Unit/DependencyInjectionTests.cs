@@ -26,7 +26,6 @@ public class DependencyInjectionTests {
         // Assert
         Assert.NotNull(manager);
         Assert.True(manager.SupportsPaging);
-        Assert.True(manager.SupportsQueries);
     }
 
     [Fact]
@@ -44,7 +43,6 @@ public class DependencyInjectionTests {
         Assert.NotNull(provider.GetService<MyPersonManager>());
         var manager = provider.GetRequiredService<EntityManager<Person>>();
         Assert.True(manager.SupportsPaging);
-        Assert.True(manager.SupportsQueries);
     }
 
     [Fact]

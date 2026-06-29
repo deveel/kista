@@ -5,6 +5,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 
+    <!-- Code-style enforcement on build -->
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <AnalysisMode>Default</AnalysisMode>
+    <ReportAnalyzer>true</ReportAnalyzer>
+
     <!-- NuGet Metadata and Commands -->
     <Authors>Antonello Provenzano</Authors>
     <Company>Deveel</Company>
@@ -24,9 +31,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" 
+    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" 
                       Condition="$(TargetFramework) == 'net8.0' OR $(TargetFramework) == 'net9.0'"/>
-      <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.201" Condition="$(TargetFramework) == 'net10.0'" PrivateAssets="All"/>
+      <PackageReference Include="Microsoft.SourceLink.GitHub" Condition="$(TargetFramework) == 'net10.0'" PrivateAssets="All"/>
   </ItemGroup>
 
   <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">

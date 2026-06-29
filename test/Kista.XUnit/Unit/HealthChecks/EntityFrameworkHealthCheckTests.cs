@@ -46,7 +46,7 @@ public class EntityFrameworkHealthCheckTests
     
     private class EfTestDelegatedHealthCheck : IHealthCheck
     {
-        public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken) =>
+        public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default) =>
             Task.FromResult(HealthCheckResult.Healthy());
     }
 

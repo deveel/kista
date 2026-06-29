@@ -56,7 +56,7 @@ public class RepositoryHealthCheckBaseTests
     
     private class DelegatedHealthCheck : IHealthCheck
     {
-        public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken) =>
+        public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default) =>
             Task.FromResult(HealthCheckResult.Healthy());
     }
 
@@ -80,7 +80,7 @@ public class RepositoryHealthCheckBaseTests
     
     private class DelegatedHealthCheck2 : IHealthCheck
     {
-        public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken) =>
+        public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default) =>
             Task.FromResult(HealthCheckResult.Healthy());
     }
 

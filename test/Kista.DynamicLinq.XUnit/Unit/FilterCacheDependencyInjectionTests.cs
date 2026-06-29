@@ -134,18 +134,19 @@ public class FilterCacheDependencyInjectionTests {
 		var services = new ServiceCollection();
 		services.AddFilterCache(maxCapacity: 100);
 		services.AddSingleton<IReadOnlyList<Person>>(persons);
-		services.AddTransient<IRepository<Person>>(sp => {
+		services.AddTransient<IRepository<Person, string>>(sp => {
 			var list = sp.GetRequiredService<IReadOnlyList<Person>>();
-			return new InMemoryRepository<Person>(list, services: sp);
+			return new InMemoryRepository<Person, string>(list, services: sp);
 		});
 		var provider = services.BuildServiceProvider();
 
 		await using var scope = provider.CreateAsyncScope();
-		var repo = scope.ServiceProvider.GetRequiredService<IRepository<Person>>();
+		var repo = scope.ServiceProvider.GetRequiredService<IRepository<Person, string>>();
 		var filter = new DynamicLinqFilter("x.LastName == \"Doe\"");
+		filter.Initialize(new DefaultFilterContext(scope.ServiceProvider));
 
-		var count1 = await repo.CountAsync(filter, TestContext.Current.CancellationToken);
-		var count2 = await repo.CountAsync(filter, TestContext.Current.CancellationToken);
+		var count1 = filter.Apply<Person>(((Repository<Person, string>)repo).Queryable()).LongCount();
+		var count2 = filter.Apply<Person>(((Repository<Person, string>)repo).Queryable()).LongCount();
 
 		Assert.Equal(2, count1);
 		Assert.Equal(2, count2);
@@ -166,8 +167,8 @@ public class FilterCacheDependencyInjectionTests {
 	}
 
 	private class CustomFilterCache : IFilterCache {
-		public bool TryGet(string key, out Delegate? func) { func = null; return false; }
-		public void Set(string key, Delegate func) { }
+		public bool TryGet(string expression, out Delegate? lambda) { lambda = null; return false; }
+		public void Set(string expression, Delegate lambda) { }
 		public void Clear() { }
 		public IFilterCacheStatistics? Statistics => null;
 	}

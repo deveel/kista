@@ -45,7 +45,7 @@ public class EntityManagerSpecificationTests : IAsyncLifetime, IAsyncDisposable 
     }
 
     public async Task DisposeAsync() {
-        var all = await Repository.FindAllAsync(Query.Empty);
+        var all = ((Repository<Person, string>)Repository).Queryable().ToList();
         await Repository.RemoveRangeAsync(all);
     }
 
@@ -68,84 +68,8 @@ public class EntityManagerSpecificationTests : IAsyncLifetime, IAsyncDisposable 
     }
 
     [Fact]
-    public async Task Should_FindFirst_When_SpecMatches() {
-        var all = await Repository.FindAllAsync(Query.Empty);
-        var targetFirstName = all[0].FirstName;
-
-        var spec = new FirstNameSpec(targetFirstName);
-        var result = await Manager.FindFirstAsync(spec);
-
-        Assert.True(result.IsSuccess());
-        Assert.NotNull(result.Value);
-        Assert.Equal(targetFirstName, result.Value.FirstName);
-    }
-
-    [Fact]
-    public async Task Should_FindAll_When_SpecMatches() {
-        var all = await Repository.FindAllAsync(Query.Empty);
-        var targetFirstName = all[0].FirstName;
-
-        var spec = new FirstNameSpec(targetFirstName);
-        var result = await Manager.FindAllAsync(spec);
-
-        Assert.NotEmpty(result);
-        Assert.All(result, p => Assert.Equal(targetFirstName, p.FirstName));
-    }
-
-    [Fact]
-    public async Task Should_Count_When_SpecMatches() {
-        var all = await Repository.FindAllAsync(Query.Empty);
-        var targetFirstName = all[0].FirstName;
-        var expectedCount = all.Count(p => p.FirstName == targetFirstName);
-
-        var spec = new FirstNameSpec(targetFirstName);
-        var count = await Manager.CountAsync(spec);
-
-        Assert.Equal(expectedCount, count);
-    }
-
-    [Fact]
-    public async Task Should_FindAll_When_AndSpecMatches() {
-        var all = await Repository.FindAllAsync(Query.Empty);
-        var target = all[0];
-
-        var spec = new FirstNameSpec(target.FirstName) & new ActivePersonSpec();
-        var result = await Manager.FindAllAsync(spec);
-
-        Assert.NotEmpty(result);
-        Assert.All(result, p => Assert.Equal(target.FirstName, p.FirstName));
-    }
-
-    [Fact]
-    public async Task Should_FindAll_When_OrSpecMatches() {
-        var all = await Repository.FindAllAsync(Query.Empty);
-        var target1 = all[0];
-        var target2 = all[1];
-
-        var spec = new FirstNameSpec(target1.FirstName) | new FirstNameSpec(target2.FirstName);
-        var result = await Manager.FindAllAsync(spec);
-
-        Assert.NotEmpty(result);
-        Assert.Contains(result, p => p.FirstName == target1.FirstName);
-        Assert.Contains(result, p => p.FirstName == target2.FirstName);
-    }
-
-    [Fact]
-    public async Task Should_FindAll_When_NotSpecMatches() {
-        var all = await Repository.FindAllAsync(Query.Empty);
-        var targetFirstName = all[0].FirstName;
-        var expectedCount = all.Count(p => p.FirstName != targetFirstName);
-
-        var spec = !new FirstNameSpec(targetFirstName);
-        var result = await Manager.FindAllAsync(spec);
-
-        Assert.Equal(expectedCount, result.Count);
-        Assert.DoesNotContain(result, p => p.FirstName == targetFirstName);
-    }
-
-    [Fact]
     public async Task Should_FindFirst_OnRepository_When_SpecMatches() {
-        var all = await Repository.FindAllAsync(Query.Empty);
+        var all = ((Repository<Person, string>)Repository).Queryable().ToList();
         var targetFirstName = all[0].FirstName;
 
         var spec = new FirstNameSpec(targetFirstName);
@@ -157,7 +81,7 @@ public class EntityManagerSpecificationTests : IAsyncLifetime, IAsyncDisposable 
 
     [Fact]
     public async Task Should_FindAll_OnRepository_When_SpecMatches() {
-        var all = await Repository.FindAllAsync(Query.Empty);
+        var all = ((Repository<Person, string>)Repository).Queryable().ToList();
         var targetFirstName = all[0].FirstName;
 
         var spec = new FirstNameSpec(targetFirstName);
@@ -169,7 +93,7 @@ public class EntityManagerSpecificationTests : IAsyncLifetime, IAsyncDisposable 
 
     [Fact]
     public async Task Should_Count_OnRepository_When_SpecMatches() {
-        var all = await Repository.FindAllAsync(Query.Empty);
+        var all = ((Repository<Person, string>)Repository).Queryable().ToList();
         var targetFirstName = all[0].FirstName;
         var expectedCount = all.Count(p => p.FirstName == targetFirstName);
 
@@ -181,7 +105,7 @@ public class EntityManagerSpecificationTests : IAsyncLifetime, IAsyncDisposable 
 
     [Fact]
     public async Task Should_Exists_OnRepository_When_SpecMatches() {
-        var all = await Repository.FindAllAsync(Query.Empty);
+        var all = ((Repository<Person, string>)Repository).Queryable().ToList();
         var targetFirstName = all[0].FirstName;
 
         var spec = new FirstNameSpec(targetFirstName);

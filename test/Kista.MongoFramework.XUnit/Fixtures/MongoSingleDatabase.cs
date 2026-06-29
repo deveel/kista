@@ -52,7 +52,7 @@ namespace Kista {
 			GC.SuppressFinalize(this);
 		}
 
-		private void Dispose(bool disposing) {
+		protected virtual void Dispose(bool disposing) {
 			if (!disposedValue) {
 				if (disposing) {
 					DisposeAsync().GetAwaiter().GetResult();

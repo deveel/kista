@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Linq.Expressions;
 using Kista;
 using Microsoft.Extensions.DependencyInjection;
@@ -167,7 +168,7 @@ public class UserScopedRepositoryDecoratorTests
 
         bobRepo.AddAsync(new NoteEntity { Title = "Bob's" }).GetAwaiter().GetResult();
 
-        var aliceNotes = aliceRepo.FindAllAsync().GetAwaiter().GetResult();
+        var aliceNotes = aliceRepo.GetPageAsync(new PageRequest(1, int.MaxValue)).GetAwaiter().GetResult().Items.AsQueryable().ToList();
         Assert.Single(aliceNotes);
         Assert.Equal("Alice's", aliceNotes[0].Title);
     }
@@ -182,7 +183,7 @@ public class UserScopedRepositoryDecoratorTests
         repo.AddAsync(new NoteEntity { Title = "Beta" }).GetAwaiter().GetResult();
 
         var filter = new ExpressionQueryFilter<NoteEntity>(x => x.Title == "Alpha");
-        var result = repo.FindAllAsync(filter).GetAwaiter().GetResult();
+        var result = ((UserScopedRepositoryDecorator<NoteEntity, Guid, string>)repo).FindAllAsync(new Query(filter)).GetAwaiter().GetResult();
 
         Assert.Single(result);
         Assert.Equal("Alpha", result[0].Title);
@@ -194,7 +195,7 @@ public class UserScopedRepositoryDecoratorTests
         var services = CreateServices<NoteEntity, Guid, string>(null, false);
         var repo = services.GetRequiredService<IRepository<NoteEntity, Guid>>();
 
-        var result = repo.FindAllAsync().GetAwaiter().GetResult();
+        var result = ((UserScopedRepositoryDecorator<NoteEntity, Guid, string>)repo).FindAllAsync(Query.Empty).GetAwaiter().GetResult();
         Assert.Empty(result);
     }
 
@@ -215,7 +216,7 @@ public class UserScopedRepositoryDecoratorTests
 
         bobRepo.AddAsync(new NoteEntity { Title = "B" }).GetAwaiter().GetResult();
 
-        var count = aliceRepo.CountAllAsync().GetAwaiter().GetResult();
+        var count = ((UserScopedRepositoryDecorator<NoteEntity, Guid, string>)aliceRepo).CountAsync(QueryFilter.Empty).GetAwaiter().GetResult();
         Assert.Equal(1, count);
     }
 
@@ -227,8 +228,7 @@ public class UserScopedRepositoryDecoratorTests
 
         repo.AddAsync(new NoteEntity { Title = "Test" }).GetAwaiter().GetResult();
 
-        var exists = repo.AsFilterable().ExistsAsync(
-            new ExpressionQueryFilter<NoteEntity>(x => x.Title == "Test")).GetAwaiter().GetResult();
+        var exists = new ExpressionQueryFilter<NoteEntity>(x => x.Title == "Test").Apply<NoteEntity>(repo.GetPageAsync(new PageRequest(1, int.MaxValue)).GetAwaiter().GetResult().Items.AsQueryable()).Any();
         Assert.True(exists);
     }
 
@@ -243,8 +243,7 @@ public class UserScopedRepositoryDecoratorTests
         var bobServices = CreateDefaultServices("bob");
         var bobRepo = bobServices.GetRequiredService<IRepository<NoteEntity, Guid>>();
 
-        var exists = bobRepo.AsFilterable().ExistsAsync(
-            new ExpressionQueryFilter<NoteEntity>(x => x.Title == "Shared")).GetAwaiter().GetResult();
+        var exists = new ExpressionQueryFilter<NoteEntity>(x => x.Title == "Shared").Apply<NoteEntity>(bobRepo.GetPageAsync(new PageRequest(1, int.MaxValue)).GetAwaiter().GetResult().Items.AsQueryable()).Any();
         Assert.False(exists);
     }
 
@@ -261,8 +260,7 @@ public class UserScopedRepositoryDecoratorTests
         for (int i = 0; i < 5; i++)
             repo.AddAsync(new NoteEntity { Title = $"Item {i}" }).GetAwaiter().GetResult();
 
-        var pageable = Assert.IsAssignableFrom<IPageableRepository<NoteEntity, Guid>>(repo);
-        var page = pageable.GetPageAsync(new PageQuery<NoteEntity>(1, 10)).GetAwaiter().GetResult();
+        var page = repo.GetPageAsync(new PageQuery<NoteEntity>(1, 10)).GetAwaiter().GetResult();
         Assert.Equal(5, page.TotalItems);
         Assert.Equal(5, page.Items.Count);
     }
@@ -314,7 +312,7 @@ public class UserScopedRepositoryDecoratorTests
         var ex = Assert.Throws<InvalidOperationException>(() =>
         {
             var repo = services.GetRequiredService<IRepository<NoteEntity, Guid>>();
-            repo.FindAllAsync().GetAwaiter().GetResult();
+            ((UserScopedRepositoryDecorator<NoteEntity, Guid, string>)repo).FindAllAsync(Query.Empty).GetAwaiter().GetResult();
         });
         Assert.Contains("User context is not set", ex.Message);
     }

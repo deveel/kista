@@ -178,9 +178,6 @@ private static bool RegisterIfAssignable(IList<Type> types, Type genericType, Ty
 				return;
 
 			if (RegisterIfAssignable(types, typeof(IRepository<>), entityType, repositoryType)) {
-				RegisterIfAssignable(types, typeof(IQueryableRepository<>), entityType, repositoryType);
-				RegisterIfAssignable(types, typeof(IFilterableRepository<>), entityType, repositoryType);
-				RegisterIfAssignable(types, typeof(IPageableRepository<>), entityType, repositoryType);
 				AddIfMissing(types, iface);
 			}
 
@@ -189,9 +186,6 @@ private static bool RegisterIfAssignable(IList<Type> types, Type genericType, Ty
 				return;
 
 			if (RegisterIfAssignable(types, typeof(IRepository<,>), entityType, keyType, repositoryType)) {
-				RegisterIfAssignable(types, typeof(IQueryableRepository<,>), entityType, keyType, repositoryType);
-				RegisterIfAssignable(types, typeof(IFilterableRepository<,>), entityType, keyType, repositoryType);
-				RegisterIfAssignable(types, typeof(IPageableRepository<,>), entityType, keyType, repositoryType);
 				AddIfMissing(types, iface);
 			}
 		}

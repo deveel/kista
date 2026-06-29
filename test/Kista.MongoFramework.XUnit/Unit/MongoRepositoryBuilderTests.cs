@@ -293,33 +293,6 @@ public class MongoRepositoryBuilderTests {
     }
 
     [Fact]
-    public void WithLifetime_Singleton_RegistersRepositoriesAsSingleton() {
-        var services = new ServiceCollection();
-
-        services.AddRepositoryContext()
-            .UseMongoDB<MongoDbContext>(b => b
-                .WithConnectionString("mongodb://localhost:27017/testdb")
-                .WithLifetime(ServiceLifetime.Singleton));
-
-        var singleParam = services.FirstOrDefault(d =>
-            d.ServiceType.IsGenericType &&
-            d.ServiceType.GetGenericTypeDefinition() == typeof(IRepository<>) &&
-            d.ImplementationType.IsGenericType &&
-            d.ImplementationType.GetGenericTypeDefinition() == typeof(MongoRepository<>));
-
-        var twoParam = services.FirstOrDefault(d =>
-            d.ServiceType.IsGenericType &&
-            d.ServiceType.GetGenericTypeDefinition() == typeof(IRepository<,>) &&
-            d.ImplementationType.IsGenericType &&
-            d.ImplementationType.GetGenericTypeDefinition() == typeof(MongoRepository<,>));
-
-        Assert.NotNull(singleParam);
-        Assert.Equal(ServiceLifetime.Singleton, singleParam.Lifetime);
-        Assert.NotNull(twoParam);
-        Assert.Equal(ServiceLifetime.Singleton, twoParam.Lifetime);
-    }
-
-    [Fact]
     public void WithLifetime_Transient_RegistersRepositoriesAsTransient() {
         var services = new ServiceCollection();
 

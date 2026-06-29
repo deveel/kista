@@ -50,9 +50,6 @@ namespace Kista {
 	/// </remarks>
 	public class InMemoryRepository<TEntity, TKey> :
 		Repository<TEntity, TKey>,
-		IQueryableRepository<TEntity, TKey>,
-		IFilterableRepository<TEntity, TKey>,
-		IPageableRepository<TEntity, TKey>,
 		ITrackingRepository<TEntity, TKey>,
 		IDisposable
 		where TEntity : class
@@ -182,45 +179,25 @@ namespace Kista {
 			Dispose(disposing: false);
 		}
 
-		[Obsolete("Use the abstract Kista.Repository<TEntity, TKey> base class instead. The IQueryable hatch is no longer exposed to consumers.", false)]
-		[ExcludeFromCodeCoverage]
-		public virtual IQueryable<TEntity> AsQueryable() => Entities.AsQueryable();
-
 		bool ITrackingRepository<TEntity, TKey>.IsTrackingChanges => true;
 
 	/// <inheritdoc />
 	protected override IServiceProvider? Services { get; }
 
-		/// <summary>
-		/// Returns the <see cref="IQueryable{T}"/> that backs the entity set
-		/// exposed by this repository. The hatch is intentionally
-		/// <c>protected</c>: the LINQ provider must not leak to consumer
-		/// code. The implementation materialises a snapshot under the read
-		/// lock so that the returned queryable is safe to iterate after the
-		/// lock is released.
-		/// </summary>
-		/// <returns>
-		/// Returns a snapshot <see cref="IQueryable{T}"/> of the entities
-		/// currently in the repository.
-		/// </returns>
-		protected override IQueryable<TEntity> Queryable() => Entities.AsQueryable();
+	/// <summary>
+	/// Returns the <see cref="IQueryable{T}"/> that backs the entity set
+	/// exposed by this repository. The implementation materialises a snapshot under the read
+	/// lock so that the returned queryable is safe to iterate after the
+	/// lock is released.
+	/// </summary>
+	/// <returns>
+	/// Returns a snapshot <see cref="IQueryable{T}"/> of the entities
+	/// currently in the repository.
+	/// </returns>
+	public override IQueryable<TEntity> Queryable() => Entities.AsQueryable();
 
-		/// <inheritdoc />
-		protected override bool IsQueryable => true;
-
-		IQueryable<TEntity> IQueryableRepository<TEntity, TKey>.AsQueryable() => Queryable();
-
-		ValueTask<bool> IFilterableRepository<TEntity, TKey>.ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken)
-			=> ExistsAsync(filter, cancellationToken);
-
-		ValueTask<long> IFilterableRepository<TEntity, TKey>.CountAsync(IQueryFilter filter, CancellationToken cancellationToken)
-			=> CountAsync(filter, cancellationToken);
-
-		ValueTask<TEntity?> IFilterableRepository<TEntity, TKey>.FindFirstAsync(IQuery query, CancellationToken cancellationToken)
-			=> FindFirstAsync(query, cancellationToken);
-
-		ValueTask<IReadOnlyList<TEntity>> IFilterableRepository<TEntity, TKey>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
-			=> FindAllAsync(query, cancellationToken);
+	/// <inheritdoc />
+	protected override bool IsQueryable => true;
 
 		/// <summary>
 		/// Gets a point-in-time snapshot of all entities in the repository.
@@ -304,7 +281,7 @@ namespace Kista {
 		}
 
 		private TKey GenerateNewKey() {
-			// TODO: make this generator configurable ...
+			// make this generator configurable ...
 			if (typeof(TKey) == typeof(Guid))
 				return (TKey)(object)(Guid.NewGuid());
 			if (typeof(TKey) == typeof(string))
@@ -611,38 +588,31 @@ namespace Kista {
 		}
 
 		/// <inheritdoc/>
-		ValueTask<PageQueryResult<TEntity>> IPageableRepository<TEntity, TKey>.GetPageAsync(PageQuery<TEntity> request, CancellationToken cancellationToken) {
-			cancellationToken.ThrowIfCancellationRequested();
-
-			try {
-				InitializeFilter(((IQuery)request).Filter);
-				_lock.EnterReadLock();
-				try {
-					var entitySet = request.ApplyQuery(GetEntityQueryable());
-					var itemCount = entitySet.Count();
-					var items = entitySet
-						.Skip(request.Offset)
-						.Take(request.Size)
-						.ToList();
-
-					var result = new PageQueryResult<TEntity>(request, itemCount, items);
-					return new ValueTask<PageQueryResult<TEntity>>(result);
-				} finally {
-					_lock.ExitReadLock();
-				}
-			} catch (Exception ex) when (ex is not RepositoryException) {
-				throw new RepositoryException("Unable to retrieve the pages", ex);
-			}
-		}
-
-		/// <inheritdoc/>
 		public override async ValueTask<PageResult<TEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) {
 			ArgumentNullException.ThrowIfNull(request);
 			cancellationToken.ThrowIfCancellationRequested();
 
 			if (request is PageQuery<TEntity> pageQuery) {
-				var result = await ((IPageableRepository<TEntity, TKey>)this).GetPageAsync(pageQuery, cancellationToken).ConfigureAwait(false);
-				return result;
+				cancellationToken.ThrowIfCancellationRequested();
+
+				try {
+					InitializeFilter(((IQuery)pageQuery).Filter);
+					_lock.EnterReadLock();
+					try {
+						var entitySet = pageQuery.ApplyQuery(GetEntityQueryable());
+						var itemCount = entitySet.Count();
+						var items = entitySet
+							.Skip(request.Offset)
+							.Take(request.Size)
+							.ToList();
+
+						return new PageQueryResult<TEntity>(pageQuery, itemCount, items);
+					} finally {
+						_lock.ExitReadLock();
+					}
+				} catch (Exception ex) when (ex is not RepositoryException) {
+					throw new RepositoryException("Unable to retrieve the pages", ex);
+				}
 			}
 
 			try {

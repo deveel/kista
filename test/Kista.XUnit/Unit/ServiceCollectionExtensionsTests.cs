@@ -83,14 +83,6 @@ public class ServiceCollectionExtensionsTests
 		Assert.NotNull(provider.GetService<IRepositoryController>());
 	}
 
-	[Fact]
-	public void ServiceCollectionExtensions_AddRepositoryController_Default_Obsolete_StillWorks() {
-		var services = new ServiceCollection();
-		services.AddRepositoryController<TestRepositoryController>();
-		var provider = services.BuildServiceProvider();
-		Assert.NotNull(provider.GetService<IRepositoryController>());
-	}
-
 	/// <summary>
 	/// A stub implementation of <see cref="ISystemTime"/> that delegates to the real system clock,
 	/// used to verify custom <see cref="ISystemTime"/> registration overloads.

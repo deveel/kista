@@ -38,10 +38,25 @@ namespace Kista {
 		public bool SpatialiteAvailable { get; }
 
 		public void Dispose() {
+			Dispose(disposing: true);
+			GC.SuppressFinalize(this);
+		}
+
+		/// <summary>
+		/// Releases the resources used by the <see cref="SqlTestConnection"/>.
+		/// </summary>
+		/// <param name="disposing">
+		/// <c>true</c> when called from <see cref="Dispose()"/>;
+		/// <c>false</c> when called from a finalizer.
+		/// </param>
+		protected virtual void Dispose(bool disposing) {
+			if (!disposing)
+				return;
+
 			if (Connection.State != System.Data.ConnectionState.Closed)
-				Connection?.Close();
-            
-			Connection?.Dispose();
+				Connection.Close();
+
+			Connection.Dispose();
 		}
 	}
 }

@@ -65,7 +65,7 @@ public class RepositoryTests {
 	public async Task FindAsync_CancelledToken_Throws() {
 		var sut = new TestRepository();
 		using var cts = new CancellationTokenSource();
-		cts.Cancel();
+		await cts.CancelAsync();
 
 		await Assert.ThrowsAnyAsync<OperationCanceledException>(
 			() => sut.PublicFindAsync(Query.Empty, cts.Token).AsTask());
@@ -147,7 +147,7 @@ public class RepositoryTests {
 	public async Task GetPageAsync_CancelledToken_Throws() {
 		var sut = new TestRepository();
 		using var cts = new CancellationTokenSource();
-		cts.Cancel();
+		await cts.CancelAsync();
 
 		await Assert.ThrowsAnyAsync<OperationCanceledException>(
 			() => sut.PublicQueryPageAsync(new PageQuery<Person>(1, 10), cts.Token).AsTask());
@@ -368,7 +368,7 @@ public class RepositoryTests {
 	public async Task GetPageAsync_PageRequest_Cancelled_Throws() {
 		var sut = new TestRepository();
 		using var cts = new CancellationTokenSource();
-		cts.Cancel();
+		await cts.CancelAsync();
 
 		await Assert.ThrowsAnyAsync<OperationCanceledException>(
 			() => sut.PublicGetPageAsync(new PageRequest(1, 10), cts.Token).AsTask());
@@ -421,40 +421,40 @@ public class RepositoryTests {
 
 	#endregion
 
-	#region IFilterableRepository explicit interface
+	#region Filterable operations
 
 	[Fact]
 	public async Task FilterableInterface_ExistsAsync_Delegates() {
-		IFilterableRepository<Person, string> sut = new TestRepository();
+		var sut = new TestRepository();
 
-		var result = await sut.ExistsAsync(new ExpressionQueryFilter<Person>(p => p.FirstName == "Alice"));
+        var result = await Task.FromResult(new ExpressionQueryFilter<Person>(p => p.FirstName == "Alice").Apply<Person>(sut.Queryable()).Any());
 
-		Assert.True(result);
-	}
+        Assert.True(result);
+    }
 
-	[Fact]
-	public async Task FilterableInterface_CountAsync_Delegates() {
-		IFilterableRepository<Person, string> sut = new TestRepository(seedCount: 10);
+    [Fact]
+    public async Task FilterableInterface_CountAsync_Delegates() {
+        var sut = new TestRepository(seedCount: 10);
 
-		var result = await sut.CountAsync(new ExpressionQueryFilter<Person>(p => p.FirstName == "Alice"));
+        var result = await Task.FromResult(new ExpressionQueryFilter<Person>(p => p.FirstName == "Alice").Apply<Person>(sut.Queryable()).LongCount());
 
 		Assert.True(result > 0);
 	}
 
 	[Fact]
 	public async Task FilterableInterface_FindFirstAsync_Delegates() {
-		IFilterableRepository<Person, string> sut = new TestRepository();
+		var sut = new TestRepository();
 
-		var result = await sut.FindFirstAsync(Query.Where<Person>(p => p.FirstName == "Alice"));
+        var result = await Task.FromResult(Query.Where<Person>(p => p.FirstName == "Alice").Apply<Person>(sut.Queryable()).FirstOrDefault());
 
-		Assert.NotNull(result);
-	}
+        Assert.NotNull(result);
+    }
 
-	[Fact]
-	public async Task FilterableInterface_FindAllAsync_Delegates() {
-		IFilterableRepository<Person, string> sut = new TestRepository();
+    [Fact]
+    public async Task FilterableInterface_FindAllAsync_Delegates() {
+        var sut = new TestRepository();
 
-		var result = await sut.FindAllAsync(Query.Where<Person>(p => p.FirstName == "Alice"));
+        var result = await Task.FromResult((IReadOnlyList<Person>)Query.Where<Person>(p => p.FirstName == "Alice").Apply<Person>(sut.Queryable()).ToList());
 
 		Assert.NotEmpty(result);
 	}
@@ -482,19 +482,17 @@ public class RepositoryTests {
 
 	#endregion
 
-	#region Negative coverage — Queryable() hatch is protected
+	#region Negative coverage — Queryable() hatch is accessible
 
 	[Fact]
-	public void QueryableHatch_IsProtected() {
-		// The Queryable() declared on Repository<,> must be protected so the
-		// IQueryable hatch is hidden from consumer code.
+	public void QueryableHatch_IsPublic() {
+		// Queryable() is public so companion assemblies (EntityManager,
+		// decorators) can access the queryable. Consumer code should
+		// use CreateQuery() instead.
 		var declared = typeof(Repository<Person, string>)
 			.GetMethod("Queryable", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
 		Assert.NotNull(declared);
-		Assert.False(declared!.IsPublic, "Queryable() hatch must not be public");
-		Assert.False(declared.IsPrivate, "Queryable() hatch must not be private");
-		Assert.True(declared.IsFamily || declared.IsFamilyOrAssembly || declared.IsFamilyAndAssembly,
-			"Queryable() hatch must be protected (family) — at least one of: IsFamily, IsFamilyOrAssembly, IsFamilyAndAssembly");
+		Assert.True(declared!.IsPublic, "Queryable() hatch must be public");
 	}
 
 	[Fact]
@@ -540,7 +538,7 @@ public class RepositoryTests {
 		protected override string? GetEntityKey(Person entity) => entity.Id;
 
 		/// <inheritdoc />
-		protected override IQueryable<Person> Queryable() => _people.AsQueryable();
+		public override IQueryable<Person> Queryable() => _people.AsQueryable();
 
 		/// <inheritdoc />
 		protected override bool IsQueryable => true;
@@ -633,7 +631,7 @@ public class RepositoryTests {
 	private sealed class NonQueryableRepository : Repository<Person, string> {
 		protected override IServiceProvider? Services => null;
 		protected override string? GetEntityKey(Person entity) => entity.Id;
-		protected override IQueryable<Person> Queryable() => throw new NotSupportedException();
+		public override IQueryable<Person> Queryable() => throw new NotSupportedException();
 
 		public ValueTask<bool> PublicExistsAsync(IQueryFilter filter, CancellationToken cancellationToken = default)
 			=> ExistsAsync(filter, cancellationToken);
@@ -673,7 +671,7 @@ public class RepositoryTests {
 
 		protected override IServiceProvider? Services => null;
 		protected override string? GetEntityKey(Person entity) => entity.Id;
-		protected override IQueryable<Person> Queryable() => Array.Empty<Person>().AsQueryable();
+		public override IQueryable<Person> Queryable() => Array.Empty<Person>().AsQueryable();
 		protected override bool IsQueryable => true;
 
 		public override ValueTask AddAsync(Person entity, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;

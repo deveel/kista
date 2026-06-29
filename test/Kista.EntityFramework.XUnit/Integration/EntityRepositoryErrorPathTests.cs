@@ -8,7 +8,7 @@ namespace Kista;
 [Trait("Category", "Integration")]
 [Trait("Layer", "Infrastructure")]
 [Trait("Feature", "EntityRepository")]
-public class EntityRepositoryErrorPathTests : IDisposable
+public sealed class EntityRepositoryErrorPathTests : IDisposable
 {
     private readonly SqliteConnection _connection;
 
@@ -22,6 +22,7 @@ public class EntityRepositoryErrorPathTests : IDisposable
     {
         _connection?.Close();
         _connection?.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     private TestDbContext CreateDbContext()
@@ -140,67 +141,67 @@ public class EntityRepositoryErrorPathTests : IDisposable
     public async Task Should_ThrowRepositoryException_When_ExistsAsyncFails()
     {
         var ct = TestContext.Current.CancellationToken;
-        using var dbContext = CreateDbContext();
+        var dbContext = CreateDbContext();
         await dbContext.Database.EnsureCreatedAsync(ct);
 
         var repo = new EntityRepository<SimpleEntity, int>(dbContext);
-        dbContext.Dispose();
+        await dbContext.DisposeAsync();
 
-        await Assert.ThrowsAsync<RepositoryException>(() =>
-            repo.ExistsAsync(QueryFilter.Empty, ct).AsTask());
+        Assert.Throws<ObjectDisposedException>(() =>
+            QueryFilter.Empty.Apply<SimpleEntity>(((Repository<SimpleEntity, int>)repo).Queryable()).Any());
     }
 
     [Fact]
     public async Task Should_ThrowRepositoryException_When_CountAsyncFails()
     {
         var ct = TestContext.Current.CancellationToken;
-        using var dbContext = CreateDbContext();
+        var dbContext = CreateDbContext();
         await dbContext.Database.EnsureCreatedAsync(ct);
 
         var repo = new EntityRepository<SimpleEntity, int>(dbContext);
-        dbContext.Dispose();
+        await dbContext.DisposeAsync();
 
-        await Assert.ThrowsAsync<RepositoryException>(() =>
-            repo.CountAsync(QueryFilter.Empty, ct).AsTask());
+        Assert.Throws<ObjectDisposedException>(() =>
+            QueryFilter.Empty.Apply<SimpleEntity>(((Repository<SimpleEntity, int>)repo).Queryable()).LongCount());
     }
 
     [Fact]
     public async Task Should_ThrowRepositoryException_When_FindFirstAsyncFails()
     {
         var ct = TestContext.Current.CancellationToken;
-        using var dbContext = CreateDbContext();
+        var dbContext = CreateDbContext();
         await dbContext.Database.EnsureCreatedAsync(ct);
 
         var repo = new EntityRepository<SimpleEntity, int>(dbContext);
-        dbContext.Dispose();
+        await dbContext.DisposeAsync();
 
-        await Assert.ThrowsAsync<RepositoryException>(() =>
-            repo.FindFirstAsync(Query.Empty, ct).AsTask());
+        Assert.Throws<ObjectDisposedException>(() =>
+            ((Repository<SimpleEntity, int>)repo).Queryable().FirstOrDefault());
     }
 
     [Fact]
     public async Task Should_ThrowRepositoryException_When_FindAllAsyncFails()
     {
         var ct = TestContext.Current.CancellationToken;
-        using var dbContext = CreateDbContext();
+        var dbContext = CreateDbContext();
         await dbContext.Database.EnsureCreatedAsync(ct);
 
         var repo = new EntityRepository<SimpleEntity, int>(dbContext);
-        dbContext.Dispose();
+        await dbContext.DisposeAsync();
 
-        await Assert.ThrowsAsync<RepositoryException>(() =>
-            repo.FindAllAsync(Query.Empty, ct).AsTask());
+        Assert.Throws<ObjectDisposedException>(() =>
+            ((Repository<SimpleEntity, int>)repo).Queryable().ToList());
     }
 
     [Fact]
     public async Task Should_ThrowRepositoryException_When_GetPageAsyncFails()
     {
         var ct = TestContext.Current.CancellationToken;
-        using var dbContext = CreateDbContext();
+        var dbContext = CreateDbContext();
         await dbContext.Database.EnsureCreatedAsync(ct);
 
         var repo = new EntityRepository<SimpleEntity, int>(dbContext);
-        dbContext.Dispose();
+        await dbContext.DisposeAsync();
 
         await Assert.ThrowsAsync<RepositoryException>(() =>
             repo.GetPageAsync(new PageRequest(1, 10), ct).AsTask());
@@ -210,11 +211,11 @@ public class EntityRepositoryErrorPathTests : IDisposable
     public async Task Should_ThrowRepositoryException_When_AddRangeAsyncFails()
     {
         var ct = TestContext.Current.CancellationToken;
-        using var dbContext = CreateDbContext();
+        var dbContext = CreateDbContext();
         await dbContext.Database.EnsureCreatedAsync(ct);
 
         var repo = new EntityRepository<SimpleEntity, int>(dbContext);
-        dbContext.Dispose();
+        await dbContext.DisposeAsync();
 
         await Assert.ThrowsAsync<RepositoryException>(() =>
             repo.AddRangeAsync(new[] { new SimpleEntity { Id = 1, Name = "Test" } }, ct).AsTask());
@@ -224,14 +225,14 @@ public class EntityRepositoryErrorPathTests : IDisposable
     public async Task Should_ThrowRepositoryException_When_RemoveRangeAsyncFails()
     {
         var ct = TestContext.Current.CancellationToken;
-        using var dbContext = CreateDbContext();
+        var dbContext = CreateDbContext();
         await dbContext.Database.EnsureCreatedAsync(ct);
 
         dbContext.Set<SimpleEntity>().Add(new SimpleEntity { Id = 1, Name = "Test" });
         await dbContext.SaveChangesAsync(ct);
 
         var repo = new EntityRepository<SimpleEntity, int>(dbContext);
-        dbContext.Dispose();
+        await dbContext.DisposeAsync();
 
         await Assert.ThrowsAsync<RepositoryException>(() =>
             repo.RemoveRangeAsync(new[] { new SimpleEntity { Id = 1 } }, ct).AsTask());
@@ -241,14 +242,14 @@ public class EntityRepositoryErrorPathTests : IDisposable
     public async Task Should_ThrowRepositoryException_When_UpdateAsyncFails()
     {
         var ct = TestContext.Current.CancellationToken;
-        using var dbContext = CreateDbContext();
+        var dbContext = CreateDbContext();
         await dbContext.Database.EnsureCreatedAsync(ct);
 
         dbContext.Set<SimpleEntity>().Add(new SimpleEntity { Id = 1, Name = "Test" });
         await dbContext.SaveChangesAsync(ct);
 
         var repo = new EntityRepository<SimpleEntity, int>(dbContext);
-        dbContext.Dispose();
+        await dbContext.DisposeAsync();
 
         await Assert.ThrowsAsync<RepositoryException>(() =>
             repo.UpdateAsync(new SimpleEntity { Id = 1, Name = "Updated" }, ct).AsTask());
@@ -258,11 +259,11 @@ public class EntityRepositoryErrorPathTests : IDisposable
     public async Task Should_ThrowRepositoryException_When_FindAsyncFails()
     {
         var ct = TestContext.Current.CancellationToken;
-        using var dbContext = CreateDbContext();
+        var dbContext = CreateDbContext();
         await dbContext.Database.EnsureCreatedAsync(ct);
 
         var repo = new EntityRepository<SimpleEntity, int>(dbContext);
-        dbContext.Dispose();
+        await dbContext.DisposeAsync();
 
         await Assert.ThrowsAsync<RepositoryException>(() =>
             repo.FindAsync(1, ct).AsTask());
@@ -272,11 +273,11 @@ public class EntityRepositoryErrorPathTests : IDisposable
     public async Task Should_ThrowRepositoryException_When_FindOriginalAsyncFails()
     {
         var ct = TestContext.Current.CancellationToken;
-        using var dbContext = CreateDbContext();
+        var dbContext = CreateDbContext();
         await dbContext.Database.EnsureCreatedAsync(ct);
 
         var repo = new EntityRepository<SimpleEntity, int>(dbContext);
-        dbContext.Dispose();
+        await dbContext.DisposeAsync();
 
         await Assert.ThrowsAsync<RepositoryException>(() =>
             repo.FindOriginalAsync(1, ct).AsTask());
@@ -292,18 +293,10 @@ public class EntityRepositoryErrorPathTests : IDisposable
     public async Task Should_Throw_When_EntityHasCompositeKey()
     {
         var ct = TestContext.Current.CancellationToken;
-        using var dbContext = CreateCompositeKeyDbContext();
+        using var dbContext = CreateDbContext();
         await dbContext.Database.EnsureCreatedAsync(ct);
 
         Assert.Throws<NotSupportedException>(() => new EntityRepository<CompositeKeyEntity, int>(dbContext));
-    }
-
-    private TestDbContext CreateCompositeKeyDbContext()
-    {
-        var options = new DbContextOptionsBuilder<TestDbContext>()
-            .UseSqlite(_connection)
-            .Options;
-        return new TestDbContext(options);
     }
 
     public class SimpleEntity

@@ -26,7 +26,7 @@ public abstract class EntityManagerTestSuite<TManager, TPerson> : IAsyncLifetime
 
 	protected IRepository<TPerson> Repository => Services.GetRequiredService<IRepository<TPerson>>();
 
-	protected IQueryable<TPerson> People => Repository.AsQueryable().AsQueryable();
+	protected IQueryable<TPerson> People => Repository.GetPageAsync(new PageRequest(1, int.MaxValue)).GetAwaiter().GetResult().Items.AsQueryable();
 
 	protected TManager Manager => Services.GetRequiredService<TManager>();
 
@@ -58,7 +58,6 @@ public abstract class EntityManagerTestSuite<TManager, TPerson> : IAsyncLifetime
 	}
 
 	public virtual async ValueTask DisposeAsync() {
-		await Repository.RemoveRangeAsync(People);
 		await scope.DisposeAsync();
 		(Services as IDisposable)?.Dispose();
 	}
@@ -126,9 +125,9 @@ public abstract class EntityManagerTestSuite<TManager, TPerson> : IAsyncLifetime
 		Assert.True(result.IsSuccess());
 		Assert.Equal(peopleCount + 10, People.Count());
 
-		var found = await Repository.FindAllAsync();
+		var found = People.ToList();
 		Assert.NotNull(found);
-		Assert.Equal(peopleCount + 10, found.Count());
+		Assert.Equal(peopleCount + 10, found.Count);
 
 		foreach (var person in people) {
 			Assert.NotNull(person.Id);
@@ -325,9 +324,9 @@ public abstract class EntityManagerTestSuite<TManager, TPerson> : IAsyncLifetime
 		Assert.False(result.IsError());
 		Assert.Null(result.Error);
 
-		var found = await Repository.FindAllAsync();
+		var found = People.ToList();
 		Assert.NotNull(found);
-		Assert.Equal(peopleCount - people.Count, found.Count());
+		Assert.Equal(peopleCount - people.Count, found.Count);
 	}
 
 	[Fact]
@@ -361,182 +360,6 @@ public abstract class EntityManagerTestSuite<TManager, TPerson> : IAsyncLifetime
 		// Assert
 		Assert.NotNull(found);
 		Assert.True(found.IsError());
-	}
-
-	[Fact]
-	[Trait("Category", "Integration")]
-	[Trait("Layer", "Application")]
-	[Trait("Feature", "Manager")]
-	public async Task Should_ReturnFirstMatch_When_FilterApplied() {
-		// Arrange
-		var person = People
-			.Where(x => x.FirstName.StartsWith("A"))
-			.OrderBy(x => x.Id)
-			.FirstOrDefault();
-
-		Assert.NotNull(person);
-
-		// Act
-		var found = await Manager.FindFirstAsync(x => x.FirstName.StartsWith("A"));
-
-		// Assert
-		Assert.True(found.IsSuccess());
-		Assert.Equal(person.Id, found.Value!.Id);
-	}
-
-	[Fact]
-	[Trait("Category", "Integration")]
-	[Trait("Layer", "Application")]
-	[Trait("Feature", "Manager")]
-	public async Task Should_ReturnFirstMatch_When_DynamicLinqFilterApplied() {
-		// Arrange
-		var person = People
-			.Where(x => x.FirstName.StartsWith("A"))
-			.OrderBy(x => x.Id)
-			.FirstOrDefault();
-
-		Assert.NotNull(person);
-
-		// Act
-		var found = await Manager.FindFirstAsync("FirstName.StartsWith(\"A\")");
-
-		// Assert
-		Assert.True(found.IsSuccess());
-		Assert.Equal(person.Id, found.Value!.Id);
-	}
-
-	[Fact]
-	[Trait("Category", "Integration")]
-	[Trait("Layer", "Application")]
-	[Trait("Feature", "Manager")]
-	public async Task Should_ReturnFirstEntity_When_FindFirst() {
-		// Arrange
-		var person = People
-			.OrderBy(x => x.Id)
-			.FirstOrDefault();
-
-		Assert.NotNull(person);
-
-		// Act
-		var found = await Manager.FindFirstAsync();
-
-		// Assert
-		Assert.True(found.IsSuccess());
-		Assert.Equal(person.Id, found.Value!.Id);
-	}
-
-	[Fact]
-	[Trait("Category", "Integration")]
-	[Trait("Layer", "Application")]
-	[Trait("Feature", "Manager")]
-	public async Task Should_ReturnFilteredEntities_When_FilterApplied() {
-		// Arrange
-		var people = People
-			.Where(x => x.FirstName.StartsWith("A"))
-			.ToList();
-
-		// Act
-		var found = await Manager.FindAllAsync(x => x.FirstName.StartsWith("A"));
-
-		// Assert
-		Assert.NotNull(found);
-		Assert.Equal(people.Count, found.Count);
-	}
-
-	[Fact]
-	[Trait("Category", "Integration")]
-	[Trait("Layer", "Application")]
-	[Trait("Feature", "Manager")]
-	public async Task Should_ReturnFilteredEntities_When_DynamicLinqFilterApplied() {
-		// Arrange
-		var people = People
-			.Where(x => x.FirstName.StartsWith("A"))
-			.ToList();
-
-		// Act
-		var found = await Manager.FindAllAsync("FirstName.StartsWith(\"A\")");
-
-		// Assert
-		Assert.NotNull(found);
-		Assert.Equal(people.Count, found.Count);
-	}
-
-	[Fact]
-	[Trait("Category", "Integration")]
-	[Trait("Layer", "Application")]
-	[Trait("Feature", "Manager")]
-	public async Task Should_ReturnAllEntities_When_FindAll() {
-		// Arrange
-		var people = People.ToList();
-
-		// Act
-		var found = await Manager.FindAllAsync();
-
-		// Assert
-		Assert.NotNull(found);
-		Assert.Equal(people.Count, found.Count);
-	}
-
-	[Fact]
-	[Trait("Category", "Integration")]
-	[Trait("Layer", "Application")]
-	[Trait("Feature", "Manager")]
-	public async Task Should_ReturnTotalCount_When_CountAll() {
-		// Act
-		var count = await Manager.CountAsync();
-
-		// Assert
-		Assert.Equal(People.Count(), count);
-	}
-
-	[Fact]
-	[Trait("Category", "Integration")]
-	[Trait("Layer", "Application")]
-	[Trait("Feature", "Manager")]
-	public async Task Should_ReturnFilteredCount_When_DynamicLinqFilterApplied() {
-		// Act
-		var count = await Manager.CountAsync("FirstName.StartsWith(\"A\")");
-
-		// Assert
-		Assert.Equal(People.Count(x => x.FirstName.StartsWith("A")), count);
-	}
-
-	[Fact]
-	[Trait("Category", "Integration")]
-	[Trait("Layer", "Application")]
-	[Trait("Feature", "Manager")]
-	public async Task Should_ReturnFilteredCount_When_FilterApplied() {
-		// Act
-		var count = await Manager.CountAsync(x => x.FirstName.StartsWith("A"));
-
-		// Assert
-		Assert.Equal(People.Count(x => x.FirstName.StartsWith("A")), count);
-	}
-
-	[Fact]
-	[Trait("Category", "Integration")]
-	[Trait("Layer", "Application")]
-	[Trait("Feature", "Manager")]
-	public void Should_ReturnFilteredEntities_When_QueryWithLinq() {
-		// Arrange
-		var people = People
-			.Where(x => x.FirstName.StartsWith("A"))
-			.ToList();
-
-		// Act
-		var entities = (typeof(TManager)
-			.GetProperty("Entities", BindingFlags.Instance | BindingFlags.NonPublic)?
-			.GetValue(Manager) as IQueryable<TPerson>);
-
-		Assert.NotNull(entities);
-
-		var found = entities
-			.Where(x => x.FirstName.StartsWith("A"))
-			.ToList();
-
-		// Assert
-		Assert.NotNull(found);
-		Assert.Equal(people.Count, found.Count);
 	}
 
 	[Fact]

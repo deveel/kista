@@ -32,7 +32,13 @@ namespace Kista.Caching {
 		where TCached : class {
 		private readonly IEasyCachingProvider cacheProvider;
 		private readonly EntityCacheOptions<TEntity>? options;
-		private readonly IEntityCacheKeyGenerator<TEntity>? keyGenerator;
+		/// <summary>
+		/// A generator to create the keys for the entities.
+		/// </summary>
+		/// <remarks>
+		/// Reserved for use by derived classes that wish to customize key generation.
+		/// </remarks>
+		protected readonly IEntityCacheKeyGenerator<TEntity>? keyGenerator;
 		private readonly IEntityEasyCacheConverter<TEntity, TCached>? converter;
 
 		/// <summary>
@@ -113,27 +119,33 @@ namespace Kista.Caching {
 			throw new NotSupportedException("The converter is not defined for this cache");
 		}
 
-		private Func<Task<TCached>> Factory(Func<ValueTask<TEntity?>> valueFactory, CancellationToken cancellationToken) {
-			return async () => {
-				var entity = await valueFactory();
-				if (entity == null)
+	private Func<Task<TCached>> Factory(Func<ValueTask<TEntity?>> valueFactory) {
+		return async () => {
+			var entity = await valueFactory();
+			if (entity == null)
 #pragma warning disable CS8603 // Possible null reference return.
-					// EasyCaching does not support nullable explicitly
-					return null;
-#pragma warning restore CS8603 // Possible null reference return.
+				// EasyCaching does not support nullable explicitly
+				return null;
+#pragma warning restore CS8603 // Possible null reference return
 
-				return ConvertToCached(entity);
-			};
-		}
+			return ConvertToCached(entity);
+		};
+	}
 
 		/// <inheritdoc/>
 		public async ValueTask<TEntity?> GetOrSetAsync(string cacheKey, Func<ValueTask<TEntity?>> valueFactory, CancellationToken cancellationToken = default) {
 			try {
-				var factory = Factory(valueFactory, cancellationToken);
+				var factory = Factory(valueFactory);
 
 				var result = await cacheProvider.GetAsync<TCached>(cacheKey, factory, Expiration, cancellationToken);
 
-				return result.HasValue ? (result.IsNull ? null : ConvertFromCached(result.Value)) : null;
+				if (!result.HasValue)
+					return null;
+
+				if (result.IsNull)
+					return null;
+
+				return ConvertFromCached(result.Value);
 			} catch (Exception ex) {
 
 				throw new RepositoryException("Could not get or set the entity in the cache", ex);

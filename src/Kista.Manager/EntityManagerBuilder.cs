@@ -69,7 +69,7 @@ namespace Kista {
 			var validatorType = typeof(TValidator);
 
 			if (!validatorType.IsClass || validatorType.IsAbstract)
-				throw new ArgumentException($"The type {validatorType} is not a concrete class", nameof(TValidator));
+				throw new ArgumentException($"The type {validatorType} is not a concrete class");
 
 			var interfaceTypes = validatorType.GetInterfaces().Where(x => x.IsGenericType);
 			foreach (var interfaceType in interfaceTypes) {
@@ -107,7 +107,7 @@ namespace Kista {
 			var generatorType = typeof(TGenerator);
 
 			if (!generatorType.IsClass || generatorType.IsAbstract)
-				throw new ArgumentException($"The type {generatorType} is not a concrete class", nameof(TGenerator));
+				throw new ArgumentException($"The type {generatorType} is not a concrete class");
 
 			var entityTypes = generatorType.GetInterfaces()
 				.Where(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IEntityCacheKeyGenerator<>))

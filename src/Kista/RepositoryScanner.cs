@@ -23,13 +23,7 @@ namespace Kista {
 	static class RepositoryScanner {
 		private static readonly Type[] _repoInterfaces = [
 			typeof(IRepository<>),
-			typeof(IQueryableRepository<>),
-			typeof(IFilterableRepository<>),
-			typeof(IPageableRepository<>),
-			typeof(IRepository<,>),
-			typeof(IQueryableRepository<,>),
-			typeof(IFilterableRepository<,>),
-			typeof(IPageableRepository<,>)
+			typeof(IRepository<,>)
 		];
 
 		/// <summary>

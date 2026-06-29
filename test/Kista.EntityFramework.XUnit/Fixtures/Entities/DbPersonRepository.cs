@@ -7,7 +7,7 @@ namespace Kista.Entities {
 			: base(context, services, logger) {
 		}
 
-		public override IQueryable<DbPerson> AsQueryable() => base.Entities.Include(x => x.Relationships);
+		public override IQueryable<DbPerson> Queryable() => base.Entities.Include(x => x.Relationships);
 
 		protected override async ValueTask<DbPerson> OnEntityFoundByKeyAsync(Guid key, DbPerson entity, CancellationToken cancellationToken = default) {
 			await Context.Entry(entity).Collection(x => x.Relationships).LoadAsync(cancellationToken);

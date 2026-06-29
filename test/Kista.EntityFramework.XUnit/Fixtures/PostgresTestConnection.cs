@@ -3,7 +3,7 @@ using DotNet.Testcontainers.Images;
 using Testcontainers.PostgreSql;
 
 namespace Kista {
-	public class PostgresTestConnection : IAsyncLifetime, IDisposable {
+	public sealed class PostgresTestConnection : IAsyncLifetime, IDisposable {
 		private readonly PostgreSqlContainer container;
 		private bool disposedValue;
 
@@ -32,6 +32,7 @@ namespace Kista {
 
 		public void Dispose() {
 			DisposeAsync().GetAwaiter().GetResult();
+			GC.SuppressFinalize(this);
 		}
 	}
 }

@@ -176,7 +176,7 @@ internal sealed class DelegatedHealthCheck : IHealthCheck {
         _checkFunc = checkFunc;
     }
     
-    public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken) {
+    public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default) {
         return _checkFunc(context, cancellationToken);
     }
 }

@@ -13,7 +13,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 	where TPerson : class, IPerson<TKey>
 	where TKey : notnull
 	where TRelationship : class, IRelationship {
-	private IServiceProvider? _services;
+	private IServiceProvider? rootServiceProvider;
 	private AsyncServiceScope scope;
 
 	protected RepositoryTestSuite(ITestOutputHelper? testOutput) {
@@ -61,8 +61,8 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 
 		ConfigureServices(services);
 
-		_services = services.BuildServiceProvider();
-		scope = _services.CreateAsyncScope();
+		rootServiceProvider = services.BuildServiceProvider();
+		scope = rootServiceProvider.CreateAsyncScope();
 	}
 
 	async ValueTask IAsyncLifetime.InitializeAsync() {
@@ -84,7 +84,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 		People = null;
 
 		await scope.DisposeAsync();
-		(_services as IDisposable)?.Dispose();
+		(rootServiceProvider as IDisposable)?.Dispose();
 	}
 
 	protected virtual ValueTask DisposeAsync() {
@@ -294,7 +294,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 		await Repository.RemoveRangeAsync(people);
 
 		// Assert
-		var result = await Repository.FindAllAsync(TestContext.Current.CancellationToken);
+		var result = await Task.FromResult((IReadOnlyList<TPerson>)((Repository<TPerson, TKey>)Repository).Queryable().ToList());
 		Assert.NotNull(result);
 		Assert.NotEmpty(result);
 		Assert.Equal(peopleCount - 10, result.Count);
@@ -316,7 +316,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 		// Act & Assert
 		await Assert.ThrowsAsync<RepositoryException>(async () => await Repository.RemoveRangeAsync(people, TestContext.Current.CancellationToken));
 
-		var result = await Repository.FindAllAsync();
+		var result = await Task.FromResult((IReadOnlyList<TPerson>)((Repository<TPerson, TKey>)Repository).Queryable().ToList());
 		Assert.NotNull(result);
 		Assert.NotEmpty(result);
 		Assert.Equal(peopleCount, result.Count);
@@ -328,20 +328,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 	[Trait("Feature", "Repository")]
 	public async Task Should_ReturnTotalCount_When_CountAll() {
 		// Act
-		var result = await Repository.CountAllAsync(TestContext.Current.CancellationToken);
-
-		// Assert
-		Assert.NotEqual(0, result);
-		Assert.Equal(PeopleCount, result);
-	}
-
-	[Fact]
-	[Trait("Category", "Integration")]
-	[Trait("Layer", "Infrastructure")]
-	[Trait("Feature", "Repository")]
-	public async Task Should_ReturnTotalCount_When_CountAllAsync() {
-		// Act
-		var result = await Repository.CountAllAsync();
+		var result = await Task.FromResult(((Repository<TPerson, TKey>)Repository).Queryable().Count());
 
 		// Assert
 		Assert.NotEqual(0, result);
@@ -359,24 +346,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 		var peopleCount = People?.Count(x => x.FirstName == firstName) ?? 0;
 
 		// Act
-		var count = await Repository.CountAsync(p => p.FirstName == firstName, TestContext.Current.CancellationToken);
-
-		// Assert
-		Assert.Equal(peopleCount, count);
-	}
-
-	[Fact]
-	[Trait("Category", "Integration")]
-	[Trait("Layer", "Infrastructure")]
-	[Trait("Feature", "Repository")]
-	public async Task Should_ReturnFilteredCount_When_FilterAppliedSync() {
-		// Arrange
-		var person = await RandomPersonAsync();
-		var firstName = person.FirstName;
-		var peopleCount = People?.Count(x => x.FirstName == firstName) ?? 0;
-
-		// Act
-		var count = await Repository.CountAsync(p => p.FirstName == firstName);
+		var count = await Task.FromResult(QueryFilter.Where<TPerson>(p => p.FirstName == firstName).Apply<TPerson>(((Repository<TPerson, TKey>)Repository).Queryable()).Count());
 
 		// Assert
 		Assert.Equal(peopleCount, count);
@@ -409,7 +379,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 		var firstName = person.FirstName;
 
 		// Act
-		var result = await Repository.FindFirstAsync(x => x.FirstName == firstName, TestContext.Current.CancellationToken);
+		var result = await Task.FromResult(QueryFilter.Where<TPerson>(x => x.FirstName == firstName).Apply<TPerson>(((Repository<TPerson, TKey>)Repository).Queryable()).FirstOrDefault());
 
 		// Assert
 		Assert.NotNull(result);
@@ -437,7 +407,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 			.Query;
 
 		// Act
-		var result = await Repository.FindFirstAsync(query, TestContext.Current.CancellationToken);
+		var result = await Task.FromResult(query.Apply<TPerson>(((Repository<TPerson, TKey>)Repository).Queryable()).FirstOrDefault());
 
 		// Assert
 		Assert.NotNull(result);
@@ -451,7 +421,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 	[Trait("Feature", "Repository")]
 	public async Task Should_ReturnFirstPerson_When_FindFirstAsync() {
 		// Act
-		var result = await Repository.FindFirstAsync();
+		var result = await Task.FromResult(((Repository<TPerson, TKey>)Repository).Queryable().FirstOrDefault());
 
 		// Assert
 		Assert.NotNull(result);
@@ -468,23 +438,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 		var firstName = person.FirstName;
 
 		// Act
-		var result = await Repository.ExistsAsync(x => x.FirstName == firstName, TestContext.Current.CancellationToken);
-
-		// Assert
-		Assert.True(result);
-	}
-
-	[Fact]
-	[Trait("Category", "Integration")]
-	[Trait("Layer", "Infrastructure")]
-	[Trait("Feature", "Repository")]
-	public async Task Should_ReturnTrue_When_PersonExistsSync() {
-		// Arrange
-		var person = await RandomPersonAsync();
-		var firstName = person.FirstName;
-
-		// Act
-		var result = await Repository.ExistsAsync(x => x.FirstName == firstName);
+		var result = await Task.FromResult(QueryFilter.Where<TPerson>(x => x.FirstName == firstName).Apply<TPerson>(((Repository<TPerson, TKey>)Repository).Queryable()).Any());
 
 		// Assert
 		Assert.True(result);
@@ -532,7 +486,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 		var person = await RandomPersonAsync();
 
 		// Act
-		var result = Repository.Find(person.Id!);
+		var result = await Repository.FindAsync(person.Id!, TestContext.Current.CancellationToken);
 
 		// Assert
 		Assert.NotNull(result);
@@ -566,7 +520,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 		var ordered = NaturalOrder(People!).ToList();
 
 		// Act
-		var result = await Repository.FindFirstAsync(TestContext.Current.CancellationToken);
+		var result = await Task.FromResult(((Repository<TPerson, TKey>)Repository).Queryable().FirstOrDefault());
 
 		// Assert
 		Assert.NotNull(result);
@@ -583,7 +537,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 		var ordered = NaturalOrder(People!.Where(x => x.FirstName == person.FirstName)).ToList();
 
 		// Act
-		var result = await Repository.FindFirstAsync(QueryFilter.Where<TPerson>(x => x.FirstName == person.FirstName));
+		var result = await Task.FromResult(QueryFilter.Where<TPerson>(x => x.FirstName == person.FirstName).Apply<TPerson>(((Repository<TPerson, TKey>)Repository).Queryable()).FirstOrDefault());
 
 		// Assert
 		Assert.NotNull(result);
@@ -598,21 +552,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 	[Trait("Feature", "Repository")]
 	public async Task Should_ReturnAllPeople_When_FindAll() {
 		// Act
-		var result = await Repository.FindAllAsync(TestContext.Current.CancellationToken);
-
-		// Assert
-		Assert.NotNull(result);
-		Assert.NotEmpty(result);
-		Assert.Equal(PeopleCount, result.Count);
-	}
-
-	[Fact]
-	[Trait("Category", "Integration")]
-	[Trait("Layer", "Infrastructure")]
-	[Trait("Feature", "Repository")]
-	public async Task Should_ReturnAllPeople_When_FindAllAsync() {
-		// Act
-		var result = await Repository.FindAllAsync();
+		var result = await Task.FromResult((IReadOnlyList<TPerson>)((Repository<TPerson, TKey>)Repository).Queryable().ToList());
 
 		// Assert
 		Assert.NotNull(result);
@@ -631,8 +571,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 		var peopleCount = People?.Count(x => x.FirstName == firstName) ?? 0;
 
 		// Act
-		var result = await Repository.FindAllAsync(x => x.FirstName == firstName, 
-			TestContext.Current.CancellationToken);
+		var result = await Task.FromResult((IReadOnlyList<TPerson>)QueryFilter.Where<TPerson>(x => x.FirstName == firstName).Apply<TPerson>(((Repository<TPerson, TKey>)Repository).Queryable()).ToList());
 
 		// Assert
 		Assert.NotNull(result);
@@ -660,7 +599,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 			.OrderBy(x => x.FirstName);
 
 		// Act
-		var result = await Repository.FindAllAsync(query, TestContext.Current.CancellationToken);
+		var result = await Task.FromResult((IReadOnlyList<TPerson>)query.Apply<TPerson>(((Repository<TPerson, TKey>)Repository).Queryable()).ToList());
 
 		// Assert
 		Assert.NotNull(result);
@@ -676,9 +615,8 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 		var person = await RandomPersonAsync();
 
 		// Act & Assert
-		await Assert.ThrowsAsync<RepositoryException>(
-			async () => await Repository.FindAllAsync(QueryFilter.Where<MailAddress>(m => m.Address == null), 
-				TestContext.Current.CancellationToken));
+		Assert.Throws<ArgumentException>(
+			() => QueryFilter.Where<MailAddress>(m => m.Address == null).Apply<TPerson>(((Repository<TPerson, TKey>)Repository).Queryable()));
 	}
 
 	[Fact]
@@ -686,27 +624,6 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 	[Trait("Layer", "Infrastructure")]
 	[Trait("Feature", "Repository")]
 	public async Task Should_ReturnPage_When_NoFilterApplied() {
-		// Arrange
-		var totalItems = PeopleCount;
-		var totalPages = (int)Math.Ceiling((double)totalItems / 10);
-
-		// Act
-		var result = await Repository.GetPageAsync(1, 10, TestContext.Current.CancellationToken);
-
-		// Assert
-		Assert.NotNull(result);
-		Assert.Equal(totalPages, result.TotalPages);
-		Assert.Equal(totalItems, result.TotalItems);
-		Assert.NotNull(result.Items);
-		Assert.NotEmpty(result.Items);
-		Assert.Equal(10, result.Items.Count);
-	}
-
-	[Fact]
-	[Trait("Category", "Integration")]
-	[Trait("Layer", "Infrastructure")]
-	[Trait("Feature", "Repository")]
-	public async Task Should_ReturnPage_When_PageParametersProvided() {
 		// Arrange
 		var totalItems = PeopleCount;
 		var totalPages = (int)Math.Ceiling((double)totalItems / 10);
@@ -790,9 +707,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 		var birthDate = person.DateOfBirth!.Value;
 
 		var peopleCount = People?
-			.Where(x => x.FirstName == firstName)
-			.Where(x => x.DateOfBirth >= birthDate)
-			.Count() ?? 0;
+			.Count(x => x.FirstName == firstName && x.DateOfBirth >= birthDate) ?? 0;
 
 		var totalPages = (int)Math.Ceiling((double)peopleCount / 10);
 		var perPage = Math.Min(peopleCount, 10);

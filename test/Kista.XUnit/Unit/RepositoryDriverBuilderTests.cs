@@ -75,7 +75,7 @@ public class RepositoryDriverBuilderTests {
 
 		var descriptor = services.FirstOrDefault(d => d.ServiceType == typeof(IRepositoryLifecycleHandler<>));
 		Assert.NotNull(descriptor);
-		Assert.Equal(typeof(TestLifecycleHandler), descriptor.ImplementationType);
+		Assert.Equal(typeof(TestLifecycleHandler), descriptor!.ImplementationType);
 	}
 
 	[Fact]

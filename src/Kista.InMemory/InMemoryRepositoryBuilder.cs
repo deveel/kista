@@ -58,6 +58,23 @@ namespace Kista
         }
 
         /// <summary>
+        /// Registers soft-delete configuration for the In-Memory driver.
+        /// Soft-delete filtering activates automatically for any entity
+        /// implementing <see cref="ISoftDeletable"/>: this call is
+        /// reserved for future configuration knobs.
+        /// </summary>
+        /// <param name="configure">
+        /// An optional delegate to configure the <see cref="SoftDeleteOptions"/>.
+        /// </param>
+        /// <returns>
+        /// Returns the same builder for chaining.
+        /// </returns>
+        public InMemoryRepositoryBuilder WithSoftDelete(Action<SoftDeleteOptions>? configure = null) {
+            Parent.WithSoftDelete(configure);
+            return this;
+        }
+
+        /// <summary>
         /// Implicitly converts to the parent <see cref="RepositoryContextBuilder"/>.
         /// </summary>
         public static implicit operator RepositoryContextBuilder(InMemoryRepositoryBuilder builder) => builder.Parent;

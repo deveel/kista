@@ -1,4 +1,4 @@
-﻿// Copyright 2023-2026 Antonello Provenzano
+// Copyright 2023-2026 Antonello Provenzano
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,30 +14,26 @@
 
 namespace Kista {
 	/// <summary>
-	/// Defines the contract for a query that can 
-	/// be executed against a repository.
+	/// Specifies how a query should treat soft-deleted entities
+	/// that implement <see cref="ISoftDeletable"/>.
 	/// </summary>
-	public interface IQuery {
+	public enum SoftDeleteMode {
 		/// <summary>
-		/// Gets the filter that is applied to the query
-		/// to select the entities.
+		/// The default behaviour: soft-deleted entities are excluded
+		/// from the query results.
 		/// </summary>
-		IQueryFilter? Filter { get; }
+		Default,
 
 		/// <summary>
-		/// Gets the sort that is applied to the query
-		/// to order the entities.
+		/// Soft-deleted entities are included alongside active entities
+		/// in the query results.
 		/// </summary>
-		IQueryOrder? Order { get; }
+		IncludeDeleted,
 
 		/// <summary>
-		/// Gets the options that influence how the query is executed
-		/// by the repository driver, such as the soft-delete mode.
+		/// Only soft-deleted entities are returned by the query; active
+		/// entities are excluded.
 		/// </summary>
-		/// <remarks>
-		/// A <c>null</c> value is equivalent to
-		/// <see cref="QueryOptions.Default"/>.
-		/// </remarks>
-		IQueryOptions? Options { get; }
+		OnlyDeleted
 	}
 }

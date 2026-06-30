@@ -154,6 +154,24 @@ namespace Kista {
 		IQueryBuilder<TEntity> OrderByDescending(string fieldName);
 
 		/// <summary>
+		/// Sets the query to include soft-deleted entities alongside
+		/// active ones in the results.
+		/// </summary>
+		/// <returns>
+		/// Returns this query builder for chaining calls.
+		/// </returns>
+		IQueryBuilder<TEntity> IncludeDeleted();
+
+		/// <summary>
+		/// Sets the query to return only soft-deleted entities, excluding
+		/// active ones.
+		/// </summary>
+		/// <returns>
+		/// Returns this query builder for chaining calls.
+		/// </returns>
+		IQueryBuilder<TEntity> OnlyDeleted();
+
+		/// <summary>
 		/// Executes the query and returns the first entity
 		/// that matches the filter, or <c>null</c> if none found.
 		/// </summary>

@@ -58,6 +58,18 @@ namespace Kista {
 		[ExcludeFromCodeCoverage]
 		IQueryOrder? IQuery.Order => Query?.Order;
 
+		[ExcludeFromCodeCoverage]
+		IQueryOptions? IQuery.Options => Query?.Options;
+
+		/// <summary>
+		/// Gets or sets the query options applied to this page request,
+		/// such as the soft-delete mode.
+		/// </summary>
+		public IQueryOptions? Options {
+			get => queryBuilder.Options;
+			set => queryBuilder.WithSoftDeleteMode(value?.SoftDeleteMode ?? SoftDeleteMode.Default);
+		}
+
 		/// <summary>
 		/// Sets or appends a new filter
 		/// </summary>
@@ -73,6 +85,30 @@ namespace Kista {
 
 			queryBuilder.Where(expression);
 
+			return this;
+		}
+
+		/// <summary>
+		/// Sets the page request to include soft-deleted entities alongside
+		/// active ones in the results.
+		/// </summary>
+		/// <returns>
+		/// Returns this page request for chaining calls.
+		/// </returns>
+		public PageQuery<TEntity> IncludeDeleted() {
+			queryBuilder.IncludeDeleted();
+			return this;
+		}
+
+		/// <summary>
+		/// Sets the page request to return only soft-deleted entities,
+		/// excluding active ones.
+		/// </summary>
+		/// <returns>
+		/// Returns this page request for chaining calls.
+		/// </returns>
+		public PageQuery<TEntity> OnlyDeleted() {
+			queryBuilder.OnlyDeleted();
 			return this;
 		}
 

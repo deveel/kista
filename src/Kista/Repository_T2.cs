@@ -332,6 +332,11 @@ namespace Kista {
 		/// <param name="cancellationToken">
 		/// A token used to cancel the operation.
 		/// </param>
+		/// <param name="options">
+		/// An optional bag of query options that influence how the query
+		/// is executed by the driver, such as the soft-delete mode. When
+		/// <c>null</c>, defaults to <see cref="QueryOptions.Default"/>.
+		/// </param>
 		/// <returns>
 		/// Returns <c>true</c> if at least one item in the inventory matches the given
 		/// filter, otherwise returns <c>false</c>.
@@ -344,13 +349,38 @@ namespace Kista {
 		/// The default implementation uses the <see cref="Queryable"/> hatch when
 		/// <see cref="IsQueryable"/> is <c>true</c>.
 		/// </remarks>
-		protected virtual ValueTask<bool> ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken = default) {
+		protected virtual ValueTask<bool> ExistsAsync(IQueryFilter? filter, IQueryOptions? options, CancellationToken cancellationToken = default) {
 			if (IsQueryable) {
 				var queryable = filter != null ? filter.Apply(Queryable()) : Queryable();
 				return new ValueTask<bool>(queryable.Any());
 			}
 			throw new NotSupportedException("Filtering requires IQueryable support or a subclass override.");
 		}
+
+		/// <summary>
+		/// Determines if at least one item in the repository exists for the
+		/// given filtering conditions.
+		/// </summary>
+		/// <param name="filter">
+		/// The filter used to identify the items.
+		/// </param>
+		/// <param name="cancellationToken">
+		/// A token used to cancel the operation.
+		/// </param>
+		/// <returns>
+		/// Returns <c>true</c> if at least one item in the inventory matches the given
+		/// filter, otherwise returns <c>false</c>.
+		/// </returns>
+		/// <exception cref="NotSupportedException">
+		/// Thrown when <see cref="IsQueryable"/> is <c>false</c> and the subclass
+		/// has not overridden this method.
+		/// </exception>
+		/// <remarks>
+		/// The default implementation uses the <see cref="Queryable"/> hatch when
+		/// <see cref="IsQueryable"/> is <c>true</c>.
+		/// </remarks>
+		protected virtual ValueTask<bool> ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken = default)
+			=> ExistsAsync(filter, null, cancellationToken);
 
 		/// <summary>
 		/// Checks if an entity exists in the repository that matches the given
@@ -383,6 +413,11 @@ namespace Kista {
 		/// <param name="cancellationToken">
 		/// A token used to cancel the operation.
 		/// </param>
+		/// <param name="options">
+		/// An optional bag of query options that influence how the query
+		/// is executed by the driver, such as the soft-delete mode. When
+		/// <c>null</c>, defaults to <see cref="QueryOptions.Default"/>.
+		/// </param>
 		/// <returns>
 		/// Returns the total count of items matching the given filtering conditions.
 		/// </returns>
@@ -399,13 +434,42 @@ namespace Kista {
 		/// <see cref="IsQueryable"/> is <c>true</c>.
 		/// </para>
 		/// </remarks>
-		protected virtual ValueTask<long> CountAsync(IQueryFilter filter, CancellationToken cancellationToken = default) {
+		protected virtual ValueTask<long> CountAsync(IQueryFilter? filter, IQueryOptions? options, CancellationToken cancellationToken = default) {
 			if (IsQueryable) {
 				var queryable = filter != null ? filter.Apply(Queryable()) : Queryable();
 				return CountAsync(queryable, cancellationToken);
 			}
 			throw new NotSupportedException("Filtering requires IQueryable support or a subclass override.");
 		}
+
+		/// <summary>
+		/// Counts the number of items in the repository matching the given
+		/// filtering conditions.
+		/// </summary>
+		/// <param name="filter">
+		/// The filter used to identify the items.
+		/// </param>
+		/// <param name="cancellationToken">
+		/// A token used to cancel the operation.
+		/// </param>
+		/// <returns>
+		/// Returns the total count of items matching the given filtering conditions.
+		/// </returns>
+		/// <exception cref="NotSupportedException">
+		/// Thrown when <see cref="IsQueryable"/> is <c>false</c> and the subclass
+		/// has not overridden this method.
+		/// </exception>
+		/// <remarks>
+		/// Passing a <c>null</c> filter or passing <see cref="QueryFilter.Empty"/> as
+		/// argument is equivalent to ask the repository not to use any filter, returning the
+		/// total count of all items in the inventory.
+		/// <para>
+		/// The default implementation uses the <see cref="Queryable"/> hatch when
+		/// <see cref="IsQueryable"/> is <c>true</c>.
+		/// </para>
+		/// </remarks>
+		protected virtual ValueTask<long> CountAsync(IQueryFilter filter, CancellationToken cancellationToken = default)
+			=> CountAsync(filter, null, cancellationToken);
 
 		/// <summary>
 		/// Counts the number of items in the repository that match the given
@@ -529,6 +593,42 @@ namespace Kista {
 		protected virtual ValueTask<IReadOnlyList<TEntity>> FindAllAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
 			=> FindAllAsync(Kista.Query.Where(predicate), cancellationToken);
 
+		/// <summary>
+		/// Finds the first entity matching the given query, with the
+		/// specified query options influencing the soft-delete filter mode.
+		/// </summary>
+		/// <param name="query">
+		/// The query to execute.
+		/// </param>
+		/// <param name="options">
+		/// The query options that influence how the query is executed,
+		/// such as the soft-delete mode.
+		/// </param>
+		/// <param name="cancellationToken">
+		/// A token used to cancel the operation.
+		/// </param>
+		/// <returns>
+		/// Returns the first entity matching the query, or <c>null</c> if
+		/// none found.
+		/// </returns>
+		/// <remarks>
+		/// This is the public entry point to the protected
+		/// <see cref="FindFirstAsync(IQuery, CancellationToken)"/> pipeline,
+		/// allowing companion assemblies (such as EntityManager) to execute
+		/// queries with specific soft-delete modes (for example
+		/// <see cref="SoftDeleteMode.IncludeDeleted"/> or
+		/// <see cref="SoftDeleteMode.OnlyDeleted"/>) without accessing the
+		/// protected query hatch directly.
+		/// </remarks>
+		public virtual ValueTask<TEntity?> FindFirstAsync(IQuery query, IQueryOptions? options, CancellationToken cancellationToken = default) {
+			var effectiveOptions = options ?? query.Options;
+			if (effectiveOptions == query.Options)
+				return FindFirstAsync(query, cancellationToken);
+
+			var queryWithOptions = new Query(query.Filter ?? QueryFilter.Empty, query.Order, effectiveOptions);
+			return FindFirstAsync(queryWithOptions, cancellationToken);
+		}
+
 		/// <inheritdoc />
 		public abstract ValueTask AddAsync(TEntity entity, CancellationToken cancellationToken = default);
 
@@ -542,7 +642,17 @@ namespace Kista {
 		public abstract ValueTask<bool> RemoveAsync(TEntity entity, CancellationToken cancellationToken = default);
 
 		/// <inheritdoc />
+		public virtual ValueTask<bool> HardDeleteAsync(TEntity entity, CancellationToken cancellationToken = default) {
+			throw new NotSupportedException("Hard delete is not supported by this repository.");
+		}
+
+		/// <inheritdoc />
 		public abstract ValueTask RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
+
+		/// <inheritdoc />
+		public virtual ValueTask HardDeleteRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) {
+			throw new NotSupportedException("Hard delete range is not supported by this repository.");
+		}
 
 		/// <inheritdoc />
 		public abstract ValueTask<TEntity?> FindAsync(TKey key, CancellationToken cancellationToken = default);
@@ -645,14 +755,14 @@ namespace Kista {
 			public override ValueTask<long> CountAsync(CancellationToken cancellationToken = default) {
 				cancellationToken.ThrowIfCancellationRequested();
 
-				return _repository.CountAsync(Query.Filter, cancellationToken);
+				return _repository.CountAsync(Query.Filter, Query.Options, cancellationToken);
 			}
 
 			/// <inheritdoc />
 			public override ValueTask<bool> AnyAsync(CancellationToken cancellationToken = default) {
 				cancellationToken.ThrowIfCancellationRequested();
 
-				return _repository.ExistsAsync(Query.Filter, cancellationToken);
+				return _repository.ExistsAsync(Query.Filter, Query.Options, cancellationToken);
 			}
 
 			/// <inheritdoc />

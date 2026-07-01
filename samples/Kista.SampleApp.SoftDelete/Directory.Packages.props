@@ -1,0 +1,12 @@
+<Project>
+
+  <!--
+    This sample is a standalone demo kept outside the centralized package
+    management of the main library. Disable CPM so that explicit Version
+    attributes on PackageReference items are honored.
+  -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+</Project>

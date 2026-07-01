@@ -67,6 +67,7 @@ namespace Kista {
 	/// </remarks>
 	public class QueryBuilder<TEntity> : IQuery, IQueryBuilder<TEntity> where TEntity : class {
 		private IQuery _query;
+		private IQueryOptions? _options;
 
 		/// <summary>
 		/// Creates a new standalone (unbound) query builder that
@@ -94,6 +95,7 @@ namespace Kista {
 		/// </param>
 		public QueryBuilder(IQuery? query) {
 			_query = query ?? global::Kista.Query.Empty;
+			_options = query?.Options;
 		}
 
 		/// <summary>
@@ -105,11 +107,29 @@ namespace Kista {
 		/// builder. Subsequent <c>Where</c> or <c>OrderBy</c> calls on the
 		/// builder do not mutate the previously returned <see cref="IQuery"/>.
 		/// </remarks>
-		public IQuery Query => _query;
+		public IQuery Query {
+			get {
+				if (_options == null)
+					return _query;
+
+				if (_query is Query q && q.Options == _options)
+					return _query;
+
+				return new Query(_query.Filter ?? QueryFilter.Empty, _query.Order, _options);
+			}
+		}
 
 		IQueryFilter? IQuery.Filter => _query.Filter;
 
 		IQueryOrder? IQuery.Order => _query.Order;
+
+		IQueryOptions? IQuery.Options => Options;
+
+		/// <summary>
+		/// Gets the query options accumulated by this builder, such as
+		/// the soft-delete mode.
+		/// </summary>
+		public IQueryOptions? Options => _options;
 
 		/// <summary>
 		/// Thrown by the default terminal-method implementation when the
@@ -156,8 +176,8 @@ namespace Kista {
 			ArgumentNullException.ThrowIfNull(filter);
 
 			_query = _query.HasFilter()
-				? new Query(QueryFilter.Combine(_query.Filter ?? QueryFilter.Empty, filter), _query.Order)
-				: new Query(filter, _query.Order);
+				? new Query(QueryFilter.Combine(_query.Filter ?? QueryFilter.Empty, filter), _query.Order, _options)
+				: new Query(filter, _query.Order, _options);
 
 			return this;
 		}
@@ -221,7 +241,7 @@ namespace Kista {
 			ArgumentNullException.ThrowIfNull(sort);
 
 			var combinedOrder = _query.Order?.Combine(sort) ?? sort;
-			_query = new Query(_query.Filter ?? QueryFilter.Empty, combinedOrder);
+			_query = new Query(_query.Filter ?? QueryFilter.Empty, combinedOrder, _options);
 
 			return this;
 		}
@@ -285,11 +305,63 @@ namespace Kista {
 		/// <inheritdoc />
 		IQueryBuilder<TEntity> IQueryBuilder<TEntity>.OrderBy(IQueryOrder sort) => OrderBy(sort);
 
+		/// <summary>
+		/// Sets the query to include soft-deleted entities alongside
+		/// active ones in the results.
+		/// </summary>
+		/// <returns>
+		/// Returns this query builder for chaining calls.
+		/// </returns>
+		/// <remarks>
+		/// This is a no-op for entities that do not implement
+		/// <see cref="ISoftDeletable"/>.
+		/// </remarks>
+		public virtual QueryBuilder<TEntity> IncludeDeleted() {
+			_options = QueryOptions.WithSoftDeleteMode(SoftDeleteMode.IncludeDeleted);
+			return this;
+		}
+
+		/// <summary>
+		/// Sets the query to return only soft-deleted entities, excluding
+		/// active ones.
+		/// </summary>
+		/// <returns>
+		/// Returns this query builder for chaining calls.
+		/// </returns>
+		/// <remarks>
+		/// This is a no-op for entities that do not implement
+		/// <see cref="ISoftDeletable"/>.
+		/// </remarks>
+		public virtual QueryBuilder<TEntity> OnlyDeleted() {
+			_options = QueryOptions.WithSoftDeleteMode(SoftDeleteMode.OnlyDeleted);
+			return this;
+		}
+
+		/// <summary>
+		/// Sets the query to apply the given soft-delete mode.
+		/// </summary>
+		/// <param name="mode">
+		/// The soft-delete mode to apply.
+		/// </param>
+		/// <returns>
+		/// Returns this query builder for chaining calls.
+		/// </returns>
+		public virtual QueryBuilder<TEntity> WithSoftDeleteMode(SoftDeleteMode mode) {
+			_options = QueryOptions.WithSoftDeleteMode(mode);
+			return this;
+		}
+
 		/// <inheritdoc />
 		IQueryBuilder<TEntity> IQueryBuilder<TEntity>.OrderBy(string fieldName, SortDirection direction) => OrderBy(fieldName, direction);
 
 		/// <inheritdoc />
 		IQueryBuilder<TEntity> IQueryBuilder<TEntity>.OrderByDescending(string fieldName) => OrderByDescending(fieldName);
+
+		/// <inheritdoc />
+		IQueryBuilder<TEntity> IQueryBuilder<TEntity>.IncludeDeleted() => IncludeDeleted();
+
+		/// <inheritdoc />
+		IQueryBuilder<TEntity> IQueryBuilder<TEntity>.OnlyDeleted() => OnlyDeleted();
 
 		/// <summary>
 		/// Executes the query and returns the first entity that matches

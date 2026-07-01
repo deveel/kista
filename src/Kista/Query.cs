@@ -21,7 +21,7 @@ namespace Kista {
 	/// </summary>
 	public readonly struct Query : IQuery {
 		/// <summary>
-		/// Constructs the query with the given filter and sort.
+		/// Constructs the query with the given filter, sort and options.
 		/// </summary>
 		/// <param name="filter">
 		/// The filter to apply to the query.
@@ -29,11 +29,17 @@ namespace Kista {
 		/// <param name="sort">
 		/// An optional sort to apply to the query.
 		/// </param>
-		public Query(IQueryFilter filter, IQueryOrder? sort = null) {
+		/// <param name="options">
+		/// An optional bag of query options that influence how the query
+		/// is executed by the driver. When <c>null</c>, defaults to
+		/// <see cref="QueryOptions.Default"/>.
+		/// </param>
+		public Query(IQueryFilter filter, IQueryOrder? sort = null, IQueryOptions? options = null) {
 			ArgumentNullException.ThrowIfNull(filter);
 
 			Filter = filter;
 			Order = sort;
+			Options = options;
 		}
 
 		/// <summary>
@@ -46,6 +52,16 @@ namespace Kista {
 		/// of the query.
 		/// </summary>
 		public IQueryOrder? Order { get; }
+
+		/// <summary>
+		/// Gets the options that influence how the query is executed
+		/// by the repository driver, such as the soft-delete mode.
+		/// </summary>
+		/// <remarks>
+		/// A <c>null</c> value is equivalent to
+		/// <see cref="QueryOptions.Default"/>.
+		/// </remarks>
+		public IQueryOptions? Options { get; }
 
 		/// <summary>
 		/// Represents an empty query, that will apply
@@ -77,6 +93,9 @@ namespace Kista {
 
 			/// <inheritdoc/>
 			public IQueryOrder? Order => null;
+
+			/// <inheritdoc/>
+			public IQueryOptions? Options => null;
 		}
 	}
 }

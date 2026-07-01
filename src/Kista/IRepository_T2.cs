@@ -151,7 +151,44 @@ namespace Kista {
 		ValueTask<bool> RemoveAsync(TEntity entity, CancellationToken cancellationToken = default);
 
 		/// <summary>
-		/// Removes a list of entities from the repository in one 
+		/// Permanently removes an entity from the repository, bypassing
+		/// any soft-delete behaviour, even when the entity implements
+		/// <see cref="ISoftDeletable"/>.
+		/// </summary>
+		/// <param name="entity">The entity to be hard-deleted</param>
+		/// <param name="cancellationToken">
+		/// A token used to cancel the operation.
+		/// </param>
+		/// <returns>
+		/// Returns <c>true</c> if the entity was successfully and physically
+		/// removed from the repository, otherwise <c>false</c>.
+		/// </returns>
+		/// <exception cref="ArgumentNullException">
+		/// Thrown if the provided <paramref name="entity"/> is <c>null</c>
+		/// </exception>
+		/// <exception cref="RepositoryException">
+		/// Thrown if an error occurred while removing the entity
+		/// </exception>
+		/// <remarks>
+		/// <para>
+		/// This operation is intended for background purge jobs that
+		/// definitively remove records previously soft-deleted, after a
+		/// retention period. It does not fire the soft-delete stamping
+		/// hooks.
+		/// </para>
+		/// <para>
+		/// The default interface implementation throws
+		/// <see cref="NotSupportedException"/>: repositories that do not
+		/// support hard deletion (or that only support soft deletion) are
+		/// not forced to provide a no-op override.
+		/// </para>
+		/// </remarks>
+		ValueTask<bool> HardDeleteAsync(TEntity entity, CancellationToken cancellationToken = default) {
+			throw new NotSupportedException("Hard delete is not supported by this repository.");
+		}
+
+		/// <summary>
+		/// Removes a list of entities from the repository in one
 		/// single operation.
 		/// </summary>
 		/// <param name="entities">
@@ -167,6 +204,39 @@ namespace Kista {
 		/// Thrown if it an error occurred while removing one or more entities
 		/// </exception>
 		ValueTask RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
+
+		/// <summary>
+		/// Permanently removes a list of entities from the repository,
+		/// bypassing any soft-delete behaviour, even when the entities
+		/// implement <see cref="ISoftDeletable"/>.
+		/// </summary>
+		/// <param name="entities">
+		/// The list of entities to be hard-deleted
+		/// </param>
+		/// <param name="cancellationToken">
+		/// A token to cancel the operation
+		/// </param>
+		/// <returns>
+		/// Returns a task that will complete when the operation is completed
+		/// </returns>
+		/// <exception cref="RepositoryException">
+		/// Thrown if an error occurred while removing one or more entities
+		/// </exception>
+		/// <remarks>
+		/// <para>
+		/// This operation is intended for background purge jobs that
+		/// definitively remove records previously soft-deleted, after a
+		/// retention period. It does not fire the soft-delete stamping
+		/// hooks.
+		/// </para>
+		/// <para>
+		/// The default interface implementation throws
+		/// <see cref="NotSupportedException"/>.
+		/// </para>
+		/// </remarks>
+		ValueTask HardDeleteRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) {
+			throw new NotSupportedException("Hard delete range is not supported by this repository.");
+		}
 
 		/// <summary>
 		/// Attempts to find in the repository an entity with the 

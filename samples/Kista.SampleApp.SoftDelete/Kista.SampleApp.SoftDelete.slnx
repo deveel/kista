@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Kista.SampleApp.SoftDelete/Kista.SampleApp.SoftDelete.csproj" />
+  </Folder>
+</Solution>

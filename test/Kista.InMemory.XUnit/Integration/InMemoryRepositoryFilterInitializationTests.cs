@@ -82,7 +82,7 @@ public class InMemoryRepositoryFilterInitializationTests {
         filter.Initialize(new DefaultFilterContext(provider));
 
         var result1 = filter.Apply<Person>(_persons.AsQueryable()).FirstOrDefault();
-        var result2 = filter.Apply<Person>(_persons.AsQueryable()).FirstOrDefault();
+        filter.Apply<Person>(_persons.AsQueryable()).FirstOrDefault();
 
 		Assert.NotNull(result1);
 		Assert.Equal("John", result1.FirstName);
@@ -163,11 +163,6 @@ public class InMemoryRepositoryFilterInitializationTests {
 	[Fact]
 	public async Task CountAsync_UsesConstructorCache_OverResolvedCache() {
 		var constructorCache = new BoundedExpressionCache(100);
-		var diCache = new BoundedExpressionCache(200);
-
-		var services = new ServiceCollection();
-		services.AddSingleton<IExpressionCache>(diCache);
-		var provider = services.BuildServiceProvider();
 
         var filter = new DynamicLinqFilter("x.FirstName == \"John\"", constructorCache);
 
@@ -176,7 +171,6 @@ public class InMemoryRepositoryFilterInitializationTests {
 
 		Assert.Same(constructorCache, filter.Cache);
 		Assert.Equal(1, constructorCache.Statistics.Hits);
-		Assert.Equal(0, diCache.Statistics.Hits);
 	}
 
 	#endregion
@@ -208,10 +202,6 @@ public class InMemoryRepositoryFilterInitializationTests {
 
 	[Fact]
 	public async Task CountAsync_WorksWithExpressionFilter_WhenServiceProviderProvided() {
-		var services = new ServiceCollection();
-		services.AddSingleton<IExpressionCache>(new BoundedExpressionCache(100));
-		var provider = services.BuildServiceProvider();
-
         var filter = new ExpressionQueryFilter<Person>(x => x.FirstName == "John");
 
         var count = filter.Apply<Person>(_persons.AsQueryable()).LongCount();

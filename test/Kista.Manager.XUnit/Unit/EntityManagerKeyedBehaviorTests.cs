@@ -670,7 +670,7 @@ public class EntityManagerKeyedBehaviorTests
     {
         protected override IServiceProvider? Services => null;
         protected override string? GetEntityKey(Person entity) => entity.Id;
-        public override IQueryable<Person> Queryable() => throw new NotSupportedException();
+        protected override IQueryable<Person> Queryable() => throw new NotSupportedException();
 
         public override ValueTask AddAsync(Person entity, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
         public override ValueTask AddRangeAsync(IEnumerable<Person> entities, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;

@@ -5,6 +5,7 @@
     <ProjectReference Include="..\..\src\Kista.Manager.AspNetCore\Kista.Manager.AspNetCore.csproj" />
     <ProjectReference Include="..\..\src\Kista.Owners\Kista.Owners.csproj" />
     <ProjectReference Include="..\Kista.Manager.Testing\Kista.Manager.Testing.csproj" />
+    <ProjectReference Include="..\Kista.Testing\Kista.Testing.csproj" />
     <ProjectReference Include="..\Kista.Testing.Utils\Kista.Testing.Utils.csproj" />
   </ItemGroup>
 

@@ -132,7 +132,7 @@ public class RepositoryBaseEfTests {
 	/// implements the abstract <c>Queryable()</c> hatch by returning the EF
 	/// <see cref="DbSet{TEntity}"/> as <see cref="IQueryable{T}"/>.
 	/// </summary>
-	private class TestEfRepository : Repository<DbPerson, Guid> {
+	private class TestEfRepository : Repository<DbPerson, Guid>, ITestRepository<DbPerson, Guid> {
 		private readonly PersonDbContext context;
 
 		public TestEfRepository(PersonDbContext context) {
@@ -148,7 +148,7 @@ public class RepositoryBaseEfTests {
 			return entity.Id;
 		}
 
-		public override IQueryable<DbPerson> Queryable() => context.Set<DbPerson>();
+		protected override IQueryable<DbPerson> Queryable() => context.Set<DbPerson>();
 
 		protected override bool IsQueryable => true;
 
@@ -200,6 +200,20 @@ public class RepositoryBaseEfTests {
 		/// </summary>
 		public ValueTask<IReadOnlyList<DbPerson>> PublicFindAsync(IQuery query, CancellationToken ct = default) =>
 			base.FindAsync(query, ct);
+
+		ValueTask<DbPerson?> ITestRepository<DbPerson, Guid>.FindFirstAsync(IQuery query, CancellationToken cancellationToken)
+			=> FindFirstAsync(query, cancellationToken);
+
+		ValueTask<IReadOnlyList<DbPerson>> ITestRepository<DbPerson, Guid>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
+			=> FindAllAsync(query, cancellationToken);
+
+		ValueTask<long> ITestRepository<DbPerson, Guid>.CountAsync(IQueryFilter filter, CancellationToken cancellationToken)
+			=> CountAsync(filter, cancellationToken);
+
+		ValueTask<bool> ITestRepository<DbPerson, Guid>.ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken)
+			=> ExistsAsync(filter, cancellationToken);
+
+		IQueryable<DbPerson> ITestRepository<DbPerson, Guid>.Queryable() => Queryable();
 	}
 
 	/// <summary>
@@ -211,7 +225,7 @@ public class RepositoryBaseEfTests {
 	private sealed class NoTrackingEfRepository : TestEfRepository {
 		public NoTrackingEfRepository(PersonDbContext context) : base(context) { }
 
-		public override IQueryable<DbPerson> Queryable() => Context.Set<DbPerson>().AsNoTracking();
+		protected override IQueryable<DbPerson> Queryable() => Context.Set<DbPerson>().AsNoTracking();
 	}
 
 	private sealed class EfFixture : IAsyncDisposable {

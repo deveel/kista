@@ -11,7 +11,7 @@ internal sealed class EfBenchmarkDriver : IRepositoryBenchmarkDriver<EfBenchPers
 	private MySqlContainer? _container;
 	private string _connectionString = String.Empty;
 	private PersonContext? _context;
-	private EntityRepository<EfBenchPerson, int>? _repository;
+	private BenchmarkEntityRepository<EfBenchPerson, int>? _repository;
 
 	public IRepository<EfBenchPerson, int> Repository =>
 		_repository ?? throw new InvalidOperationException("The Entity Framework repository was not initialized.");
@@ -41,7 +41,7 @@ internal sealed class EfBenchmarkDriver : IRepositoryBenchmarkDriver<EfBenchPers
 		_context.People.RemoveRange(_context.People.ToList());
 		_context.SaveChanges();
 
-		_repository = new EntityRepository<EfBenchPerson, int>(_context);
+		_repository = new BenchmarkEntityRepository<EfBenchPerson, int>(_context);
 
 		if (seedEntities is { Count: > 0 }) {
 			_repository.AddRangeAsync(seedEntities).GetAwaiter().GetResult();

@@ -110,7 +110,18 @@ namespace Kista {
 		/// Returns the <see cref="IQueryable{T}"/> produced by
 		/// <see cref="DbSet"/>.AsQueryable().
 		/// </returns>
-		public override IQueryable<TEntity> Queryable() => DbSet.AsQueryable();
+		protected override IQueryable<TEntity> Queryable() => DbSet.AsQueryable();
+
+		/// <summary>
+		/// Returns the engine-native <see cref="IQueryable{T}"/> for use by
+		/// engine-coupled extensions in this assembly (for example the
+		/// geo-distance filters). Consumer code must not call this method.
+		/// </summary>
+		/// <returns>
+		/// Returns the <see cref="IQueryable{T}"/> produced by
+		/// <see cref="DbSet"/>.AsQueryable().
+		/// </returns>
+		internal IQueryable<TEntity> EngineQueryable() => DbSet.AsQueryable();
 
 		/// <inheritdoc />
 		protected override bool IsQueryable => true;

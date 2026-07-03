@@ -17,10 +17,4 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
-  <ItemGroup>
-    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
-      <_Parameter1>Kista.Owners.XUnit</_Parameter1>
-    </AssemblyAttribute>
-  </ItemGroup>
-
 </Project>

@@ -5,7 +5,7 @@ using Kista.Benchmarks.Models;
 namespace Kista.Benchmarks.Drivers;
 
 internal sealed class InMemoryBenchmarkDriver : IRepositoryBenchmarkDriver<InMemoryBenchPerson, string> {
-	private InMemoryRepository<InMemoryBenchPerson, string>? _repository;
+	private BenchmarkInMemoryRepository<InMemoryBenchPerson, string>? _repository;
 
 	public IRepository<InMemoryBenchPerson, string> Repository =>
 		_repository ?? throw new InvalidOperationException("The in-memory repository was not initialized.");
@@ -16,7 +16,7 @@ internal sealed class InMemoryBenchmarkDriver : IRepositoryBenchmarkDriver<InMem
 
 	public void Reset(IReadOnlyCollection<InMemoryBenchPerson>? seedEntities = null) {
 		_repository?.Dispose();
-		_repository = new InMemoryRepository<InMemoryBenchPerson, string>();
+		_repository = new BenchmarkInMemoryRepository<InMemoryBenchPerson, string>();
 
 		if (seedEntities is { Count: > 0 }) {
 			_repository.AddRangeAsync(seedEntities).GetAwaiter().GetResult();

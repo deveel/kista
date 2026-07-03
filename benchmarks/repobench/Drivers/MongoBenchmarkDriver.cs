@@ -18,7 +18,7 @@ internal sealed class MongoBenchmarkDriver : IRepositoryBenchmarkDriver<MongoBen
 	private MongoDbContainer? _container;
 	private string _connectionString = String.Empty;
 	private ServiceProvider? _serviceProvider;
-	private MongoRepository<MongoBenchPerson, ObjectId>? _repository;
+	private BenchmarkMongoRepository<MongoBenchPerson, ObjectId>? _repository;
 
 	public IRepository<MongoBenchPerson, ObjectId> Repository =>
 		_repository ?? throw new InvalidOperationException("The Mongo repository was not initialized.");
@@ -45,7 +45,7 @@ internal sealed class MongoBenchmarkDriver : IRepositoryBenchmarkDriver<MongoBen
 		_serviceProvider = services.BuildServiceProvider();
 
 		var context = _serviceProvider.GetRequiredService<IMongoDbContext>();
-		_repository = new MongoRepository<MongoBenchPerson, ObjectId>(context);
+		_repository = new BenchmarkMongoRepository<MongoBenchPerson, ObjectId>(context);
 
 		if (seedEntities is { Count: > 0 }) {
 			_repository.AddRangeAsync(seedEntities).GetAwaiter().GetResult();

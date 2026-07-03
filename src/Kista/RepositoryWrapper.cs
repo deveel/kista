@@ -52,9 +52,6 @@ namespace Kista {
 		/// <inheritdoc/>
 		public IQueryable<TEntity> AsQueryable() => entities.AsQueryable();
 
-		/// <inheritdoc/>
-		public IQueryable<TEntity> Queryable() => AsQueryable();
-
 		private MemberInfo DiscoverKeyMember() {
 			if (idMember == null) {
 				var idMembers = typeof(TEntity).GetMembers(BindingFlags.Instance | BindingFlags.Public)

@@ -27,6 +27,7 @@
     <ProjectReference Include="..\..\src\Kista.InMemory\Kista.InMemory.csproj" />
     <ProjectReference Include="..\..\src\Kista.MongoFramework\Kista.MongoFramework.csproj" />
     <ProjectReference Include="..\..\src\Kista.DynamicLinq\Kista.DynamicLinq.csproj" />
+    <ProjectReference Include="..\..\test\Kista.Testing\Kista.Testing.csproj" />
   </ItemGroup>
 
 </Project>

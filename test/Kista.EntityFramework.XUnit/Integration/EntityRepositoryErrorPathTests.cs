@@ -144,11 +144,11 @@ public sealed class EntityRepositoryErrorPathTests : IDisposable
         var dbContext = CreateDbContext();
         await dbContext.Database.EnsureCreatedAsync(ct);
 
-        var repo = new EntityRepository<SimpleEntity, int>(dbContext);
+        var repo = new TestSimpleEntityRepository(dbContext);
         await dbContext.DisposeAsync();
 
-        Assert.Throws<ObjectDisposedException>(() =>
-            QueryFilter.Empty.Apply<SimpleEntity>(((Repository<SimpleEntity, int>)repo).Queryable()).Any());
+        Assert.Throws<RepositoryException>(() =>
+            ((ITestRepository<SimpleEntity, int>)repo).ExistsAsync(QueryFilter.Empty).AsTask().GetAwaiter().GetResult());
     }
 
     [Fact]
@@ -158,11 +158,11 @@ public sealed class EntityRepositoryErrorPathTests : IDisposable
         var dbContext = CreateDbContext();
         await dbContext.Database.EnsureCreatedAsync(ct);
 
-        var repo = new EntityRepository<SimpleEntity, int>(dbContext);
+        var repo = new TestSimpleEntityRepository(dbContext);
         await dbContext.DisposeAsync();
 
-        Assert.Throws<ObjectDisposedException>(() =>
-            QueryFilter.Empty.Apply<SimpleEntity>(((Repository<SimpleEntity, int>)repo).Queryable()).LongCount());
+        Assert.Throws<RepositoryException>(() =>
+            ((ITestRepository<SimpleEntity, int>)repo).CountAsync(QueryFilter.Empty).AsTask().GetAwaiter().GetResult());
     }
 
     [Fact]
@@ -172,11 +172,11 @@ public sealed class EntityRepositoryErrorPathTests : IDisposable
         var dbContext = CreateDbContext();
         await dbContext.Database.EnsureCreatedAsync(ct);
 
-        var repo = new EntityRepository<SimpleEntity, int>(dbContext);
+        var repo = new TestSimpleEntityRepository(dbContext);
         await dbContext.DisposeAsync();
 
-        Assert.Throws<ObjectDisposedException>(() =>
-            ((Repository<SimpleEntity, int>)repo).Queryable().FirstOrDefault());
+        Assert.Throws<RepositoryException>(() =>
+            ((ITestRepository<SimpleEntity, int>)repo).FindFirstAsync(Kista.Query.Empty).AsTask().GetAwaiter().GetResult());
     }
 
     [Fact]
@@ -186,11 +186,11 @@ public sealed class EntityRepositoryErrorPathTests : IDisposable
         var dbContext = CreateDbContext();
         await dbContext.Database.EnsureCreatedAsync(ct);
 
-        var repo = new EntityRepository<SimpleEntity, int>(dbContext);
+        var repo = new TestSimpleEntityRepository(dbContext);
         await dbContext.DisposeAsync();
 
-        Assert.Throws<ObjectDisposedException>(() =>
-            ((Repository<SimpleEntity, int>)repo).Queryable().ToList());
+        Assert.Throws<RepositoryException>(() =>
+            ((ITestRepository<SimpleEntity, int>)repo).FindAllAsync(Kista.Query.Empty).AsTask().GetAwaiter().GetResult());
     }
 
     [Fact]
@@ -331,5 +331,23 @@ public sealed class EntityRepositoryErrorPathTests : IDisposable
             modelBuilder.Entity<NoKeyEntity>().HasNoKey();
             modelBuilder.Entity<CompositeKeyEntity>().HasKey(x => new { x.Key1, x.Key2 });
         }
+    }
+
+    private sealed class TestSimpleEntityRepository : EntityRepository<SimpleEntity, int>, ITestRepository<SimpleEntity, int> {
+        public TestSimpleEntityRepository(DbContext context) : base(context) { }
+
+        ValueTask<SimpleEntity?> ITestRepository<SimpleEntity, int>.FindFirstAsync(IQuery query, CancellationToken cancellationToken)
+            => FindFirstAsync(query, cancellationToken);
+
+        ValueTask<IReadOnlyList<SimpleEntity>> ITestRepository<SimpleEntity, int>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
+            => FindAllAsync(query, cancellationToken);
+
+        ValueTask<long> ITestRepository<SimpleEntity, int>.CountAsync(IQueryFilter filter, CancellationToken cancellationToken)
+            => CountAsync(filter, cancellationToken);
+
+        ValueTask<bool> ITestRepository<SimpleEntity, int>.ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken)
+            => ExistsAsync(filter, cancellationToken);
+
+        IQueryable<SimpleEntity> ITestRepository<SimpleEntity, int>.Queryable() => Queryable();
     }
 }

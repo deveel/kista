@@ -30,28 +30,6 @@ public class MongoRepositoryNoKeyUnitTests
 	}
 
 	[Fact]
-	public void AsQueryable_ShouldReturnQueryable()
-	{
-		// Arrange
-		var services = new ServiceCollection();
-		services.AddMongoDbContext<TestMongoContext>(builder => {
-			builder.UseConnection("mongodb://localhost:27017/testdb");
-		});
-
-		var provider = services.BuildServiceProvider();
-		var context = provider.GetRequiredService<TestMongoContext>();
-		var repository = new MongoRepository<TestEntity>(context, (ILogger<MongoRepository<TestEntity>>?)null);
-
-		// Act
-#pragma warning disable CS0618
-		var queryable = repository.Queryable();
-#pragma warning restore CS0618
-
-		// Assert
-		Assert.NotNull(queryable);
-	}
-
-	[Fact]
 	public void GetEntityKey_ViaInterface_ShouldReturnKey()
 	{
 		// Arrange

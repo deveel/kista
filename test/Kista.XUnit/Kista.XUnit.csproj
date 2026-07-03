@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Kista\Kista.csproj" />
+    <ProjectReference Include="..\Kista.Testing\Kista.Testing.csproj" />
     <ProjectReference Include="..\..\src\Kista.HealthChecks\Kista.HealthChecks.csproj" />
     <ProjectReference Include="..\..\src\Kista.HealthChecks.EntityFramework\Kista.HealthChecks.EntityFramework.csproj" />
     <ProjectReference Include="..\..\src\Kista.HealthChecks.MongoFramework\Kista.HealthChecks.MongoFramework.csproj" />

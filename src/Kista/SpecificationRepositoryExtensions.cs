@@ -52,8 +52,7 @@ namespace Kista {
 				throw new NotSupportedException(NotFilterableMessage);
 
 			var query = specification.ToQuery();
-			var result = query.Apply(repo.Queryable()).FirstOrDefault();
-			return new ValueTask<TEntity?>(result);
+			return repo.FindFirstAsyncInternal(query, cancellationToken);
 		}
 
 		/// <summary>
@@ -89,8 +88,7 @@ namespace Kista {
 				throw new NotSupportedException(NotFilterableMessage);
 
 			var query = specification.ToQuery();
-			var result = query.Apply(repo.Queryable()).ToList();
-			return new ValueTask<IReadOnlyList<TEntity>>(result);
+			return repo.FindAllAsyncInternal(query, cancellationToken);
 		}
 
 		/// <summary>
@@ -125,9 +123,8 @@ namespace Kista {
 			if (!(repository is Repository<TEntity, TKey> repo))
 				throw new NotSupportedException(NotFilterableMessage);
 
-			var query = specification.ToQuery();
-			var result = query.Apply(repo.Queryable()).LongCount();
-			return new ValueTask<long>(result);
+			var filter = specification.ToQuery().Filter;
+			return repo.CountAsyncInternal(filter, cancellationToken);
 		}
 
 		/// <summary>
@@ -163,9 +160,8 @@ namespace Kista {
 			if (!(repository is Repository<TEntity, TKey> repo))
 				throw new NotSupportedException(NotFilterableMessage);
 
-			var query = specification.ToQuery();
-			var result = query.Apply(repo.Queryable()).Any();
-			return result;
+			var filter = specification.ToQuery().Filter;
+			return await repo.ExistsAsyncInternal(filter, cancellationToken).ConfigureAwait(false);
 		}
 	}
 }

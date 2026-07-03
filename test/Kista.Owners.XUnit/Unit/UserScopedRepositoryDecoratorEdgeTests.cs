@@ -189,22 +189,22 @@ public class UserScopedRepositoryDecoratorEdgeTests
     [Fact]
     public void Should_FilterByOwner_When_DecoratorUsedDirectly()
     {
-        var aliceInner = new InMemoryRepository<StringKeyEntity, string>(null, null, null);
+        var aliceInner = new StringKeyRepo();
         var aliceDecorator = new UserScopedRepositoryDecorator<StringKeyEntity, string, string>(
             aliceInner, new StaticUserAccessor("alice"));
 
-        var bobInner = new InMemoryRepository<StringKeyEntity, string>(null, null, null);
+        var bobInner = new StringKeyRepo();
         var bobDecorator = new UserScopedRepositoryDecorator<StringKeyEntity, string, string>(
             bobInner, new StaticUserAccessor("bob"));
 
         aliceDecorator.AddAsync(new StringKeyEntity { Name = "Alice's" }).GetAwaiter().GetResult();
         bobDecorator.AddAsync(new StringKeyEntity { Name = "Bob's" }).GetAwaiter().GetResult();
 
-        var aliceItems = aliceInner.Queryable().ToList();
+        var aliceItems = ((ITestRepository<StringKeyEntity, string>)aliceInner).FindAllAsync(Kista.Query.Empty).GetAwaiter().GetResult();
         Assert.Single(aliceItems);
         Assert.Equal("Alice's", aliceItems[0].Name);
 
-        var bobItems = bobInner.Queryable().ToList();
+        var bobItems = ((ITestRepository<StringKeyEntity, string>)bobInner).FindAllAsync(Kista.Query.Empty).GetAwaiter().GetResult();
         Assert.Single(bobItems);
         Assert.Equal("Bob's", bobItems[0].Name);
     }
@@ -411,9 +411,25 @@ public class UserScopedRepositoryDecoratorEdgeTests
     // Repository Types
     // ============================================================
 
-    public class StringKeyRepo : InMemoryRepository<StringKeyEntity, string>
+    public class StringKeyRepo : InMemoryRepository<StringKeyEntity, string>, ITestRepository<StringKeyEntity, string>
     {
         public StringKeyRepo(IServiceProvider sp) : base(null, null, sp) { }
+
+        public StringKeyRepo() : base(null, null, null) { }
+
+        ValueTask<StringKeyEntity?> ITestRepository<StringKeyEntity, string>.FindFirstAsync(IQuery query, CancellationToken cancellationToken)
+            => FindFirstAsync(query, cancellationToken);
+
+        ValueTask<IReadOnlyList<StringKeyEntity>> ITestRepository<StringKeyEntity, string>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
+            => FindAllAsync(query, cancellationToken);
+
+        ValueTask<long> ITestRepository<StringKeyEntity, string>.CountAsync(IQueryFilter filter, CancellationToken cancellationToken)
+            => CountAsync(filter, cancellationToken);
+
+        ValueTask<bool> ITestRepository<StringKeyEntity, string>.ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken)
+            => ExistsAsync(filter, cancellationToken);
+
+        IQueryable<StringKeyEntity> ITestRepository<StringKeyEntity, string>.Queryable() => Queryable();
     }
 
     public class IntKeyRepo : InMemoryRepository<IntKeyEntity, int>

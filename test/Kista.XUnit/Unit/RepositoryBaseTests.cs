@@ -427,7 +427,7 @@ public class RepositoryTests {
 	public async Task FilterableInterface_ExistsAsync_Delegates() {
 		var sut = new TestRepository();
 
-        var result = await Task.FromResult(new ExpressionQueryFilter<Person>(p => p.FirstName == "Alice").Apply<Person>(sut.Queryable()).Any());
+        var result = await sut.PublicExistsAsync(new ExpressionQueryFilter<Person>(p => p.FirstName == "Alice"));
 
         Assert.True(result);
     }
@@ -436,7 +436,7 @@ public class RepositoryTests {
     public async Task FilterableInterface_CountAsync_Delegates() {
         var sut = new TestRepository(seedCount: 10);
 
-        var result = await Task.FromResult(new ExpressionQueryFilter<Person>(p => p.FirstName == "Alice").Apply<Person>(sut.Queryable()).LongCount());
+        var result = await sut.PublicCountAsync(new ExpressionQueryFilter<Person>(p => p.FirstName == "Alice"));
 
 		Assert.True(result > 0);
 	}
@@ -445,7 +445,7 @@ public class RepositoryTests {
 	public async Task FilterableInterface_FindFirstAsync_Delegates() {
 		var sut = new TestRepository();
 
-        var result = await Task.FromResult(Query.Where<Person>(p => p.FirstName == "Alice").Apply<Person>(sut.Queryable()).FirstOrDefault());
+        var result = await sut.PublicFindFirstAsync(Query.Where<Person>(p => p.FirstName == "Alice"));
 
         Assert.NotNull(result);
     }
@@ -454,7 +454,7 @@ public class RepositoryTests {
     public async Task FilterableInterface_FindAllAsync_Delegates() {
         var sut = new TestRepository();
 
-        var result = await Task.FromResult((IReadOnlyList<Person>)Query.Where<Person>(p => p.FirstName == "Alice").Apply<Person>(sut.Queryable()).ToList());
+        var result = await sut.PublicFindAllAsync(Query.Where<Person>(p => p.FirstName == "Alice"));
 
 		Assert.NotEmpty(result);
 	}
@@ -482,17 +482,21 @@ public class RepositoryTests {
 
 	#endregion
 
-	#region Negative coverage — Queryable() hatch is accessible
+	#region Negative coverage — Queryable() hatch is protected
 
 	[Fact]
-	public void QueryableHatch_IsPublic() {
-		// Queryable() is public so companion assemblies (EntityManager,
-		// decorators) can access the queryable. Consumer code should
-		// use CreateQuery() instead.
+	public void QueryableHatch_IsProtected() {
+		// Queryable() is protected so only inherited classes and the
+		// base-class query pipeline can touch the engine-native queryable.
+		// Companion assemblies use the internal filterable entry points
+		// (FindFirstAsync/FindAllAsync/CountAsync/ExistsAsync) or
+		// CreateQuery(); consumer code sees neither.
 		var declared = typeof(Repository<Person, string>)
 			.GetMethod("Queryable", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
 		Assert.NotNull(declared);
-		Assert.True(declared!.IsPublic, "Queryable() hatch must be public");
+		Assert.False(declared!.IsPublic, "Queryable() hatch must not be public");
+		Assert.True(declared.IsFamily || declared.IsFamilyOrAssembly || declared.IsFamilyAndAssembly,
+			"Queryable() hatch must be protected (family) — at least one of: IsFamily, IsFamilyOrAssembly, IsFamilyAndAssembly");
 	}
 
 	[Fact]
@@ -538,7 +542,7 @@ public class RepositoryTests {
 		protected override string? GetEntityKey(Person entity) => entity.Id;
 
 		/// <inheritdoc />
-		public override IQueryable<Person> Queryable() => _people.AsQueryable();
+		protected override IQueryable<Person> Queryable() => _people.AsQueryable();
 
 		/// <inheritdoc />
 		protected override bool IsQueryable => true;
@@ -631,7 +635,7 @@ public class RepositoryTests {
 	private sealed class NonQueryableRepository : Repository<Person, string> {
 		protected override IServiceProvider? Services => null;
 		protected override string? GetEntityKey(Person entity) => entity.Id;
-		public override IQueryable<Person> Queryable() => throw new NotSupportedException();
+		protected override IQueryable<Person> Queryable() => throw new NotSupportedException();
 
 		public ValueTask<bool> PublicExistsAsync(IQueryFilter filter, CancellationToken cancellationToken = default)
 			=> ExistsAsync(filter, cancellationToken);
@@ -671,7 +675,7 @@ public class RepositoryTests {
 
 		protected override IServiceProvider? Services => null;
 		protected override string? GetEntityKey(Person entity) => entity.Id;
-		public override IQueryable<Person> Queryable() => Array.Empty<Person>().AsQueryable();
+		protected override IQueryable<Person> Queryable() => Array.Empty<Person>().AsQueryable();
 		protected override bool IsQueryable => true;
 
 		public override ValueTask AddAsync(Person entity, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;

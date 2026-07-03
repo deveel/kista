@@ -509,6 +509,27 @@ namespace Kista {
 		}
 
 		/// <summary>
+		/// Finds all the items in the repository that match the given
+		/// predicate expression.
+		/// </summary>
+		/// <param name="predicate">
+		/// The predicate expression used to identify the items to return.
+		/// </param>
+		/// <param name="cancellationToken">
+		/// A token used to cancel the operation.
+		/// </param>
+		/// <returns>
+		/// Returns a read-only list of items in the repository that match the given predicate,
+		/// or an empty list if none of the items matches the condition.
+		/// </returns>
+		/// <exception cref="NotSupportedException">
+		/// Thrown when <see cref="IsQueryable"/> is <c>false</c> and the subclass
+		/// has not overridden this method.
+		/// </exception>
+		protected virtual ValueTask<IReadOnlyList<TEntity>> FindAllAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+			=> FindAllAsync(Kista.Query.Where(predicate), cancellationToken);
+
+		/// <summary>
 		/// Internal dispatch entry point for the filterable pipeline,
 		/// accessible to Kista-owned companion assemblies (decorators,
 		/// specification extensions) through <c>InternalsVisibleTo</c>.
@@ -551,27 +572,6 @@ namespace Kista {
 		/// </summary>
 		internal ValueTask<bool> ExistsAsyncInternal(IQueryFilter filter, CancellationToken cancellationToken = default)
 			=> ExistsAsync(filter, cancellationToken);
-
-		/// <summary>
-		/// Finds all the items in the repository that match the given
-		/// predicate expression.
-		/// </summary>
-		/// <param name="predicate">
-		/// The predicate expression used to identify the items to return.
-		/// </param>
-		/// <param name="cancellationToken">
-		/// A token used to cancel the operation.
-		/// </param>
-		/// <returns>
-		/// Returns a read-only list of items in the repository that match the given predicate,
-		/// or an empty list if none of the items matches the condition.
-		/// </returns>
-		/// <exception cref="NotSupportedException">
-		/// Thrown when <see cref="IsQueryable"/> is <c>false</c> and the subclass
-		/// has not overridden this method.
-		/// </exception>
-		protected virtual ValueTask<IReadOnlyList<TEntity>> FindAllAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
-			=> FindAllAsync(Kista.Query.Where(predicate), cancellationToken);
 
 		/// <inheritdoc />
 		public abstract ValueTask AddAsync(TEntity entity, CancellationToken cancellationToken = default);

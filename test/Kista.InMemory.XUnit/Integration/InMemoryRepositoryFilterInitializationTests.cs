@@ -42,7 +42,6 @@ public class InMemoryRepositoryFilterInitializationTests {
 		services.AddSingleton<IExpressionCache>(cache);
 		var provider = services.BuildServiceProvider();
 
-		var repo = new InMemoryRepository<Person, string>(_persons, services: provider);
 		var filter = new DynamicLinqFilter("x.FirstName == \"John\"");
 		filter.Initialize(new DefaultFilterContext(provider));
 
@@ -61,7 +60,6 @@ public class InMemoryRepositoryFilterInitializationTests {
 		services.AddSingleton<IExpressionCache>(cache);
 		var provider = services.BuildServiceProvider();
 
-		var repo = new InMemoryRepository<Person, string>(_persons, services: provider);
 		var filter = new DynamicLinqFilter("x.FirstName == \"Jane\"");
 		filter.Initialize(new DefaultFilterContext(provider));
 
@@ -80,7 +78,6 @@ public class InMemoryRepositoryFilterInitializationTests {
 		services.AddSingleton<IExpressionCache>(cache);
 		var provider = services.BuildServiceProvider();
 
-        var repo = new InMemoryRepository<Person, string>(_persons, services: provider);
         var filter = new DynamicLinqFilter("x.LastName == \"Smith\"");
         filter.Initialize(new DefaultFilterContext(provider));
 
@@ -99,7 +96,6 @@ public class InMemoryRepositoryFilterInitializationTests {
 		services.AddSingleton<IExpressionCache>(cache);
 		var provider = services.BuildServiceProvider();
 
-        var repo = new InMemoryRepository<Person, string>(_persons, services: provider);
         var filter = new DynamicLinqFilter("x.LastName == \"Doe\"");
         filter.Initialize(new DefaultFilterContext(provider));
 
@@ -138,7 +134,6 @@ public class InMemoryRepositoryFilterInitializationTests {
 
 	[Fact]
 	public async Task CountAsync_DoesNotCache_WhenNoServiceProvider() {
-        var repo = new InMemoryRepository<Person, string>(_persons);
         var filter = new DynamicLinqFilter("x.FirstName == \"John\"");
 
         var count1 = filter.Apply<Person>(_persons.AsQueryable()).LongCount();
@@ -151,7 +146,6 @@ public class InMemoryRepositoryFilterInitializationTests {
 
 	[Fact]
 	public async Task ExistsAsync_DoesNotCache_WhenNoServiceProvider() {
-        var repo = new InMemoryRepository<Person, string>(_persons);
         var filter = new DynamicLinqFilter("x.FirstName == \"Jane\"");
 
         var exists1 = filter.Apply<Person>(_persons.AsQueryable()).Any();
@@ -175,7 +169,6 @@ public class InMemoryRepositoryFilterInitializationTests {
 		services.AddSingleton<IExpressionCache>(diCache);
 		var provider = services.BuildServiceProvider();
 
-        var repo = new InMemoryRepository<Person, string>(_persons, services: provider);
         var filter = new DynamicLinqFilter("x.FirstName == \"John\"", constructorCache);
 
         filter.Apply<Person>(_persons.AsQueryable()).LongCount();
@@ -197,7 +190,6 @@ public class InMemoryRepositoryFilterInitializationTests {
 		services.AddSingleton<IExpressionCache>(cache);
 		var provider = services.BuildServiceProvider();
 
-		var repo = new InMemoryRepository<Person, string>(_persons, services: provider);
         var filter1 = new DynamicLinqFilter("x.FirstName == \"John\"");
         var filter2 = new DynamicLinqFilter("x.LastName == \"Doe\"");
         var combined = QueryFilter.Combine(filter1, filter2);
@@ -220,7 +212,6 @@ public class InMemoryRepositoryFilterInitializationTests {
 		services.AddSingleton<IExpressionCache>(new BoundedExpressionCache(100));
 		var provider = services.BuildServiceProvider();
 
-        var repo = new InMemoryRepository<Person, string>(_persons, services: provider);
         var filter = new ExpressionQueryFilter<Person>(x => x.FirstName == "John");
 
         var count = filter.Apply<Person>(_persons.AsQueryable()).LongCount();

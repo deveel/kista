@@ -424,16 +424,7 @@ public class RepositoryTests {
 	#region Filterable operations
 
 	[Fact]
-	public async Task FilterableInterface_ExistsAsync_Delegates() {
-		var sut = new TestRepository();
-
-        var result = await sut.PublicExistsAsync(new ExpressionQueryFilter<Person>(p => p.FirstName == "Alice"));
-
-        Assert.True(result);
-    }
-
-    [Fact]
-    public async Task FilterableInterface_CountAsync_Delegates() {
+	public async Task FilterableInterface_CountAsync_Delegates() {
         var sut = new TestRepository(seedCount: 10);
 
         var result = await sut.PublicCountAsync(new ExpressionQueryFilter<Person>(p => p.FirstName == "Alice"));

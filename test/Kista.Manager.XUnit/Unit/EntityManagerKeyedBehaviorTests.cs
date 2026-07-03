@@ -70,7 +70,9 @@ public class EntityManagerKeyedBehaviorTests
     public void Should_ReturnTrue_When_IsTrackingChangesForTrackingRepo()
     {
         var trackingRepo = Substitute.For<IRepository<Person, string>, ITrackingRepository<Person, string>>();
+#pragma warning disable S1944 // NSubstitute dynamic proxy implements both interfaces at runtime
         ((ITrackingRepository<Person, string>)trackingRepo).IsTrackingChanges.Returns(true);
+#pragma warning restore S1944
         var manager = new EntityManager<Person, string>(trackingRepo);
 
         Assert.True(manager.IsTrackingChanges);

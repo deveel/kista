@@ -42,7 +42,7 @@ namespace Kista {
 	/// </remarks>
 	/// <typeparam name="TEntity">The type of entity handled by the repository.</typeparam>
 	/// <typeparam name="TKey">The type of the entity's primary key.</typeparam>
-	public interface ITestRepository<TEntity, TKey> where TEntity : class {
+	public interface ITestRepository<TEntity, TKey> where TEntity : class where TKey : notnull {
 		/// <summary>
 		/// Finds the first entity matching the given query, forwarding to
 		/// the protected <c>FindFirstAsync(IQuery, CancellationToken)</c>

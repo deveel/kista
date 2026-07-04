@@ -28,5 +28,8 @@
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
       <_Parameter1>Kista.Owners</_Parameter1>
     </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>Kista.Manager</_Parameter1>
+    </AssemblyAttribute>
   </ItemGroup>
 </Project>

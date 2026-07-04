@@ -31,7 +31,7 @@ public class InMemorySoftDeleteTests : SoftDeleteRepositoryTestSuite<SoftDeletab
     }
 
     protected override void ConfigureServices(IServiceCollection services) {
-        services.AddRepository<InMemoryRepository<SoftDeletablePerson>>();
+        services.AddRepository<SoftDeletablePersonRepository>();
         services.AddRepositoryController();
         base.ConfigureServices(services);
     }

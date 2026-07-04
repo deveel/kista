@@ -19,18 +19,19 @@ public abstract class SoftDeleteRepositoryTestSuite<TPerson, TKey, TRelationship
 	protected SoftDeleteRepositoryTestSuite(ITestOutputHelper? testOutput) : base(testOutput) {
 	}
 
-	/// <summary>
-	/// Gets the repository cast to <see cref="Repository{TEntity, TKey}"/>
-	/// for access to the query pipeline, or <c>null</c> if the repository
-	/// is not a <see cref="Repository{TEntity, TKey}"/>.
-	/// </summary>
-	protected Repository<TPerson, TKey>? RepositoryBase => Repository as Repository<TPerson, TKey>;
-
 	private IQueryOptions IncludeDeletedOptions => QueryOptions.WithSoftDeleteMode(SoftDeleteMode.IncludeDeleted);
 	private IQueryOptions OnlyDeletedOptions => QueryOptions.WithSoftDeleteMode(SoftDeleteMode.OnlyDeleted);
 
+	private ITestRepository<TPerson, TKey> TestRepo => (ITestRepository<TPerson, TKey>)Repository;
+
 	private IQuery KeyQuery(TKey key) =>
 		new Query(QueryFilter.Where<TPerson>(p => p.Id!.Equals(key)));
+
+	private IQuery IncludeDeletedQuery(TKey key) =>
+		new Query(KeyQuery(key).Filter ?? QueryFilter.Empty, null, IncludeDeletedOptions);
+
+	private IQuery OnlyDeletedQuery(TKey key) =>
+		new Query(KeyQuery(key).Filter ?? QueryFilter.Empty, null, OnlyDeletedOptions);
 
 	[Fact]
 	public async Task Should_SoftDelete_When_EntityIsSoftDeletable() {
@@ -51,9 +52,7 @@ public abstract class SoftDeleteRepositoryTestSuite<TPerson, TKey, TRelationship
 
 		await Repository.RemoveAsync(person, TestContext.Current.CancellationToken);
 
-		var results = RepositoryBase!.Queryable()
-			.Where(p => p.Id!.Equals(personId))
-			.ToList();
+		var results = await TestRepo.FindAllAsync(KeyQuery(personId), TestContext.Current.CancellationToken);
 
 		Assert.Empty(results);
 	}
@@ -62,11 +61,11 @@ public abstract class SoftDeleteRepositoryTestSuite<TPerson, TKey, TRelationship
 	public async Task Should_ExcludeDeleted_FromCount() {
 		var person = await RandomPersonAsync();
 
-		var countBefore = RepositoryBase!.Queryable().Count();
+		var countBefore = await TestRepo.CountAsync(QueryFilter.Empty, TestContext.Current.CancellationToken);
 
 		await Repository.RemoveAsync(person, TestContext.Current.CancellationToken);
 
-		var countAfter = RepositoryBase!.Queryable().Count();
+		var countAfter = await TestRepo.CountAsync(QueryFilter.Empty, TestContext.Current.CancellationToken);
 
 		Assert.Equal(countBefore - 1, countAfter);
 	}
@@ -78,7 +77,7 @@ public abstract class SoftDeleteRepositoryTestSuite<TPerson, TKey, TRelationship
 
 		await Repository.RemoveAsync(person, TestContext.Current.CancellationToken);
 
-		var found = await RepositoryBase!.FindFirstAsync(KeyQuery(personId), IncludeDeletedOptions, TestContext.Current.CancellationToken);
+		var found = await TestRepo.FindFirstAsync(IncludeDeletedQuery(personId), TestContext.Current.CancellationToken);
 
 		Assert.NotNull(found);
 		Assert.True(found!.IsDeleted);
@@ -91,7 +90,7 @@ public abstract class SoftDeleteRepositoryTestSuite<TPerson, TKey, TRelationship
 
 		await Repository.RemoveAsync(person, TestContext.Current.CancellationToken);
 
-		var found = await RepositoryBase!.FindFirstAsync(KeyQuery(personId), OnlyDeletedOptions, TestContext.Current.CancellationToken);
+		var found = await TestRepo.FindFirstAsync(OnlyDeletedQuery(personId), TestContext.Current.CancellationToken);
 
 		Assert.NotNull(found);
 		Assert.True(found!.IsDeleted);
@@ -116,7 +115,7 @@ public abstract class SoftDeleteRepositoryTestSuite<TPerson, TKey, TRelationship
 		var deleted = await Repository.HardDeleteAsync(person, TestContext.Current.CancellationToken);
 		Assert.True(deleted);
 
-		var found = await RepositoryBase!.FindFirstAsync(KeyQuery(personId), IncludeDeletedOptions, TestContext.Current.CancellationToken);
+		var found = await TestRepo.FindFirstAsync(IncludeDeletedQuery(personId), TestContext.Current.CancellationToken);
 		Assert.Null(found);
 	}
 
@@ -130,7 +129,7 @@ public abstract class SoftDeleteRepositoryTestSuite<TPerson, TKey, TRelationship
 		var hardDeleted = await Repository.HardDeleteAsync(person, TestContext.Current.CancellationToken);
 		Assert.True(hardDeleted);
 
-		var found = await RepositoryBase!.FindFirstAsync(KeyQuery(personId), IncludeDeletedOptions, TestContext.Current.CancellationToken);
+		var found = await TestRepo.FindFirstAsync(IncludeDeletedQuery(personId), TestContext.Current.CancellationToken);
 		Assert.Null(found);
 	}
 
@@ -141,7 +140,7 @@ public abstract class SoftDeleteRepositoryTestSuite<TPerson, TKey, TRelationship
 
 		await Repository.RemoveAsync(person, TestContext.Current.CancellationToken);
 
-		var found = await RepositoryBase!.FindFirstAsync(KeyQuery(personId), OnlyDeletedOptions, TestContext.Current.CancellationToken);
+		var found = await TestRepo.FindFirstAsync(OnlyDeletedQuery(personId), TestContext.Current.CancellationToken);
 
 		Assert.NotNull(found);
 		Assert.True(found!.IsDeleted);
@@ -156,7 +155,7 @@ public abstract class SoftDeleteRepositoryTestSuite<TPerson, TKey, TRelationship
 
 		foreach (var person in persons) {
 			var personId = Repository.GetEntityKey(person)!;
-			var found = await RepositoryBase!.FindFirstAsync(KeyQuery(personId), IncludeDeletedOptions, TestContext.Current.CancellationToken);
+			var found = await TestRepo.FindFirstAsync(IncludeDeletedQuery(personId), TestContext.Current.CancellationToken);
 			Assert.Null(found);
 		}
 	}

@@ -1266,7 +1266,8 @@ namespace Kista {
 		protected virtual async ValueTask<TEntity?> FindDeletedAsync(TKey key, CancellationToken cancellationToken) {
 			if (Repository is Repository<TEntity, TKey> repo) {
 				var query = global::Kista.Query.Where<TEntity>(e => EqualityComparer<TKey>.Default.Equals(GetEntityKey(e)!, key));
-				return await repo.FindFirstAsync(query, QueryOptions.WithSoftDeleteMode(SoftDeleteMode.OnlyDeleted), cancellationToken);
+				var queryWithOptions = new Query(query.Filter ?? QueryFilter.Empty, query.Order, QueryOptions.WithSoftDeleteMode(SoftDeleteMode.OnlyDeleted));
+				return await repo.FindFirstAsyncInternal(queryWithOptions, cancellationToken);
 			}
 
 			var found = await Repository.FindAsync(key, cancellationToken);
@@ -1294,7 +1295,8 @@ namespace Kista {
 		protected virtual async ValueTask<TEntity?> FindIncludingDeletedAsync(TKey key, CancellationToken cancellationToken) {
 			if (Repository is Repository<TEntity, TKey> repo) {
 				var query = global::Kista.Query.Where<TEntity>(e => EqualityComparer<TKey>.Default.Equals(GetEntityKey(e)!, key));
-				return await repo.FindFirstAsync(query, QueryOptions.WithSoftDeleteMode(SoftDeleteMode.IncludeDeleted), cancellationToken);
+				var queryWithOptions = new Query(query.Filter ?? QueryFilter.Empty, query.Order, QueryOptions.WithSoftDeleteMode(SoftDeleteMode.IncludeDeleted));
+				return await repo.FindFirstAsyncInternal(queryWithOptions, cancellationToken);
 			}
 
 			return await Repository.FindAsync(key, cancellationToken);

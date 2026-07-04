@@ -52,7 +52,7 @@ namespace Kista {
 			services
 				.AddMongoDbContext<MongoDbContext>(builder => builder.UseConnection(ConnectionString))
 				.AddRepositoryController();
-			services.AddRepository<MongoRepository<SoftDeletableMongoPerson, ObjectId>>();
+			services.AddRepository<TestSoftDeletableMongoPersonRepository>();
 
 			base.ConfigureServices(services);
 		}

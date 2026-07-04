@@ -24,7 +24,7 @@ public class MongoRepositoryTests : MongoRepositoryTestSuite<MongoPerson> {
 		services
 			.AddMongoDbContext<MongoDbContext>(builder => builder.UseConnection(ConnectionString))
 			.AddRepositoryController();
-		services.AddRepository<MongoRepository<MongoPerson, ObjectId>>();
+		services.AddRepository<TestMongoPersonRepository>();
 	}
 
 	protected async Task<MongoPerson?> FindPerson(ObjectId id) {
@@ -70,18 +70,6 @@ public class MongoRepositoryTests : MongoRepositoryTestSuite<MongoPerson> {
 
 		// Assert
 		Assert.Null(result);
-	}
-
-	[Fact]
-	public async Task Should_AsQueryable_ReturnQueryable() {
-		// Act
-#pragma warning disable CS0618
-		var queryable = ((MongoRepository<MongoPerson, ObjectId>)Repository).Queryable();
-#pragma warning restore CS0618
-
-		// Assert
-		Assert.NotNull(queryable);
-		Assert.NotEmpty(queryable);
 	}
 
 	[Fact]

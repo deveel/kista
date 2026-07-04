@@ -28,9 +28,15 @@ namespace Kista {
 	/// <remarks>
 	/// <para>
 	/// The data-access hatch is the <see cref="Queryable"/> method, which is
-	/// <c>public</c> so that companion assemblies (e.g. EntityManager,
-	/// decorators) can access the queryable, but consumer code should
-	/// use <see cref="CreateQuery"/> instead. Subclasses return the
+	/// <c>protected</c> so that only subclasses and the base-class query
+	/// pipeline can reach the engine-native queryable. Kista-owned companion
+	/// assemblies (e.g. EntityManager, decorators, specification extensions)
+	/// access the filterable pipeline through the <c>internal</c> dispatch
+	/// entry points (<see cref="FindFirstAsyncInternal"/>,
+	/// <see cref="FindAllAsyncInternal"/>, <see cref="CountAsyncInternal"/>,
+	/// <see cref="ExistsAsyncInternal"/>) exposed via
+	/// <c>InternalsVisibleTo</c>; consumer code must use
+	/// <see cref="CreateQuery"/> instead. Subclasses return the
 	/// engine-native queryable and the default implementations of the
 	/// protected <c>FindAsync(IQuery, CancellationToken)</c>,
 	/// <c>QueryPageAsync(PageQuery{TEntity}, CancellationToken)</c>,
@@ -103,11 +109,11 @@ namespace Kista {
 		/// entity set exposed by the repository.
 		/// </summary>
 		/// <returns>
-		/// Returns an <see cref="IQueryable{T}"/> that can be used by the
+		/// Returns an <see cref="IQueryable{T}"/> that is used by the
 		/// repository's own query translation pipeline. This hatch is
-		/// <c>public</c> so that companion assemblies (e.g. EntityManager,
-		/// decorators) can access the queryable, but consumer code should
-		/// use <see cref="CreateQuery"/> instead.
+		/// <c>protected</c> so that only inherited classes and the base-class
+		/// query pipeline can access the engine-native queryable. Consumer
+		/// code must use <see cref="CreateQuery"/> instead.
 		/// </returns>
 		/// <remarks>
 		/// <para>
@@ -117,7 +123,7 @@ namespace Kista {
 		/// snapshot <see cref="IQueryable{T}"/> for in-memory stores).
 		/// </para>
 		/// <para>
-		/// The default implementations of the protected
+		/// The default implementations of the
 		/// <c>FindAsync(IQuery, CancellationToken)</c>,
 		/// <c>QueryPageAsync(PageQuery{TEntity}, CancellationToken)</c>,
 		/// <c>ExistsAsync(IQueryFilter, CancellationToken)</c>,
@@ -130,7 +136,7 @@ namespace Kista {
 		/// the unpacking primitives.
 		/// </para>
 		/// </remarks>
-		public abstract IQueryable<TEntity> Queryable();
+		protected abstract IQueryable<TEntity> Queryable();
 
 		/// <summary>
 		/// Gets a value indicating whether this repository supports
@@ -528,6 +534,50 @@ namespace Kista {
 		/// </exception>
 		protected virtual ValueTask<IReadOnlyList<TEntity>> FindAllAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
 			=> FindAllAsync(Kista.Query.Where(predicate), cancellationToken);
+
+		/// <summary>
+		/// Internal dispatch entry point for the filterable pipeline,
+		/// accessible to Kista-owned companion assemblies (decorators,
+		/// specification extensions) through <c>InternalsVisibleTo</c>.
+		/// Consumer code must not call this method: it forwards to the
+		/// protected <see cref="FindFirstAsync(IQuery, CancellationToken)"/>
+		/// virtual that subclasses can override.
+		/// </summary>
+		internal ValueTask<TEntity?> FindFirstAsyncInternal(IQuery query, CancellationToken cancellationToken = default)
+			=> FindFirstAsync(query, cancellationToken);
+
+		/// <summary>
+		/// Internal dispatch entry point for the filterable pipeline,
+		/// accessible to Kista-owned companion assemblies (decorators,
+		/// specification extensions) through <c>InternalsVisibleTo</c>.
+		/// Consumer code must not call this method: it forwards to the
+		/// protected <see cref="FindAllAsync(IQuery, CancellationToken)"/>
+		/// virtual that subclasses can override.
+		/// </summary>
+		internal ValueTask<IReadOnlyList<TEntity>> FindAllAsyncInternal(IQuery query, CancellationToken cancellationToken = default)
+			=> FindAllAsync(query, cancellationToken);
+
+		/// <summary>
+		/// Internal dispatch entry point for the filterable pipeline,
+		/// accessible to Kista-owned companion assemblies (decorators,
+		/// specification extensions) through <c>InternalsVisibleTo</c>.
+		/// Consumer code must not call this method: it forwards to the
+		/// protected <see cref="CountAsync(IQueryFilter, CancellationToken)"/>
+		/// virtual that subclasses can override.
+		/// </summary>
+		internal ValueTask<long> CountAsyncInternal(IQueryFilter filter, CancellationToken cancellationToken = default)
+			=> CountAsync(filter, cancellationToken);
+
+		/// <summary>
+		/// Internal dispatch entry point for the filterable pipeline,
+		/// accessible to Kista-owned companion assemblies (decorators,
+		/// specification extensions) through <c>InternalsVisibleTo</c>.
+		/// Consumer code must not call this method: it forwards to the
+		/// protected <see cref="ExistsAsync(IQueryFilter, CancellationToken)"/>
+		/// virtual that subclasses can override.
+		/// </summary>
+		internal ValueTask<bool> ExistsAsyncInternal(IQueryFilter filter, CancellationToken cancellationToken = default)
+			=> ExistsAsync(filter, cancellationToken);
 
 		/// <inheritdoc />
 		public abstract ValueTask AddAsync(TEntity entity, CancellationToken cancellationToken = default);

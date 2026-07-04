@@ -14,7 +14,7 @@ public class InMemoryRepositoryLifecycleHandlerTests
     public async Task Should_ReturnFalse_When_CheckingExists()
     {
         var services = new ServiceCollection()
-            .AddRepository<InMemoryRepository<Person>>()
+            .AddRepository<TestInMemoryRepository<Person>>()
             .BuildServiceProvider();
         var handler = new InMemoryRepositoryLifecycleHandler<Person>(services, NullLogger<InMemoryRepositoryLifecycleHandler<Person>>.Instance);
 
@@ -27,7 +27,7 @@ public class InMemoryRepositoryLifecycleHandlerTests
     public async Task Should_NotThrow_When_CreateAsyncCalled()
     {
         var services = new ServiceCollection()
-            .AddRepository<InMemoryRepository<Person>>()
+            .AddRepository<TestInMemoryRepository<Person>>()
             .BuildServiceProvider();
         var handler = new InMemoryRepositoryLifecycleHandler<Person>(services, NullLogger<InMemoryRepositoryLifecycleHandler<Person>>.Instance);
 
@@ -38,7 +38,7 @@ public class InMemoryRepositoryLifecycleHandlerTests
     public async Task Should_NotThrow_When_DropAsyncCalled()
     {
         var services = new ServiceCollection()
-            .AddRepository<InMemoryRepository<Person>>()
+            .AddRepository<TestInMemoryRepository<Person>>()
             .BuildServiceProvider();
         var handler = new InMemoryRepositoryLifecycleHandler<Person>(services, NullLogger<InMemoryRepositoryLifecycleHandler<Person>>.Instance);
 
@@ -49,7 +49,7 @@ public class InMemoryRepositoryLifecycleHandlerTests
     public async Task Should_SeedEntities_When_SeedAsyncCalled()
     {
         var services = new ServiceCollection()
-            .AddRepository<InMemoryRepository<Person>>()
+            .AddRepository<TestInMemoryRepository<Person>>()
             .BuildServiceProvider();
         var handler = new InMemoryRepositoryLifecycleHandler<Person>(services, NullLogger<InMemoryRepositoryLifecycleHandler<Person>>.Instance);
         var entities = _faker.Generate(3);
@@ -57,7 +57,7 @@ public class InMemoryRepositoryLifecycleHandlerTests
         await handler.SeedAsync(entities, TestContext.Current.CancellationToken);
 
         var repository = services.GetRequiredService<IRepository<Person>>();
-        var allPeople = ((Repository<Person, string>)repository).Queryable().ToList();
+        var allPeople = await ((ITestRepository<Person>)repository).FindAllAsync(Kista.Query.Empty);
         Assert.Equal(3, allPeople.Count);
     }
 
@@ -65,7 +65,7 @@ public class InMemoryRepositoryLifecycleHandlerTests
     public async Task Should_SeedSingleEntity_When_SingleEntityProvided()
     {
         var services = new ServiceCollection()
-            .AddRepository<InMemoryRepository<Person>>()
+            .AddRepository<TestInMemoryRepository<Person>>()
             .BuildServiceProvider();
         var handler = new InMemoryRepositoryLifecycleHandler<Person>(services, NullLogger<InMemoryRepositoryLifecycleHandler<Person>>.Instance);
         var entity = _faker.Generate();

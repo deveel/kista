@@ -42,12 +42,11 @@ public class InMemoryRepositoryFilterInitializationTests {
 		services.AddSingleton<IExpressionCache>(cache);
 		var provider = services.BuildServiceProvider();
 
-		var repo = new InMemoryRepository<Person, string>(_persons, services: provider);
 		var filter = new DynamicLinqFilter("x.FirstName == \"John\"");
 		filter.Initialize(new DefaultFilterContext(provider));
 
-		var count1 = filter.Apply<Person>(((Repository<Person, string>)repo).Queryable()).LongCount();
-		var count2 = filter.Apply<Person>(((Repository<Person, string>)repo).Queryable()).LongCount();
+		var count1 = filter.Apply<Person>(_persons.AsQueryable()).LongCount();
+		var count2 = filter.Apply<Person>(_persons.AsQueryable()).LongCount();
 
 		Assert.Equal(2, count1);
 		Assert.Equal(2, count2);
@@ -61,12 +60,11 @@ public class InMemoryRepositoryFilterInitializationTests {
 		services.AddSingleton<IExpressionCache>(cache);
 		var provider = services.BuildServiceProvider();
 
-		var repo = new InMemoryRepository<Person, string>(_persons, services: provider);
 		var filter = new DynamicLinqFilter("x.FirstName == \"Jane\"");
 		filter.Initialize(new DefaultFilterContext(provider));
 
-		var exists1 = filter.Apply<Person>(((Repository<Person, string>)repo).Queryable()).Any();
-		var exists2 = filter.Apply<Person>(((Repository<Person, string>)repo).Queryable()).Any();
+		var exists1 = filter.Apply<Person>(_persons.AsQueryable()).Any();
+		var exists2 = filter.Apply<Person>(_persons.AsQueryable()).Any();
 
 		Assert.True(exists1);
 		Assert.True(exists2);
@@ -80,12 +78,11 @@ public class InMemoryRepositoryFilterInitializationTests {
 		services.AddSingleton<IExpressionCache>(cache);
 		var provider = services.BuildServiceProvider();
 
-        var repo = new InMemoryRepository<Person, string>(_persons, services: provider);
         var filter = new DynamicLinqFilter("x.LastName == \"Smith\"");
         filter.Initialize(new DefaultFilterContext(provider));
 
-        var result1 = filter.Apply<Person>(((Repository<Person, string>)repo).Queryable()).FirstOrDefault();
-        var result2 = filter.Apply<Person>(((Repository<Person, string>)repo).Queryable()).FirstOrDefault();
+        var result1 = filter.Apply<Person>(_persons.AsQueryable()).FirstOrDefault();
+        filter.Apply<Person>(_persons.AsQueryable()).FirstOrDefault();
 
 		Assert.NotNull(result1);
 		Assert.Equal("John", result1.FirstName);
@@ -99,12 +96,11 @@ public class InMemoryRepositoryFilterInitializationTests {
 		services.AddSingleton<IExpressionCache>(cache);
 		var provider = services.BuildServiceProvider();
 
-        var repo = new InMemoryRepository<Person, string>(_persons, services: provider);
         var filter = new DynamicLinqFilter("x.LastName == \"Doe\"");
         filter.Initialize(new DefaultFilterContext(provider));
 
-        var results1 = filter.Apply<Person>(((Repository<Person, string>)repo).Queryable()).ToList();
-        var results2 = filter.Apply<Person>(((Repository<Person, string>)repo).Queryable()).ToList();
+        var results1 = filter.Apply<Person>(_persons.AsQueryable()).ToList();
+        var results2 = filter.Apply<Person>(_persons.AsQueryable()).ToList();
 
 		Assert.Equal(2, results1.Count);
 		Assert.Equal(2, results2.Count);
@@ -138,11 +134,10 @@ public class InMemoryRepositoryFilterInitializationTests {
 
 	[Fact]
 	public async Task CountAsync_DoesNotCache_WhenNoServiceProvider() {
-        var repo = new InMemoryRepository<Person, string>(_persons);
         var filter = new DynamicLinqFilter("x.FirstName == \"John\"");
 
-        var count1 = filter.Apply<Person>(((Repository<Person, string>)repo).Queryable()).LongCount();
-        var count2 = filter.Apply<Person>(((Repository<Person, string>)repo).Queryable()).LongCount();
+        var count1 = filter.Apply<Person>(_persons.AsQueryable()).LongCount();
+        var count2 = filter.Apply<Person>(_persons.AsQueryable()).LongCount();
 
 		Assert.Equal(2, count1);
 		Assert.Equal(2, count2);
@@ -151,11 +146,10 @@ public class InMemoryRepositoryFilterInitializationTests {
 
 	[Fact]
 	public async Task ExistsAsync_DoesNotCache_WhenNoServiceProvider() {
-        var repo = new InMemoryRepository<Person, string>(_persons);
         var filter = new DynamicLinqFilter("x.FirstName == \"Jane\"");
 
-        var exists1 = filter.Apply<Person>(((Repository<Person, string>)repo).Queryable()).Any();
-        var exists2 = filter.Apply<Person>(((Repository<Person, string>)repo).Queryable()).Any();
+        var exists1 = filter.Apply<Person>(_persons.AsQueryable()).Any();
+        var exists2 = filter.Apply<Person>(_persons.AsQueryable()).Any();
 
 		Assert.True(exists1);
 		Assert.True(exists2);
@@ -169,21 +163,14 @@ public class InMemoryRepositoryFilterInitializationTests {
 	[Fact]
 	public async Task CountAsync_UsesConstructorCache_OverResolvedCache() {
 		var constructorCache = new BoundedExpressionCache(100);
-		var diCache = new BoundedExpressionCache(200);
 
-		var services = new ServiceCollection();
-		services.AddSingleton<IExpressionCache>(diCache);
-		var provider = services.BuildServiceProvider();
-
-        var repo = new InMemoryRepository<Person, string>(_persons, services: provider);
         var filter = new DynamicLinqFilter("x.FirstName == \"John\"", constructorCache);
 
-        filter.Apply<Person>(((Repository<Person, string>)repo).Queryable()).LongCount();
-        filter.Apply<Person>(((Repository<Person, string>)repo).Queryable()).LongCount();
+        filter.Apply<Person>(_persons.AsQueryable()).LongCount();
+        filter.Apply<Person>(_persons.AsQueryable()).LongCount();
 
 		Assert.Same(constructorCache, filter.Cache);
 		Assert.Equal(1, constructorCache.Statistics.Hits);
-		Assert.Equal(0, diCache.Statistics.Hits);
 	}
 
 	#endregion
@@ -197,13 +184,12 @@ public class InMemoryRepositoryFilterInitializationTests {
 		services.AddSingleton<IExpressionCache>(cache);
 		var provider = services.BuildServiceProvider();
 
-		var repo = new InMemoryRepository<Person, string>(_persons, services: provider);
         var filter1 = new DynamicLinqFilter("x.FirstName == \"John\"");
         var filter2 = new DynamicLinqFilter("x.LastName == \"Doe\"");
         var combined = QueryFilter.Combine(filter1, filter2);
         combined.Initialize(new DefaultFilterContext(provider));
 
-        var count = combined.Apply<Person>(((Repository<Person, string>)repo).Queryable()).LongCount();
+        var count = combined.Apply<Person>(_persons.AsQueryable()).LongCount();
 
 		Assert.Equal(1, count);
 		Assert.NotNull(filter1.Cache);
@@ -216,14 +202,9 @@ public class InMemoryRepositoryFilterInitializationTests {
 
 	[Fact]
 	public async Task CountAsync_WorksWithExpressionFilter_WhenServiceProviderProvided() {
-		var services = new ServiceCollection();
-		services.AddSingleton<IExpressionCache>(new BoundedExpressionCache(100));
-		var provider = services.BuildServiceProvider();
-
-        var repo = new InMemoryRepository<Person, string>(_persons, services: provider);
         var filter = new ExpressionQueryFilter<Person>(x => x.FirstName == "John");
 
-        var count = filter.Apply<Person>(((Repository<Person, string>)repo).Queryable()).LongCount();
+        var count = filter.Apply<Person>(_persons.AsQueryable()).LongCount();
 
 		Assert.Equal(2, count);
 	}

@@ -155,8 +155,7 @@ namespace Kista
 			=> ApplyOwnerFilterAndCallAsync(query, q => {
 				if (!(_inner is Repository<TEntity, TKey> repo))
 					throw new NotSupportedException(InnerRepositoryNoFilterMessage);
-				var result = q.Apply(repo.Queryable()).ToList();
-				return new ValueTask<IReadOnlyList<TEntity>>(result);
+				return repo.FindAllAsyncInternal(q, cancellationToken);
 			});
 
 		/// <inheritdoc />
@@ -164,8 +163,7 @@ namespace Kista
 			=> ApplyOwnerFilterAndCallAsync(query, q => {
 				if (!(_inner is Repository<TEntity, TKey> repo))
 					throw new NotSupportedException(InnerRepositoryNoFilterMessage);
-				var result = q.Apply(repo.Queryable()).FirstOrDefault();
-				return new ValueTask<TEntity?>(result);
+				return repo.FindFirstAsyncInternal(q, cancellationToken);
 			});
 
 		/// <inheritdoc />
@@ -173,8 +171,7 @@ namespace Kista
 			=> ApplyOwnerFilterAndCallAsync(filter, f => {
 				if (!(_inner is Repository<TEntity, TKey> repo))
 					throw new NotSupportedException(InnerRepositoryNoFilterMessage);
-				var result = f.Apply(repo.Queryable()).LongCount();
-				return new ValueTask<long>(result);
+				return repo.CountAsyncInternal(f, cancellationToken);
 			});
 
 		/// <inheritdoc />
@@ -182,8 +179,7 @@ namespace Kista
 			=> ApplyOwnerFilterAndCallAsync(filter, f => {
 				if (!(_inner is Repository<TEntity, TKey> repo))
 					throw new NotSupportedException(InnerRepositoryNoFilterMessage);
-				var result = f.Apply(repo.Queryable()).Any();
-				return new ValueTask<bool>(result);
+				return repo.ExistsAsyncInternal(f, cancellationToken);
 			});
 
 		/// <inheritdoc />

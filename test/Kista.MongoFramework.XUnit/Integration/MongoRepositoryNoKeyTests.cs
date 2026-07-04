@@ -24,7 +24,7 @@ public class MongoRepositoryNoKeyTests : MongoRepositoryNoKeyTestSuite<MongoPers
 		services
 			.AddMongoDbContext<MongoDbContext>(builder => builder.UseConnection(ConnectionString))
 			.AddRepositoryController();
-		services.AddRepository<MongoRepository<MongoPerson>>();
+		services.AddRepository<TestMongoPersonNoKeyRepository>();
 	}
 
 	protected async Task<MongoPerson?> FindPerson(ObjectId id) {
@@ -58,18 +58,6 @@ public class MongoRepositoryNoKeyTests : MongoRepositoryNoKeyTestSuite<MongoPers
 		for (int i = 0; i < sorted.Count; i++) {
 			Assert.Equal(sorted[i].FirstName, result.Items.ElementAt(i).FirstName);
 		}
-	}
-
-	[Fact]
-	public async Task Should_AsQueryable_ReturnQueryable() {
-		// Act
-#pragma warning disable CS0618
-		var queryable = ((MongoRepository<MongoPerson>)Repository).Queryable();
-#pragma warning restore CS0618
-
-		// Assert
-		Assert.NotNull(queryable);
-		Assert.NotEmpty(queryable);
 	}
 
 	[Fact]

@@ -136,7 +136,7 @@ public class FilterCacheDependencyInjectionTests {
 		services.AddSingleton<IReadOnlyList<Person>>(persons);
 		services.AddTransient<IRepository<Person, string>>(sp => {
 			var list = sp.GetRequiredService<IReadOnlyList<Person>>();
-			return new InMemoryRepository<Person, string>(list, services: sp);
+			return new TestInMemoryPersonRepository(list, sp);
 		});
 		var provider = services.BuildServiceProvider();
 
@@ -145,8 +145,8 @@ public class FilterCacheDependencyInjectionTests {
 		var filter = new DynamicLinqFilter("x.LastName == \"Doe\"");
 		filter.Initialize(new DefaultFilterContext(scope.ServiceProvider));
 
-		var count1 = filter.Apply<Person>(((Repository<Person, string>)repo).Queryable()).LongCount();
-		var count2 = filter.Apply<Person>(((Repository<Person, string>)repo).Queryable()).LongCount();
+		var count1 = await ((ITestRepository<Person, string>)repo).CountAsync(filter);
+		var count2 = await ((ITestRepository<Person, string>)repo).CountAsync(filter);
 
 		Assert.Equal(2, count1);
 		Assert.Equal(2, count2);
@@ -171,5 +171,23 @@ public class FilterCacheDependencyInjectionTests {
 		public void Set(string expression, Delegate lambda) { }
 		public void Clear() { }
 		public IFilterCacheStatistics? Statistics => null;
+	}
+
+	private sealed class TestInMemoryPersonRepository : InMemoryRepository<Person, string>, ITestRepository<Person, string> {
+		public TestInMemoryPersonRepository(IReadOnlyList<Person>? entities, IServiceProvider? services = null) : base(entities, services: services) { }
+
+		ValueTask<Person?> ITestRepository<Person, string>.FindFirstAsync(IQuery query, CancellationToken cancellationToken)
+			=> FindFirstAsync(query, cancellationToken);
+
+		ValueTask<IReadOnlyList<Person>> ITestRepository<Person, string>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
+			=> FindAllAsync(query, cancellationToken);
+
+		ValueTask<long> ITestRepository<Person, string>.CountAsync(IQueryFilter filter, CancellationToken cancellationToken)
+			=> CountAsync(filter, cancellationToken);
+
+		ValueTask<bool> ITestRepository<Person, string>.ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken)
+			=> ExistsAsync(filter, cancellationToken);
+
+		IQueryable<Person> ITestRepository<Person, string>.Queryable() => Queryable();
 	}
 }

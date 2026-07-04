@@ -294,7 +294,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 		await Repository.RemoveRangeAsync(people);
 
 		// Assert
-		var result = await Task.FromResult((IReadOnlyList<TPerson>)((Repository<TPerson, TKey>)Repository).Queryable().ToList());
+		var result = await ((ITestRepository<TPerson, TKey>)Repository).FindAllAsync(Kista.Query.Empty);
 		Assert.NotNull(result);
 		Assert.NotEmpty(result);
 		Assert.Equal(peopleCount - 10, result.Count);
@@ -316,7 +316,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 		// Act & Assert
 		await Assert.ThrowsAsync<RepositoryException>(async () => await Repository.RemoveRangeAsync(people, TestContext.Current.CancellationToken));
 
-		var result = await Task.FromResult((IReadOnlyList<TPerson>)((Repository<TPerson, TKey>)Repository).Queryable().ToList());
+		var result = await ((ITestRepository<TPerson, TKey>)Repository).FindAllAsync(Kista.Query.Empty);
 		Assert.NotNull(result);
 		Assert.NotEmpty(result);
 		Assert.Equal(peopleCount, result.Count);
@@ -328,7 +328,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 	[Trait("Feature", "Repository")]
 	public async Task Should_ReturnTotalCount_When_CountAll() {
 		// Act
-		var result = await Task.FromResult(((Repository<TPerson, TKey>)Repository).Queryable().Count());
+		var result = await ((ITestRepository<TPerson, TKey>)Repository).CountAsync(QueryFilter.Empty);
 
 		// Assert
 		Assert.NotEqual(0, result);
@@ -346,7 +346,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 		var peopleCount = People?.Count(x => x.FirstName == firstName) ?? 0;
 
 		// Act
-		var count = await Task.FromResult(QueryFilter.Where<TPerson>(p => p.FirstName == firstName).Apply<TPerson>(((Repository<TPerson, TKey>)Repository).Queryable()).Count());
+		var count = await ((ITestRepository<TPerson, TKey>)Repository).CountAsync(QueryFilter.Where<TPerson>(p => p.FirstName == firstName));
 
 		// Assert
 		Assert.Equal(peopleCount, count);
@@ -379,7 +379,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 		var firstName = person.FirstName;
 
 		// Act
-		var result = await Task.FromResult(QueryFilter.Where<TPerson>(x => x.FirstName == firstName).Apply<TPerson>(((Repository<TPerson, TKey>)Repository).Queryable()).FirstOrDefault());
+		var result = await ((ITestRepository<TPerson, TKey>)Repository).FindFirstAsync(Query.Where<TPerson>(x => x.FirstName == firstName));
 
 		// Assert
 		Assert.NotNull(result);
@@ -407,7 +407,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 			.Query;
 
 		// Act
-		var result = await Task.FromResult(query.Apply<TPerson>(((Repository<TPerson, TKey>)Repository).Queryable()).FirstOrDefault());
+		var result = await ((ITestRepository<TPerson, TKey>)Repository).FindFirstAsync(query);
 
 		// Assert
 		Assert.NotNull(result);
@@ -421,7 +421,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 	[Trait("Feature", "Repository")]
 	public async Task Should_ReturnFirstPerson_When_FindFirstAsync() {
 		// Act
-		var result = await Task.FromResult(((Repository<TPerson, TKey>)Repository).Queryable().FirstOrDefault());
+		var result = await ((ITestRepository<TPerson, TKey>)Repository).FindFirstAsync(Kista.Query.Empty);
 
 		// Assert
 		Assert.NotNull(result);
@@ -438,7 +438,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 		var firstName = person.FirstName;
 
 		// Act
-		var result = await Task.FromResult(QueryFilter.Where<TPerson>(x => x.FirstName == firstName).Apply<TPerson>(((Repository<TPerson, TKey>)Repository).Queryable()).Any());
+		var result = await ((ITestRepository<TPerson, TKey>)Repository).ExistsAsync(QueryFilter.Where<TPerson>(x => x.FirstName == firstName));
 
 		// Assert
 		Assert.True(result);
@@ -520,7 +520,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 		var ordered = NaturalOrder(People!).ToList();
 
 		// Act
-		var result = await Task.FromResult(((Repository<TPerson, TKey>)Repository).Queryable().FirstOrDefault());
+		var result = await ((ITestRepository<TPerson, TKey>)Repository).FindFirstAsync(Kista.Query.Empty);
 
 		// Assert
 		Assert.NotNull(result);
@@ -537,7 +537,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 		var ordered = NaturalOrder(People!.Where(x => x.FirstName == person.FirstName)).ToList();
 
 		// Act
-		var result = await Task.FromResult(QueryFilter.Where<TPerson>(x => x.FirstName == person.FirstName).Apply<TPerson>(((Repository<TPerson, TKey>)Repository).Queryable()).FirstOrDefault());
+		var result = await ((ITestRepository<TPerson, TKey>)Repository).FindFirstAsync(new Query(QueryFilter.Where<TPerson>(x => x.FirstName == person.FirstName), null));
 
 		// Assert
 		Assert.NotNull(result);
@@ -552,7 +552,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 	[Trait("Feature", "Repository")]
 	public async Task Should_ReturnAllPeople_When_FindAll() {
 		// Act
-		var result = await Task.FromResult((IReadOnlyList<TPerson>)((Repository<TPerson, TKey>)Repository).Queryable().ToList());
+		var result = await ((ITestRepository<TPerson, TKey>)Repository).FindAllAsync(Kista.Query.Empty);
 
 		// Assert
 		Assert.NotNull(result);
@@ -571,7 +571,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 		var peopleCount = People?.Count(x => x.FirstName == firstName) ?? 0;
 
 		// Act
-		var result = await Task.FromResult((IReadOnlyList<TPerson>)QueryFilter.Where<TPerson>(x => x.FirstName == firstName).Apply<TPerson>(((Repository<TPerson, TKey>)Repository).Queryable()).ToList());
+		var result = await ((ITestRepository<TPerson, TKey>)Repository).FindAllAsync(new Query(QueryFilter.Where<TPerson>(x => x.FirstName == firstName), null));
 
 		// Assert
 		Assert.NotNull(result);
@@ -599,7 +599,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 			.OrderBy(x => x.FirstName);
 
 		// Act
-		var result = await Task.FromResult((IReadOnlyList<TPerson>)query.Apply<TPerson>(((Repository<TPerson, TKey>)Repository).Queryable()).ToList());
+		var result = await ((ITestRepository<TPerson, TKey>)Repository).FindAllAsync(query.Query);
 
 		// Assert
 		Assert.NotNull(result);
@@ -616,7 +616,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 
 		// Act & Assert
 		Assert.Throws<ArgumentException>(
-			() => QueryFilter.Where<MailAddress>(m => m.Address == null).Apply<TPerson>(((Repository<TPerson, TKey>)Repository).Queryable()));
+			() => QueryFilter.Where<MailAddress>(m => m.Address == null).Apply<TPerson>(Array.Empty<TPerson>().AsQueryable()));
 	}
 
 	[Fact]

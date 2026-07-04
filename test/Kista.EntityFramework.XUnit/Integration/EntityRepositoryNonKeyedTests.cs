@@ -35,8 +35,8 @@ public sealed class EntityRepositoryNonKeyedTests : IDisposable
         dbContext.Set<SimpleEntity>().Add(new SimpleEntity { Name = "Existing" });
         await dbContext.SaveChangesAsync(ct);
 
-        var repo = new EntityRepository<SimpleEntity>(dbContext);
-        var exists = await new ExpressionQueryFilter<SimpleEntity>(x => x.Name == "Existing").Apply<SimpleEntity>(((Repository<SimpleEntity, object>)repo).Queryable()).AnyAsync();
+        var repo = new TestSimpleEntityRepository(dbContext);
+        var exists = await ((ITestRepository<SimpleEntity, object>)repo).ExistsAsync(new ExpressionQueryFilter<SimpleEntity>(x => x.Name == "Existing"));
 
         Assert.True(exists);
     }
@@ -53,8 +53,8 @@ public sealed class EntityRepositoryNonKeyedTests : IDisposable
             new SimpleEntity { Name = "B" });
         await dbContext.SaveChangesAsync(ct);
 
-        var repo = new EntityRepository<SimpleEntity>(dbContext);
-        var count = await new ExpressionQueryFilter<SimpleEntity>(x => x.Name != "").Apply<SimpleEntity>(((Repository<SimpleEntity, object>)repo).Queryable()).LongCountAsync();
+        var repo = new TestSimpleEntityRepository(dbContext);
+        var count = await ((ITestRepository<SimpleEntity, object>)repo).CountAsync(new ExpressionQueryFilter<SimpleEntity>(x => x.Name != ""));
 
         Assert.Equal(2, count);
     }
@@ -71,8 +71,8 @@ public sealed class EntityRepositoryNonKeyedTests : IDisposable
             new SimpleEntity { Name = "Second" });
         await dbContext.SaveChangesAsync(ct);
 
-        var repo = new EntityRepository<SimpleEntity>(dbContext);
-        var found = await new Query(new ExpressionQueryFilter<SimpleEntity>(x => x.Name == "First"), null).Apply(((Repository<SimpleEntity, object>)repo).Queryable()).FirstOrDefaultAsync();
+        var repo = new TestSimpleEntityRepository(dbContext);
+        var found = await ((ITestRepository<SimpleEntity, object>)repo).FindFirstAsync(new Query(new ExpressionQueryFilter<SimpleEntity>(x => x.Name == "First"), null));
 
         Assert.NotNull(found);
         Assert.Equal("First", found.Name);
@@ -90,8 +90,8 @@ public sealed class EntityRepositoryNonKeyedTests : IDisposable
             new SimpleEntity { Name = "Y" });
         await dbContext.SaveChangesAsync(ct);
 
-        var repo = new EntityRepository<SimpleEntity>(dbContext);
-        var all = await new Query(new ExpressionQueryFilter<SimpleEntity>(x => x.Name != ""), null).Apply(((Repository<SimpleEntity, object>)repo).Queryable()).ToListAsync();
+        var repo = new TestSimpleEntityRepository(dbContext);
+        var all = await ((ITestRepository<SimpleEntity, object>)repo).FindAllAsync(new Query(new ExpressionQueryFilter<SimpleEntity>(x => x.Name != ""), null));
 
         Assert.Collection(all.OrderBy(x => x.Name),
             x => Assert.Equal("X", x.Name),
@@ -120,5 +120,23 @@ public sealed class EntityRepositoryNonKeyedTests : IDisposable
         }
 
         public DbSet<SimpleEntity> Entities => Set<SimpleEntity>();
+    }
+
+    private sealed class TestSimpleEntityRepository : EntityRepository<SimpleEntity>, ITestRepository<SimpleEntity, object> {
+        public TestSimpleEntityRepository(DbContext context) : base(context) { }
+
+        ValueTask<SimpleEntity?> ITestRepository<SimpleEntity, object>.FindFirstAsync(IQuery query, CancellationToken cancellationToken)
+            => FindFirstAsync(query, cancellationToken);
+
+        ValueTask<IReadOnlyList<SimpleEntity>> ITestRepository<SimpleEntity, object>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
+            => FindAllAsync(query, cancellationToken);
+
+        ValueTask<long> ITestRepository<SimpleEntity, object>.CountAsync(IQueryFilter filter, CancellationToken cancellationToken)
+            => CountAsync(filter, cancellationToken);
+
+        ValueTask<bool> ITestRepository<SimpleEntity, object>.ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken)
+            => ExistsAsync(filter, cancellationToken);
+
+        IQueryable<SimpleEntity> ITestRepository<SimpleEntity, object>.Queryable() => Queryable();
     }
 }

@@ -58,7 +58,7 @@ namespace Kista {
 				throw new ArgumentException($"The repository is not a {nameof(MongoRepository<TEntity>)}");
 
 			var query = new Query(new MongoGeoDistanceFilter<TEntity>(field, point, maxDistance));
-			var result = query.Apply<TEntity>(mongoRepository.Queryable()).FirstOrDefault();
+			var result = query.Apply<TEntity>(mongoRepository.EngineQueryable()).FirstOrDefault();
 			return new ValueTask<TEntity?>(result);
 		}
 
@@ -101,7 +101,7 @@ namespace Kista {
 				throw new ArgumentException($"The repository is not a {nameof(MongoRepository<TEntity>)}");
 
 			var query = new Query(new MongoGeoDistanceFilter<TEntity>(field, point, maxDistance));
-			var result = query.Apply<TEntity>(mongoRepository.Queryable()).FirstOrDefault();
+			var result = query.Apply<TEntity>(mongoRepository.EngineQueryable()).FirstOrDefault();
 			return new ValueTask<TEntity?>(result);
 		}
 
@@ -141,7 +141,7 @@ namespace Kista {
 				throw new ArgumentException($"The repository is not a {nameof(MongoRepository<TEntity>)}");
 
 			var query = new Query(new MongoGeoDistanceFilter<TEntity>(field, point, maxDistance));
-			var result = query.Apply<TEntity>(mongoRepository.Queryable()).ToList();
+			var result = query.Apply<TEntity>(mongoRepository.EngineQueryable()).ToList();
 			return new ValueTask<IReadOnlyList<TEntity>>(result);
 		}
 
@@ -183,7 +183,7 @@ namespace Kista {
 				throw new ArgumentException($"The repository is not a {nameof(MongoRepository<TEntity>)}");
 
 			var query = new Query(new MongoGeoDistanceFilter<TEntity>(field, point, maxDistance));
-			var result = query.Apply<TEntity>(mongoRepository.Queryable()).ToList();
+			var result = query.Apply<TEntity>(mongoRepository.EngineQueryable()).ToList();
 			return new ValueTask<IReadOnlyList<TEntity>>(result);
 		}
 

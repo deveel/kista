@@ -91,3 +91,6 @@ csharp_space_around_binary_operators = before_and_after
 dotnet_diagnostic.S3236.severity = none
 # S6610: StartsWith with string is intentional - EntityFramework translates string overload to SQL, char overload is not recognized
 dotnet_diagnostic.S6610.severity = none
+# S2326: Unused generic type parameter in ITestRepository<TEntity, TKey> - TKey mirrors Repository<TEntity, TKey>
+# but is not referenced in the filterable pipeline method signatures. Semantic, not an error.
+dotnet_diagnostic.S2326.severity = none

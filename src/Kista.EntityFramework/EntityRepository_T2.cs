@@ -107,7 +107,7 @@ namespace Kista
 		/// Returns the <see cref="IQueryable{T}"/> produced by
 		/// <see cref="Entities"/>.AsQueryable().
 		/// </returns>
-		public override IQueryable<TEntity> Queryable() => Entities.AsQueryable();
+		protected override IQueryable<TEntity> Queryable() => Entities.AsQueryable();
 
 		/// <summary>
 		/// Gets a value indicating whether the entity type managed by this

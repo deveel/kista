@@ -1,6 +1,6 @@
 namespace Kista;
 
-internal sealed class TestPersonRepository : Repository<Person, string> {
+internal sealed class TestPersonRepository : Repository<Person, string>, ITestRepository<Person, string> {
 	private readonly List<Person> _people;
 
 	public TestPersonRepository(int seedCount = 20) {
@@ -13,10 +13,24 @@ internal sealed class TestPersonRepository : Repository<Person, string> {
 
 	protected override IServiceProvider? Services => null;
 	protected override string? GetEntityKey(Person entity) => entity.Id;
-	public override IQueryable<Person> Queryable() => _people.AsQueryable();
+	protected override IQueryable<Person> Queryable() => _people.AsQueryable();
 	protected override bool IsQueryable => true;
 
 	public QueryBuilder<Person> PublicQuery() => CreateQuery();
+
+	ValueTask<Person?> ITestRepository<Person, string>.FindFirstAsync(IQuery query, CancellationToken cancellationToken)
+		=> FindFirstAsync(query, cancellationToken);
+
+	ValueTask<IReadOnlyList<Person>> ITestRepository<Person, string>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
+		=> FindAllAsync(query, cancellationToken);
+
+	ValueTask<long> ITestRepository<Person, string>.CountAsync(IQueryFilter filter, CancellationToken cancellationToken)
+		=> CountAsync(filter, cancellationToken);
+
+	ValueTask<bool> ITestRepository<Person, string>.ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken)
+		=> ExistsAsync(filter, cancellationToken);
+
+	IQueryable<Person> ITestRepository<Person, string>.Queryable() => Queryable();
 
 	public override ValueTask AddAsync(Person entity, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(entity);

@@ -110,14 +110,25 @@ namespace Kista {
 		/// Returns the <see cref="IQueryable{T}"/> produced by
 		/// <see cref="DbSet"/>.AsQueryable().
 		/// </returns>
-		public override IQueryable<TEntity> Queryable() => ApplySoftDeleteMode(DbSet.AsQueryable(), null);
+		protected override IQueryable<TEntity> Queryable() => DbSet.AsQueryable();
+
+		/// <summary>
+		/// Returns the engine-native <see cref="IQueryable{T}"/> for use by
+		/// engine-coupled extensions in this assembly (for example the
+		/// geo-distance filters). Consumer code must not call this method.
+		/// </summary>
+		/// <returns>
+		/// Returns the <see cref="IQueryable{T}"/> produced by
+		/// <see cref="DbSet"/>.AsQueryable().
+		/// </returns>
+		internal IQueryable<TEntity> EngineQueryable() => DbSet.AsQueryable();
 
 		/// <summary>
 		/// Gets a value indicating whether the entity type managed by this
 		/// repository implements <see cref="ISoftDeletable"/>.
 		/// </summary>
 		protected bool IsSoftDeletable => typeof(ISoftDeletable).IsAssignableFrom(typeof(TEntity));
-
+		
 		/// <summary>
 		/// Applies the soft-delete mode to the given queryable, according
 		/// to the provided <see cref="IQueryOptions"/>.
@@ -156,7 +167,7 @@ namespace Kista {
 				_ => queryable
 			};
 		}
-
+		
 		/// <inheritdoc />
 		protected override bool IsQueryable => true;
 

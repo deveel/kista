@@ -45,7 +45,7 @@ public class InMemoryRepositoryConcurrencyTests {
     public async Task Should_AddAllEntities_When_ManyThreadsWriteConcurrently() {
         // Arrange
         var cancellationToken = TestContext.Current.CancellationToken;
-        using var repository = new InMemoryRepository<Person, string>();
+        using var repository = new TestInMemoryRepository<Person, string>();
         var people = PersonFaker.Generate(ThreadCount);
 
         // Act — fire all AddAsync calls simultaneously
@@ -53,7 +53,7 @@ public class InMemoryRepositoryConcurrencyTests {
         await Task.WhenAll(tasks);
 
         // Assert — every entity must be retrievable; no writes may have been lost
-        var count = repository.Queryable().LongCount();
+        var count = await repository.PublicCountAsync(QueryFilter.Empty);
         Assert.Equal(ThreadCount, count);
     }
 
@@ -61,7 +61,7 @@ public class InMemoryRepositoryConcurrencyTests {
     public async Task Should_NotCorruptState_When_WritersAndReadersRunSimultaneously() {
         // Arrange
         var cancellationToken = TestContext.Current.CancellationToken;
-        using var repository = new InMemoryRepository<Person, string>();
+        using var repository = new TestInMemoryRepository<Person, string>();
 
         // Seed an initial batch so readers have something to read from the start
         var seedPeople = PersonFaker.Generate(50);
@@ -80,20 +80,20 @@ public class InMemoryRepositoryConcurrencyTests {
             }
         });
 
-        var readTasks = Enumerable.Range(0, ThreadCount).Select(async _ => {
-            try {
-                var list = repository.Queryable().ToList();
-                Assert.NotNull(list);
-            } catch (Exception ex) {
-                exceptions.Add(ex);
-            }
-        });
+		var readTasks = Enumerable.Range(0, ThreadCount).Select(async _ => {
+			try {
+				var list = await repository.PublicFindAllAsync(Kista.Query.Empty);
+				Assert.NotNull(list);
+			} catch (Exception ex) {
+				exceptions.Add(ex);
+			}
+		});
 
         await Task.WhenAll(writeTasks.Concat(readTasks));
 
         // Assert — no exceptions and the store contains at least the seed set
         Assert.Empty(exceptions);
-        var total = repository.Queryable().LongCount();
+		var total = await repository.PublicCountAsync(QueryFilter.Empty);
         Assert.True(total >= 50, $"Expected at least 50 entities; found {total}");
     }
 
@@ -106,7 +106,7 @@ public class InMemoryRepositoryConcurrencyTests {
     public async Task Should_ReturnCorrectEntity_When_ManyThreadsReadConcurrently() {
         // Arrange
         var cancellationToken = TestContext.Current.CancellationToken;
-        using var repository = new InMemoryRepository<Person, string>();
+        using var repository = new TestInMemoryRepository<Person, string>();
         var people = PersonFaker.Generate(ThreadCount);
         foreach (var p in people)
             await repository.AddAsync(p, cancellationToken);
@@ -130,7 +130,7 @@ public class InMemoryRepositoryConcurrencyTests {
     public async Task Should_NeverThrow_When_ManyThreadsCallFindAllConcurrently() {
         // Arrange
         var cancellationToken = TestContext.Current.CancellationToken;
-        using var repository = new InMemoryRepository<Person, string>();
+        using var repository = new TestInMemoryRepository<Person, string>();
         var people = PersonFaker.Generate(50);
         foreach (var p in people)
             await repository.AddAsync(p, cancellationToken);
@@ -138,9 +138,9 @@ public class InMemoryRepositoryConcurrencyTests {
         var exceptions = new ConcurrentBag<Exception>();
 
         // Act — 100 concurrent FindAll calls
-        var tasks = Enumerable.Range(0, ThreadCount).Select(async _ => {
+		var tasks = Enumerable.Range(0, ThreadCount).Select(async _ => {
             try {
-                var list = repository.Queryable().ToList();
+                var list = await repository.PublicFindAllAsync(Kista.Query.Empty);
                 Assert.NotNull(list);
             } catch (Exception ex) {
                 exceptions.Add(ex);
@@ -162,7 +162,7 @@ public class InMemoryRepositoryConcurrencyTests {
     public async Task Should_PreserveAllUpdates_When_ManyThreadsUpdateConcurrently() {
         // Arrange
         var cancellationToken = TestContext.Current.CancellationToken;
-        using var repository = new InMemoryRepository<Person, string>();
+        using var repository = new TestInMemoryRepository<Person, string>();
         var people = PersonFaker.Generate(ThreadCount);
         foreach (var p in people)
             await repository.AddAsync(p, cancellationToken);
@@ -189,7 +189,7 @@ public class InMemoryRepositoryConcurrencyTests {
     public async Task Should_RemoveAllTargetedEntities_When_ManyThreadsRemoveConcurrently() {
         // Arrange
         var cancellationToken = TestContext.Current.CancellationToken;
-        using var repository = new InMemoryRepository<Person, string>();
+        using var repository = new TestInMemoryRepository<Person, string>();
         var people = PersonFaker.Generate(ThreadCount);
         foreach (var p in people)
             await repository.AddAsync(p, cancellationToken);
@@ -200,7 +200,7 @@ public class InMemoryRepositoryConcurrencyTests {
 
         // Assert — every removal must have returned true and the store must be empty
         Assert.All(results, Assert.True);
-        var count = repository.Queryable().LongCount();
+        var count = await repository.PublicCountAsync(QueryFilter.Empty);
         Assert.Equal(0, count);
     }
 
@@ -213,7 +213,7 @@ public class InMemoryRepositoryConcurrencyTests {
     public async Task Should_MaintainConsistency_When_ReadersWritersAndUpdatersCombine() {
         // Arrange
         var cancellationToken = TestContext.Current.CancellationToken;
-        using var repository = new InMemoryRepository<Person, string>();
+        using var repository = new TestInMemoryRepository<Person, string>();
 
         // Seed 50 entities that will be read and updated throughout the test
         var seed = PersonFaker.Generate(50);
@@ -232,9 +232,9 @@ public class InMemoryRepositoryConcurrencyTests {
         });
 
         // 100 readers: each counts all current entities
-        var readers = Enumerable.Range(0, ThreadCount).Select(async _ => {
+		var readers = Enumerable.Range(0, ThreadCount).Select(async _ => {
             try {
-                var count = repository.Queryable().LongCount();
+                var count = await repository.PublicCountAsync(QueryFilter.Empty);
                 Assert.True(count >= 0);
             } catch (Exception ex) {
                 exceptions.Add(ex);
@@ -256,7 +256,7 @@ public class InMemoryRepositoryConcurrencyTests {
 
         // Assert — no race-condition exceptions; store has at least the seeded set
         Assert.Empty(exceptions);
-        var finalCount = repository.Queryable().LongCount();
+		var finalCount = await repository.PublicCountAsync(QueryFilter.Empty);
         Assert.True(finalCount >= 50, $"Expected at least 50 entities; found {finalCount}");
     }
 
@@ -269,7 +269,7 @@ public class InMemoryRepositoryConcurrencyTests {
     public async Task Should_ResolveEntityKey_When_ManyThreadsCallGetEntityKeyConcurrently() {
         // Arrange
         var cancellationToken = TestContext.Current.CancellationToken;
-        using var repository = new InMemoryRepository<Person, string>();
+        using var repository = new TestInMemoryRepository<Person, string>();
         var people = PersonFaker.Generate(ThreadCount);
         foreach (var p in people)
             await repository.AddAsync(p, cancellationToken);
@@ -294,7 +294,7 @@ public class InMemoryRepositoryConcurrencyTests {
     public async Task Should_ReturnAtLeastSeedCount_When_SnapshotTakenDuringConcurrentWrites() {
         // Arrange
         var cancellationToken = TestContext.Current.CancellationToken;
-        using var repository = new InMemoryRepository<Person, string>();
+        using var repository = new TestInMemoryRepository<Person, string>();
         const int seedCount = 20;
         const int extraCount = ThreadCount;
 
@@ -315,10 +315,95 @@ public class InMemoryRepositoryConcurrencyTests {
             $"Snapshot contained {snapshot.Count} entities but should have at least {seedCount}");
 
         // Final count must be exactly seed + extra
-        var finalCount = repository.Queryable().LongCount();
+		var finalCount = await repository.PublicCountAsync(QueryFilter.Empty);
         Assert.Equal(seedCount + extraCount, finalCount);
     }
 
     #endregion
+}
+
+/// <summary>
+/// A test stub deriving from <see cref="InMemoryRepository{TEntity, TKey}"/>
+/// that implements <see cref="ITestRepository{TEntity, TKey}"/> by forwarding
+/// the protected filterable pipeline through public passthroughs, so the
+/// concurrency tests can drive the filterable methods without
+/// <c>InternalsVisibleTo</c>.
+/// </summary>
+internal sealed class TestInMemoryRepository<TEntity, TKey> : InMemoryRepository<TEntity, TKey>, ITestRepository<TEntity, TKey>
+    where TEntity : class
+    where TKey : notnull {
+
+    public TestInMemoryRepository() : base() { }
+
+    public TestInMemoryRepository(IList<TEntity>? entities) : base(entities) { }
+
+    public ValueTask<TEntity?> PublicFindFirstAsync(IQuery query, CancellationToken cancellationToken = default)
+        => FindFirstAsync(query, cancellationToken);
+
+    public ValueTask<IReadOnlyList<TEntity>> PublicFindAllAsync(IQuery query, CancellationToken cancellationToken = default)
+        => FindAllAsync(query, cancellationToken);
+
+    public ValueTask<long> PublicCountAsync(IQueryFilter filter, CancellationToken cancellationToken = default)
+        => CountAsync(filter, cancellationToken);
+
+    public ValueTask<bool> PublicExistsAsync(IQueryFilter filter, CancellationToken cancellationToken = default)
+        => ExistsAsync(filter, cancellationToken);
+
+    public new IQueryable<TEntity> Queryable() => base.Queryable();
+
+    ValueTask<TEntity?> ITestRepository<TEntity, TKey>.FindFirstAsync(IQuery query, CancellationToken cancellationToken)
+        => FindFirstAsync(query, cancellationToken);
+
+    ValueTask<IReadOnlyList<TEntity>> ITestRepository<TEntity, TKey>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
+        => FindAllAsync(query, cancellationToken);
+
+    ValueTask<long> ITestRepository<TEntity, TKey>.CountAsync(IQueryFilter filter, CancellationToken cancellationToken)
+        => CountAsync(filter, cancellationToken);
+
+    ValueTask<bool> ITestRepository<TEntity, TKey>.ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken)
+        => ExistsAsync(filter, cancellationToken);
+
+    IQueryable<TEntity> ITestRepository<TEntity, TKey>.Queryable() => Queryable();
+}
+
+/// <summary>
+/// A no-key test stub deriving from <see cref="InMemoryRepository{TEntity}"/>
+/// that implements <see cref="ITestRepository{TEntity}"/> by forwarding the
+/// protected filterable pipeline through public passthroughs.
+/// </summary>
+internal sealed class TestInMemoryRepository<TEntity> : InMemoryRepository<TEntity>, ITestRepository<TEntity>
+    where TEntity : class {
+
+    public TestInMemoryRepository() : base() { }
+
+    public TestInMemoryRepository(IList<TEntity>? entities) : base(entities) { }
+
+    public ValueTask<TEntity?> PublicFindFirstAsync(IQuery query, CancellationToken cancellationToken = default)
+        => FindFirstAsync(query, cancellationToken);
+
+    public ValueTask<IReadOnlyList<TEntity>> PublicFindAllAsync(IQuery query, CancellationToken cancellationToken = default)
+        => FindAllAsync(query, cancellationToken);
+
+    public ValueTask<long> PublicCountAsync(IQueryFilter filter, CancellationToken cancellationToken = default)
+        => CountAsync(filter, cancellationToken);
+
+    public ValueTask<bool> PublicExistsAsync(IQueryFilter filter, CancellationToken cancellationToken = default)
+        => ExistsAsync(filter, cancellationToken);
+
+    public new IQueryable<TEntity> Queryable() => base.Queryable();
+
+    ValueTask<TEntity?> ITestRepository<TEntity, object>.FindFirstAsync(IQuery query, CancellationToken cancellationToken)
+        => FindFirstAsync(query, cancellationToken);
+
+    ValueTask<IReadOnlyList<TEntity>> ITestRepository<TEntity, object>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
+        => FindAllAsync(query, cancellationToken);
+
+    ValueTask<long> ITestRepository<TEntity, object>.CountAsync(IQueryFilter filter, CancellationToken cancellationToken)
+        => CountAsync(filter, cancellationToken);
+
+    ValueTask<bool> ITestRepository<TEntity, object>.ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken)
+        => ExistsAsync(filter, cancellationToken);
+
+    IQueryable<TEntity> ITestRepository<TEntity, object>.Queryable() => Queryable();
 }
 

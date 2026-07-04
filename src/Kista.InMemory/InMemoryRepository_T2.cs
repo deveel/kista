@@ -194,7 +194,7 @@ namespace Kista {
 	/// Returns a snapshot <see cref="IQueryable{T}"/> of the entities
 	/// currently in the repository.
 	/// </returns>
-		public override IQueryable<TEntity> Queryable() => ApplySoftDeleteMode(Entities.AsQueryable(), null);
+	protected override IQueryable<TEntity> Queryable() => Entities.AsQueryable();
 
 	/// <inheritdoc />
 	protected override bool IsQueryable => true;

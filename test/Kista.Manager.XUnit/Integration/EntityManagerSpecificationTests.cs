@@ -30,7 +30,7 @@ public class EntityManagerSpecificationTests : IAsyncLifetime, IAsyncDisposable 
     private void CreateServices() {
         var services = new ServiceCollection();
         services.AddLogging(logging => logging.AddXUnit(testOutput));
-        services.AddRepository<InMemoryRepository<Person, string>>();
+        services.AddRepository<TestPersonRepositoryStub>();
         services.AddEntityManager<EntityManager<Person, string>>();
         scope = services.BuildServiceProvider().CreateAsyncScope();
     }
@@ -45,7 +45,7 @@ public class EntityManagerSpecificationTests : IAsyncLifetime, IAsyncDisposable 
     }
 
     public async Task DisposeAsync() {
-        var all = ((Repository<Person, string>)Repository).Queryable().ToList();
+        var all = ((ITestRepository<Person, string>)Repository).FindAllAsync(Kista.Query.Empty).GetAwaiter().GetResult();
         await Repository.RemoveRangeAsync(all);
     }
 
@@ -69,7 +69,7 @@ public class EntityManagerSpecificationTests : IAsyncLifetime, IAsyncDisposable 
 
     [Fact]
     public async Task Should_FindFirst_OnRepository_When_SpecMatches() {
-        var all = ((Repository<Person, string>)Repository).Queryable().ToList();
+        var all = ((ITestRepository<Person, string>)Repository).FindAllAsync(Kista.Query.Empty).GetAwaiter().GetResult();
         var targetFirstName = all[0].FirstName;
 
         var spec = new FirstNameSpec(targetFirstName);
@@ -81,7 +81,7 @@ public class EntityManagerSpecificationTests : IAsyncLifetime, IAsyncDisposable 
 
     [Fact]
     public async Task Should_FindAll_OnRepository_When_SpecMatches() {
-        var all = ((Repository<Person, string>)Repository).Queryable().ToList();
+        var all = ((ITestRepository<Person, string>)Repository).FindAllAsync(Kista.Query.Empty).GetAwaiter().GetResult();
         var targetFirstName = all[0].FirstName;
 
         var spec = new FirstNameSpec(targetFirstName);
@@ -93,7 +93,7 @@ public class EntityManagerSpecificationTests : IAsyncLifetime, IAsyncDisposable 
 
     [Fact]
     public async Task Should_Count_OnRepository_When_SpecMatches() {
-        var all = ((Repository<Person, string>)Repository).Queryable().ToList();
+        var all = ((ITestRepository<Person, string>)Repository).FindAllAsync(Kista.Query.Empty).GetAwaiter().GetResult();
         var targetFirstName = all[0].FirstName;
         var expectedCount = all.Count(p => p.FirstName == targetFirstName);
 
@@ -105,7 +105,7 @@ public class EntityManagerSpecificationTests : IAsyncLifetime, IAsyncDisposable 
 
     [Fact]
     public async Task Should_Exists_OnRepository_When_SpecMatches() {
-        var all = ((Repository<Person, string>)Repository).Queryable().ToList();
+        var all = ((ITestRepository<Person, string>)Repository).FindAllAsync(Kista.Query.Empty).GetAwaiter().GetResult();
         var targetFirstName = all[0].FirstName;
 
         var spec = new FirstNameSpec(targetFirstName);
@@ -120,5 +120,23 @@ public class EntityManagerSpecificationTests : IAsyncLifetime, IAsyncDisposable 
         var exists = await Repository.ExistsAsync<Person, string>(spec);
 
         Assert.False(exists);
+    }
+
+    private sealed class TestPersonRepositoryStub : InMemoryRepository<Person, string>, ITestRepository<Person, string> {
+        public TestPersonRepositoryStub() : base() { }
+
+        ValueTask<Person?> ITestRepository<Person, string>.FindFirstAsync(IQuery query, CancellationToken cancellationToken)
+            => FindFirstAsync(query, cancellationToken);
+
+        ValueTask<IReadOnlyList<Person>> ITestRepository<Person, string>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
+            => FindAllAsync(query, cancellationToken);
+
+        ValueTask<long> ITestRepository<Person, string>.CountAsync(IQueryFilter filter, CancellationToken cancellationToken)
+            => CountAsync(filter, cancellationToken);
+
+        ValueTask<bool> ITestRepository<Person, string>.ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken)
+            => ExistsAsync(filter, cancellationToken);
+
+        IQueryable<Person> ITestRepository<Person, string>.Queryable() => Queryable();
     }
 }

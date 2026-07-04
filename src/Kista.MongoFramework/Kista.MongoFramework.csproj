@@ -24,11 +24,6 @@
     <ProjectReference Include="..\Kista\Kista.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Kista.Owners\Kista.Owners.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
-      <_Parameter1>Kista.MongoFramework.XUnit</_Parameter1>
-    </AssemblyAttribute>
+      <ProjectReference Include="..\Kista.Owners\Kista.Owners.csproj" />
   </ItemGroup>
 </Project>

@@ -32,7 +32,7 @@ public class FilterableRepositoryTests {
         var person = RandomPerson();
         var expected = _persons.Count(x => x.FirstName == person.FirstName);
 
-        var count = new DynamicLinqFilter("p", $"p.FirstName == \"{person.FirstName}\"").Apply<Person>(((Repository<Person, string>)_repository).Queryable()).LongCount();
+        var count = new DynamicLinqFilter("p", $"p.FirstName == \"{person.FirstName}\"").Apply<Person>(_persons.AsQueryable()).LongCount();
 
         Assert.Equal(expected, count);
     }
@@ -42,7 +42,7 @@ public class FilterableRepositoryTests {
         var person = RandomPerson();
         var expected = _persons.Count(x => x.FirstName == person.FirstName);
 
-        var count = new DynamicLinqFilter($"x.FirstName == \"{person.FirstName}\"").Apply<Person>(((Repository<Person, string>)_repository).Queryable()).LongCount();
+        var count = new DynamicLinqFilter($"x.FirstName == \"{person.FirstName}\"").Apply<Person>(_persons.AsQueryable()).LongCount();
 
         Assert.Equal(expected, count);
     }
@@ -50,7 +50,7 @@ public class FilterableRepositoryTests {
     [Fact]
     public void Should_ThrowInvalidOperationException_When_CountExpressionInvalid() {
         Assert.Throws<InvalidOperationException>(
-            () => new DynamicLinqFilter(FirstNameExpression).Apply<Person>(((Repository<Person, string>)_repository).Queryable()).LongCount());
+            () => new DynamicLinqFilter(FirstNameExpression).Apply<Person>(_persons.AsQueryable()).LongCount());
     }
 
     #endregion
@@ -62,7 +62,7 @@ public class FilterableRepositoryTests {
         var person = RandomPerson();
         var expected = _persons.Any(x => x.FirstName == person.FirstName);
 
-        var result = new DynamicLinqFilter("p", $"p.FirstName == \"{person.FirstName}\"").Apply<Person>(((Repository<Person, string>)_repository).Queryable()).Any();
+        var result = new DynamicLinqFilter("p", $"p.FirstName == \"{person.FirstName}\"").Apply<Person>(_persons.AsQueryable()).Any();
 
         Assert.Equal(expected, result);
     }
@@ -72,7 +72,7 @@ public class FilterableRepositoryTests {
         var person = RandomPerson();
         var expected = _persons.Any(x => x.FirstName == person.FirstName);
 
-        var result = new DynamicLinqFilter($"x.FirstName == \"{person.FirstName}\"").Apply<Person>(((Repository<Person, string>)_repository).Queryable()).Any();
+        var result = new DynamicLinqFilter($"x.FirstName == \"{person.FirstName}\"").Apply<Person>(_persons.AsQueryable()).Any();
 
         Assert.Equal(expected, result);
     }
@@ -80,7 +80,7 @@ public class FilterableRepositoryTests {
     [Fact]
     public void Should_ThrowInvalidOperationException_When_ExistsExpressionInvalid() {
         Assert.Throws<InvalidOperationException>(
-            () => new DynamicLinqFilter(FirstNameExpression).Apply<Person>(((Repository<Person, string>)_repository).Queryable()).Any());
+            () => new DynamicLinqFilter(FirstNameExpression).Apply<Person>(_persons.AsQueryable()).Any());
     }
 
     #endregion
@@ -92,7 +92,7 @@ public class FilterableRepositoryTests {
         var person = RandomPerson();
         var expected = _persons.FirstOrDefault(x => x.FirstName == person.FirstName);
 
-        var result = new DynamicLinqFilter("p", $"p.FirstName == \"{person.FirstName}\"").Apply<Person>(((Repository<Person, string>)_repository).Queryable()).FirstOrDefault();
+        var result = new DynamicLinqFilter("p", $"p.FirstName == \"{person.FirstName}\"").Apply<Person>(_persons.AsQueryable()).FirstOrDefault();
 
         Assert.Equal(expected, result);
     }
@@ -102,7 +102,7 @@ public class FilterableRepositoryTests {
         var person = RandomPerson();
         var expected = _persons.FirstOrDefault(x => x.FirstName == person.FirstName);
 
-        var result = new DynamicLinqFilter($"x.FirstName == \"{person.FirstName}\"").Apply<Person>(((Repository<Person, string>)_repository).Queryable()).FirstOrDefault();
+        var result = new DynamicLinqFilter($"x.FirstName == \"{person.FirstName}\"").Apply<Person>(_persons.AsQueryable()).FirstOrDefault();
 
         Assert.Equal(expected, result);
     }
@@ -110,7 +110,7 @@ public class FilterableRepositoryTests {
     [Fact]
     public void Should_ThrowInvalidOperationException_When_FindFirstExpressionInvalid() {
         Assert.Throws<InvalidOperationException>(
-            () => new DynamicLinqFilter(FirstNameExpression).Apply<Person>(((Repository<Person, string>)_repository).Queryable()).FirstOrDefault());
+            () => new DynamicLinqFilter(FirstNameExpression).Apply<Person>(_persons.AsQueryable()).FirstOrDefault());
     }
 
     #endregion
@@ -122,7 +122,7 @@ public class FilterableRepositoryTests {
         var person = RandomPerson();
         var expected = _persons.Where(x => x.FirstName == person.FirstName).ToList();
 
-        var result = (IReadOnlyList<Person>)new DynamicLinqFilter("p", $"p.FirstName == \"{person.FirstName}\"").Apply<Person>(((Repository<Person, string>)_repository).Queryable()).ToList();
+        var result = (IReadOnlyList<Person>)new DynamicLinqFilter("p", $"p.FirstName == \"{person.FirstName}\"").Apply<Person>(_persons.AsQueryable()).ToList();
 
         Assert.Equal(expected, result);
     }
@@ -132,7 +132,7 @@ public class FilterableRepositoryTests {
         var person = RandomPerson();
         var expected = _persons.Where(x => x.FirstName == person.FirstName).ToList();
 
-        var result = (IReadOnlyList<Person>)new DynamicLinqFilter($"x.FirstName == \"{person.FirstName}\"").Apply<Person>(((Repository<Person, string>)_repository).Queryable()).ToList();
+        var result = (IReadOnlyList<Person>)new DynamicLinqFilter($"x.FirstName == \"{person.FirstName}\"").Apply<Person>(_persons.AsQueryable()).ToList();
 
         Assert.Equal(expected, result);
     }
@@ -140,7 +140,7 @@ public class FilterableRepositoryTests {
     [Fact]
     public void Should_ThrowInvalidOperationException_When_FindAllExpressionInvalid() {
         Assert.Throws<InvalidOperationException>(
-            () => new DynamicLinqFilter(FirstNameExpression).Apply<Person>(((Repository<Person, string>)_repository).Queryable()).ToList());
+            () => new DynamicLinqFilter(FirstNameExpression).Apply<Person>(_persons.AsQueryable()).ToList());
     }
 
     #endregion

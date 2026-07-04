@@ -171,6 +171,45 @@ Drop any explicit interface method implementations (`IFilterableRepository<...>.
 
 `AddRepository<T>()` and `ScanRepositories()` no longer register `IQueryableRepository<T>`, `IPageableRepository<T>`, or `IFilterableRepository<T>` as services. This is expected — those interfaces no longer exist. Resolve `IRepository<T>` or your custom interface instead. See [Registration](custom-repository/registration.md) for the current behaviour.
 
+## `Queryable()` is now `protected`
+
+In a follow-on tightening to the 1.7.1 cleanup, the `Repository<TEntity, TKey>.Queryable()` method changed from `public abstract` to `protected abstract`. The in-memory `RepositoryWrapper.Queryable()` override was removed entirely. This closes the last public `IQueryable<T>` escape hatch on the base class — the queryable is now reachable only from inside a subclass and from the base-class query pipeline.
+
+### Who is affected
+
+- **Consumer code that called `repo.Queryable()` directly** from outside a subclass (or from another assembly) — this was already undocumented and discouraged, but it compiled in 1.7.1. It no longer compiles.
+- **Companion-assembly authors** who reached into `Queryable()` from another assembly to apply filters, counts, or existence checks. The Kista-owned companions (`UserScopedRepositoryDecorator`, `SpecificationRepositoryExtensions`) were migrated to the new dispatch path (see below); third-party companions doing the same must follow the same migration.
+- **Subclasses** that override `Queryable()` must change the override from `public override` to `protected override` to match the new base-class visibility.
+
+### Migration
+
+**From outside the subclass / another assembly** — define a domain-specific method on a custom repository interface, implemented through the `protected Queryable()` hatch inside the subclass. This is the same pattern already documented above in [Replace `AsQueryable()` consumer code](#replace-asqueryable-consumer-code): the consumer depends on a domain contract, not on `IQueryable<T>`.
+
+**From a Kista-owned companion assembly** — use the new `internal` dispatch entry points on `Repository<TEntity, TKey>` instead of calling `Queryable()` directly:
+
+| Old (1.7.1) | New (1.7.x) |
+| ----------- | ----------- |
+| `query.Apply(repo.Queryable()).FirstOrDefault()` | `repo.FindFirstAsyncInternal(query, ct)` |
+| `query.Apply(repo.Queryable()).ToList()` | `repo.FindAllAsyncInternal(query, ct)` |
+| `filter.Apply(repo.Queryable()).LongCount()` | `repo.CountAsyncInternal(filter, ct)` |
+| `filter.Apply(repo.Queryable()).Any()` | `repo.ExistsAsyncInternal(filter, ct)` |
+
+These `internal` methods forward to the existing `protected` virtual filterable methods (`FindFirstAsync`, `FindAllAsync`, `CountAsync`, `ExistsAsync`) and are accessible to Kista-owned assemblies through `InternalsVisibleTo`. They are **not** part of the public API surface — consumer code must not call them.
+
+**In subclasses** — change the override visibility:
+
+```csharp
+// Before (1.7.1)
+public override IQueryable<Product> Queryable() => _context.Set<Product>().AsQueryable();
+
+// After (1.7.x)
+protected override IQueryable<Product> Queryable() => _context.Set<Product>().AsQueryable();
+```
+
+The `protected` member is still overridable in subclasses; the change only closes the cross-assembly public escape. Subclass code that called `Queryable()` internally (to implement domain-specific query methods) is unaffected.
+
+> The `ParameterReplacer` expression visitor in `Kista` core was removed in the same change — it was only consumed by the removed queryable-composition paths. Consumer code never referenced it directly.
+
 ## Reference
 
 - [The Repository Pattern](repository-pattern.md) — the `Repository<TEntity, TKey>` base class and its protected query hatch

@@ -28,9 +28,15 @@ namespace Kista {
 	/// <remarks>
 	/// <para>
 	/// The data-access hatch is the <see cref="Queryable"/> method, which is
-	/// <c>public</c> so that companion assemblies (e.g. EntityManager,
-	/// decorators) can access the queryable, but consumer code should
-	/// use <see cref="CreateQuery"/> instead. Subclasses return the
+	/// <c>protected</c> so that only subclasses and the base-class query
+	/// pipeline can reach the engine-native queryable. Kista-owned companion
+	/// assemblies (e.g. EntityManager, decorators, specification extensions)
+	/// access the filterable pipeline through the <c>internal</c> dispatch
+	/// entry points (<see cref="FindFirstAsyncInternal"/>,
+	/// <see cref="FindAllAsyncInternal"/>, <see cref="CountAsyncInternal"/>,
+	/// <see cref="ExistsAsyncInternal"/>) exposed via
+	/// <c>InternalsVisibleTo</c>; consumer code must use
+	/// <see cref="CreateQuery"/> instead. Subclasses return the
 	/// engine-native queryable and the default implementations of the
 	/// protected <c>FindAsync(IQuery, CancellationToken)</c>,
 	/// <c>QueryPageAsync(PageQuery{TEntity}, CancellationToken)</c>,

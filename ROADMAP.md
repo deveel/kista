@@ -755,6 +755,34 @@ The current design maintains a parallel universe of interfaces — `IRepository<
 
 ---
 
+### Feature — Encapsulate the IQueryable Hatch
+
+**Title:** Remove the Public `Queryable()` Escape from the Repository
+
+**Intent**  
+> "Tighten the `Repository<TEntity, TKey>.Queryable()` method from `public` to `protected` so the `IQueryable<T>` data-access hatch is reachable only by subclasses and the base-class query pipeline. Kista-owned companion assemblies (EntityManager, decorators, specification extensions) now reach the filterable pipeline through `internal` dispatch entry points exposed via `InternalsVisibleTo`, instead of calling `Queryable()` directly."
+
+**The Problem Today**  
+After the legacy capability interfaces were removed in v1.7.1, `Repository<TEntity, TKey>.Queryable()` remained `public abstract`. This kept a public `IQueryable<T>` escape hatch on the base class: any consumer (not only Kista-owned companion assemblies) could call `repo.Queryable()` and compose arbitrary LINQ outside the data layer, reintroducing the leak the v1.7.1 cleanup was meant to close. Companion assemblies (EntityManager, `UserScopedRepositoryDecorator`, `SpecificationRepositoryExtensions`) reached into `Queryable()` from outside the subclass boundary to apply filters, counts, and existence checks, coupling the public surface to internal query translation.
+
+**What We Are Building**  
+- Change `Repository<TEntity, TKey>.Queryable()` from `public abstract` to `protected abstract`, so only subclasses and the base-class query pipeline can reach the engine-native queryable
+- Remove the public `Queryable()` override from `RepositoryWrapper` (the in-memory wrapper no longer exposes the hatch)
+- Add four `internal` dispatch entry points on `Repository<TEntity, TKey>` — `FindFirstAsyncInternal(IQuery, CancellationToken)`, `FindAllAsyncInternal(IQuery, CancellationToken)`, `CountAsyncInternal(IQueryFilter, CancellationToken)`, `ExistsAsyncInternal(IQueryFilter, CancellationToken)` — that forward to the existing `protected` virtual filterable methods and are accessible to Kista-owned companion assemblies through `InternalsVisibleTo`
+- Switch `UserScopedRepositoryDecorator` and `SpecificationRepositoryExtensions` from calling `repo.Queryable()` + manual `IQueryable` composition to the new `internal` dispatch entry points
+- Delete the now-unused `ParameterReplacer.cs` expression visitor from `Kista` core (its combine logic was only consumed by the removed queryable-composition paths)
+- Update `EntityRepository`, `MongoRepository`, and `InMemoryRepository` overrides from `public override` to `protected override` to match the new base-class visibility
+
+**Benefits**
+- No `IQueryable<T>` leak on the public consumer-facing surface — the hatch is closed to code outside the subclass boundary
+- Companion assemblies share a single, auditable dispatch path through the `internal` entry points, instead of each re-implementing `IQueryable` composition
+- The `protected` surface stays small, testable, and consistent across drivers
+- The change is source-compatible for consumers who already followed the documented `protected` pattern; only code that called `repo.Queryable()` from outside a subclass (already discouraged and undocumentented) breaks
+
+**Status:** ✅ Completed in v1.7.x (branch `116-encapsulate-the-iqueryable-hatch`). See the [Migration from 1.7 guide](docs/migrating-from-1.7.md) for the `public → protected` change and the new companion-assembly dispatch path.
+
+---
+
 ### Feature — Repository Source Generators
 
 **Title:** Compile-Time Repository Scaffolding via Roslyn Source Generators

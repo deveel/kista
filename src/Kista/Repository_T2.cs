@@ -105,6 +105,52 @@ namespace Kista {
 		TKey? IRepository<TEntity, TKey>.GetEntityKey(TEntity entity) => GetEntityKey(entity);
 
 		/// <summary>
+		/// Gets a value indicating whether the entity type managed by this
+		/// repository implements <see cref="ISoftDeletable"/>.
+		/// </summary>
+		protected static bool IsSoftDeletable => typeof(ISoftDeletable).IsAssignableFrom(typeof(TEntity));
+
+		/// <summary>
+		/// Applies the soft-delete mode to the given queryable, according
+		/// to the provided <see cref="IQueryOptions"/>.
+		/// </summary>
+		/// <param name="queryable">
+		/// The queryable to filter.
+		/// </param>
+		/// <param name="options">
+		/// The query options carrying the soft-delete mode, or <c>null</c>
+		/// for the default mode (exclude soft-deleted records).
+		/// </param>
+		/// <returns>
+		/// Returns the queryable filtered according to the soft-delete mode.
+		/// When the entity is not <see cref="ISoftDeletable"/>, the queryable
+		/// is returned unchanged.
+		/// </returns>
+		/// <remarks>
+		/// <para>
+		/// The default implementation applies an in-memory <c>Where</c> filter
+		/// on <see cref="ISoftDeletable.IsDeleted"/>. Engine-specific subclasses
+		/// (e.g. Entity Framework) may override this method to leverage native
+		/// query-filter support (such as <c>IgnoreQueryFilters</c>).
+		/// </para>
+		/// </remarks>
+		protected virtual IQueryable<TEntity> ApplySoftDeleteMode(IQueryable<TEntity> queryable, IQueryOptions? options) {
+			ArgumentNullException.ThrowIfNull(queryable);
+
+			if (!IsSoftDeletable)
+				return queryable;
+
+			var mode = options?.SoftDeleteMode ?? SoftDeleteMode.Default;
+
+			return mode switch {
+				SoftDeleteMode.Default => queryable.Where(e => !((ISoftDeletable)e).IsDeleted),
+				SoftDeleteMode.IncludeDeleted => queryable,
+				SoftDeleteMode.OnlyDeleted => queryable.Where(e => ((ISoftDeletable)e).IsDeleted),
+				_ => queryable
+			};
+		}
+
+		/// <summary>
 		/// Gets the underlying <see cref="IQueryable{T}"/> that represents the
 		/// entity set exposed by the repository.
 		/// </summary>

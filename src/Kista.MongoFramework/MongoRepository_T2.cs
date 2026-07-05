@@ -123,51 +123,6 @@ namespace Kista {
 		/// </returns>
 		internal IQueryable<TEntity> EngineQueryable() => DbSet.AsQueryable();
 
-		/// <summary>
-		/// Gets a value indicating whether the entity type managed by this
-		/// repository implements <see cref="ISoftDeletable"/>.
-		/// </summary>
-		protected static bool IsSoftDeletable => typeof(ISoftDeletable).IsAssignableFrom(typeof(TEntity));
-		
-		/// <summary>
-		/// Applies the soft-delete mode to the given queryable, according
-		/// to the provided <see cref="IQueryOptions"/>.
-		/// </summary>
-		/// <param name="queryable">
-		/// The queryable to filter.
-		/// </param>
-		/// <param name="options">
-		/// The query options carrying the soft-delete mode, or <c>null</c>
-		/// for the default mode (exclude soft-deleted records).
-		/// </param>
-		/// <returns>
-		/// Returns the queryable filtered according to the soft-delete mode.
-		/// When the entity is not <see cref="ISoftDeletable"/>, the queryable
-		/// is returned unchanged.
-		/// </returns>
-		/// <remarks>
-		/// <para>
-		/// MongoDB has no native global query filter equivalent to EF Core's
-		/// <c>HasQueryFilter</c>, so the soft-delete exclusion is applied
-		/// explicitly here.
-		/// </para>
-		/// </remarks>
-		protected virtual IQueryable<TEntity> ApplySoftDeleteMode(IQueryable<TEntity> queryable, IQueryOptions? options) {
-			ArgumentNullException.ThrowIfNull(queryable);
-
-			if (!IsSoftDeletable)
-				return queryable;
-
-			var mode = options?.SoftDeleteMode ?? SoftDeleteMode.Default;
-
-			return mode switch {
-				SoftDeleteMode.Default => queryable.Where(e => !((ISoftDeletable)e).IsDeleted),
-				SoftDeleteMode.IncludeDeleted => queryable,
-				SoftDeleteMode.OnlyDeleted => queryable.Where(e => ((ISoftDeletable)e).IsDeleted),
-				_ => queryable
-			};
-		}
-		
 		/// <inheritdoc />
 		protected override bool IsQueryable => true;
 

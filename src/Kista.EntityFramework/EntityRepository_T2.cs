@@ -110,12 +110,6 @@ namespace Kista
 		protected override IQueryable<TEntity> Queryable() => Entities.AsQueryable();
 
 		/// <summary>
-		/// Gets a value indicating whether the entity type managed by this
-		/// repository implements <see cref="ISoftDeletable"/>.
-		/// </summary>
-		protected static bool IsSoftDeletable => typeof(ISoftDeletable).IsAssignableFrom(typeof(TEntity));
-
-		/// <summary>
 		/// Applies the soft-delete mode to the given queryable, according
 		/// to the provided <see cref="IQueryOptions"/>.
 		/// </summary>
@@ -133,21 +127,16 @@ namespace Kista
 		/// </returns>
 		/// <remarks>
 		/// <para>
-		/// <see cref="SoftDeleteMode.Default"/> relies on the EF Core
+		/// Overrides the base in-memory filter: EF Core relies on the
 		/// <c>HasQueryFilter</c> convention registered through
 		/// <see cref="SoftDeleteModelBuilderExtensions.HasSoftDeleteFilter{TEntity}(EntityTypeBuilder{TEntity})"/>
-		/// and does not add any extra filter here.
-		/// </para>
-		/// <para>
-		/// <see cref="SoftDeleteMode.IncludeDeleted"/> calls
+		/// for <see cref="SoftDeleteMode.Default"/>, so no extra filter is
+		/// applied here; <see cref="SoftDeleteMode.IncludeDeleted"/> and
+		/// <see cref="SoftDeleteMode.OnlyDeleted"/> call
 		/// <c>IgnoreQueryFilters()</c> to surface soft-deleted records.
 		/// </para>
-		/// <para>
-		/// <see cref="SoftDeleteMode.OnlyDeleted"/> calls
-		/// <c>IgnoreQueryFilters()</c> and filters to <c>IsDeleted == true</c>.
-		/// </para>
 		/// </remarks>
-		protected virtual IQueryable<TEntity> ApplySoftDeleteMode(IQueryable<TEntity> queryable, IQueryOptions? options) {
+		protected override IQueryable<TEntity> ApplySoftDeleteMode(IQueryable<TEntity> queryable, IQueryOptions? options) {
 			ArgumentNullException.ThrowIfNull(queryable);
 
 			if (!IsSoftDeletable)
@@ -410,21 +399,12 @@ namespace Kista
 				if (!ReferenceEquals(entry.Entity, entity))
 					entry.CurrentValues.SetValues(entity);
 
-				entry.State = EntityState.Modified;
-
-				var count = await Context.SaveChangesAsync(cancellationToken);
-				var deleted = count > 0;
-
-				if (deleted) {
-					Logger.LogEntityDeleted(typeof(TEntity), entityId);
-				} else {
-					Logger.WarnEntityNotDeleted(typeof(TEntity), entityId);
-				}
-
-				return deleted;
+				return await PersistDeletionAsync(entity, entityId, entry, EntityState.Modified, "Unable to soft-delete the entity", cancellationToken);
 			} catch (DbUpdateConcurrencyException) {
 				Logger.WarnEntityNotFound(typeof(TEntity), GetEntityKey(entity)!);
 				return false;
+			} catch (RepositoryException) {
+				throw;
 			} catch (Exception ex) {
 				Logger.LogUnknownError(ex, typeof(TEntity));
 				throw new RepositoryException("Unable to soft-delete the entity", ex);
@@ -447,26 +427,66 @@ namespace Kista
 					entry = ResolveEntryForEntityKey(entity, entityId);
 				}
 
-				entry.State = EntityState.Deleted;
-
-				var count = await Context.SaveChangesAsync(cancellationToken);
-
-				var deleted = count > 0;
-
-				if (deleted) {
-					Logger.LogEntityDeleted(typeof(TEntity), entityId);
-				} else {
-					Logger.WarnEntityNotDeleted(typeof(TEntity), entityId);
-				}
-
-				return deleted;
+				return await PersistDeletionAsync(entity, entityId, entry, EntityState.Deleted, "Unable to delete the entity", cancellationToken);
 			} catch (DbUpdateConcurrencyException) {
 				Logger.WarnEntityNotFound(typeof(TEntity), GetEntityKey(entity)!);
 				return false;
+			} catch (RepositoryException) {
+				throw;
 			} catch (Exception ex) {
 				Logger.LogUnknownError(ex, typeof(TEntity));
 				throw new RepositoryException("Unable to delete the entity", ex);
 			}
+		}
+
+		/// <summary>
+		/// Persists a deletion (soft or hard) through the EF change tracker
+		/// and reports the outcome via the logger, normalising the
+		/// <see cref="DbUpdateConcurrencyException"/> and generic-exception
+		/// handling shared by <see cref="SoftDeleteAsync"/> and
+		/// <see cref="HardDeleteAsync"/>.
+		/// </summary>
+		/// <param name="entity">
+		/// The entity being deleted (used to re-read its key on the
+		/// concurrency-exception recovery path).
+		/// </param>
+		/// <param name="entityId">
+		/// The previously-resolved key of <paramref name="entity"/>, used
+		/// for logging.
+		/// </param>
+		/// <param name="entry">
+		/// The already-resolved <see cref="EntityEntry{TEntity}"/> whose
+		/// <see cref="EntityEntry.State"/> will be set to
+		/// <paramref name="state"/>.
+		/// </param>
+		/// <param name="state">
+		/// The target <see cref="EntityState"/> (<see cref="EntityState.Modified"/>
+		/// for soft-delete, <see cref="EntityState.Deleted"/> for hard-delete).
+		/// </param>
+		/// <param name="errorContext">
+		/// A human-readable phrase used in the <see cref="RepositoryException"/>
+		/// message if persistence fails unexpectedly.
+		/// </param>
+		/// <param name="cancellationToken">
+		/// A token used to cancel the operation.
+		/// </param>
+		/// <returns>
+		/// Returns <c>true</c> if the underlying <c>SaveChangesAsync</c>
+		/// reported at least one affected row, otherwise <c>false</c>.
+		/// </returns>
+		private async ValueTask<bool> PersistDeletionAsync(TEntity entity, object entityId, EntityEntry<TEntity> entry, EntityState state, string errorContext, CancellationToken cancellationToken) {
+			entry.State = state;
+
+			var count = await Context.SaveChangesAsync(cancellationToken);
+			var deleted = count > 0;
+
+			if (deleted) {
+				Logger.LogEntityDeleted(typeof(TEntity), entityId);
+			} else {
+				Logger.WarnEntityNotDeleted(typeof(TEntity), entityId);
+			}
+
+			return deleted;
 		}
 
 		/// <inheritdoc/>

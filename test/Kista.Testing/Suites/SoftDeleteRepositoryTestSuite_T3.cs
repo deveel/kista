@@ -26,10 +26,10 @@ public abstract class SoftDeleteRepositoryTestSuite<TPerson, TKey> : RepositoryT
 	private static IQuery KeyQuery(TKey key) =>
 		new Query(QueryFilter.Where<TPerson>(p => p.Id!.Equals(key)));
 
-	private IQuery IncludeDeletedQuery(TKey key) =>
+	private static IQuery IncludeDeletedQuery(TKey key) =>
 		new Query(KeyQuery(key).Filter ?? QueryFilter.Empty, null, IncludeDeletedOptions);
 
-	private IQuery OnlyDeletedQuery(TKey key) =>
+	private static IQuery OnlyDeletedQuery(TKey key) =>
 		new Query(KeyQuery(key).Filter ?? QueryFilter.Empty, null, OnlyDeletedOptions);
 
 	[Fact]

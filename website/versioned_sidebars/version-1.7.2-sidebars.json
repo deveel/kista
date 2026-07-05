@@ -54,6 +54,7 @@
       ]
     },
     "multi-tenancy",
+    "soft-delete",
     {
       "type": "category",
       "label": "Repository Implementations",
@@ -93,7 +94,23 @@
         "health-checks/troubleshooting"
       ]
     },
+    {
+      "type": "category",
+      "label": "Specifications",
+      "link": {
+        "type": "doc",
+        "id": "specifications/README"
+      },
+      "items": []
+    },
     "sample-app",
+    {
+      "type": "category",
+      "label": "Migrate",
+      "items": [
+        "migrating-from-1.7"
+      ]
+    },
     "roadmap"
   ]
 }

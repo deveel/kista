@@ -77,16 +77,19 @@ const config: Config = {
           path: '../docs',
           sidebarPath: './sidebars.ts',
           editUrl: 'https://github.com/deveel/kista/edit/main/docs/',
-          lastVersion: '1.7.1',
+          lastVersion: '1.7.2',
           versions: {
+            '1.7.2': {
+              label: 'v1.7.2 (latest)',
+            },
             '1.7.1': {
-              label: '1.7.1',
+              label: 'v1.7.1',
             },
             '1.7.0': {
-              label: '1.7.0',
+              label: 'v1.7.0',
             },
             '1.6.8': {
-              label: '1.6.8',
+              label: 'v1.6.8',
             },
           },
         },

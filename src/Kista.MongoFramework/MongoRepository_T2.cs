@@ -676,14 +676,12 @@ namespace Kista {
 				if (entities.Any(x => DbSet.Context.ChangeTracker.GetEntry(x) == null))
 					throw new RepositoryException("The list contains entities that are not tracked by the repository");
 
-				var now = ResolveSystemTime().UtcNow;
+			var now = ResolveSystemTime().UtcNow;
 
-				foreach (var entity in entities) {
-					if (entity is ISoftDeletable softDeletable) {
-						softDeletable.IsDeleted = true;
-						softDeletable.DeletedAtUtc = now;
-					}
-				}
+			foreach (var softDeletable in entities.OfType<ISoftDeletable>()) {
+				softDeletable.IsDeleted = true;
+				softDeletable.DeletedAtUtc = now;
+			}
 
 				DbSet.UpdateRange(entities);
 

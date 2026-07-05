@@ -468,7 +468,7 @@ namespace Kista {
 				}
 			} catch (RepositoryException) {
 				throw;
-			} catch (Exception ex) {
+			} catch (InvalidOperationException ex) {
 				throw new RepositoryException("Could not soft-delete the entity", ex);
 			}
 		}
@@ -567,7 +567,7 @@ namespace Kista {
 				await Task.CompletedTask;
 			} catch (RepositoryException) {
 				throw;
-			} catch (Exception ex) {
+			} catch (InvalidOperationException ex) {
 				throw new RepositoryException("Could not soft-delete the entities", ex);
 			}
 		}

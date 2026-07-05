@@ -405,7 +405,7 @@ namespace Kista
 				return false;
 			} catch (RepositoryException) {
 				throw;
-			} catch (Exception ex) {
+			} catch (DbUpdateException ex) {
 				Logger.LogUnknownError(ex, typeof(TEntity));
 				throw new RepositoryException("Unable to soft-delete the entity", ex);
 			}
@@ -539,7 +539,7 @@ namespace Kista
 				await Context.SaveChangesAsync(true, cancellationToken);
 			} catch (DbUpdateConcurrencyException ex) {
 				throw new RepositoryException("One or more entities were not found in the repository", ex);
-			} catch (Exception ex) {
+			} catch (DbUpdateException ex) {
 				Logger.LogUnknownError(ex, typeof(TEntity));
 				throw new RepositoryException("Unknown error while trying to soft-delete a range of entities from the repository", ex);
 			}

@@ -29,21 +29,21 @@ namespace Kista {
 			.GetDatabase(new MongoUrl(ConnectionString).DatabaseName)
 			.GetCollection<SoftDeletableMongoPerson>("soft_deletable_persons");
 
-		protected override void ConfigureServices(IServiceCollection services) {
-			services
-				.AddMongoDbContext<MongoDbContext>(builder => builder.UseConnection(ConnectionString))
-				.AddRepositoryController();
-			services.AddRepository<TestSoftDeletableMongoPersonRepository>();
+	protected override void ConfigureServices(IServiceCollection services) {
+		services.AddRepositoryContext()
+			.UseMongoDB<MongoDbContext>(b => b.WithConnectionString(ConnectionString))
+			.ConfigureLifecycle()
+			.AddRepository<TestSoftDeletableMongoPersonRepository>();
 
-			base.ConfigureServices(services);
-		}
+		base.ConfigureServices(services);
+	}
 
-		protected override async ValueTask InitializeAsync() {
-			var controller = Services.GetRequiredService<IRepositoryController>();
-			await controller.CreateRepositoryAsync<SoftDeletableMongoPerson, ObjectId>();
+	protected override async ValueTask InitializeAsync() {
+		var controller = Services.GetRequiredService<IRepositoryLifecycleService>();
+		await controller.CreateRepositoryAsync<SoftDeletableMongoPerson, ObjectId>();
 
-			await base.InitializeAsync();
-		}
+		await base.InitializeAsync();
+	}
 
 		protected override async ValueTask DisposeAsync() {
 			await MongoCollection.DeleteManyAsync(x => true);

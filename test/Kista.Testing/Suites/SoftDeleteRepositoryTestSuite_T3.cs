@@ -152,8 +152,7 @@ public abstract class SoftDeleteRepositoryTestSuite<TPerson, TKey> : RepositoryT
 
 		await Repository.HardDeleteRangeAsync(persons, TestContext.Current.CancellationToken);
 
-		foreach (var person in persons) {
-			var personId = Repository.GetEntityKey(person)!;
+		foreach (var personId in persons.Select(p => Repository.GetEntityKey(p)!)) {
 			var found = await TestRepo.FindFirstAsync(IncludeDeletedQuery(personId), TestContext.Current.CancellationToken);
 			Assert.Null(found);
 		}

@@ -1164,7 +1164,7 @@ namespace Kista {
 				await SetToCacheAsync(deleted, token);
 
 				return Success();
-			} catch (Exception ex) {
+			} catch (InvalidOperationException ex) {
 				LogEntityUnknownError(entityKey, ex);
 				return Fail(EntityErrorCodes.UnknownError);
 			}

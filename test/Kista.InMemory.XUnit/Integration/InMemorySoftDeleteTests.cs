@@ -20,8 +20,9 @@ public class InMemorySoftDeleteTests : SoftDeleteRepositoryTestSuite<SoftDeletab
     protected override string GeneratePersonId() => Guid.NewGuid().ToString("N");
 
     protected override void ConfigureServices(IServiceCollection services) {
-        services.AddRepository<SoftDeletablePersonRepository>();
-        services.AddRepositoryController();
+        services.AddRepositoryContext()
+            .ConfigureLifecycle()
+            .AddRepository<SoftDeletablePersonRepository>();
         base.ConfigureServices(services);
     }
 }

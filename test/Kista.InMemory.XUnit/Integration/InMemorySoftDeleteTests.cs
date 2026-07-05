@@ -29,20 +29,8 @@ public class InMemorySoftDeleteTests : SoftDeleteRepositoryTestSuite<SoftDeletab
 [Trait("Category", "Integration")]
 [Trait("Layer", "Infrastructure")]
 [Trait("Feature", "SoftDelete")]
-public class InMemorySoftDeleteRestoreTests : SoftDeleteRepositoryTestSuite<SoftDeletablePerson, string> {
+public class InMemorySoftDeleteRestoreTests : InMemorySoftDeleteTests {
     public InMemorySoftDeleteRestoreTests(ITestOutputHelper outputHelper) : base(outputHelper) {
-    }
-
-    protected override Faker<SoftDeletablePerson> PersonFaker { get; } = new SoftDeletablePersonFaker();
-
-    protected override IEnumerable<SoftDeletablePerson> NaturalOrder(IEnumerable<SoftDeletablePerson> source) => source.OrderBy(x => x.Id);
-
-    protected override string GeneratePersonId() => Guid.NewGuid().ToString("N");
-
-    protected override void ConfigureServices(IServiceCollection services) {
-        services.AddRepository<SoftDeletablePersonRepository>();
-        services.AddRepositoryController();
-        base.ConfigureServices(services);
     }
 
     [Fact]
@@ -51,7 +39,7 @@ public class InMemorySoftDeleteRestoreTests : SoftDeleteRepositoryTestSuite<Soft
         var personId = Repository.GetEntityKey(person)!;
 
         var services = new ServiceCollection();
-        services.AddSingleton<IUserAccessor<string>>(new StaticUserAccessor("user-42"));
+        services.AddSingleton<IUserAccessor<string>>(new StaticUserAccessor<string>("user-42"));
         services.AddLogging();
         var provider = services.BuildServiceProvider();
 
@@ -72,14 +60,4 @@ public class InMemorySoftDeleteRestoreTests : SoftDeleteRepositoryTestSuite<Soft
 			Assert.Null(foundRestored.DeletedAtUtc);
 			Assert.Null(foundRestored.DeletedBy);
 		}
-
-    private sealed class StaticUserAccessor : IUserAccessor<string> {
-        private readonly string _userId;
-
-        public StaticUserAccessor(string userId) {
-            _userId = userId;
-        }
-
-        public string? GetUserId() => _userId;
-    }
 }

@@ -57,43 +57,9 @@ namespace Kista {
 	[Trait("Category", "Integration")]
 	[Trait("Layer", "Infrastructure")]
 	[Trait("Feature", "SoftDelete")]
-	public class MongoSoftDeleteRestoreTests : SoftDeleteRepositoryTestSuite<SoftDeletableMongoPerson, ObjectId> {
-		public MongoSoftDeleteRestoreTests(MongoSingleDatabase mongo, ITestOutputHelper outputHelper) : base(outputHelper) {
-			ConnectionString = mongo.ConnectionString;
+	public class MongoSoftDeleteRestoreTests : MongoSoftDeleteTests {
+		public MongoSoftDeleteRestoreTests(MongoSingleDatabase mongo, ITestOutputHelper outputHelper) : base(mongo, outputHelper) {
 		}
-
-		protected string ConnectionString { get; }
-
-		protected override Faker<SoftDeletableMongoPerson> PersonFaker { get; } = new SoftDeletableMongoPersonFaker();
-
-		protected override ObjectId GeneratePersonId() => ObjectId.GenerateNewId();
-
-		protected IMongoCollection<SoftDeletableMongoPerson> MongoCollection => new MongoClient(ConnectionString)
-			.GetDatabase(new MongoUrl(ConnectionString).DatabaseName)
-			.GetCollection<SoftDeletableMongoPerson>("soft_deletable_persons");
-
-		protected override void ConfigureServices(IServiceCollection services) {
-			services
-				.AddMongoDbContext<MongoDbContext>(builder => builder.UseConnection(ConnectionString))
-				.AddRepositoryController();
-			services.AddRepository<TestSoftDeletableMongoPersonRepository>();
-
-			base.ConfigureServices(services);
-		}
-
-		protected override async ValueTask InitializeAsync() {
-			var controller = Services.GetRequiredService<IRepositoryController>();
-			await controller.CreateRepositoryAsync<SoftDeletableMongoPerson, ObjectId>();
-
-			await base.InitializeAsync();
-		}
-
-		protected override async ValueTask DisposeAsync() {
-			await MongoCollection.DeleteManyAsync(x => true);
-			await base.DisposeAsync();
-		}
-
-		protected override IEnumerable<SoftDeletableMongoPerson> NaturalOrder(IEnumerable<SoftDeletableMongoPerson> source) => source.OrderBy(x => x.Id);
 
 		[Fact]
 		public async Task Should_RestoreEntity_ThroughEntityManager_BringsEntityBackToQueries() {
@@ -101,7 +67,7 @@ namespace Kista {
 			var personId = Repository.GetEntityKey(person)!;
 
 			var services = new ServiceCollection();
-			services.AddSingleton<IUserAccessor<string>>(new StaticUserAccessor("user-42"));
+			services.AddSingleton<IUserAccessor<string>>(new StaticUserAccessor<string>("user-42"));
 			services.AddLogging();
 			var provider = services.BuildServiceProvider();
 
@@ -125,14 +91,5 @@ namespace Kista {
 			Assert.Null(foundRestored.DeletedBy);
 		}
 
-		private sealed class StaticUserAccessor : IUserAccessor<string> {
-			private readonly string _userId;
-
-			public StaticUserAccessor(string userId) {
-				_userId = userId;
-			}
-
-			public string? GetUserId() => _userId;
-		}
 	}
 }

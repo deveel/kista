@@ -58,6 +58,8 @@ namespace Kista {
 		private SortedList<TKey, Entry> entities;
 		private bool disposedValue;
 
+		private const string TheEntityDoesNotHaveAnId = "The entity does not have an ID";
+
 		/// <summary>
 		/// Guards <see cref="entities"/> for concurrent access.
 		/// Multiple readers are allowed to run simultaneously;
@@ -203,7 +205,7 @@ namespace Kista {
 		/// Gets a value indicating whether the entity type managed by this
 		/// repository implements <see cref="ISoftDeletable"/>.
 		/// </summary>
-		protected bool IsSoftDeletable => typeof(ISoftDeletable).IsAssignableFrom(typeof(TEntity));
+		protected static bool IsSoftDeletable => typeof(ISoftDeletable).IsAssignableFrom(typeof(TEntity));
 
 		/// <summary>
 		/// Applies the soft-delete mode to the given queryable, according
@@ -290,8 +292,8 @@ namespace Kista {
 			var result = new SortedList<TKey, Entry>();
 			foreach (var item in source) {
 				var id = GetEntityId(item);
-				if (id == null)
-					throw new RepositoryException("The entity does not have an ID");
+				if (EqualityComparer<TKey>.Default.Equals(id, default))
+					throw new RepositoryException(TheEntityDoesNotHaveAnId);
 
 				result.Add(id, new Entry(item));
 			}
@@ -309,7 +311,7 @@ namespace Kista {
 		private void SetEntityId(TEntity entity, TKey value) {
 			var setter = _keySetter.Value;
 			if (setter == null)
-				throw new RepositoryException("The entity does not have an ID");
+				throw new RepositoryException(TheEntityDoesNotHaveAnId);
 			setter(entity, value);
 		}
 
@@ -482,7 +484,7 @@ namespace Kista {
 
 			try {
 				var entityId = GetEntityId(entity);
-				if (entityId == null)
+				if (EqualityComparer<TKey>.Default.Equals(entityId, default))
 					return false;
 
 				_lock.EnterWriteLock();
@@ -575,17 +577,15 @@ namespace Kista {
 
 				var ids = toUpdate.Select(entity => {
 					var id = GetEntityId(entity);
-					if (id == null)
-						throw new RepositoryException("The entity does not have an ID");
+					if (EqualityComparer<TKey>.Default.Equals(id, default))
+						throw new RepositoryException(TheEntityDoesNotHaveAnId);
 					return id;
 				}).ToList();
 
 				_lock.EnterWriteLock();
 				try {
-					foreach (var id in ids) {
-						if (!this.entities.ContainsKey(id))
-							throw new RepositoryException("The entity is not in the repository");
-					}
+					if (ids.Any(id => !this.entities.ContainsKey(id)))
+						throw new RepositoryException("The entity is not in the repository");
 
 					foreach (var entity in toUpdate) {
 						if (entity is ISoftDeletable softDeletable) {
@@ -622,15 +622,15 @@ namespace Kista {
 				// Resolve all IDs before acquiring the lock
 				var ids = toRemove.Select(entity => {
 					var id = GetEntityId(entity);
-					if (id == null)
-						throw new RepositoryException("The entity does not have an ID");
+					if (EqualityComparer<TKey>.Default.Equals(id, default))
+						throw new RepositoryException(TheEntityDoesNotHaveAnId);
 					return id;
 				}).ToList();
 
-				_lock.EnterWriteLock();
-				try {
-					// verify all entities exist before removing any
-					foreach (var id in ids) {
+			_lock.EnterWriteLock();
+			try {
+				// verify all entities exist before removing any
+				foreach (var id in ids) {
 						if (!this.entities.ContainsKey(id))
 							throw new RepositoryException("The entity is not in the repository");
 					}

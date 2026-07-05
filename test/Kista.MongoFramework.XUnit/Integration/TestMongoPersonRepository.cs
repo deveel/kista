@@ -68,7 +68,7 @@ public class TestMongoPersonNoKeyRepository : MongoRepository<MongoPerson>, ITes
 /// <see cref="ITestRepository{TEntity, TKey}"/> by forwarding the protected
 /// filterable pipeline and <c>Queryable()</c> hatch through public
 /// passthroughs, so the shared
-/// <see cref="SoftDeleteRepositoryTestSuite{TPerson, TKey, TRelationship}"/>
+/// <see cref="SoftDeleteRepositoryTestSuite{TPerson, TKey}"/>
 /// can exercise the soft-delete query modes without
 /// <c>InternalsVisibleTo</c>.
 /// </summary>

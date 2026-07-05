@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Kista;
 
-public class SoftDeletablePerson : IPerson<string>, IPerson, ISoftDeletable {
+public class SoftDeletablePerson : IPerson, ISoftDeletable {
     public string FirstName { get; set; } = string.Empty;
 
     public string LastName { get; set; } = string.Empty;

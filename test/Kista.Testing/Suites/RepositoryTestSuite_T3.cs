@@ -9,10 +9,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Kista;
 
-public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsyncLifetime, IAsyncDisposable
+public abstract class RepositoryTestSuite<TPerson, TKey> : IAsyncLifetime, IAsyncDisposable
 	where TPerson : class, IPerson<TKey>
-	where TKey : notnull
-	where TRelationship : class, IRelationship {
+	where TKey : notnull {
 	private IServiceProvider? rootServiceProvider;
 	private AsyncServiceScope scope;
 
@@ -34,11 +33,7 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 
 	protected abstract Faker<TPerson> PersonFaker { get; }
 
-	protected abstract Faker<TRelationship> RelationshipFaker { get; }
-
 	protected TPerson GeneratePerson() => PersonFaker.Generate();
-
-	protected TRelationship GenerateRelationship() => RelationshipFaker.Generate();
 
 	protected ISystemTime TestTime { get; } = new TestTime();
 
@@ -99,10 +94,6 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 	protected virtual IEnumerable<TPerson> NaturalOrder(IEnumerable<TPerson> source) {
 		return source;
 	}
-
-	protected abstract Task AddRelationshipAsync(TPerson person, TRelationship relationship);
-
-	protected abstract Task RemoveRelationshipAsync(TPerson person, TRelationship relationship);
 
 	protected virtual void ClearRelationships(TPerson person) {
 	}
@@ -497,24 +488,6 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 	[Trait("Category", "Integration")]
 	[Trait("Layer", "Infrastructure")]
 	[Trait("Feature", "Repository")]
-	public async Task Should_ReturnPersonWithRelationships_When_KeyExists() {
-		// Arrange
-		var person = await RandomPersonAsync(x => x.Relationships != null && x.Relationships.Any());
-		Assert.NotNull(person);
-
-		// Act
-		var result = await Repository.FindAsync(person.Id!, TestContext.Current.CancellationToken);
-
-		// Assert
-		Assert.NotNull(result);
-		Assert.NotNull(result.Relationships);
-		Assert.NotEmpty(result.Relationships);
-	}
-
-	[Fact]
-	[Trait("Category", "Integration")]
-	[Trait("Layer", "Infrastructure")]
-	[Trait("Feature", "Repository")]
 	public async Task Should_ReturnFirstPerson_When_FindFirst() {
 		// Arrange
 		var ordered = NaturalOrder(People!).ToList();
@@ -900,6 +873,46 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : IAsync
 		var updated = await Repository.FindAsync(person.Id!, TestContext.Current.CancellationToken);
 		Assert.NotNull(updated);
 		Assert.Equal(toUpdate, updated);
+	}
+}
+
+/// <summary>
+/// Extends <see cref="RepositoryTestSuite{TPerson, TKey}"/> with relationship-specific
+/// fixtures and tests for entities whose <see cref="IPerson.Relationships"/> collection
+/// is typed by <typeparamref name="TRelationship"/>.
+/// </summary>
+public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : RepositoryTestSuite<TPerson, TKey>
+	where TPerson : class, IPerson<TKey>
+	where TKey : notnull
+	where TRelationship : class, IRelationship {
+
+	protected RepositoryTestSuite(ITestOutputHelper? testOutput) : base(testOutput) {
+	}
+
+	protected abstract Faker<TRelationship> RelationshipFaker { get; }
+
+	protected TRelationship GenerateRelationship() => RelationshipFaker.Generate();
+
+	protected abstract Task AddRelationshipAsync(TPerson person, TRelationship relationship);
+
+	protected abstract Task RemoveRelationshipAsync(TPerson person, TRelationship relationship);
+
+	[Fact]
+	[Trait("Category", "Integration")]
+	[Trait("Layer", "Infrastructure")]
+	[Trait("Feature", "Repository")]
+	public async Task Should_ReturnPersonWithRelationships_When_KeyExists() {
+		// Arrange
+		var person = await RandomPersonAsync(x => x.Relationships != null && x.Relationships.Any());
+		Assert.NotNull(person);
+
+		// Act
+		var result = await Repository.FindAsync(person.Id!, TestContext.Current.CancellationToken);
+
+		// Assert
+		Assert.NotNull(result);
+		Assert.NotNull(result.Relationships);
+		Assert.NotEmpty(result.Relationships);
 	}
 
 	[Fact]

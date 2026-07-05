@@ -14,11 +14,8 @@ namespace Kista {
 	[Trait("Category", "Integration")]
 	[Trait("Layer", "Infrastructure")]
 	[Trait("Feature", "SoftDelete")]
-	public class MongoSoftDeleteTests : SoftDeleteRepositoryTestSuite<SoftDeletableMongoPerson, ObjectId, MongoPersonRelationship> {
-		private readonly MongoSingleDatabase mongo;
-
+	public class MongoSoftDeleteTests : SoftDeleteRepositoryTestSuite<SoftDeletableMongoPerson, ObjectId> {
 		public MongoSoftDeleteTests(MongoSingleDatabase mongo, ITestOutputHelper outputHelper) : base(outputHelper) {
-			this.mongo = mongo;
 			ConnectionString = mongo.ConnectionString;
 		}
 
@@ -26,25 +23,7 @@ namespace Kista {
 
 		protected override Faker<SoftDeletableMongoPerson> PersonFaker { get; } = new SoftDeletableMongoPersonFaker();
 
-		protected override Faker<MongoPersonRelationship> RelationshipFaker => new MongoPersonRelationshipFaker();
-
 		protected override ObjectId GeneratePersonId() => ObjectId.GenerateNewId();
-
-		protected override Task AddRelationshipAsync(SoftDeletableMongoPerson person, MongoPersonRelationship relationship) {
-			if (person.Relationships == null)
-				person.Relationships = new List<MongoPersonRelationship>();
-
-			person.Relationships.Add(relationship);
-
-			return Task.CompletedTask;
-		}
-
-		protected override Task RemoveRelationshipAsync(SoftDeletableMongoPerson person, MongoPersonRelationship relationship) {
-			if (person.Relationships != null)
-				person.Relationships.Remove(relationship);
-
-			return Task.CompletedTask;
-		}
 
 		protected IMongoCollection<SoftDeletableMongoPerson> MongoCollection => new MongoClient(ConnectionString)
 			.GetDatabase(new MongoUrl(ConnectionString).DatabaseName)
@@ -78,11 +57,8 @@ namespace Kista {
 	[Trait("Category", "Integration")]
 	[Trait("Layer", "Infrastructure")]
 	[Trait("Feature", "SoftDelete")]
-	public class MongoSoftDeleteRestoreTests : SoftDeleteRepositoryTestSuite<SoftDeletableMongoPerson, ObjectId, MongoPersonRelationship> {
-		private readonly MongoSingleDatabase mongo;
-
+	public class MongoSoftDeleteRestoreTests : SoftDeleteRepositoryTestSuite<SoftDeletableMongoPerson, ObjectId> {
 		public MongoSoftDeleteRestoreTests(MongoSingleDatabase mongo, ITestOutputHelper outputHelper) : base(outputHelper) {
-			this.mongo = mongo;
 			ConnectionString = mongo.ConnectionString;
 		}
 
@@ -90,25 +66,7 @@ namespace Kista {
 
 		protected override Faker<SoftDeletableMongoPerson> PersonFaker { get; } = new SoftDeletableMongoPersonFaker();
 
-		protected override Faker<MongoPersonRelationship> RelationshipFaker => new MongoPersonRelationshipFaker();
-
 		protected override ObjectId GeneratePersonId() => ObjectId.GenerateNewId();
-
-		protected override Task AddRelationshipAsync(SoftDeletableMongoPerson person, MongoPersonRelationship relationship) {
-			if (person.Relationships == null)
-				person.Relationships = new List<MongoPersonRelationship>();
-
-			person.Relationships.Add(relationship);
-
-			return Task.CompletedTask;
-		}
-
-		protected override Task RemoveRelationshipAsync(SoftDeletableMongoPerson person, MongoPersonRelationship relationship) {
-			if (person.Relationships != null)
-				person.Relationships.Remove(relationship);
-
-			return Task.CompletedTask;
-		}
 
 		protected IMongoCollection<SoftDeletableMongoPerson> MongoCollection => new MongoClient(ConnectionString)
 			.GetDatabase(new MongoUrl(ConnectionString).DatabaseName)

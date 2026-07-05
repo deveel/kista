@@ -127,7 +127,7 @@ namespace Kista {
 		/// Gets a value indicating whether the entity type managed by this
 		/// repository implements <see cref="ISoftDeletable"/>.
 		/// </summary>
-		protected bool IsSoftDeletable => typeof(ISoftDeletable).IsAssignableFrom(typeof(TEntity));
+		protected static bool IsSoftDeletable => typeof(ISoftDeletable).IsAssignableFrom(typeof(TEntity));
 		
 		/// <summary>
 		/// Applies the soft-delete mode to the given queryable, according
@@ -627,7 +627,7 @@ namespace Kista {
 		/// </returns>
 		protected virtual async ValueTask<bool> SoftDeleteAsync(TEntity entity, ISoftDeletable softDeletable, CancellationToken cancellationToken) {
 			var entityId = GetEntityKey(entity);
-			if (entityId == null)
+			if (EqualityComparer<TKey>.Default.Equals(entityId, default))
 				throw new ArgumentException("The entity does not have an ID", nameof(entity));
 
 			try {
@@ -669,7 +669,7 @@ namespace Kista {
 			cancellationToken.ThrowIfCancellationRequested();
 
 			var entityId = GetEntityKey(entity);
-			if (entityId == null)
+			if (EqualityComparer<TKey>.Default.Equals(entityId, default))
 				throw new ArgumentException("The entity does not have an ID", nameof(entity));
 
 			try {

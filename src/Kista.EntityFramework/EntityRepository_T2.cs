@@ -113,7 +113,7 @@ namespace Kista
 		/// Gets a value indicating whether the entity type managed by this
 		/// repository implements <see cref="ISoftDeletable"/>.
 		/// </summary>
-		protected bool IsSoftDeletable => typeof(ISoftDeletable).IsAssignableFrom(typeof(TEntity));
+		protected static bool IsSoftDeletable => typeof(ISoftDeletable).IsAssignableFrom(typeof(TEntity));
 
 		/// <summary>
 		/// Applies the soft-delete mode to the given queryable, according
@@ -497,7 +497,7 @@ namespace Kista
 
 				foreach (var item in entities) {
 					var entityId = GetEntityKey(item);
-					if (entityId == null)
+					if (EqualityComparer<TKey>.Default.Equals(entityId, default))
 						throw new RepositoryException("One of the entities has no primary key configured");
 
 					var entry = Context.Entry(item);
@@ -532,7 +532,7 @@ namespace Kista
 			try {
 				foreach (var item in entities) {
 					var entityId = GetEntityKey(item);
-					if (entityId == null)
+					if (EqualityComparer<TKey>.Default.Equals(entityId, default))
 						throw new RepositoryException("One of the entities has no primary key configured");
 
 					var entry = Context.Entry(item);

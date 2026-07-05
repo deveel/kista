@@ -42,6 +42,8 @@ namespace Kista {
 		where TKey : notnull {
 		private bool disposedValue;
 
+		private const string TheEntityDoesNotHaveAValidKey = "The entity does not have a valid key";
+
 		/// <summary>
 		/// Constructs the service with the given repository.
 		/// </summary>
@@ -939,8 +941,8 @@ namespace Kista {
 			var entityKey = GetEntityKey(entity);
 
 			try {
-				if (entityKey == null || Equals(entityKey, default(TKey)))
-					return Fail(EntityErrorCodes.NotValid, "The entity does not have a valid key");
+				if (EqualityComparer<TKey>.Default.Equals(entityKey, default))
+					return Fail(EntityErrorCodes.NotValid, TheEntityDoesNotHaveAValidKey);
 
 				Logger.LogUpdatingEntity(typeof(TEntity), entityKey);
 
@@ -1022,8 +1024,8 @@ namespace Kista {
 			var entityKey = GetEntityKey(entity);
 
 			try {
-				if (entityKey == null || Equals(default(TKey), entityKey))
-					return Fail(EntityErrorCodes.NotValid, "The entity does not have a valid key");
+				if (EqualityComparer<TKey>.Default.Equals(entityKey, default))
+					return Fail(EntityErrorCodes.NotValid, TheEntityDoesNotHaveAValidKey);
 
 				var token = GetCancellationToken(cancellationToken);
 
@@ -1140,8 +1142,8 @@ namespace Kista {
 			var entityKey = GetEntityKey(entity);
 
 			try {
-				if (entityKey == null || Equals(default(TKey), entityKey))
-					return Fail(EntityErrorCodes.NotValid, "The entity does not have a valid key");
+				if (EqualityComparer<TKey>.Default.Equals(entityKey, default))
+					return Fail(EntityErrorCodes.NotValid, TheEntityDoesNotHaveAValidKey);
 
 				var token = GetCancellationToken(cancellationToken);
 
@@ -1198,8 +1200,8 @@ namespace Kista {
 			var entityKey = GetEntityKey(entity);
 
 			try {
-				if (entityKey == null || Equals(default(TKey), entityKey))
-					return Fail(EntityErrorCodes.NotValid, "The entity does not have a valid key");
+				if (EqualityComparer<TKey>.Default.Equals(entityKey, default))
+					return Fail(EntityErrorCodes.NotValid, TheEntityDoesNotHaveAValidKey);
 
 				var token = GetCancellationToken(cancellationToken);
 

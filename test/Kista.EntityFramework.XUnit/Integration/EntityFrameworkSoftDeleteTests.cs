@@ -12,7 +12,7 @@ namespace Kista {
 	[Trait("Category", "Integration")]
 	[Trait("Layer", "Infrastructure")]
 	[Trait("Feature", "SoftDelete")]
-	public class EntityFrameworkSoftDeleteTests : SoftDeleteRepositoryTestSuite<SoftDeletableDbPerson, Guid, SoftDeletableDbRelationship> {
+	public class EntityFrameworkSoftDeleteTests : SoftDeleteRepositoryTestSuite<SoftDeletableDbPerson, Guid> {
 		private readonly SqlTestConnection sql;
 
 		public EntityFrameworkSoftDeleteTests(SqlTestConnection sql, ITestOutputHelper? testOutput) : base(testOutput) {
@@ -21,25 +21,7 @@ namespace Kista {
 
 		protected override Faker<SoftDeletableDbPerson> PersonFaker => new SoftDeletableDbPersonFaker();
 
-		protected override Faker<SoftDeletableDbRelationship> RelationshipFaker => new SoftDeletableDbRelationshipFaker();
-
 		protected override Guid GeneratePersonId() => Guid.NewGuid();
-
-		protected override Task AddRelationshipAsync(SoftDeletableDbPerson person, SoftDeletableDbRelationship relationship) {
-			if (person.Relationships == null)
-				person.Relationships = new List<SoftDeletableDbRelationship>();
-
-			person.Relationships.Add(relationship);
-
-			return Task.CompletedTask;
-		}
-
-		protected override Task RemoveRelationshipAsync(SoftDeletableDbPerson person, SoftDeletableDbRelationship relationship) {
-			if (person.Relationships != null)
-				person.Relationships.Remove(relationship);
-
-			return Task.CompletedTask;
-		}
 
 		protected override void ConfigureServices(IServiceCollection services) {
 			services.AddDbContext<SoftDeletablePersonDbContext>(builder => {
@@ -76,7 +58,7 @@ namespace Kista {
 	[Trait("Category", "Integration")]
 	[Trait("Layer", "Infrastructure")]
 	[Trait("Feature", "SoftDelete")]
-	public class EntityFrameworkSoftDeleteRestoreTests : SoftDeleteRepositoryTestSuite<SoftDeletableDbPerson, Guid, SoftDeletableDbRelationship> {
+	public class EntityFrameworkSoftDeleteRestoreTests : SoftDeleteRepositoryTestSuite<SoftDeletableDbPerson, Guid> {
 		private readonly SqlTestConnection sql;
 
 		public EntityFrameworkSoftDeleteRestoreTests(SqlTestConnection sql, ITestOutputHelper? testOutput) : base(testOutput) {
@@ -85,25 +67,7 @@ namespace Kista {
 
 		protected override Faker<SoftDeletableDbPerson> PersonFaker => new SoftDeletableDbPersonFaker();
 
-		protected override Faker<SoftDeletableDbRelationship> RelationshipFaker => new SoftDeletableDbRelationshipFaker();
-
 		protected override Guid GeneratePersonId() => Guid.NewGuid();
-
-		protected override Task AddRelationshipAsync(SoftDeletableDbPerson person, SoftDeletableDbRelationship relationship) {
-			if (person.Relationships == null)
-				person.Relationships = new List<SoftDeletableDbRelationship>();
-
-			person.Relationships.Add(relationship);
-
-			return Task.CompletedTask;
-		}
-
-		protected override Task RemoveRelationshipAsync(SoftDeletableDbPerson person, SoftDeletableDbRelationship relationship) {
-			if (person.Relationships != null)
-				person.Relationships.Remove(relationship);
-
-			return Task.CompletedTask;
-		}
 
 		protected override void ConfigureServices(IServiceCollection services) {
 			services.AddDbContext<SoftDeletablePersonDbContext>(builder => {

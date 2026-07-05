@@ -7,7 +7,7 @@ namespace Kista;
 [Trait("Category", "Integration")]
 [Trait("Layer", "Infrastructure")]
 [Trait("Feature", "InMemoryRepository")]
-public class InMemoryRepositoryNoKeyTests : RepositoryTestSuite<Person, PersonRelationship> {
+public class InMemoryRepositoryNoKeyTests : NoKeyRepositoryTestSuite<Person, PersonRelationship> {
 	public InMemoryRepositoryNoKeyTests(ITestOutputHelper outputHelper) : base(outputHelper) {
 	}
 

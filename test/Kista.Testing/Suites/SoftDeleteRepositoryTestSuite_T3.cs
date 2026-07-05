@@ -11,20 +11,19 @@ namespace Kista;
 /// repository driver, for entities implementing both
 /// <see cref="IPerson{TKey}"/> and <see cref="ISoftDeletable"/>.
 /// </summary>
-public abstract class SoftDeleteRepositoryTestSuite<TPerson, TKey, TRelationship> : RepositoryTestSuite<TPerson, TKey, TRelationship>
+public abstract class SoftDeleteRepositoryTestSuite<TPerson, TKey> : RepositoryTestSuite<TPerson, TKey>
 	where TPerson : class, IPerson<TKey>, ISoftDeletable
-	where TKey : notnull
-	where TRelationship : class, IRelationship {
+	where TKey : notnull {
 
 	protected SoftDeleteRepositoryTestSuite(ITestOutputHelper? testOutput) : base(testOutput) {
 	}
 
-	private IQueryOptions IncludeDeletedOptions => QueryOptions.WithSoftDeleteMode(SoftDeleteMode.IncludeDeleted);
-	private IQueryOptions OnlyDeletedOptions => QueryOptions.WithSoftDeleteMode(SoftDeleteMode.OnlyDeleted);
+	private static IQueryOptions IncludeDeletedOptions => QueryOptions.WithSoftDeleteMode(SoftDeleteMode.IncludeDeleted);
+	private static IQueryOptions OnlyDeletedOptions => QueryOptions.WithSoftDeleteMode(SoftDeleteMode.OnlyDeleted);
 
 	private ITestRepository<TPerson, TKey> TestRepo => (ITestRepository<TPerson, TKey>)Repository;
 
-	private IQuery KeyQuery(TKey key) =>
+	private static IQuery KeyQuery(TKey key) =>
 		new Query(QueryFilter.Where<TPerson>(p => p.Id!.Equals(key)));
 
 	private IQuery IncludeDeletedQuery(TKey key) =>

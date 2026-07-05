@@ -93,13 +93,14 @@ namespace Kista {
 		public static ModelBuilder HasSoftDeleteFilter(this ModelBuilder modelBuilder) {
 			ArgumentNullException.ThrowIfNull(modelBuilder);
 
-			foreach (var entityType in modelBuilder.Model.GetEntityTypes()) {
-				if (!typeof(ISoftDeletable).IsAssignableFrom(entityType.ClrType))
-					continue;
+			var softDeletableTypes = modelBuilder.Model.GetEntityTypes()
+				.Where(entityType => typeof(ISoftDeletable).IsAssignableFrom(entityType.ClrType))
+				.Select(entityType => entityType.ClrType);
 
-				var entityBuilder = modelBuilder.Entity(entityType.ClrType);
+			foreach (var clrType in softDeletableTypes) {
+				var entityBuilder = modelBuilder.Entity(clrType);
 
-				var parameter = Expression.Parameter(entityType.ClrType, "e");
+				var parameter = Expression.Parameter(clrType, "e");
 				var property = Expression.Property(parameter, nameof(ISoftDeletable.IsDeleted));
 				var notDeleted = Expression.Not(property);
 				var lambda = Expression.Lambda(notDeleted, parameter);

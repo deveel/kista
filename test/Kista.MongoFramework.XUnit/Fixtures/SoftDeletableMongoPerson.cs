@@ -10,7 +10,7 @@ using MongoFramework.Attributes;
 
 namespace Kista {
 	[Table("soft_deletable_persons")]
-	public class SoftDeletableMongoPerson : IPerson<ObjectId>, IHaveTimeStamp, ISoftDeletable {
+	public class SoftDeletableMongoPerson : IPerson<ObjectId>, ISoftDeletable {
 		[Key, Column("_id")]
 		public ObjectId Id { get; set; }
 

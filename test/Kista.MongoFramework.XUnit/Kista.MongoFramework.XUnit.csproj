@@ -19,6 +19,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Kista.MongoFramework.MultiTenant\Kista.MongoFramework.MultiTenant.csproj" />
     <ProjectReference Include="..\..\src\Kista.MongoFramework\Kista.MongoFramework.csproj" />
+    <ProjectReference Include="..\..\src\Kista.Manager\Kista.Manager.csproj" />
     <ProjectReference Include="..\..\src\Kista.Owners\Kista.Owners.csproj" />
     <ProjectReference Include="..\Kista.Testing\Kista.Testing.csproj" />
   </ItemGroup>

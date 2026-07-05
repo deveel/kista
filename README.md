@@ -217,7 +217,7 @@ We are actively building Kista toward a comprehensive, production-ready framewor
   - [x] Repository Controller Lifecycle Redesign
 
 - [ ] **v1.7.0** — "Entity Lifecycle"
-  - [ ] Soft Delete Support
+  - [x] Soft Delete Support
   - [ ] Entity State Machine
   - [ ] Domain Event Emission from EntityManager
   - [x] Specification Pattern Support

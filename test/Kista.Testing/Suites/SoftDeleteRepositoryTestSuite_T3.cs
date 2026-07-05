@@ -159,4 +159,30 @@ public abstract class SoftDeleteRepositoryTestSuite<TPerson, TKey, TRelationship
 			Assert.Null(found);
 		}
 	}
+
+	[Fact]
+	public async Task Should_SoftDeleteRange_StampsAllEntities() {
+		var persons = await Task.WhenAll(Enumerable.Range(0, 3).Select(_ => RandomPersonAsync()));
+
+		// Pre-set DeletedBy on the entities to verify the driver preserves
+		// a caller-provided audit attribution through the range soft-delete path.
+		foreach (var person in persons)
+			person.DeletedBy = "caller-actor";
+
+		await Repository.RemoveRangeAsync(persons, TestContext.Current.CancellationToken);
+
+		foreach (var person in persons) {
+			var personId = Repository.GetEntityKey(person)!;
+
+			Assert.True(person.IsDeleted);
+			Assert.NotNull(person.DeletedAtUtc);
+			Assert.Equal("caller-actor", person.DeletedBy);
+
+			var found = await TestRepo.FindFirstAsync(OnlyDeletedQuery(personId), TestContext.Current.CancellationToken);
+			Assert.NotNull(found);
+			Assert.True(found!.IsDeleted);
+			Assert.NotNull(found.DeletedAtUtc);
+			Assert.Equal("caller-actor", found.DeletedBy);
+		}
+	}
 }

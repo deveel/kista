@@ -19,7 +19,7 @@ namespace Kista
 	/// of the application.
 	/// </summary>
 	/// <remarks>
-	/// This contact can be used to retrieve identifier about the
+	/// This contract can be used to retrieve identifier about the
 	/// user that is currently using the application, such as the
 	/// username or the user ID.
 	/// </remarks>

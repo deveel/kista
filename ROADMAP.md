@@ -403,18 +403,20 @@ Applications are not just about storing data — they care deeply about what *ha
 Regulatory, operational, and undo requirements push many teams toward logical deletion. Today this is entirely DIY: add a flag column, filter it manually in every query, and hope no new query path forgets the filter. The `IRepository.RemoveAsync` path has no hook to intercept and rewrite this as a soft delete; there is no convention at all.
 
 **What We Are Building**  
-- An `ISoftDeletable` marker interface carrying `DeletedAt` and `DeletedBy` properties
+- An `ISoftDeletable` marker interface carrying `IsDeleted`, `DeletedAtUtc`, and `DeletedBy` properties
 - Automatic rewriting of `RemoveAsync` into a soft-delete update when the entity implements `ISoftDeletable`
 - A global query filter — applied at the driver level for EF Core and MongoDB — that transparently excludes soft-deleted records from all regular queries
 - `IncludeDeleted()` and `OnlyDeleted()` query modifiers for administrative, reporting, or recovery contexts
 - A `RestoreAsync` operation on `EntityManager` for undeleting a record
-- Full driver coverage: EF Core global query filter; MongoDB `{DeletedAt: null}` filter; In-Memory inline filter
+- Full driver coverage: EF Core global query filter; MongoDB `{IsDeleted: false}` filter; In-Memory inline filter
 
 **Benefits**
 - Compliance-ready data retention with zero query-level changes in normal application code
 - No risk of accidentally surfacing deleted data in read or write operations
 - Self-service data recovery through the strongly-typed `RestoreAsync` API
 - Full audit trail of who deleted what and when, stored directly on the entity
+
+**Status:** ✅ Completed.
 
 ---
 

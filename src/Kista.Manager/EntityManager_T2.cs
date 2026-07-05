@@ -14,6 +14,8 @@
 
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
+
 using Deveel;
 using Kista.Caching;
 using System.Linq.Expressions;
@@ -126,6 +128,15 @@ namespace Kista {
 		/// </summary>
 		protected IEntityCacheKeyGenerator<TEntity>? EntityCacheKeyGenerator
 			=> Services?.GetService<IEntityCacheKeyGenerator<TEntity>>();
+
+		/// <summary>
+		/// Gets the service used to resolve the identifier of the
+		/// current user, used for audit attribution (such as the
+		/// <see cref="ISoftDeletable.DeletedBy"/> stamp on soft-delete),
+		/// or <c>null</c> if no user accessor is registered.
+		/// </summary>
+		protected IUserAccessor<string>? UserAccessor
+			=> Services?.GetService<IUserAccessor<string>>();
 
 		/// <summary>
 		/// Gets the service used to validate the entity before
@@ -517,13 +528,21 @@ namespace Kista {
 		/// </param>
 		/// <returns>
 		/// Returns the entity after the soft-delete stamping has been
-		/// applied (setting <see cref="ISoftDeletable.IsDeleted"/> and
-		/// <see cref="ISoftDeletable.DeletedAtUtc"/>).
+		/// applied (setting <see cref="ISoftDeletable.IsDeleted"/>,
+		/// <see cref="ISoftDeletable.DeletedAtUtc"/> and
+		/// <see cref="ISoftDeletable.DeletedBy"/>).
 		/// </returns>
 		protected virtual ValueTask<TEntity> OnRemovingEntityAsync(TEntity entity, CancellationToken cancellationToken) {
 			if (entity is ISoftDeletable softDeletable) {
 				softDeletable.IsDeleted = true;
 				softDeletable.DeletedAtUtc = Time?.UtcNow;
+
+				var actor = UserAccessor?.GetUserId()?.ToString();
+				if (actor != null) {
+					softDeletable.DeletedBy = actor;
+				} else {
+					Logger.LogSoftDeleteActorMissing(typeof(TEntity));
+				}
 			}
 
 			return new ValueTask<TEntity>(entity);
@@ -1264,13 +1283,7 @@ namespace Kista {
 		/// entity with the given key exists.
 		/// </returns>
 		protected virtual async ValueTask<TEntity?> FindDeletedAsync(TKey key, CancellationToken cancellationToken) {
-			if (Repository is Repository<TEntity, TKey> repo) {
-				var query = global::Kista.Query.Where<TEntity>(e => EqualityComparer<TKey>.Default.Equals(GetEntityKey(e)!, key));
-				var queryWithOptions = new Query(query.Filter ?? QueryFilter.Empty, query.Order, QueryOptions.WithSoftDeleteMode(SoftDeleteMode.OnlyDeleted));
-				return await repo.FindFirstAsyncInternal(queryWithOptions, cancellationToken);
-			}
-
-			var found = await Repository.FindAsync(key, cancellationToken);
+			var found = await FindIncludingDeletedAsync(key, cancellationToken);
 			if (found is ISoftDeletable softDeletable && softDeletable.IsDeleted)
 				return found;
 
@@ -1294,12 +1307,40 @@ namespace Kista {
 		/// </returns>
 		protected virtual async ValueTask<TEntity?> FindIncludingDeletedAsync(TKey key, CancellationToken cancellationToken) {
 			if (Repository is Repository<TEntity, TKey> repo) {
-				var query = global::Kista.Query.Where<TEntity>(e => EqualityComparer<TKey>.Default.Equals(GetEntityKey(e)!, key));
-				var queryWithOptions = new Query(query.Filter ?? QueryFilter.Empty, query.Order, QueryOptions.WithSoftDeleteMode(SoftDeleteMode.IncludeDeleted));
-				return await repo.FindFirstAsyncInternal(queryWithOptions, cancellationToken);
+				try {
+					var query = Query.Where<TEntity>(e => EqualityComparer<TKey>.Default.Equals(GetEntityKey(e)!, key));
+					var queryWithOptions = new Query(query.Filter ?? QueryFilter.Empty, query.Order, QueryOptions.WithSoftDeleteMode(SoftDeleteMode.IncludeDeleted));
+					return await repo.FindFirstAsyncInternal(queryWithOptions, cancellationToken);
+				} catch (RepositoryException) {
+					// The driver could not translate the key-comparison expression
+					// (e.g. EF Core): fall back to the driver's FindAsync, which
+					// returns null for soft-deleted entities, then retry with the
+					// IncludeDeleted mode using a direct property access filter.
+					var found = await Repository.FindAsync(key, cancellationToken);
+					if (found != null)
+						return found;
+
+					// The entity is either deleted or doesn't exist: try a
+					// property-based key filter that the driver can translate.
+					var keyProperty = typeof(TEntity).GetProperty("Id");
+					if (keyProperty != null && keyProperty.PropertyType == typeof(TKey)) {
+						var filter = BuildKeyFilter(keyProperty, key);
+						var queryWithOptions = new Query(filter, null, QueryOptions.WithSoftDeleteMode(SoftDeleteMode.IncludeDeleted));
+						return await repo.FindFirstAsyncInternal(queryWithOptions, cancellationToken);
+					}
+				}
 			}
 
 			return await Repository.FindAsync(key, cancellationToken);
+		}
+
+		private static IQueryFilter BuildKeyFilter(PropertyInfo keyProperty, TKey key) {
+			var parameter = Expression.Parameter(typeof(TEntity), "e");
+			var propertyAccess = Expression.Property(parameter, keyProperty);
+			var constant = Expression.Constant(key, typeof(TKey));
+			var equality = Expression.Equal(propertyAccess, constant);
+			var lambda = Expression.Lambda<Func<TEntity, bool>>(equality, parameter);
+			return new ExpressionQueryFilter<TEntity>(lambda);
 		}
 
 		/// <summary>

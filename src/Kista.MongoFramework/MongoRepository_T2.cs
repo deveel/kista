@@ -602,6 +602,16 @@ namespace Kista {
 		/// <summary>
 		/// Marks the given entity as soft-deleted and persists the change.
 		/// </summary>
+		/// <remarks>
+		/// The caller may pre-set <see cref="ISoftDeletable.DeletedBy"/>
+		/// on the entity before calling <see cref="RemoveAsync"/> to
+		/// attribute the deletion to an actor for audit purposes: the
+		/// driver preserves and persists any value already set on the
+		/// entity. When soft-deleting through <c>EntityManager</c>,
+		/// the <c>DeletedBy</c> stamp is resolved from the registered
+		/// <see cref="IUserAccessor{TKey}"/> and set before this method
+		/// is reached.
+		/// </remarks>
 		/// <param name="entity">
 		/// The entity instance to soft-delete.
 		/// </param>

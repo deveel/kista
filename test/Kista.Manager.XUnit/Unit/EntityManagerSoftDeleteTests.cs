@@ -1,3 +1,5 @@
+using Microsoft.Extensions.DependencyInjection;
+
 using NSubstitute;
 
 namespace Kista;
@@ -7,6 +9,17 @@ namespace Kista;
 [Trait("Feature", "SoftDelete")]
 public class EntityManagerSoftDeleteTests {
 	private readonly SoftDeletablePersonFaker _faker = new();
+
+	private static IServiceProvider BuildServicesWithUserAccessor(string userId) {
+		var services = new ServiceCollection();
+		services.AddSingleton<IUserAccessor<string>>(new StaticUserAccessor<string>(userId));
+		return services.BuildServiceProvider();
+	}
+
+	private static IServiceProvider BuildServicesWithoutUserAccessor() {
+		var services = new ServiceCollection();
+		return services.BuildServiceProvider();
+	}
 
 	[Fact]
 	public async Task Should_SoftDeleteViaManager_When_EntityIsSoftDeletable() {
@@ -18,7 +31,8 @@ public class EntityManagerSoftDeleteTests {
 		repo.FindAsync("1", Arg.Any<CancellationToken>()).Returns(person);
 		repo.UpdateAsync(Arg.Any<SoftDeletablePerson>(), Arg.Any<CancellationToken>()).Returns(true);
 
-		var manager = new EntityManager<SoftDeletablePerson, string>(repo);
+		var services = BuildServicesWithUserAccessor("user-42");
+		var manager = new EntityManager<SoftDeletablePerson, string>(repo, services: services);
 
 		var result = await manager.RemoveAsync(person, TestContext.Current.CancellationToken);
 
@@ -37,7 +51,8 @@ public class EntityManagerSoftDeleteTests {
 		repo.FindAsync("1", Arg.Any<CancellationToken>()).Returns(person);
 		repo.UpdateAsync(Arg.Any<SoftDeletablePerson>(), Arg.Any<CancellationToken>()).Returns(true);
 
-		var manager = new EntityManager<SoftDeletablePerson, string>(repo);
+		var services = BuildServicesWithUserAccessor("user-42");
+		var manager = new EntityManager<SoftDeletablePerson, string>(repo, services: services);
 
 		await manager.RemoveAsync(person, TestContext.Current.CancellationToken);
 
@@ -46,11 +61,49 @@ public class EntityManagerSoftDeleteTests {
 	}
 
 	[Fact]
+	public async Task Should_StampDeletedBy_When_UserAccessorRegistered() {
+		var person = _faker.Generate();
+		person.Id = "1";
+
+		var repo = Substitute.For<IRepository<SoftDeletablePerson, string>>();
+		repo.GetEntityKey(Arg.Any<SoftDeletablePerson>()).Returns(c => c.Arg<SoftDeletablePerson>().Id);
+		repo.FindAsync("1", Arg.Any<CancellationToken>()).Returns(person);
+		repo.UpdateAsync(Arg.Any<SoftDeletablePerson>(), Arg.Any<CancellationToken>()).Returns(true);
+
+		var services = BuildServicesWithUserAccessor("user-42");
+		var manager = new EntityManager<SoftDeletablePerson, string>(repo, services: services);
+
+		await manager.RemoveAsync(person, TestContext.Current.CancellationToken);
+
+		Assert.Equal("user-42", person.DeletedBy);
+	}
+
+	[Fact]
+	public async Task Should_LeaveDeletedByNull_When_NoUserAccessorRegistered() {
+		var person = _faker.Generate();
+		person.Id = "1";
+
+		var repo = Substitute.For<IRepository<SoftDeletablePerson, string>>();
+		repo.GetEntityKey(Arg.Any<SoftDeletablePerson>()).Returns(c => c.Arg<SoftDeletablePerson>().Id);
+		repo.FindAsync("1", Arg.Any<CancellationToken>()).Returns(person);
+		repo.UpdateAsync(Arg.Any<SoftDeletablePerson>(), Arg.Any<CancellationToken>()).Returns(true);
+
+		var services = BuildServicesWithoutUserAccessor();
+		var manager = new EntityManager<SoftDeletablePerson, string>(repo, services: services);
+
+		var result = await manager.RemoveAsync(person, TestContext.Current.CancellationToken);
+
+		Assert.True(result.IsSuccess());
+		Assert.Null(person.DeletedBy);
+	}
+
+	[Fact]
 	public async Task Should_RestoreEntity_When_SoftDeleted() {
 		var person = _faker.Generate();
 		person.Id = "1";
 		person.IsDeleted = true;
 		person.DeletedAtUtc = DateTimeOffset.UtcNow;
+		person.DeletedBy = "user-42";
 
 		var repo = Substitute.For<IRepository<SoftDeletablePerson, string>>();
 		repo.GetEntityKey(Arg.Any<SoftDeletablePerson>()).Returns(c => c.Arg<SoftDeletablePerson>().Id);
@@ -152,6 +205,17 @@ public class EntityManagerSoftDeleteTests {
 
 		Assert.True(result.IsSuccess());
 		await repo.Received().HardDeleteRangeAsync(Arg.Any<IEnumerable<SoftDeletablePerson>>(), Arg.Any<CancellationToken>());
+	}
+
+	private sealed class StaticUserAccessor<TKey> : IUserAccessor<TKey>
+		where TKey : notnull {
+		private readonly TKey? _userId;
+
+		public StaticUserAccessor(TKey? userId) {
+			_userId = userId;
+		}
+
+		public TKey? GetUserId() => _userId;
 	}
 
 	private class TestManager<TEntity, TKey> : EntityManager<TEntity, TKey>

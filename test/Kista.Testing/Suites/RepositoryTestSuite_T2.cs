@@ -9,13 +9,13 @@ using System.Net.Mail;
 
 namespace Kista;
 
-public abstract class RepositoryTestSuite<TPerson, TRelationship> : IAsyncLifetime
+public abstract class NoKeyRepositoryTestSuite<TPerson, TRelationship> : IAsyncLifetime
 	where TPerson : class, IPerson
 	where TRelationship : class, IRelationship {
 	private IServiceProvider? rootServiceProvider;
 	private AsyncServiceScope scope;
 
-	protected RepositoryTestSuite(ITestOutputHelper? testOutput) {
+	protected NoKeyRepositoryTestSuite(ITestOutputHelper? testOutput) {
 		TestOutput = testOutput;
 	}
 

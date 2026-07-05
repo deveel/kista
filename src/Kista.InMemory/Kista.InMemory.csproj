@@ -7,7 +7,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Kista\Kista.csproj" />
-    <ProjectReference Include="..\Kista.Owners\Kista.Owners.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">

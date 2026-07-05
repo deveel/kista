@@ -10,7 +10,7 @@ namespace Kista {
 	[Trait("Category", "Integration")]
 	[Trait("Layer", "Infrastructure")]
 	[Trait("Feature", "MongoRepository")]
-	public abstract class MongoRepositoryNoKeyTestSuite<TPerson> : RepositoryTestSuite<TPerson, MongoPersonRelationship>
+	public abstract class MongoRepositoryNoKeyTestSuite<TPerson> : NoKeyRepositoryTestSuite<TPerson, MongoPersonRelationship>
 		where TPerson : MongoPerson {
 		private readonly MongoSingleDatabase mongo;
 

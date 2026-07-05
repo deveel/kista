@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Kista.InMemory\Kista.InMemory.csproj" />
     <ProjectReference Include="..\..\src\Kista.DynamicLinq\Kista.DynamicLinq.csproj" />
+    <ProjectReference Include="..\..\src\Kista.Manager\Kista.Manager.csproj" />
     <ProjectReference Include="..\..\src\Kista.Owners\Kista.Owners.csproj" />
     <ProjectReference Include="..\Kista.Testing\Kista.Testing.csproj" />
   </ItemGroup>

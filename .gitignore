@@ -107,6 +107,11 @@ ipch/
 *.VC.db
 *.VC.VC.opendb
 
+# SQLite database files (samples produce these at runtime)
+*.db
+*.db-shm
+*.db-wal
+
 # Visual Studio profiler
 *.psess
 *.vsp

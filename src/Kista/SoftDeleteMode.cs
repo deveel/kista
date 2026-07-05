@@ -12,29 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-namespace Kista
-{
+namespace Kista {
 	/// <summary>
-	/// A service that provides information about the current user
-	/// of the application.
+	/// Specifies how a query should treat soft-deleted entities
+	/// that implement <see cref="ISoftDeletable"/>.
 	/// </summary>
-	/// <remarks>
-	/// This contact can be used to retrieve identifier about the
-	/// user that is currently using the application, such as the
-	/// username or the user ID.
-	/// </remarks>
-	/// <typeparam name="TKey">
-	/// The type of the key that identifies the user.
-	/// </typeparam>
-	public interface IUserAccessor<out TKey>
-	{
+	public enum SoftDeleteMode {
 		/// <summary>
-		/// Gets the identifier of the current user.
+		/// The default behaviour: soft-deleted entities are excluded
+		/// from the query results.
 		/// </summary>
-		/// <returns>
-		/// Returns a string that represents the identifier of the
-		/// user that is currently using the application.
-		/// </returns>
-		TKey? GetUserId();
+		Default,
+
+		/// <summary>
+		/// Soft-deleted entities are included alongside active entities
+		/// in the query results.
+		/// </summary>
+		IncludeDeleted,
+
+		/// <summary>
+		/// Only soft-deleted entities are returned by the query; active
+		/// entities are excluded.
+		/// </summary>
+		OnlyDeleted
 	}
 }

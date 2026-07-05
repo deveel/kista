@@ -63,6 +63,12 @@ namespace Kista {
 		/// </summary>
 		public const int EntityNotRemoved = 1005;
 
+		/// <summary>
+		/// A soft-delete was performed but no user accessor was
+		/// registered to attribute the deletion to an actor.
+		/// </summary>
+		public const int SoftDeleteActorMissing = 1006;
+
 
 		// Debugs
 

@@ -75,6 +75,23 @@ namespace Kista
             return this;
         }
 
+        /// <summary>
+        /// Registers soft-delete configuration for the MongoDB driver.
+        /// Soft-delete filtering activates automatically for any entity
+        /// implementing <see cref="ISoftDeletable"/>: this call is
+        /// reserved for future configuration knobs.
+        /// </summary>
+        /// <param name="configure">
+        /// An optional delegate to configure the <see cref="SoftDeleteOptions"/>.
+        /// </param>
+        /// <returns>
+        /// Returns the same builder for chaining.
+        /// </returns>
+        public MongoRepositoryBuilder WithSoftDelete(Action<SoftDeleteOptions>? configure = null) {
+            Parent.WithSoftDelete(configure);
+            return this;
+        }
+
         internal void FinalizeRegistration() {
             if (_connectionString != null) {
                 RegisterMongoContext(_connectionString);

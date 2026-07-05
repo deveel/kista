@@ -61,3 +61,33 @@ public class TestMongoPersonNoKeyRepository : MongoRepository<MongoPerson>, ITes
 
 	IQueryable<MongoPerson> ITestRepository<MongoPerson, object>.Queryable() => Queryable();
 }
+
+/// <summary>
+/// A test stub deriving from <see cref="MongoRepository{TEntity, TKey}"/>
+/// for <see cref="SoftDeletableMongoPerson"/>, implementing
+/// <see cref="ITestRepository{TEntity, TKey}"/> by forwarding the protected
+/// filterable pipeline and <c>Queryable()</c> hatch through public
+/// passthroughs, so the shared
+/// <see cref="SoftDeleteRepositoryTestSuite{TPerson, TKey}"/>
+/// can exercise the soft-delete query modes without
+/// <c>InternalsVisibleTo</c>.
+/// </summary>
+public class TestSoftDeletableMongoPersonRepository : MongoRepository<SoftDeletableMongoPerson, ObjectId>, ITestRepository<SoftDeletableMongoPerson, ObjectId> {
+	public TestSoftDeletableMongoPersonRepository(IMongoDbContext context, ILogger<MongoRepository<SoftDeletableMongoPerson, ObjectId>>? logger = null, IServiceProvider? services = null)
+		: base(context, logger, services) {
+	}
+
+	ValueTask<SoftDeletableMongoPerson?> ITestRepository<SoftDeletableMongoPerson, ObjectId>.FindFirstAsync(IQuery query, CancellationToken cancellationToken)
+		=> FindFirstAsync(query, cancellationToken);
+
+	ValueTask<IReadOnlyList<SoftDeletableMongoPerson>> ITestRepository<SoftDeletableMongoPerson, ObjectId>.FindAllAsync(IQuery query, CancellationToken cancellationToken)
+		=> FindAllAsync(query, cancellationToken);
+
+	ValueTask<long> ITestRepository<SoftDeletableMongoPerson, ObjectId>.CountAsync(IQueryFilter filter, CancellationToken cancellationToken)
+		=> CountAsync(filter, cancellationToken);
+
+	ValueTask<bool> ITestRepository<SoftDeletableMongoPerson, ObjectId>.ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken)
+		=> ExistsAsync(filter, cancellationToken);
+
+	IQueryable<SoftDeletableMongoPerson> ITestRepository<SoftDeletableMongoPerson, ObjectId>.Queryable() => Queryable();
+}

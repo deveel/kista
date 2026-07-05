@@ -279,6 +279,159 @@ namespace Kista {
 			=> repository.RemoveByKeyAsync(key).ConfigureAwait(false).GetAwaiter().GetResult();
 
 		/// <summary>
+		/// Permanently removes an entity, identified by the given key,
+		/// from the repository, bypassing any soft-delete behaviour.
+		/// </summary>
+		/// <typeparam name="TEntity">
+		/// The type of entity handled by the repository.
+		/// </typeparam>
+		/// <param name="repository">
+		/// The instance of the repository from which the entity is hard-deleted.
+		/// </param>
+		/// <param name="key">
+		/// The key that uniquely identifies the entity to hard-delete.
+		/// </param>
+		/// <param name="cancellationToken">
+		/// A token used to cancel the operation.
+		/// </param>
+		/// <returns>
+		/// Returns <c>true</c> if the entity was hard-deleted successfully,
+		/// otherwise <c>false</c>.
+		/// </returns>
+		public static async ValueTask<bool> HardDeleteByKeyAsync<TEntity>(this IRepository<TEntity> repository, object key, CancellationToken cancellationToken = default)
+			where TEntity : class {
+			var entity = await repository.FindAsync(key, cancellationToken);
+			if (entity == null)
+				return false;
+
+			return await repository.HardDeleteAsync(entity, cancellationToken);
+		}
+
+		/// <summary>
+		/// Permanently removes an entity, identified by the given key,
+		/// from the repository, bypassing any soft-delete behaviour.
+		/// </summary>
+		/// <typeparam name="TEntity">
+		/// The type of entity handled by the repository.
+		/// </typeparam>
+		/// <typeparam name="TKey">
+		/// The type of the key that uniquely identifies the entity.
+		/// </typeparam>
+		/// <param name="repository">
+		/// The instance of the repository from which the entity is hard-deleted.
+		/// </param>
+		/// <param name="key">
+		/// The key that uniquely identifies the entity to hard-delete.
+		/// </param>
+		/// <param name="cancellationToken">
+		/// A token used to cancel the operation.
+		/// </param>
+		/// <returns>
+		/// Returns <c>true</c> if the entity was hard-deleted successfully,
+		/// otherwise <c>false</c>.
+		/// </returns>
+		public static async ValueTask<bool> HardDeleteByKeyAsync<TEntity, TKey>(this IRepository<TEntity, TKey> repository, TKey key, CancellationToken cancellationToken = default)
+			where TEntity : class {
+			var entity = await repository.FindAsync(key, cancellationToken);
+			if (entity == null)
+				return false;
+
+			return await repository.HardDeleteAsync(entity, cancellationToken);
+		}
+
+		/// <summary>
+		/// Synchronously and permanently removes an entity, identified by
+		/// the given key, from the repository, bypassing any soft-delete
+		/// behaviour.
+		/// </summary>
+		/// <typeparam name="TEntity">
+		/// The type of entity handled by the repository.
+		/// </typeparam>
+		/// <param name="repository">
+		/// The instance of the repository from which the entity is hard-deleted.
+		/// </param>
+		/// <param name="key">
+		/// The key that uniquely identifies the entity to hard-delete.
+		/// </param>
+		/// <returns>
+		/// Returns <c>true</c> if the entity was hard-deleted successfully,
+		/// otherwise <c>false</c>.
+		/// </returns>
+		public static bool HardDeleteByKey<TEntity>(this IRepository<TEntity> repository, object key)
+			where TEntity : class
+			=> repository.HardDeleteByKeyAsync(key).ConfigureAwait(false).GetAwaiter().GetResult();
+
+		/// <summary>
+		/// Synchronously and permanently removes an entity, identified by
+		/// the given key, from the repository, bypassing any soft-delete
+		/// behaviour.
+		/// </summary>
+		/// <typeparam name="TEntity">
+		/// The type of entity handled by the repository.
+		/// </typeparam>
+		/// <typeparam name="TKey">
+		/// The type of the key that uniquely identifies the entity.
+		/// </typeparam>
+		/// <param name="repository">
+		/// The instance of the repository from which the entity is hard-deleted.
+		/// </param>
+		/// <param name="key">
+		/// The key that uniquely identifies the entity to hard-delete.
+		/// </param>
+		/// <returns>
+		/// Returns <c>true</c> if the entity was hard-deleted successfully,
+		/// otherwise <c>false</c>.
+		/// </returns>
+		public static bool HardDeleteByKey<TEntity, TKey>(this IRepository<TEntity, TKey> repository, TKey key)
+			where TEntity : class
+			=> repository.HardDeleteByKeyAsync(key).ConfigureAwait(false).GetAwaiter().GetResult();
+
+		/// <summary>
+		/// Permanently removes an entity from the repository synchronously,
+		/// bypassing any soft-delete behaviour.
+		/// </summary>
+		/// <typeparam name="TEntity">
+		/// The type of entity handled by the repository.
+		/// </typeparam>
+		/// <param name="repository">
+		/// The instance of the repository from which the entity is hard-deleted.
+		/// </param>
+		/// <param name="entity">
+		/// The instance of the entity to hard-delete.
+		/// </param>
+		/// <returns>
+		/// Returns <c>true</c> if the entity was hard-deleted successfully,
+		/// otherwise <c>false</c>.
+		/// </returns>
+		public static bool HardDelete<TEntity>(this IRepository<TEntity> repository, TEntity entity)
+			where TEntity : class
+			=> repository.HardDeleteAsync(entity).ConfigureAwait(false).GetAwaiter().GetResult();
+
+		/// <summary>
+		/// Permanently removes an entity from the repository synchronously,
+		/// bypassing any soft-delete behaviour.
+		/// </summary>
+		/// <typeparam name="TEntity">
+		/// The type of entity handled by the repository.
+		/// </typeparam>
+		/// <typeparam name="TKey">
+		/// The type of the key that uniquely identifies the entity.
+		/// </typeparam>
+		/// <param name="repository">
+		/// The instance of the repository from which the entity is hard-deleted.
+		/// </param>
+		/// <param name="entity">
+		/// The instance of the entity to hard-delete.
+		/// </param>
+		/// <returns>
+		/// Returns <c>true</c> if the entity was hard-deleted successfully,
+		/// otherwise <c>false</c>.
+		/// </returns>
+		public static bool HardDelete<TEntity, TKey>(this IRepository<TEntity, TKey> repository, TEntity entity)
+			where TEntity : class
+			=> repository.HardDeleteAsync(entity).ConfigureAwait(false).GetAwaiter().GetResult();
+
+		/// <summary>
 		/// Removes a range of entities from the repository synchronously.
 		/// </summary>
 		/// <typeparam name="TEntity">

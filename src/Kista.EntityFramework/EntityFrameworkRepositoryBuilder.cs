@@ -70,6 +70,30 @@ namespace Kista
             return this;
         }
 
+        /// <summary>
+        /// Registers soft-delete configuration for the Entity Framework
+        /// driver. Soft-delete filtering activates automatically for any
+        /// entity implementing <see cref="ISoftDeletable"/>: this call
+        /// is reserved for future configuration knobs.
+        /// </summary>
+        /// <param name="configure">
+        /// An optional delegate to configure the <see cref="SoftDeleteOptions"/>.
+        /// </param>
+        /// <returns>
+        /// Returns the same builder for chaining.
+        /// </returns>
+        /// <remarks>
+        /// <para>
+        /// To enable the EF Core global query filter, call
+        /// <see cref="SoftDeleteModelBuilderExtensions.HasSoftDeleteFilter(ModelBuilder)"/>
+        /// in your <c>OnModelCreating</c> override.
+        /// </para>
+        /// </remarks>
+        public EntityFrameworkRepositoryBuilder WithSoftDelete(Action<SoftDeleteOptions>? configure = null) {
+            Parent.WithSoftDelete(configure);
+            return this;
+        }
+
         internal void FinalizeRegistration() {
             if (_dbContextConfig != null) {
                 RegisterDbContext(Parent.Services, _dbContextConfig, _lifetime);

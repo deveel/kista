@@ -29,5 +29,15 @@ namespace Kista {
 		/// to order the entities.
 		/// </summary>
 		IQueryOrder? Order { get; }
+
+		/// <summary>
+		/// Gets the options that influence how the query is executed
+		/// by the repository driver, such as the soft-delete mode.
+		/// </summary>
+		/// <remarks>
+		/// A <c>null</c> value is equivalent to
+		/// <see cref="QueryOptions.Default"/>.
+		/// </remarks>
+		IQueryOptions? Options { get; }
 	}
 }

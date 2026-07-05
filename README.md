@@ -186,6 +186,7 @@ For driver-specific configuration, multi-tenancy, and guidance on writing a cust
 | [Entity Manager](docs/entity-manager/) | Business layer with validation, caching, and events |
 | [Custom repositories](docs/custom-repository/) | Write your own driver |
 | [Multi-Tenancy](docs/multi-tenancy.md) | Tenant-isolated repositories |
+| [Soft-Delete](docs/soft-delete.md) | Logical deletion with automatic query filtering and restore |
 | [User Entities](docs/user-entities/) | User-scoped entities with owner filtering |
 | [Health Checks](docs/health-checks/overview.md) | Repository connectivity monitoring |
 
@@ -217,7 +218,7 @@ We are actively building Kista toward a comprehensive, production-ready framewor
   - [x] Repository Controller Lifecycle Redesign
 
 - [ ] **v1.7.0** — "Entity Lifecycle"
-  - [ ] Soft Delete Support
+  - [x] Soft Delete Support
   - [ ] Entity State Machine
   - [ ] Domain Event Emission from EntityManager
   - [x] Specification Pattern Support

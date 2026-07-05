@@ -18,6 +18,16 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
+      label: 'The Entity Manager',
+      link: {type: 'doc', id: 'entity-manager/README'},
+      items: [
+        'entity-manager/entity-validation',
+        'entity-manager/http-request-cancellation',
+        'entity-manager/caching-entities',
+      ],
+    },
+    {
+      type: 'category',
       label: 'Repository Lifecycle',
       link: {type: 'doc', id: 'repository-lifecycle/README'},
       items: [
@@ -34,6 +44,7 @@ const sidebars: SidebarsConfig = {
       ],
     },
     'multi-tenancy',
+    'soft-delete',
     {
       type: 'category',
       label: 'Repository Implementations',
@@ -62,16 +73,6 @@ const sidebars: SidebarsConfig = {
         'health-checks/driver-specific',
         'health-checks/advanced-scenarios',
         'health-checks/troubleshooting',
-      ],
-    },
-    {
-      type: 'category',
-      label: 'The Entity Manager',
-      link: {type: 'doc', id: 'entity-manager/README'},
-      items: [
-        'entity-manager/entity-validation',
-        'entity-manager/http-request-cancellation',
-        'entity-manager/caching-entities',
       ],
     },
     {

@@ -58,6 +58,8 @@ namespace Kista {
 		private SortedList<TKey, Entry> entities;
 		private bool disposedValue;
 
+		private const string TheEntityDoesNotHaveAnId = "The entity does not have an ID";
+
 		/// <summary>
 		/// Guards <see cref="entities"/> for concurrent access.
 		/// Multiple readers are allowed to run simultaneously;
@@ -252,8 +254,8 @@ namespace Kista {
 			var result = new SortedList<TKey, Entry>();
 			foreach (var item in source) {
 				var id = GetEntityId(item);
-				if (id == null)
-					throw new RepositoryException("The entity does not have an ID");
+				if (EqualityComparer<TKey>.Default.Equals(id, default))
+					throw new RepositoryException(TheEntityDoesNotHaveAnId);
 
 				result.Add(id, new Entry(item));
 			}
@@ -271,7 +273,7 @@ namespace Kista {
 		private void SetEntityId(TEntity entity, TKey value) {
 			var setter = _keySetter.Value;
 			if (setter == null)
-				throw new RepositoryException("The entity does not have an ID");
+				throw new RepositoryException(TheEntityDoesNotHaveAnId);
 			setter(entity, value);
 		}
 
@@ -291,14 +293,15 @@ namespace Kista {
 		}
 
 		/// <inheritdoc/>
-		protected override ValueTask<long> CountAsync(IQueryFilter filter, CancellationToken cancellationToken = default) {
+		protected override ValueTask<long> CountAsync(IQueryFilter? filter, IQueryOptions? options, CancellationToken cancellationToken = default) {
 			cancellationToken.ThrowIfCancellationRequested();
 
 			try {
 				InitializeFilter(filter);
 				_lock.EnterReadLock();
 				try {
-					var result = GetEntityQueryable().LongCount(filter);
+					var queryable = ApplySoftDeleteMode(GetEntityQueryable(), options);
+					var result = queryable.LongCount(filter);
 					return new ValueTask<long>(result);
 				} finally {
 					_lock.ExitReadLock();
@@ -390,7 +393,8 @@ namespace Kista {
 		}
 
 		/// <summary>
-		/// Removes a single entity from the repository.
+		/// Removes a single entity from the repository, or marks it as
+		/// soft-deleted when the entity implements <see cref="ISoftDeletable"/>.
 		/// </summary>
 		/// <remarks>
 		/// This method acquires an exclusive write lock before mutating the
@@ -398,6 +402,79 @@ namespace Kista {
 		/// </remarks>
 		/// <inheritdoc/>
 		public override ValueTask<bool> RemoveAsync(TEntity entity, CancellationToken cancellationToken = default) {
+			ArgumentNullException.ThrowIfNull(entity);
+
+			cancellationToken.ThrowIfCancellationRequested();
+
+			if (entity is ISoftDeletable softDeletable)
+				return SoftDeleteAsync(entity, softDeletable, cancellationToken);
+
+			return HardDeleteAsync(entity, cancellationToken);
+		}
+
+		/// <summary>
+		/// Marks the given entity as soft-deleted by setting its
+		/// <see cref="ISoftDeletable.IsDeleted"/> flag and
+		/// <see cref="ISoftDeletable.DeletedAtUtc"/> timestamp, then
+		/// persists the change through the in-memory store.
+		/// </summary>
+		/// <remarks>
+		/// The caller may pre-set <see cref="ISoftDeletable.DeletedBy"/>
+		/// on the entity before calling <see cref="RemoveAsync"/> to
+		/// attribute the deletion to an actor for audit purposes: the
+		/// driver preserves and persists any value already set on the
+		/// entity. When soft-deleting through <c>EntityManager</c>,
+		/// the <c>DeletedBy</c> stamp is resolved from the registered
+		/// <see cref="IUserAccessor{TKey}"/> and set before this method
+		/// is reached.
+		/// </remarks>
+		/// <param name="entity">
+		/// The entity instance to soft-delete.
+		/// </param>
+		/// <param name="softDeletable">
+		/// The <see cref="ISoftDeletable"/> view of the same entity.
+		/// </param>
+		/// <param name="cancellationToken">
+		/// A token used to cancel the operation.
+		/// </param>
+		/// <returns>
+		/// Returns <c>true</c> if the entity was successfully soft-deleted,
+		/// otherwise <c>false</c>.
+		/// </returns>
+		protected virtual async ValueTask<bool> SoftDeleteAsync(TEntity entity, ISoftDeletable softDeletable, CancellationToken cancellationToken) {
+			cancellationToken.ThrowIfCancellationRequested();
+
+			try {
+				var entityId = GetEntityId(entity);
+				if (EqualityComparer<TKey>.Default.Equals(entityId, default))
+					return false;
+
+				_lock.EnterWriteLock();
+				try {
+					if (!entities.TryGetValue(entityId, out var entry))
+						return false;
+
+					if (((ISoftDeletable)entry.Entity).IsDeleted)
+						return false;
+
+					softDeletable.IsDeleted = true;
+					softDeletable.DeletedAtUtc = ResolveSystemTime().UtcNow;
+
+					entry.Update(entity);
+					_version++;
+					return true;
+				} finally {
+					_lock.ExitWriteLock();
+				}
+			} catch (RepositoryException) {
+				throw;
+			} catch (InvalidOperationException ex) {
+				throw new RepositoryException("Could not soft-delete the entity", ex);
+			}
+		}
+
+		/// <inheritdoc/>
+		public override ValueTask<bool> HardDeleteAsync(TEntity entity, CancellationToken cancellationToken = default) {
 			ArgumentNullException.ThrowIfNull(entity);
 
 			cancellationToken.ThrowIfCancellationRequested();
@@ -423,7 +500,9 @@ namespace Kista {
 		}
 
 		/// <summary>
-		/// Removes a range of entities from the repository.
+		/// Removes a range of entities from the repository, or marks them
+		/// as soft-deleted when the entities implement
+		/// <see cref="ISoftDeletable"/>.
 		/// </summary>
 		/// <remarks>
 		/// This method acquires an exclusive write lock before mutating the
@@ -435,21 +514,85 @@ namespace Kista {
 
 			ArgumentNullException.ThrowIfNull(entities);
 
+			if (IsSoftDeletable)
+				return SoftDeleteRangeAsync(entities, cancellationToken);
+
+			return HardDeleteRangeAsync(entities, cancellationToken);
+		}
+
+		/// <summary>
+		/// Marks the given entities as soft-deleted and persists the
+		/// changes through the in-memory store.
+		/// </summary>
+		/// <param name="entities">
+		/// The entities to soft-delete.
+		/// </param>
+		/// <param name="cancellationToken">
+		/// A token used to cancel the operation.
+		/// </param>
+		protected virtual async ValueTask SoftDeleteRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken) {
+			cancellationToken.ThrowIfCancellationRequested();
+
+			try {
+				var now = ResolveSystemTime().UtcNow;
+				var toUpdate = entities.ToList();
+
+				var ids = toUpdate.Select(entity => {
+					var id = GetEntityId(entity);
+					if (EqualityComparer<TKey>.Default.Equals(id, default))
+						throw new RepositoryException(TheEntityDoesNotHaveAnId);
+					return id;
+				}).ToList();
+
+				_lock.EnterWriteLock();
+				try {
+					if (ids.Any(id => !this.entities.ContainsKey(id)))
+						throw new RepositoryException("The entity is not in the repository");
+
+					foreach (var entity in toUpdate) {
+						if (entity is ISoftDeletable softDeletable) {
+							softDeletable.IsDeleted = true;
+							softDeletable.DeletedAtUtc = now;
+						}
+
+						var id = GetEntityId(entity)!;
+						this.entities[id].Update(entity);
+					}
+
+					_version++;
+				} finally {
+					_lock.ExitWriteLock();
+				}
+
+				await Task.CompletedTask;
+			} catch (RepositoryException) {
+				throw;
+			} catch (InvalidOperationException ex) {
+				throw new RepositoryException("Could not soft-delete the entities", ex);
+			}
+		}
+
+		/// <inheritdoc/>
+		public override ValueTask HardDeleteRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) {
+			cancellationToken.ThrowIfCancellationRequested();
+
+			ArgumentNullException.ThrowIfNull(entities);
+
 			try {
 				var toRemove = entities.ToList();
 
 				// Resolve all IDs before acquiring the lock
 				var ids = toRemove.Select(entity => {
 					var id = GetEntityId(entity);
-					if (id == null)
-						throw new RepositoryException("The entity does not have an ID");
+					if (EqualityComparer<TKey>.Default.Equals(id, default))
+						throw new RepositoryException(TheEntityDoesNotHaveAnId);
 					return id;
 				}).ToList();
 
-				_lock.EnterWriteLock();
-				try {
-					// verify all entities exist before removing any
-					foreach (var id in ids) {
+			_lock.EnterWriteLock();
+			try {
+				// verify all entities exist before removing any
+				foreach (var id in ids) {
 						if (!this.entities.ContainsKey(id))
 							throw new RepositoryException("The entity is not in the repository");
 					}
@@ -471,15 +614,27 @@ namespace Kista {
 			}
 		}
 
+		/// <summary>
+		/// Resolves the <see cref="ISystemTime"/> service used to stamp
+		/// soft-deletion timestamps.
+		/// </summary>
+		/// <returns>
+		/// Returns an <see cref="ISystemTime"/> instance.
+		/// </returns>
+		protected virtual ISystemTime ResolveSystemTime() {
+			return Services?.GetService(typeof(ISystemTime)) as ISystemTime ?? SystemTime.Default;
+		}
+
 		/// <inheritdoc/>
-		protected override ValueTask<bool> ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken = default) {
+		protected override ValueTask<bool> ExistsAsync(IQueryFilter? filter, IQueryOptions? options, CancellationToken cancellationToken = default) {
 			cancellationToken.ThrowIfCancellationRequested();
 
 			try {
 				InitializeFilter(filter);
 				_lock.EnterReadLock();
 				try {
-					var result = GetEntityQueryable().Any(filter);
+					var queryable = ApplySoftDeleteMode(GetEntityQueryable(), options);
+					var result = queryable.Any(filter);
 					return new ValueTask<bool>(result);
 				} finally {
 					_lock.ExitReadLock();
@@ -498,7 +653,8 @@ namespace Kista {
 				InitializeFilter(query.Filter);
 				_lock.EnterReadLock();
 				try {
-					var result = query.Apply(GetEntityQueryable()).ToList();
+					var queryable = ApplySoftDeleteMode(GetEntityQueryable(), query.Options);
+					var result = query.Apply(queryable).ToList();
 					return new ValueTask<IReadOnlyList<TEntity>>(result);
 				} finally {
 					_lock.ExitReadLock();
@@ -516,7 +672,8 @@ namespace Kista {
 				InitializeFilter(query.Filter);
 				_lock.EnterReadLock();
 				try {
-					var result = query.Apply(GetEntityQueryable()).FirstOrDefault();
+					var queryable = ApplySoftDeleteMode(GetEntityQueryable(), query.Options);
+					var result = query.Apply(queryable).FirstOrDefault();
 					return new ValueTask<TEntity?>(result);
 				} finally {
 					_lock.ExitReadLock();
@@ -558,6 +715,9 @@ namespace Kista {
 					if (!entities.TryGetValue(key, out var entity))
 						return new ValueTask<TEntity?>((TEntity?)null);
 
+					if (entity.Entity is ISoftDeletable softDeletable && softDeletable.IsDeleted)
+						return new ValueTask<TEntity?>((TEntity?)null);
+
 					return new ValueTask<TEntity?>(entity.Entity);
 				} finally {
 					_lock.ExitReadLock();
@@ -595,30 +755,31 @@ namespace Kista {
 			if (request is PageQuery<TEntity> pageQuery) {
 				cancellationToken.ThrowIfCancellationRequested();
 
+			try {
+				InitializeFilter(((IQuery)pageQuery).Filter);
+				_lock.EnterReadLock();
 				try {
-					InitializeFilter(((IQuery)pageQuery).Filter);
-					_lock.EnterReadLock();
-					try {
-						var entitySet = pageQuery.ApplyQuery(GetEntityQueryable());
-						var itemCount = entitySet.Count();
-						var items = entitySet
-							.Skip(request.Offset)
-							.Take(request.Size)
-							.ToList();
+					var queryable = ApplySoftDeleteMode(GetEntityQueryable(), pageQuery.Options);
+					var entitySet = pageQuery.ApplyQuery(queryable);
+					var itemCount = entitySet.Count();
+					var items = entitySet
+						.Skip(request.Offset)
+						.Take(request.Size)
+						.ToList();
 
-						return new PageQueryResult<TEntity>(pageQuery, itemCount, items);
-					} finally {
-						_lock.ExitReadLock();
-					}
-				} catch (Exception ex) when (ex is not RepositoryException) {
-					throw new RepositoryException("Unable to retrieve the pages", ex);
+					return new PageQueryResult<TEntity>(pageQuery, itemCount, items);
+				} finally {
+					_lock.ExitReadLock();
 				}
+			} catch (Exception ex) when (ex is not RepositoryException) {
+				throw new RepositoryException("Unable to retrieve the pages", ex);
 			}
+		}
 
 			try {
 				_lock.EnterReadLock();
 				try {
-					var entitySet = GetEntityQueryable();
+					var entitySet = ApplySoftDeleteMode(GetEntityQueryable(), null);
 					var itemCount = entitySet.Count();
 					var items = entitySet
 						.Skip(request.Offset)

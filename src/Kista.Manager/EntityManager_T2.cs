@@ -14,6 +14,8 @@
 
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
+
 using Deveel;
 using Kista.Caching;
 using System.Linq.Expressions;
@@ -39,6 +41,8 @@ namespace Kista {
 		where TEntity : class 
 		where TKey : notnull {
 		private bool disposedValue;
+
+		private const string TheEntityDoesNotHaveAValidKey = "The entity does not have a valid key";
 
 		/// <summary>
 		/// Constructs the service with the given repository.
@@ -126,6 +130,15 @@ namespace Kista {
 		/// </summary>
 		protected IEntityCacheKeyGenerator<TEntity>? EntityCacheKeyGenerator
 			=> Services?.GetService<IEntityCacheKeyGenerator<TEntity>>();
+
+		/// <summary>
+		/// Gets the service used to resolve the identifier of the
+		/// current user, used for audit attribution (such as the
+		/// <see cref="ISoftDeletable.DeletedBy"/> stamp on soft-delete),
+		/// or <c>null</c> if no user accessor is registered.
+		/// </summary>
+		protected IUserAccessor<string>? UserAccessor
+			=> Services?.GetService<IUserAccessor<string>>();
 
 		/// <summary>
 		/// Gets the service used to validate the entity before
@@ -505,6 +518,90 @@ namespace Kista {
 		}
 
 		/// <summary>
+		/// A callback invoked before an entity is soft-deleted through
+		/// <see cref="RemoveAsync(TEntity, CancellationToken?)"/>, when the
+		/// entity implements <see cref="ISoftDeletable"/>.
+		/// </summary>
+		/// <param name="entity">
+		/// The entity that is about to be soft-deleted.
+		/// </param>
+		/// <param name="cancellationToken">
+		/// A token used to cancel the operation.
+		/// </param>
+		/// <returns>
+		/// Returns the entity after the soft-delete stamping has been
+		/// applied (setting <see cref="ISoftDeletable.IsDeleted"/>,
+		/// <see cref="ISoftDeletable.DeletedAtUtc"/> and
+		/// <see cref="ISoftDeletable.DeletedBy"/>).
+		/// </returns>
+		protected virtual ValueTask<TEntity> OnRemovingEntityAsync(TEntity entity, CancellationToken cancellationToken) {
+			if (entity is ISoftDeletable softDeletable) {
+				softDeletable.IsDeleted = true;
+				softDeletable.DeletedAtUtc = Time?.UtcNow;
+
+				var actor = UserAccessor?.GetUserId()?.ToString();
+				if (actor != null) {
+					softDeletable.DeletedBy = actor;
+				} else {
+					Logger.LogSoftDeleteActorMissing(typeof(TEntity));
+				}
+			}
+
+			return new ValueTask<TEntity>(entity);
+		}
+
+		/// <summary>
+		/// A callback invoked before an entity is restored through
+		/// <see cref="RestoreAsync(TEntity, CancellationToken?)"/>, when the
+		/// entity implements <see cref="ISoftDeletable"/>.
+		/// </summary>
+		/// <param name="entity">
+		/// The entity that is about to be restored.
+		/// </param>
+		/// <param name="cancellationToken">
+		/// A token used to cancel the operation.
+		/// </param>
+		/// <returns>
+		/// Returns the entity after the soft-delete stamping has been
+		/// cleared (resetting <see cref="ISoftDeletable.IsDeleted"/>,
+		/// <see cref="ISoftDeletable.DeletedAtUtc"/> and
+		/// <see cref="ISoftDeletable.DeletedBy"/>).
+		/// </returns>
+		protected virtual ValueTask<TEntity> OnRestoringEntityAsync(TEntity entity, CancellationToken cancellationToken) {
+			if (entity is ISoftDeletable softDeletable) {
+				softDeletable.IsDeleted = false;
+				softDeletable.DeletedAtUtc = null;
+				softDeletable.DeletedBy = null;
+			}
+
+			return new ValueTask<TEntity>(entity);
+		}
+
+		/// <summary>
+		/// A callback invoked before an entity is hard-deleted through
+		/// <see cref="HardDeleteAsync(TEntity, CancellationToken?)"/>.
+		/// </summary>
+		/// <param name="entity">
+		/// The entity that is about to be hard-deleted.
+		/// </param>
+		/// <param name="cancellationToken">
+		/// A token used to cancel the operation.
+		/// </param>
+		/// <returns>
+		/// Returns the entity that is about to be hard-deleted, unchanged
+		/// by the default implementation. Override this hook to add audit
+		/// or purge-logging concerns.
+		/// </returns>
+		/// <remarks>
+		/// Unlike <see cref="OnRemovingEntityAsync"/>, this hook does not
+		/// stamp the entity as soft-deleted: hard deletion bypasses the
+		/// soft-delete behaviour entirely.
+		/// </remarks>
+		protected virtual ValueTask<TEntity> OnHardRemovingEntityAsync(TEntity entity, CancellationToken cancellationToken) {
+			return new ValueTask<TEntity>(entity);
+		}
+
+		/// <summary>
 		/// Generates the cache keys for the given entity.
 		/// </summary>
 		/// <param name="entity">
@@ -844,8 +941,8 @@ namespace Kista {
 			var entityKey = GetEntityKey(entity);
 
 			try {
-				if (entityKey == null || Equals(entityKey, default(TKey)))
-					return Fail(EntityErrorCodes.NotValid, "The entity does not have a valid key");
+				if (EqualityComparer<TKey>.Default.Equals(entityKey, default))
+					return Fail(EntityErrorCodes.NotValid, TheEntityDoesNotHaveAValidKey);
 
 				Logger.LogUpdatingEntity(typeof(TEntity), entityKey);
 
@@ -927,8 +1024,8 @@ namespace Kista {
 			var entityKey = GetEntityKey(entity);
 
 			try {
-				if (entityKey == null || Equals(default(TKey), entityKey))
-					return Fail(EntityErrorCodes.NotValid, "The entity does not have a valid key");
+				if (EqualityComparer<TKey>.Default.Equals(entityKey, default))
+					return Fail(EntityErrorCodes.NotValid, TheEntityDoesNotHaveAValidKey);
 
 				var token = GetCancellationToken(cancellationToken);
 
@@ -940,12 +1037,27 @@ namespace Kista {
 					return Fail(EntityErrorCodes.NotFound);
 				}
 
-				if (!await Repository.RemoveAsync(foundResult.Value!, token)) {
-					Logger.LogEntityNotRemoved(typeof(TEntity), entityKey);
-					return NotChanged();
-				}
+				var found = foundResult.Value!;
+				var isSoftDeletable = found is ISoftDeletable;
 
-				await EvictAsync(entity, token);
+				if (isSoftDeletable) {
+					found = await OnRemovingEntityAsync(found, token);
+
+					if (!await Repository.UpdateAsync(found, token)) {
+						Logger.LogEntityNotRemoved(typeof(TEntity), entityKey);
+						return NotChanged();
+					}
+
+					Logger.LogEntityUpdated(entityKey);
+					await SetToCacheAsync(found, token);
+				} else {
+					if (!await Repository.RemoveAsync(found, token)) {
+						Logger.LogEntityNotRemoved(typeof(TEntity), entityKey);
+						return NotChanged();
+					}
+
+					await EvictAsync(found, token);
+				}
 
 				return Success();
 			} catch (Exception ex) {
@@ -990,6 +1102,247 @@ namespace Kista {
 				LogUnknownError(ex);
 				return Fail(EntityErrorCodes.UnknownError);
 			}
+		}
+
+		/// <summary>
+		/// Restores a previously soft-deleted entity, clearing its
+		/// <see cref="ISoftDeletable"/> stamping and persisting the change.
+		/// </summary>
+		/// <param name="entity">
+		/// The entity to be restored. The entity must implement
+		/// <see cref="ISoftDeletable"/> and must have been previously
+		/// soft-deleted.
+		/// </param>
+		/// <param name="cancellationToken">
+		/// A token used to cancel the operation.
+		/// </param>
+		/// <returns>
+		/// Returns an instance of <see cref="OperationResult"/> that
+		/// describes the result of the operation.
+		/// </returns>
+		/// <remarks>
+		/// <para>
+		/// This method finds the soft-deleted entity by its key (bypassing
+		/// the default soft-delete filter), clears the deletion stamping
+		/// through <see cref="OnRestoringEntityAsync"/>, and persists the
+		/// change through <see cref="IRepository{TEntity, TKey}.UpdateAsync"/>.
+		/// </para>
+		/// <para>
+		/// If the entity is not <see cref="ISoftDeletable"/>, or if no
+		/// soft-deleted entity is found with the given key, the operation
+		/// returns a <see cref="EntityErrorCodes.NotFound"/> failure.
+		/// </para>
+		/// </remarks>
+		public virtual async ValueTask<OperationResult> RestoreAsync(TEntity entity, CancellationToken? cancellationToken = null) {
+			ThrowIfDisposed();
+
+			if (entity is not ISoftDeletable)
+				return Fail(EntityErrorCodes.NotValid, "The entity does not support soft-delete");
+
+			var entityKey = GetEntityKey(entity);
+
+			try {
+				if (EqualityComparer<TKey>.Default.Equals(entityKey, default))
+					return Fail(EntityErrorCodes.NotValid, TheEntityDoesNotHaveAValidKey);
+
+				var token = GetCancellationToken(cancellationToken);
+
+				var deleted = await FindDeletedAsync(entityKey, token);
+				if (deleted == null) {
+					LogEntityNotFound(entityKey);
+					return Fail(EntityErrorCodes.NotFound);
+				}
+
+				deleted = await OnRestoringEntityAsync(deleted, token);
+
+				if (!await Repository.UpdateAsync(deleted, token)) {
+					Logger.LogEntityNotModified(typeof(TEntity), entityKey);
+					return NotChanged();
+				}
+
+				Logger.LogEntityUpdated(entityKey);
+				await SetToCacheAsync(deleted, token);
+
+				return Success();
+			} catch (InvalidOperationException ex) {
+				LogEntityUnknownError(entityKey, ex);
+				return Fail(EntityErrorCodes.UnknownError);
+			}
+		}
+
+		/// <summary>
+		/// Permanently removes the given entity from the repository,
+		/// bypassing any soft-delete behaviour, even when the entity
+		/// implements <see cref="ISoftDeletable"/>.
+		/// </summary>
+		/// <param name="entity">
+		/// The entity to be hard-deleted.
+		/// </param>
+		/// <param name="cancellationToken">
+		/// A token used to cancel the operation.
+		/// </param>
+		/// <returns>
+		/// Returns an instance of <see cref="OperationResult"/> that
+		/// describes the result of the operation.
+		/// </returns>
+		/// <remarks>
+		/// <para>
+		/// This method is intended for background purge jobs that
+		/// definitively remove records previously soft-deleted, after a
+		/// retention period. It does not fire the
+		/// <see cref="OnRemovingEntityAsync"/> hook; instead it fires
+		/// <see cref="OnHardRemovingEntityAsync"/> for audit/purge logging.
+		/// </para>
+		/// </remarks>
+		public virtual async ValueTask<OperationResult> HardDeleteAsync(TEntity entity, CancellationToken? cancellationToken = null) {
+			ThrowIfDisposed();
+
+			var entityKey = GetEntityKey(entity);
+
+			try {
+				if (EqualityComparer<TKey>.Default.Equals(entityKey, default))
+					return Fail(EntityErrorCodes.NotValid, TheEntityDoesNotHaveAValidKey);
+
+				var token = GetCancellationToken(cancellationToken);
+
+				Logger.LogRemovingEntity(typeof(TEntity), entityKey);
+
+				var found = await FindIncludingDeletedAsync(entityKey, token);
+				if (found == null) {
+					LogEntityNotFound(entityKey);
+					return Fail(EntityErrorCodes.NotFound);
+				}
+
+				found = await OnHardRemovingEntityAsync(found, token);
+
+				if (!await Repository.HardDeleteAsync(found, token)) {
+					Logger.LogEntityNotRemoved(typeof(TEntity), entityKey);
+					return NotChanged();
+				}
+
+				await EvictAsync(found, token);
+
+				return Success();
+			} catch (Exception ex) {
+				LogEntityUnknownError(entityKey, ex);
+				return Fail(EntityErrorCodes.UnknownError);
+			}
+		}
+
+		/// <summary>
+		/// Permanently removes the given range of entities from the
+		/// repository, bypassing any soft-delete behaviour.
+		/// </summary>
+		/// <param name="entities">
+		/// The range of entities to be hard-deleted.
+		/// </param>
+		/// <param name="cancellationToken">
+		/// A token used to cancel the operation.
+		/// </param>
+		/// <returns>
+		/// Returns an instance of <see cref="OperationResult"/> that
+		/// describes the result of the operation.
+		/// </returns>
+		public virtual async ValueTask<OperationResult> HardDeleteRangeAsync(IEnumerable<TEntity> entities, CancellationToken? cancellationToken = null) {
+			ThrowIfDisposed();
+
+			try {
+				Logger.LogRemovingEntityRange();
+
+				var token = GetCancellationToken(cancellationToken);
+
+				var list = entities.ToList();
+				foreach (var entity in list)
+					await OnHardRemovingEntityAsync(entity, token);
+
+				await Repository.HardDeleteRangeAsync(list, token);
+
+				Logger.LogEntityRangeRemoved();
+
+				foreach (var entity in list) {
+					await EvictAsync(entity, token);
+				}
+
+				return Success();
+			} catch (Exception ex) {
+				LogUnknownError(ex);
+				return Fail(EntityErrorCodes.UnknownError);
+			}
+		}
+
+		/// <summary>
+		/// Finds a soft-deleted entity by its key, bypassing the default
+		/// soft-delete filter.
+		/// </summary>
+		/// <param name="key">
+		/// The key of the entity to find.
+		/// </param>
+		/// <param name="cancellationToken">
+		/// A token used to cancel the operation.
+		/// </param>
+		/// <returns>
+		/// Returns the soft-deleted entity, or <c>null</c> if no soft-deleted
+		/// entity with the given key exists.
+		/// </returns>
+		protected virtual async ValueTask<TEntity?> FindDeletedAsync(TKey key, CancellationToken cancellationToken) {
+			var found = await FindIncludingDeletedAsync(key, cancellationToken);
+			if (found is ISoftDeletable softDeletable && softDeletable.IsDeleted)
+				return found;
+
+			return null;
+		}
+
+		/// <summary>
+		/// Finds an entity by its key, bypassing the default soft-delete
+		/// filter, so that soft-deleted entities can be found for hard
+		/// deletion or restore operations.
+		/// </summary>
+		/// <param name="key">
+		/// The key of the entity to find.
+		/// </param>
+		/// <param name="cancellationToken">
+		/// A token used to cancel the operation.
+		/// </param>
+		/// <returns>
+		/// Returns the entity (whether active or soft-deleted), or
+		/// <c>null</c> if no entity with the given key exists.
+		/// </returns>
+		protected virtual async ValueTask<TEntity?> FindIncludingDeletedAsync(TKey key, CancellationToken cancellationToken) {
+			if (Repository is Repository<TEntity, TKey> repo) {
+				try {
+					var query = Query.Where<TEntity>(e => EqualityComparer<TKey>.Default.Equals(GetEntityKey(e)!, key));
+					var queryWithOptions = new Query(query.Filter ?? QueryFilter.Empty, query.Order, QueryOptions.WithSoftDeleteMode(SoftDeleteMode.IncludeDeleted));
+					return await repo.FindFirstAsyncInternal(queryWithOptions, cancellationToken);
+				} catch (RepositoryException) {
+					// The driver could not translate the key-comparison expression
+					// (e.g. EF Core): fall back to the driver's FindAsync, which
+					// returns null for soft-deleted entities, then retry with the
+					// IncludeDeleted mode using a direct property access filter.
+					var found = await Repository.FindAsync(key, cancellationToken);
+					if (found != null)
+						return found;
+
+					// The entity is either deleted or doesn't exist: try a
+					// property-based key filter that the driver can translate.
+					var keyProperty = typeof(TEntity).GetProperty("Id");
+					if (keyProperty != null && keyProperty.PropertyType == typeof(TKey)) {
+						var filter = BuildKeyFilter(keyProperty, key);
+						var queryWithOptions = new Query(filter, null, QueryOptions.WithSoftDeleteMode(SoftDeleteMode.IncludeDeleted));
+						return await repo.FindFirstAsyncInternal(queryWithOptions, cancellationToken);
+					}
+				}
+			}
+
+			return await Repository.FindAsync(key, cancellationToken);
+		}
+
+		private static IQueryFilter BuildKeyFilter(PropertyInfo keyProperty, TKey key) {
+			var parameter = Expression.Parameter(typeof(TEntity), "e");
+			var propertyAccess = Expression.Property(parameter, keyProperty);
+			var constant = Expression.Constant(key, typeof(TKey));
+			var equality = Expression.Equal(propertyAccess, constant);
+			var lambda = Expression.Lambda<Func<TEntity, bool>>(equality, parameter);
+			return new ExpressionQueryFilter<TEntity>(lambda);
 		}
 
 		/// <summary>

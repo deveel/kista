@@ -97,6 +97,15 @@ namespace Kista {
 		public static partial void LogEntityNotRemoved(this ILogger logger, Type entityType, object? entityId);
 
         /// <summary>
+        /// Logs that a soft-delete was performed but no user accessor
+        /// was registered to attribute the deletion to an actor.
+        /// </summary>
+        /// <param name="logger">The logger.</param>
+        /// <param name="entityType">The entity type.</param>
+        [LoggerMessage(EntityManagerEventIds.SoftDeleteActorMissing, LogLevel.Warning, "Soft-deleting an entity of type {EntityType} but no IUserAccessor was registered: DeletedBy will not be set.")]
+        public static partial void LogSoftDeleteActorMissing(this ILogger logger, Type entityType);
+
+        /// <summary>
         /// Logs that an entity is being added to the repository.
         /// </summary>
         /// <param name="logger">The logger.</param>

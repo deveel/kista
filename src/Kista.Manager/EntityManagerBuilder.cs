@@ -134,5 +134,24 @@ namespace Kista {
 			Services.AddOperationErrorFactory(EntityType, typeof(TFactory));
 			return this;
 		}
+
+		/// <summary>
+		/// Registers soft-delete configuration for the entity manager.
+		/// Soft-delete filtering activates automatically for any entity
+		/// implementing <see cref="ISoftDeletable"/>: this call is
+		/// reserved for future configuration knobs.
+		/// </summary>
+		/// <param name="configure">
+		/// An optional delegate to configure the <see cref="SoftDeleteOptions"/>.
+		/// </param>
+		/// <returns>
+		/// Returns the same builder for chaining.
+		/// </returns>
+		public EntityManagerBuilder WithSoftDelete(Action<SoftDeleteOptions>? configure = null) {
+			var options = new SoftDeleteOptions();
+			configure?.Invoke(options);
+			Services.TryAddSingleton(options);
+			return this;
+		}
 	}
 }

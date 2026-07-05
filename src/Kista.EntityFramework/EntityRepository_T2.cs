@@ -109,6 +109,49 @@ namespace Kista
 		/// </returns>
 		protected override IQueryable<TEntity> Queryable() => Entities.AsQueryable();
 
+		/// <summary>
+		/// Applies the soft-delete mode to the given queryable, according
+		/// to the provided <see cref="IQueryOptions"/>.
+		/// </summary>
+		/// <param name="queryable">
+		/// The queryable to filter.
+		/// </param>
+		/// <param name="options">
+		/// The query options carrying the soft-delete mode, or <c>null</c>
+		/// for the default mode (exclude soft-deleted records).
+		/// </param>
+		/// <returns>
+		/// Returns the queryable filtered according to the soft-delete mode.
+		/// When the entity is not <see cref="ISoftDeletable"/>, the queryable
+		/// is returned unchanged.
+		/// </returns>
+		/// <remarks>
+		/// <para>
+		/// Overrides the base in-memory filter: EF Core relies on the
+		/// <c>HasQueryFilter</c> convention registered through
+		/// <see cref="SoftDeleteModelBuilderExtensions.HasSoftDeleteFilter{TEntity}(EntityTypeBuilder{TEntity})"/>
+		/// for <see cref="SoftDeleteMode.Default"/>, so no extra filter is
+		/// applied here; <see cref="SoftDeleteMode.IncludeDeleted"/> and
+		/// <see cref="SoftDeleteMode.OnlyDeleted"/> call
+		/// <c>IgnoreQueryFilters()</c> to surface soft-deleted records.
+		/// </para>
+		/// </remarks>
+		protected override IQueryable<TEntity> ApplySoftDeleteMode(IQueryable<TEntity> queryable, IQueryOptions? options) {
+			ArgumentNullException.ThrowIfNull(queryable);
+
+			if (!IsSoftDeletable)
+				return queryable;
+
+			var mode = options?.SoftDeleteMode ?? SoftDeleteMode.Default;
+
+			return mode switch {
+				SoftDeleteMode.Default => queryable,
+				SoftDeleteMode.IncludeDeleted => queryable.IgnoreQueryFilters(),
+				SoftDeleteMode.OnlyDeleted => queryable.IgnoreQueryFilters().Where(e => ((ISoftDeletable)e).IsDeleted),
+				_ => queryable
+			};
+		}
+
 		/// <inheritdoc />
 		protected override bool IsQueryable => true;
 
@@ -301,6 +344,42 @@ namespace Kista
 
 			ArgumentNullException.ThrowIfNull(entity);
 
+			if (entity is ISoftDeletable softDeletable)
+				return await SoftDeleteAsync(entity, softDeletable, cancellationToken);
+
+			return await HardDeleteAsync(entity, cancellationToken);
+		}
+
+		/// <summary>
+		/// Marks the given entity as soft-deleted by setting its
+		/// <see cref="ISoftDeletable.IsDeleted"/> flag and
+		/// <see cref="ISoftDeletable.DeletedAtUtc"/> timestamp, then
+		/// persists the change through the EF Core change tracker.
+		/// </summary>
+		/// <remarks>
+		/// The caller may pre-set <see cref="ISoftDeletable.DeletedBy"/>
+		/// on the entity before calling <see cref="RemoveAsync"/> to
+		/// attribute the deletion to an actor for audit purposes: the
+		/// driver preserves and persists any value already set on the
+		/// entity. When soft-deleting through <c>EntityManager</c>,
+		/// the <c>DeletedBy</c> stamp is resolved from the registered
+		/// <see cref="IUserAccessor{TKey}"/> and set before this method
+		/// is reached.
+		/// </remarks>
+		/// <param name="entity">
+		/// The entity instance to soft-delete.
+		/// </param>
+		/// <param name="softDeletable">
+		/// The <see cref="ISoftDeletable"/> view of the same entity.
+		/// </param>
+		/// <param name="cancellationToken">
+		/// A token used to cancel the operation.
+		/// </param>
+		/// <returns>
+		/// Returns <c>true</c> if the entity was successfully soft-deleted,
+		/// otherwise <c>false</c>.
+		/// </returns>
+		protected virtual async ValueTask<bool> SoftDeleteAsync(TEntity entity, ISoftDeletable softDeletable, CancellationToken cancellationToken) {
 			try {
 				var entityId = GetEntityKey(entity)!;
 
@@ -311,37 +390,169 @@ namespace Kista
 					entry = ResolveEntryForEntityKey(entity, entityId);
 				}
 
-				entry.State = EntityState.Deleted;
+				if (((ISoftDeletable)entry.Entity).IsDeleted)
+					return false;
 
-				var count = await Context.SaveChangesAsync(cancellationToken);
+				softDeletable.IsDeleted = true;
+				softDeletable.DeletedAtUtc = ResolveSystemTime().UtcNow;
 
-				// It cannot be just one change, when the entity has related entities
-				var deleted = count > 0;
+				if (!ReferenceEquals(entry.Entity, entity))
+					entry.CurrentValues.SetValues(entity);
 
-				if (deleted) {
-					Logger.LogEntityDeleted(typeof(TEntity), entityId);
-				} else {
-					Logger.WarnEntityNotDeleted(typeof(TEntity), entityId);
-				}
-
-				return deleted;
+				return await PersistDeletionAsync(entity, entityId, entry, EntityState.Modified, "Unable to soft-delete the entity", cancellationToken);
 			} catch (DbUpdateConcurrencyException) {
 				Logger.WarnEntityNotFound(typeof(TEntity), GetEntityKey(entity)!);
 				return false;
+			} catch (RepositoryException) {
+				throw;
+			} catch (DbUpdateException ex) {
+				Logger.LogUnknownError(ex, typeof(TEntity));
+				throw new RepositoryException("Unable to soft-delete the entity", ex);
+			}
+		}
+
+		/// <inheritdoc/>
+		public override async ValueTask<bool> HardDeleteAsync(TEntity entity, CancellationToken cancellationToken = default) {
+			ThrowIfDisposed();
+
+			ArgumentNullException.ThrowIfNull(entity);
+
+			try {
+				var entityId = GetEntityKey(entity)!;
+
+				Logger.TraceDeletingEntity(typeof(TEntity), entityId);
+
+				var entry = Context.Entry(entity);
+				if (entry.State == EntityState.Detached) {
+					entry = ResolveEntryForEntityKey(entity, entityId);
+				}
+
+				return await PersistDeletionAsync(entity, entityId, entry, EntityState.Deleted, "Unable to delete the entity", cancellationToken);
+			} catch (DbUpdateConcurrencyException) {
+				Logger.WarnEntityNotFound(typeof(TEntity), GetEntityKey(entity)!);
+				return false;
+			} catch (RepositoryException) {
+				throw;
 			} catch (Exception ex) {
 				Logger.LogUnknownError(ex, typeof(TEntity));
 				throw new RepositoryException("Unable to delete the entity", ex);
 			}
 		}
 
+		/// <summary>
+		/// Persists a deletion (soft or hard) through the EF change tracker
+		/// and reports the outcome via the logger, normalising the
+		/// <see cref="DbUpdateConcurrencyException"/> and generic-exception
+		/// handling shared by <see cref="SoftDeleteAsync"/> and
+		/// <see cref="HardDeleteAsync"/>.
+		/// </summary>
+		/// <param name="entity">
+		/// The entity being deleted (used to re-read its key on the
+		/// concurrency-exception recovery path).
+		/// </param>
+		/// <param name="entityId">
+		/// The previously-resolved key of <paramref name="entity"/>, used
+		/// for logging.
+		/// </param>
+		/// <param name="entry">
+		/// The already-resolved <see cref="EntityEntry{TEntity}"/> whose
+		/// <see cref="EntityEntry.State"/> will be set to
+		/// <paramref name="state"/>.
+		/// </param>
+		/// <param name="state">
+		/// The target <see cref="EntityState"/> (<see cref="EntityState.Modified"/>
+		/// for soft-delete, <see cref="EntityState.Deleted"/> for hard-delete).
+		/// </param>
+		/// <param name="errorContext">
+		/// A human-readable phrase used in the <see cref="RepositoryException"/>
+		/// message if persistence fails unexpectedly.
+		/// </param>
+		/// <param name="cancellationToken">
+		/// A token used to cancel the operation.
+		/// </param>
+		/// <returns>
+		/// Returns <c>true</c> if the underlying <c>SaveChangesAsync</c>
+		/// reported at least one affected row, otherwise <c>false</c>.
+		/// </returns>
+		private async ValueTask<bool> PersistDeletionAsync(TEntity entity, object entityId, EntityEntry<TEntity> entry, EntityState state, string errorContext, CancellationToken cancellationToken) {
+			entry.State = state;
+
+			var count = await Context.SaveChangesAsync(cancellationToken);
+			var deleted = count > 0;
+
+			if (deleted) {
+				Logger.LogEntityDeleted(typeof(TEntity), entityId);
+			} else {
+				Logger.WarnEntityNotDeleted(typeof(TEntity), entityId);
+			}
+
+			return deleted;
+		}
+
 		/// <inheritdoc/>
 		public override async ValueTask RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) {
+			ThrowIfDisposed();
+
+			if (IsSoftDeletable) {
+				await SoftDeleteRangeAsync(entities, cancellationToken);
+				return;
+			}
+
+			await HardDeleteRangeAsync(entities, cancellationToken);
+		}
+
+		/// <summary>
+		/// Marks the given entities as soft-deleted and persists the
+		/// changes through the EF Core change tracker.
+		/// </summary>
+		/// <param name="entities">
+		/// The entities to soft-delete.
+		/// </param>
+		/// <param name="cancellationToken">
+		/// A token used to cancel the operation.
+		/// </param>
+		protected virtual async ValueTask SoftDeleteRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken) {
+			try {
+				var now = ResolveSystemTime().UtcNow;
+
+				foreach (var item in entities) {
+					var entityId = GetEntityKey(item);
+					if (EqualityComparer<TKey>.Default.Equals(entityId, default))
+						throw new RepositoryException("One of the entities has no primary key configured");
+
+					var entry = Context.Entry(item);
+					if (entry.State == EntityState.Detached) {
+						entry = ResolveEntryForEntityKey(item, entityId);
+					}
+
+					if (item is ISoftDeletable softDeletable) {
+						softDeletable.IsDeleted = true;
+						softDeletable.DeletedAtUtc = now;
+					}
+
+					if (!ReferenceEquals(entry.Entity, item))
+						entry.CurrentValues.SetValues(item);
+
+					entry.State = EntityState.Modified;
+				}
+
+				await Context.SaveChangesAsync(true, cancellationToken);
+			} catch (DbUpdateConcurrencyException ex) {
+				throw new RepositoryException("One or more entities were not found in the repository", ex);
+			} catch (DbUpdateException ex) {
+				Logger.LogUnknownError(ex, typeof(TEntity));
+				throw new RepositoryException("Unknown error while trying to soft-delete a range of entities from the repository", ex);
+			}
+		}
+
+		/// <inheritdoc/>
+		public override async ValueTask HardDeleteRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) {
 			ThrowIfDisposed();
 
 			try {
 				foreach (var item in entities) {
 					var entityId = GetEntityKey(item);
-					if (entityId == null)
+					if (EqualityComparer<TKey>.Default.Equals(entityId, default))
 						throw new RepositoryException("One of the entities has no primary key configured");
 
 					var entry = Context.Entry(item);
@@ -359,6 +570,18 @@ namespace Kista
 				Logger.LogUnknownError(ex, typeof(TEntity));
 				throw new RepositoryException("Unknown error while trying to remove a range of entities from the repository", ex);
 			}
+		}
+
+		/// <summary>
+		/// Resolves the <see cref="ISystemTime"/> service used to stamp
+		/// soft-deletion timestamps, falling back to the default
+		/// implementation when no service provider is available.
+		/// </summary>
+		/// <returns>
+		/// Returns an <see cref="ISystemTime"/> instance.
+		/// </returns>
+		protected virtual ISystemTime ResolveSystemTime() {
+			return Services?.GetService(typeof(ISystemTime)) as ISystemTime ?? SystemTime.Default;
 		}
 
 
@@ -431,6 +654,10 @@ namespace Kista
 		/// <param name="filter">
 		/// The expression that defines the filter to apply to the entities.
 		/// </param>
+		/// <param name="options">
+		/// An optional bag of query options that influence how the query
+		/// is executed by the driver, such as the soft-delete mode.
+		/// </param>
 		/// <param name="cancellationToken">
 		/// A token used to cancel the operation.
 		/// </param>
@@ -439,12 +666,12 @@ namespace Kista
 		/// that matches the given filter, otherwise <c>false</c>.
 		/// </returns>
 		/// <exception cref="RepositoryException"></exception>
-		protected override async ValueTask<bool> ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken = default) {
+		protected override async ValueTask<bool> ExistsAsync(IQueryFilter? filter, IQueryOptions? options, CancellationToken cancellationToken = default) {
 			ThrowIfDisposed();
 
 			try {
 				InitializeFilter(filter);
-				var query = Queryable().AsNoTracking();
+				var query = ApplySoftDeleteMode(Queryable().AsNoTracking(), options);
 				query = ApplyFilter(query, filter);
 
 				return await query.AnyAsync(cancellationToken);
@@ -461,18 +688,22 @@ namespace Kista
 		/// <param name="filter">
 		/// The expression that defines the filter to apply to the entities.
 		/// </param>
+		/// <param name="options">
+		/// An optional bag of query options that influence how the query
+		/// is executed by the driver, such as the soft-delete mode.
+		/// </param>
 		/// <param name="cancellationToken">
 		/// A token used to cancel the operation.
 		/// </param>
 		/// <returns>
 		/// Returns the number of entities that match the given filter.
 		/// </returns>
-		protected override async ValueTask<long> CountAsync(IQueryFilter filter, CancellationToken cancellationToken = default) {
+		protected override async ValueTask<long> CountAsync(IQueryFilter? filter, IQueryOptions? options, CancellationToken cancellationToken = default) {
 			ThrowIfDisposed();
 
 			try {
 				InitializeFilter(filter);
-				var query = Queryable().AsNoTracking();
+				var query = ApplySoftDeleteMode(Queryable().AsNoTracking(), options);
 				query = ApplyFilter(query, filter);
 
 				return await query.LongCountAsync(cancellationToken);
@@ -486,7 +717,8 @@ namespace Kista
 		protected override async ValueTask<TEntity?> FindFirstAsync(IQuery query, CancellationToken cancellationToken = default) {
 			try {
 				InitializeFilter(query.Filter);
-				var result = EfQueryNormalizer.Normalize(query.Apply(Queryable()));
+				var queryable = ApplySoftDeleteMode(Queryable(), query.Options);
+				var result = EfQueryNormalizer.Normalize(query.Apply(queryable));
 
 				return await result.FirstOrDefaultAsync(cancellationToken);
 			} catch (Exception ex) {
@@ -503,6 +735,9 @@ namespace Kista
 				var result = await Entities.FindAsync(new object?[] { ConvertEntityKey(key) }, cancellationToken);
 				if (result == null)
 					return result;
+
+				if (result is ISoftDeletable softDeletable && softDeletable.IsDeleted)
+					return null;
 
 				result = await OnEntityFoundByKeyAsync(key, result, cancellationToken);
 
@@ -538,7 +773,8 @@ namespace Kista
 		protected override async ValueTask<IReadOnlyList<TEntity>> FindAllAsync(IQuery query, CancellationToken cancellationToken = default) {
 			try {
 				InitializeFilter(query.Filter);
-				var result = EfQueryNormalizer.Normalize(query.Apply(Queryable()));
+				var queryable = ApplySoftDeleteMode(Queryable(), query.Options);
+				var result = EfQueryNormalizer.Normalize(query.Apply(queryable));
 				return await result.ToListAsync(cancellationToken);
 			} catch (Exception ex) {
 				Logger.LogUnknownError(ex, typeof(TEntity));
@@ -588,7 +824,8 @@ namespace Kista
 
 			try {
 				if (request is PageQuery<TEntity> pageQuery) {
-					var querySet = EfQueryNormalizer.Normalize(pageQuery.ApplyQuery(Queryable()));
+					var queryable = ApplySoftDeleteMode(Queryable(), pageQuery.Options);
+					var querySet = EfQueryNormalizer.Normalize(pageQuery.ApplyQuery(queryable));
 					var totalCount = await querySet.CountAsync(cancellationToken);
 
 					var items = await querySet
@@ -599,7 +836,8 @@ namespace Kista
 					return new PageQueryResult<TEntity>(pageQuery, totalCount, items);
 				}
 
-				var allQuerySet = EfQueryNormalizer.Normalize(Queryable());
+				var allQueryable = ApplySoftDeleteMode(Queryable(), null);
+				var allQuerySet = EfQueryNormalizer.Normalize(allQueryable);
 				var allTotalCount = await allQuerySet.CountAsync(cancellationToken);
 
 				var allItems = await allQuerySet

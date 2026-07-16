@@ -123,6 +123,47 @@ namespace Kista {
 		}
 
 		/// <summary>
+		/// Registers an interceptor type by scanning its implemented
+		/// <see cref="IEntityManagerInterceptor{TEntity}"/> and
+		/// <see cref="IEntityManagerInterceptor{TEntity, TKey}"/>
+		/// interfaces, filtering for those matching the current entity
+		/// and key types.
+		/// </summary>
+		/// <typeparam name="TInterceptor">
+		/// The type of the interceptor to register.
+		/// </typeparam>
+		/// <returns>This builder for chaining.</returns>
+		public EntityManagerBuilder WithInterceptor<TInterceptor>()
+			where TInterceptor : class {
+			var interceptorType = typeof(TInterceptor);
+
+			if (!interceptorType.IsClass || interceptorType.IsAbstract)
+				throw new ArgumentException($"The type {interceptorType} is not a concrete class");
+
+			var interfaceTypes = interceptorType.GetInterfaces().Where(x => x.IsGenericType);
+			foreach (var interfaceType in interfaceTypes) {
+				var genericDef = interfaceType.GetGenericTypeDefinition();
+
+				if (genericDef == typeof(IEntityManagerInterceptor<>)) {
+					var entityType = interfaceType.GetGenericArguments()[0];
+					if (entityType == EntityType) {
+						var compareType = typeof(IEntityManagerInterceptor<>).MakeGenericType(entityType);
+						Services.TryAdd(new ServiceDescriptor(compareType, interceptorType, _lifetime));
+					}
+				} else if (genericDef == typeof(IEntityManagerInterceptor<,>)) {
+					var args = interfaceType.GetGenericArguments();
+					if (args[0] == EntityType && args[1] == EntityKeyType) {
+						var compareType = typeof(IEntityManagerInterceptor<,>).MakeGenericType(args[0], args[1]);
+						Services.TryAdd(new ServiceDescriptor(compareType, interceptorType, _lifetime));
+					}
+				}
+			}
+
+			Services.Add(new ServiceDescriptor(interceptorType, interceptorType, _lifetime));
+			return this;
+		}
+
+		/// <summary>
 		/// Registers an operation error factory for the current entity type.
 		/// </summary>
 		/// <typeparam name="TFactory">

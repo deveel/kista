@@ -244,5 +244,17 @@ namespace Kista {
         /// <param name="entityId">The entity ID.</param>
         [LoggerMessage(EntityManagerEventIds.EntityUpdated, LogLevel.Information, "The entity {EntityId} was updated in the repository.")]
 		public static partial void LogEntityUpdated(this ILogger logger, object? entityId);
+
+		/// <summary>
+		/// Logs that an interceptor short-circuited a write operation
+		/// by returning a failed operation result from
+		/// <c>PreWriteAsync</c>.
+		/// </summary>
+		/// <param name="logger">The logger.</param>
+		/// <param name="entityType">The entity type.</param>
+		/// <param name="operationKind">The kind of operation short-circuited.</param>
+		/// <param name="interceptorType">The interceptor type that produced the short-circuit.</param>
+		[LoggerMessage(EntityManagerEventIds.InterceptorShortCircuit, LogLevel.Debug, "The operation {OperationKind} on entities of type {EntityType} was short-circuited by the interceptor {InterceptorType}.")]
+		public static partial void LogInterceptorShortCircuited(this ILogger logger, Type entityType, EntityOperationKind operationKind, Type interceptorType);
 	}
 }

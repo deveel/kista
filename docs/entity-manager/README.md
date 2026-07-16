@@ -5,6 +5,7 @@ The `EntityManager<TEntity>` (and `EntityManager<TEntity, TKey>`) is an optional
 - **Validation** — entities are validated before being added or updated.
 - **Caching** — frequently accessed entities can be served from a second-level cache.
 - **Timestamping** — entities implementing `IHaveTimeStamp` are automatically stamped on create/update.
+- **Operation pipeline** — every write operation runs through an extensible chain of interceptors for cross-cutting concerns (audit, events, tracing). See [Operation Pipeline](operation-pipeline.md).
 - **Structured error handling** — operations return structured error results rather than throwing raw exceptions.
 - **Logging** — all operations are logged through the standard `ILogger` infrastructure.
 

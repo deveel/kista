@@ -445,28 +445,90 @@ Regulatory, operational, and undo requirements push many teams toward logical de
 
 ---
 
-### Feature — Domain Event Emission from EntityManager
+### Feature — Extensible Operation Pipeline on EntityManager
 
-**Title:** Observable CRUD and State-Change Events from the Manager Layer
+**Title:** Extensible Operation Pipeline on EntityManager
 
 **Intent**  
-> "Surface every meaningful lifecycle change as an observable event so downstream systems — notifications, search indexers, audit logs — can react without coupling to the repository internals."
+> "Give every cross-cutting concern on EntityManager — events, audit, OpenTelemetry, multi-tenancy — one ordered, testable extension point instead of scattered glue code and per-concern hooks."
 
 **The Problem Today**  
-Repository writes are fire-and-forget from the framework's perspective. Teams needing side effects (send a notification when an entity is created, reindex a record on update, log an audit entry on delete) add glue code inside controllers or application services — scattered, untestable, and easy to miss when new code paths are added.
+EntityManager's only extension points are a handful of `protected virtual` hooks (`OnAddingEntityAsync`, `OnUpdatingEntityAsync`, ...) that run before the write, cannot short-circuit, and have no after-write slot. Cache warming and logging are therefore duplicated inline in every CRUD method. `RemoveRangeAsync` has no hook at all. Teams needing audit trails or tracing build bespoke decorators or subclass the manager, neither of which composes.
 
 **What We Are Building**  
-- A typed `EntityEvent<TEntity>` envelope carrying operation type, entity snapshot, actor, and timestamp
-- An `IEntityEventPublisher` interface registered as an optional DI service
-- Hook points on `EntityManager` for `OnCreated`, `OnUpdated`, `OnDeleted`, and `OnStateChanged`
-- A default MediatR-compatible publisher adapter as a small optional package
-- An `IEntityEventHandler<TEntity>` convention-based subscriber for in-process handling
+- An `IEntityManagerInterceptor<TEntity, TKey>` abstraction with `PreWriteAsync` (may transform the entity or short-circuit by returning a failed `OperationResult`) and `PostWriteAsync` (invoked only on success, for event emission, cache warming, audit, tracing)
+- An `IEntityOperationContext<TEntity, TKey>` carrying operation kind, mutable entity, original pre-image (for Update/Remove), key, actor, timestamp, cancellation token, and a per-operation `Items` bag for sharing data between steps
+- Interceptors run in registration order, sequentially; a short-circuit stops the chain. Resolved lazily from DI via `IEnumerable<IEntityManagerInterceptor<TEntity, TKey>>` — zero cost when none registered, the same pattern as `EntityCacheKeyGenerator` and `UserAccessor`
+- The existing `On*Async` virtual hooks are preserved as `protected virtual`; a default builtin interceptor wraps them, so subclass overrides keep working and the pipeline and hooks coexist. `RemoveRangeAsync` and `AddRangeAsync` gain the pipeline for free
+- Registration via `EntityManagerBuilder.WithInterceptor<T>()` (Scoped, mirroring `WithValidator`)
 
 **Benefits**
-- Side effects live in dedicated, independently testable handlers — not scattered across service classes
-- Foundation for outbox and message-bus adapters targeted in later milestones
-- Works with any in-process pub/sub: MediatR, .NET `IObservable`, or a custom implementation
+- One ordered, testable extension point replaces scattered glue code and per-concern hooks
+- `PreWriteAsync` can short-circuit a write by returning a failed `OperationResult` — a capability the existing `On*Async` hooks lack
+- `PostWriteAsync` fills the after-write gap that today forces cache/logging logic to be duplicated inline in every CRUD method
+- The same pipeline serves v1.9.0 audit trail and OpenTelemetry — those milestones consume it without re-architecting
+- Composable: timestamp, soft-delete, events, audit, and custom interceptors stack cleanly in registration order
+
+**Status:** ✅ Completed. See [Operation Pipeline documentation](docs/entity-manager/operation-pipeline.md).
+
+---
+
+### Feature — Domain Event Emission from EntityManager
+
+**Title:** Domain Event Emission from EntityManager
+
+**Intent**  
+> "Surface every meaningful lifecycle change as an event so downstream systems — notifications, search indexers, audit logs — can react without coupling to the repository internals, with a CloudEvents-native adapter available out of the box."
+
+**The Problem Today**  
+Repository writes are fire-and-forget from the framework's perspective. Teams needing side effects (send a notification when an entity is created, reindex a record on update, log an audit entry on delete) add glue code inside controllers or application services — scattered, untestable, and easy to miss when new code paths are added. Hand-rolled event envelopes drift from contract to contract, no two teams agree on the shape, and there is no path to a real message bus without a rewrite.
+
+**What We Are Building**  
+- A new opt-in `Kista.Manager.Events` base package providing a framework-agnostic event model: an `IEntityEventPublisher` abstraction and an `EntityEventData<TEntity>` base class with per-operation POCO subclasses — `EntityCreatedData<TEntity>`, `EntityUpdatedData<TEntity>` (carries the pre-image), `EntityDeletedData<TEntity>`, `EntityRestoredData<TEntity>`, and `EntityStateChangedData<TEntity, TStatus>` (carries `FromStatus`/`ToStatus`)
+- A builtin `EntityEventInterceptor<TEntity, TKey>` (built on the [Extensible Operation Pipeline](#feature--extensible-operation-pipeline-on-entitymanager)) that publishes through `IEntityEventPublisher` in `PostWriteAsync` after a successful write. The state-machine feature's `TransitionStateAsync` emits `EntityStateChangedData` through the same slot
+- A `WithEntityEvents()` registration on `EntityManagerBuilder` that wires the interceptor and a default in-memory publisher, so the base package is usable and testable on its own
+- A specialized `Kista.Manager.Hermodr` adapter package that bridges `IEntityEventPublisher` with the [Hermodr](https://hermodr.deveel.org) CloudEvents framework. A `HermodrEventPublisher` maps the base POCO data to canonical CNCF CloudEvents (`kista.entity.created`, `kista.entity.updated`, `kista.entity.deleted`, `kista.entity.restored`, `kista.entity.statechanged`) and dispatches them through Hermodr's `IEventPublisher`
+- A `WithHermodrEvents()` registration (mirroring `WithEasyCaching`) that calls `AddEventPublisher()` from `Hermodr.Publisher`, registers `HermodrEventPublisher` as `IEntityEventPublisher`, and registers `EntityEventInterceptor`
+- In-process subscribers registered through `Hermodr.Subscriptions` — `AddSubscriptions().Subscribe("kista.entity.*", ...)` with filter expressions, replacing the convention-based `IEntityEventHandler<TEntity>` originally proposed
+- Test assertions via `Hermodr.TestPublisher`'s `TestEventPublishChannel`, slotted into the existing `Kista.Manager.XUnit` suite conventions
+
+**Benefits**
+- The base `Kista.Manager.Events` package carries no messaging dependency — teams can adopt the event model and swap the publisher later
+- Every CloudEvent is canonical CNCF out of the box via Hermodr: schema-first contracts, AsyncAPI export, multi-transport delivery, dead-letter capture — without Kista owning any of that surface
+- Pluggable transports through Hermodr channels (Azure Service Bus, RabbitMQ, MassTransit, Webhook) with zero application code change
+- The transactional outbox is already built for Kista: `Hermodr.Publisher.Outbox` and `Hermodr.Publisher.Outbox.EntityFramework` depend on `Kista` and `Kista.EntityFramework`, so at-least-once delivery lands in v1.7.0 without new persistence abstractions — and feeds the v1.9.0 audit-trail milestone
+- Works with any in-process pub/sub: Hermodr.Subscriptions, a raw `IEventPublishChannel`, or a custom `IEntityEventPublisher` implementation
 - Every handler receives the same strongly-typed event regardless of which driver triggered it
+
+**Status:** 🔲 Planned for v1.7.0. Depends on the Extensible Operation Pipeline feature.
+
+---
+
+### Feature — Cache Alignment to the Operation Pipeline
+
+**Title:** Cache Alignment to the Operation Pipeline
+
+**Intent**  
+> "Move the EntityManager's inline cache glue into the same operation pipeline as events and audit, so the cache concern becomes removable, reorderable, and testable in isolation — and the manager body stops duplicating cache calls across every CRUD method."
+
+**The Problem Today**  
+Cache warming and eviction are hardwired into `EntityManager` as private `SetToCacheAsync` / `EvictAsync` helpers called inline from eight different sites across `AddAsync`, `AddRangeAsync`, `UpdateAsync`, `RemoveAsync`, `RemoveRangeAsync`, `RestoreAsync`, `HardDeleteAsync`, and `HardDeleteRangeAsync`. The concern cannot be removed, reordered, or tested in isolation without subclassing the manager. `RemoveRangeAsync` and `HardDeleteRangeAsync` loop over the helpers per entity, with no hook for batch-aware invalidation. There is no after-write extension point — that gap is exactly what the Extensible Operation Pipeline closes.
+
+**What We Are Building**  
+- A builtin `CacheInterceptor<TEntity, TKey>` (built on the [Extensible Operation Pipeline](#feature--extensible-operation-pipeline-on-entitymanager)) that moves the existing `SetToCacheAsync` / `EvictAsync` glue into `PostWriteAsync`: `Create` / `Update` / `Restore` re-cache the written entity, `Remove` (soft-delete branch) and `HardDelete` evict it
+- The private `SetToCacheAsync` / `EvictAsync` helpers and their eight inline call sites are removed from `EntityManager`; cache behavior is preserved by default through the interceptor and becomes removable for tests or custom cache strategies
+- Batch-aware invalidation is now possible: the interceptor sees the operation context and can evict a batch in one step instead of looping per entity inside the manager body
+- No change to `IEntityCache<TEntity>`, `IEntityCacheKeyGenerator<TEntity>`, or any `Kista.Manager.*` cache extension package — the interceptor consumes the same `IEntityCache<TEntity>` resolved from DI; only the call site moves
+- `FindAsync`'s read-through `GetOrSetByKeyAsync` stays inline — read-path caching is out of scope for this feature
+
+**Benefits**
+- Eight inline cache call sites collapse into one interceptor — the manager body shrinks and stops duplicating glue
+- Cache becomes removable, reorderable, and testable in isolation alongside events, audit, and custom interceptors
+- Batch-aware invalidation is enabled without new hooks
+- Existing `Kista.Manager.EasyCaching` / `MemoryCache` / `DistributedCache` / `FusionCache` packages keep working unchanged — they register `IEntityCache<TEntity>`, the interceptor calls it
+- The same pipeline serves v1.9.0 audit trail and OpenTelemetry — no second extension point to invent
+
+**Status:** 🔲 Planned for v1.7.0. Depends on the Extensible Operation Pipeline feature.
 
 ---
 

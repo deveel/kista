@@ -72,21 +72,8 @@ public class InterceptorRegistrationTests {
 		Assert.True(result.IsSuccess());
 	}
 
-	private class CountingInterceptor : IEntityManagerInterceptor<Person, string> {
-		public int PreWriteCount;
-		public int PostWriteCount;
-
-		public ValueTask<IOperationResult?> PreWriteAsync(IEntityOperationContext<Person, string> context) {
-			PreWriteCount++;
-			return default;
-		}
-
-		public ValueTask PostWriteAsync(IEntityOperationContext<Person, string> context, IOperationResult result) {
-			PostWriteCount++;
-			return ValueTask.CompletedTask;
-		}
-	}
-
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("SonarQube", "S1694",
+		Justification = "Deliberately abstract to test that WithInterceptor rejects non-concrete class types.")]
 	private abstract class AbstractInterceptor : IEntityManagerInterceptor<Person, string> {
 		public abstract ValueTask<IOperationResult?> PreWriteAsync(IEntityOperationContext<Person, string> context);
 		public abstract ValueTask PostWriteAsync(IEntityOperationContext<Person, string> context, IOperationResult result);

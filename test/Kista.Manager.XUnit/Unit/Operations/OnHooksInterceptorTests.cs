@@ -122,7 +122,7 @@ public class OnHooksInterceptorTests {
 		await repo.DidNotReceive().AddAsync(Arg.Any<Person>(), Arg.Any<CancellationToken>());
 	}
 
-	private class TimestampRecordingManager : EntityManager<Person, string> {
+	private sealed class TimestampRecordingManager : EntityManager<Person, string> {
 		public bool OnAddingEntityCalled;
 		public bool OnUpdatingEntityCalled;
 		public readonly ISystemTime TestTime = new TestSystemTime();
@@ -150,52 +150,4 @@ public class OnHooksInterceptorTests {
 		}
 	}
 
-	private class RecordingInterceptor : IEntityManagerInterceptor<Person, string> {
-		private readonly string _name;
-		private readonly List<string> _callOrder;
-
-		public RecordingInterceptor(string name, List<string> callOrder) {
-			_name = name;
-			_callOrder = callOrder;
-		}
-
-		public ValueTask<IOperationResult?> PreWriteAsync(IEntityOperationContext<Person, string> context) {
-			_callOrder.Add($"{_name}.Pre");
-			return default;
-		}
-
-		public ValueTask PostWriteAsync(IEntityOperationContext<Person, string> context, IOperationResult result) {
-			_callOrder.Add($"{_name}.Post");
-			return ValueTask.CompletedTask;
-		}
-	}
-
-	private class MutatingInterceptor : IEntityManagerInterceptor<Person, string> {
-		private readonly Action<Person> _mutate;
-
-		public MutatingInterceptor(Action<Person> mutate) {
-			_mutate = mutate;
-		}
-
-		public ValueTask<IOperationResult?> PreWriteAsync(IEntityOperationContext<Person, string> context) {
-			_mutate(context.Entity);
-			return default;
-		}
-
-		public ValueTask PostWriteAsync(IEntityOperationContext<Person, string> context, IOperationResult result)
-			=> ValueTask.CompletedTask;
-	}
-
-	private class ShortCircuitInterceptor : IEntityManagerInterceptor<Person, string> {
-		public ValueTask<IOperationResult?> PreWriteAsync(IEntityOperationContext<Person, string> context)
-			=> new(OperationResult.Fail(new OperationError("SHORT_CIRCUIT", "Test", "Short-circuited")));
-
-		public ValueTask PostWriteAsync(IEntityOperationContext<Person, string> context, IOperationResult result)
-			=> ValueTask.CompletedTask;
-	}
-
-	private sealed class TestSystemTime : ISystemTime {
-		public DateTimeOffset UtcNow => new DateTimeOffset(2026, 7, 12, 10, 0, 0, TimeSpan.Zero);
-		public DateTimeOffset Now => UtcNow.ToLocalTime();
-	}
 }

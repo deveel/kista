@@ -87,22 +87,7 @@ public class RangeOperationInterceptorTests {
 		Assert.Equal(2, interceptor.PostWriteCount);
 	}
 
-	private class CountingInterceptor : IEntityManagerInterceptor<Person, string> {
-		public int PreWriteCount;
-		public int PostWriteCount;
-
-		public ValueTask<IOperationResult?> PreWriteAsync(IEntityOperationContext<Person, string> context) {
-			PreWriteCount++;
-			return default;
-		}
-
-		public ValueTask PostWriteAsync(IEntityOperationContext<Person, string> context, IOperationResult result) {
-			PostWriteCount++;
-			return ValueTask.CompletedTask;
-		}
-	}
-
-	private class ShortCircuitOnSecondInterceptor : IEntityManagerInterceptor<Person, string> {
+	private sealed class ShortCircuitOnSecondInterceptor : IEntityManagerInterceptor<Person, string> {
 		public int PreWriteCount;
 		public int PostWriteCount;
 

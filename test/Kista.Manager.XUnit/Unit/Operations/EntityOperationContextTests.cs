@@ -9,7 +9,7 @@ public class EntityOperationContextTests {
 		var entity = new Person { Id = "1", FirstName = "Test" };
 		var original = new Person { Id = "1", FirstName = "Original" };
 		var timestamp = new DateTimeOffset(2026, 7, 12, 10, 0, 0, TimeSpan.Zero);
-		var cts = new CancellationTokenSource();
+		using var cts = new CancellationTokenSource();
 		var token = cts.Token;
 
 		var context = new EntityOperationContext<Person, string>(

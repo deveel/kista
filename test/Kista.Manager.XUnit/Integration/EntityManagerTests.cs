@@ -20,7 +20,8 @@ public class EntityManagerTests : EntityManagerTestSuite<EntityManager<Person, s
 	}
 
 	protected override void ConfigureServices(IServiceCollection services) {
-		services.AddRepository<InMemoryRepository<Person, string>>();
+		services.AddRepositoryContext()
+			.AddRepository<InMemoryRepository<Person, string>>(_ => { });
 		base.ConfigureServices(services);
 	}
 }

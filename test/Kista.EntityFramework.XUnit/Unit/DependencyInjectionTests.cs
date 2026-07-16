@@ -39,7 +39,7 @@ public class DependencyInjectionTests {
         services.AddDbContext<DbContext, PersonDbContext>(options => ConfigurePersonDbContext(options));
 
         // Act
-        services.AddEntityRepository<DbPerson>(ServiceLifetime.Scoped);
+        services.AddRepositoryContext().AddRepository<EntityRepository<DbPerson>>(_ => { });
         var provider = services.BuildServiceProvider();
         var scope = provider.CreateScope();
 
@@ -55,7 +55,7 @@ public class DependencyInjectionTests {
         services.AddDbContext<DbContext, PersonDbContext>(options => ConfigurePersonDbContext(options));
 
         // Act
-        services.AddRepository<EntityRepository<DbPerson>>(ServiceLifetime.Scoped);
+        services.AddRepositoryContext().AddRepository<EntityRepository<DbPerson>>(ServiceLifetime.Scoped);
         var provider = services.BuildServiceProvider();
         var scope = provider.CreateScope();
 

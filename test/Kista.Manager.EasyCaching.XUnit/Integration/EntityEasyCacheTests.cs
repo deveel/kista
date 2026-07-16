@@ -19,10 +19,11 @@ public class EntityEasyCacheTests
     {
         var services = new ServiceCollection();
         services.AddEasyCaching(options => options.UseInMemory("default"));
-        services.AddEntityEasyCacheFor<Person>(options =>
-        {
-            options.Expiration = TimeSpan.FromMinutes(15);
-        });
+        services.AddRepositoryContext()
+            .AddRepository<InMemoryRepository<Person, string>>(repo => repo
+                .WithManagement(mgmt => mgmt.WithEasyCaching(options => {
+                    options.DefaultExpiration = TimeSpan.FromMinutes(15);
+                })));
         var provider = services.BuildServiceProvider();
         var cache = provider.GetRequiredService<IEntityCache<Person>>();
         return (provider, cache);
@@ -148,6 +149,6 @@ public class EntityEasyCacheTests
         var (provider, _) = CreateCache();
 
         Assert.NotNull(provider.GetRequiredService<IEntityCache<Person>>());
-        Assert.NotNull(provider.GetRequiredService<EntityEasyCache<Person, Person>>());
+        Assert.NotNull(provider.GetRequiredService<EntityEasyCache<Person>>());
     }
 }

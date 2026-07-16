@@ -164,6 +164,71 @@ namespace Kista {
 		}
 
 		/// <summary>
+		/// Registers a custom <see cref="EntityManager{TEntity}"/> or
+		/// <see cref="EntityManager{TEntity, TKey}"/> subclass as the
+		/// manager for the current entity (and key) type, replacing the
+		/// default <see cref="EntityManager{TEntity}"/> registration.
+		/// </summary>
+		/// <typeparam name="TManager">
+		/// The type of the custom manager to register. Must be a concrete
+		/// class deriving from <see cref="EntityManager{TEntity}"/> or
+		/// <see cref="EntityManager{TEntity, TKey}"/>.
+		/// </typeparam>
+		/// <returns>This builder for chaining.</returns>
+		/// <exception cref="ArgumentException">
+		/// Thrown when <typeparamref name="TManager"/> is not a concrete
+		/// class or does not derive from a valid <see cref="EntityManager{TEntity}"/>.
+		/// </exception>
+		public EntityManagerBuilder UsingManager<TManager>()
+			where TManager : class {
+			var managerType = typeof(TManager);
+
+			if (!managerType.IsClass || managerType.IsAbstract)
+				throw new ArgumentException($"The type {managerType} is not a concrete class");
+
+			var serviceTypes = new List<Type>();
+
+			var baseType = managerType;
+			while (baseType != null) {
+				if (baseType.IsGenericType) {
+					var genericType = baseType.GetGenericTypeDefinition();
+					var genericArgs = baseType.GetGenericArguments();
+
+					if (genericType == typeof(EntityManager<>)) {
+						var entityType = genericArgs[0];
+						if (entityType == EntityType) {
+							serviceTypes.Add(genericType.MakeGenericType(entityType));
+						}
+					} else if (genericType == typeof(EntityManager<,>)) {
+						var entityType = genericArgs[0];
+						var keyType = genericArgs[1];
+						if (entityType == EntityType && keyType == EntityKeyType) {
+							serviceTypes.Add(genericType.MakeGenericType(entityType, keyType));
+						}
+					}
+				}
+
+				baseType = baseType.BaseType;
+			}
+
+			if (serviceTypes.Count == 0)
+				throw new ArgumentException($"The type {managerType} is not a valid manager type for entity {EntityType}");
+
+			if (!serviceTypes.Contains(managerType))
+				serviceTypes.Add(managerType);
+
+			foreach (var serviceType in serviceTypes) {
+				if (serviceType == managerType) {
+					Services.Add(new ServiceDescriptor(serviceType, managerType, _lifetime));
+				} else {
+					Services.Replace(new ServiceDescriptor(serviceType, managerType, _lifetime));
+				}
+			}
+
+			return this;
+		}
+
+		/// <summary>
 		/// Registers an operation error factory for the current entity type.
 		/// </summary>
 		/// <typeparam name="TFactory">

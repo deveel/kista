@@ -1,6 +1,8 @@
 ﻿using Kista.Caching;
 
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
 namespace Kista;
@@ -15,7 +17,7 @@ public class DependencyInjectionTests {
     public void Should_ResolveConfiguredOptions_When_OptionsConfiguredByAction() {
         // Arrange
         var services = new ServiceCollection();
-        services.AddEntityCacheOptions<Person>(options => {
+        services.AddOptions<EntityCacheOptions<Person>>().Configure(options => {
             options.Expiration = TimeSpan.FromMinutes(15);
         });
 
@@ -38,7 +40,7 @@ public class DependencyInjectionTests {
                 { "EntityCacheOptions:Person:Expiration", "00:15:00" }
             });
         services.AddSingleton<IConfiguration>(config.Build());
-        services.AddEntityCacheOptions<Person>("EntityCacheOptions:Person");
+        services.AddOptions<EntityCacheOptions<Person>>().BindConfiguration("EntityCacheOptions:Person");
 
         // Act
         var provider = services.BuildServiceProvider();
@@ -59,9 +61,11 @@ public class DependencyInjectionTests {
         // Arrange
         var services = new ServiceCollection();
         services.AddEasyCaching(options => options.UseInMemory("default"));
-        services.AddEntityEasyCacheFor<Person>(options => {
-            options.Expiration = TimeSpan.FromMinutes(15);
-        });
+        services.AddRepositoryContext()
+            .AddRepository<InMemoryRepository<Person, string>>(repo => repo
+                .WithManagement(mgmt => mgmt.WithEasyCaching(options => {
+                    options.DefaultExpiration = TimeSpan.FromMinutes(15);
+                })));
 
         // Act
         var provider = services.BuildServiceProvider();
@@ -72,12 +76,18 @@ public class DependencyInjectionTests {
     }
 
     [Fact]
-    public void Should_ThrowArgumentException_When_RegisteringNonCacheType() {
+    public void Should_NotRegisterCache_When_NoRepositoryForEntityType() {
         // Arrange
         var services = new ServiceCollection();
+        services.AddEasyCaching(options => options.UseInMemory("default"));
+        services.AddRepositoryContext()
+            .WithEasyCaching();
 
-        // Act & Assert
-        Assert.Throws<ArgumentException>(() => services.AddEntityEasyCache<NotCache>());
+        // Act
+        var provider = services.BuildServiceProvider();
+
+        // Assert
+        Assert.Null(provider.GetService<IEntityCache<Person>>());
     }
 
     #endregion
@@ -88,7 +98,9 @@ public class DependencyInjectionTests {
     public void Should_ResolveKeyGenerator_When_EntityCacheKeyGeneratorRegistered() {
         // Arrange
         var services = new ServiceCollection();
-        services.AddEntityCacheKeyGenerator<PersonCacheKeyGenerator>();
+        services.AddRepositoryContext()
+            .AddRepository<InMemoryRepository<Person, string>>(repo => repo
+                .WithManagement(mgmt => mgmt.WithCacheKeyGenerator<PersonCacheKeyGenerator>()));
 
         // Act
         var provider = services.BuildServiceProvider();
@@ -103,7 +115,8 @@ public class DependencyInjectionTests {
     public void Should_ResolveConverter_When_EntityEasyCacheConverterRegistered() {
         // Arrange
         var services = new ServiceCollection();
-        services.AddEntityEasyCacheConverter<PersonCacheConverter>();
+        services.TryAdd(new ServiceDescriptor(typeof(IEntityEasyCacheConverter<Person, CachedPerson>), typeof(PersonCacheConverter), ServiceLifetime.Singleton));
+        services.Add(new ServiceDescriptor(typeof(PersonCacheConverter), typeof(PersonCacheConverter), ServiceLifetime.Singleton));
 
         // Act
         var provider = services.BuildServiceProvider();

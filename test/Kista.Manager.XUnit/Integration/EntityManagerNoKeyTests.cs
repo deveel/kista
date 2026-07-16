@@ -15,7 +15,8 @@ public class EntityManagerNoKeyTests : EntityManagerTestSuite<EntityManager<Pers
 	protected override string GenerateKey() => Guid.NewGuid().ToString();
 
 	protected override void ConfigureServices(IServiceCollection services) {
-		services.AddRepository<InMemoryRepository<Person>>();
+		services.AddRepositoryContext()
+			.AddRepository<InMemoryRepository<Person>>(_ => { });
 		base.ConfigureServices(services);
 	}
 

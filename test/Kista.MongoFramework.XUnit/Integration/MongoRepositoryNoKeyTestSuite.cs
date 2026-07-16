@@ -46,14 +46,14 @@ namespace Kista {
 		}
 
 		protected override async ValueTask InitializeAsync() {
-			var controller = Services.GetRequiredService<IRepositoryController>();
+			var controller = Services.GetRequiredService<IRepositoryLifecycleService>();
 			await controller.CreateRepositoryAsync<MongoPerson>();
 
 			await base.InitializeAsync();
 		}
 
 		protected override async ValueTask DisposeAsync() {
-			var controller = Services.GetRequiredService<IRepositoryController>();
+			var controller = Services.GetRequiredService<IRepositoryLifecycleService>();
 			await controller.DropRepositoryAsync<MongoPerson>();
 
 			await base.DisposeAsync();

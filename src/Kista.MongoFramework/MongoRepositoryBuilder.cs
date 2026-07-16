@@ -102,6 +102,8 @@ namespace Kista
                 Parent.Services.TryAdd(ServiceDescriptor.Scoped(typeof(IMongoDbContext), _contextType));
             }
 
+            RegisterAdditionalContextTypes();
+
             Parent.AddRepository(typeof(MongoRepository<>), _lifetime);
             Parent.AddRepository(typeof(MongoRepository<,>), _lifetime);
 
@@ -122,6 +124,19 @@ namespace Kista
 
             Parent.Services.TryAdd(ServiceDescriptor.Scoped(_contextType, _contextType));
             Parent.Services.TryAdd(ServiceDescriptor.Scoped(typeof(IMongoDbContext), _contextType));
+        }
+
+        private void RegisterAdditionalContextTypes() {
+            if (typeof(IMongoDbTenantContext).IsAssignableFrom(_contextType))
+                Parent.Services.TryAdd(new ServiceDescriptor(typeof(IMongoDbTenantContext), _contextType, ServiceLifetime.Scoped));
+
+            if (typeof(MongoDbContext).IsAssignableFrom(_contextType) &&
+                typeof(MongoDbContext) != _contextType)
+                Parent.Services.TryAdd(new ServiceDescriptor(typeof(MongoDbContext), _contextType, ServiceLifetime.Scoped));
+
+            if (typeof(MongoDbTenantContext).IsAssignableFrom(_contextType) &&
+                typeof(MongoDbTenantContext) != _contextType)
+                Parent.Services.TryAdd(new ServiceDescriptor(typeof(MongoDbTenantContext), provider => provider.GetRequiredService(_contextType), ServiceLifetime.Scoped));
         }
 
         /// <summary>

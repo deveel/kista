@@ -31,7 +31,7 @@ namespace Kista {
 				builder.UseSqlite(sql.Connection);
 			});
 
-			services.AddRepository<SoftDeletableDbPersonRepository>();
+			services.AddRepositoryContext().AddRepository<SoftDeletableDbPersonRepository>(_ => { });
 
 			base.ConfigureServices(services);
 		}

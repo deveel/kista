@@ -33,8 +33,9 @@ namespace Kista {
 					npgsql.UseNetTopologySuite();
 				});
 				builder.EnableSensitiveDataLogging();
-			})
-			.AddRepository<DbPersonRepository>();
+		});
+
+		services.AddRepositoryContext().AddRepository<DbPersonRepository>(_ => { });
 
 			base.ConfigureServices(services);
 		}

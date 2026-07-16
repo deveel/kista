@@ -75,14 +75,6 @@ public class ServiceCollectionExtensionsTests
 		Assert.Same(testTime, systemTime);
 	}
 
-	[Fact]
-	public void ServiceCollectionExtensions_AddRepositoryController_Obsolete_StillWorks() {
-		var services = new ServiceCollection();
-		services.AddRepositoryController<TestRepositoryController>();
-		var provider = services.BuildServiceProvider();
-		Assert.NotNull(provider.GetService<IRepositoryController>());
-	}
-
 	/// <summary>
 	/// A stub implementation of <see cref="ISystemTime"/> that delegates to the real system clock,
 	/// used to verify custom <see cref="ISystemTime"/> registration overloads.
@@ -208,10 +200,4 @@ public class ServiceCollectionExtensionsTests
 		public object? GetSeedData(Type entityType) => null;
 	}
 
-	private sealed class TestRepositoryController : IRepositoryController {
-		public ValueTask CreateRepositoryAsync<TEntity>(CancellationToken cancellationToken = default) where TEntity : class => ValueTask.CompletedTask;
-		public ValueTask CreateRepositoryAsync<TEntity, TKey>(CancellationToken cancellationToken = default) where TEntity : class => ValueTask.CompletedTask;
-		public ValueTask DropRepositoryAsync<TEntity>(CancellationToken cancellationToken = default) where TEntity : class => ValueTask.CompletedTask;
-		public ValueTask DropRepositoryAsync<TEntity, TKey>(CancellationToken cancellationToken = default) where TEntity : class => ValueTask.CompletedTask;
-	}
 }

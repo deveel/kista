@@ -36,8 +36,9 @@ namespace Kista {
 				if (!sql.SpatialiteAvailable)
 					builder.ReplaceService<IModelCustomizer, NonSpatialModelCustomizer>();
 				builder.EnableSensitiveDataLogging();
-			})
-			.AddRepository<DbPersonRepository>();
+		});
+
+		services.AddRepositoryContext().AddRepository<DbPersonRepository>(_ => { });
 
 			base.ConfigureServices(services);
 		}

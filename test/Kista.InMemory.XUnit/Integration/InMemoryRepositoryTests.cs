@@ -36,7 +36,8 @@ public class InMemoryRepositoryTests : RepositoryTestSuite<Person, string, Perso
 	}
 
 	protected virtual void AddRepository(IServiceCollection services) {
-		services.AddRepository<PersonRepository>();
-		services.AddRepositoryController();
+		services.AddRepositoryContext()
+			.AddRepository<PersonRepository>(_ => { })
+			.ConfigureLifecycle();
 	}
 }

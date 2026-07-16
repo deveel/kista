@@ -16,10 +16,11 @@ public class DependencyInjectionTests {
     public void Should_ResolveDefaultManager_When_ManagerForEntityRegistered() {
         // Arrange
         var services = new ServiceCollection();
-        services.AddRepository<InMemoryRepository<Person>>();
 
         // Act
-        services.AddManagerFor<Person>();
+        services.AddRepositoryContext()
+            .AddRepository<InMemoryRepository<Person>>(_ => { })
+            .WithManagement();
         var provider = services.BuildServiceProvider();
         var manager = provider.GetRequiredService<EntityManager<Person>>();
 
@@ -32,10 +33,12 @@ public class DependencyInjectionTests {
     public void Should_ResolveCustomManager_When_EntityManagerRegistered() {
         // Arrange
         var services = new ServiceCollection();
-        services.AddRepository<InMemoryRepository<Person>>();
 
         // Act
-        services.AddEntityManager<MyPersonManager>();
+        services.AddRepositoryContext()
+            .AddRepository<InMemoryRepository<Person>>()
+            .WithManagement(mgmt => mgmt
+                .UsingManager<MyPersonManager>());
         var provider = services.BuildServiceProvider();
 
         // Assert
@@ -51,7 +54,9 @@ public class DependencyInjectionTests {
         var services = new ServiceCollection();
 
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => services.AddEntityManager<NotEntityManager>());
+        Assert.Throws<ArgumentException>(() => services.AddRepositoryContext()
+            .AddRepository<InMemoryRepository<Person>>()
+            .WithManagement(mgmt => mgmt.UsingManager<NotEntityManager>()));
     }
 
     #endregion
@@ -64,7 +69,10 @@ public class DependencyInjectionTests {
         var services = new ServiceCollection();
 
         // Act
-        services.AddEntityValidator<PersonValidator>();
+        services.AddRepositoryContext()
+            .AddRepository<InMemoryRepository<Person>>()
+            .WithManagement(mgmt => mgmt
+                .WithValidator<PersonValidator>());
         var provider = services.BuildServiceProvider();
 
         // Assert

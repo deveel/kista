@@ -9,8 +9,7 @@ namespace Kista;
 /// Tests for the repository lifecycle feature, including
 /// <see cref="IRepositoryLifecycleService"/> registration, option configuration,
 /// <see cref="RepositoryLifecycleService"/> behavior (create, drop, seed),
-/// controllable repository fallback, seed-data provider resolution, and
-/// obsolete <see cref="RepositoryControllerAdapter"/> / <see cref="DefaultRepositoryController"/>.
+/// controllable repository fallback, and seed-data provider resolution.
 /// </summary>
 [Trait("Category", "Unit")]
 [Trait("Layer", "Core")]
@@ -179,43 +178,6 @@ public class LifecycleTests {
 		await Assert.ThrowsAsync<RepositoryException>(
 			() => orchestrator.CreateRepositoryAsync<Person>().AsTask()
 		);
-	}
-
-	[Fact]
-	public void Adapter_WrapsOrchestrator() {
-		var orchestrator = new RepositoryLifecycleService(
-			Options.Create(new RepositoryLifecycleOptions()),
-			new ServiceCollection().BuildServiceProvider()
-		);
-
-		var adapter = new RepositoryControllerAdapter(orchestrator);
-
-		Assert.NotNull(adapter);
-		Assert.IsAssignableFrom<IRepositoryController>(adapter);
-	}
-
-	[Fact]
-	public void ControllerAdapter_IsObsolete() {
-		var attr = typeof(RepositoryControllerAdapter)
-			.GetCustomAttributes(typeof(ObsoleteAttribute), false);
-
-		Assert.NotEmpty(attr);
-	}
-
-	[Fact]
-	public void DefaultRepositoryController_IsObsolete() {
-		var attr = typeof(DefaultRepositoryController)
-			.GetCustomAttributes(typeof(ObsoleteAttribute), false);
-
-		Assert.NotEmpty(attr);
-	}
-
-	[Fact]
-	public void RepositoryControllerOptions_IsObsolete() {
-		var attr = typeof(RepositoryControllerOptions)
-			.GetCustomAttributes(typeof(ObsoleteAttribute), false);
-
-		Assert.NotEmpty(attr);
 	}
 
 	[Fact]

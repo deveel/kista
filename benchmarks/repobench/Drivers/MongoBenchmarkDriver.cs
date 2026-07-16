@@ -42,7 +42,7 @@ internal sealed class MongoBenchmarkDriver : IRepositoryBenchmarkDriver<MongoBen
         DropDatabase();
 
         var services = new ServiceCollection();
-        services.AddMongoDbContext<MongoDbContext>(builder => builder.UseConnection(_connectionString));
+        services.AddRepositoryContext().UseMongoDB<MongoDbContext>(mongoBuilder => mongoBuilder.WithConnection(builder => builder.UseConnection(_connectionString)));
         _serviceProvider = services.BuildServiceProvider();
 
         var context = _serviceProvider.GetRequiredService<IMongoDbContext>();

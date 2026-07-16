@@ -15,7 +15,7 @@ public class DependencyInjectionTests {
     [Fact]
     public void Should_ResolveConfiguredOptions_When_OptionsConfiguredByAction() {
         var services = new ServiceCollection();
-        services.AddEntityCacheOptions<Person>(options => {
+        services.AddOptions<EntityCacheOptions<Person>>().Configure(options => {
             options.Expiration = TimeSpan.FromMinutes(15);
         });
 
@@ -35,7 +35,7 @@ public class DependencyInjectionTests {
                 { "EntityCacheOptions:Person:Expiration", "00:15:00" }
             });
         services.AddSingleton<IConfiguration>(config.Build());
-        services.AddEntityCacheOptions<Person>("EntityCacheOptions:Person");
+        services.AddOptions<EntityCacheOptions<Person>>().BindConfiguration("EntityCacheOptions:Person");
 
         var provider = services.BuildServiceProvider();
         var options = provider.GetService<IOptions<EntityCacheOptions<Person>>>();
@@ -62,7 +62,9 @@ public class DependencyInjectionTests {
     [Fact]
     public void Should_ResolveKeyGenerator_When_EntityCacheKeyGeneratorRegistered() {
         var services = new ServiceCollection();
-        services.AddEntityCacheKeyGenerator<PersonCacheKeyGenerator>();
+        services.AddRepositoryContext()
+            .AddRepository<InMemoryRepository<Person, string>>(repo => repo
+                .WithManagement(mgmt => mgmt.WithCacheKeyGenerator<PersonCacheKeyGenerator>()));
 
         var provider = services.BuildServiceProvider();
         var generator = provider.GetService<IEntityCacheKeyGenerator<Person>>();

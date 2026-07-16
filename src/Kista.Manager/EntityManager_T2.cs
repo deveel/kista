@@ -1629,56 +1629,6 @@ namespace Kista {
 		}
 
 		/// <summary>
-		/// Retrieves a page of entities from the repository based on the given query.
-		/// </summary>
-		/// <example>
-		/// <code>
-		/// var manager = new EntityManager&lt;MyEntity&gt;(repository);
-		/// var pageQuery = new PageQuery&lt;MyEntity&gt;(1, 10);
-		/// var page = await manager.GetPageAsync(pageQuery);
-		/// foreach (var entity in page.Items) {
-		///     Console.WriteLine(entity);
-		/// }
-		/// </code>
-		/// </example>
-		/// <param name="query">
-		/// The paging and filtering criteria to apply to the query.
-		/// </param>
-		/// <param name="cancellationToken">
-		/// A token used to cancel the operation.
-		/// </param>
-		/// <returns>
-		/// Returns a <see cref="PageQueryResult{TEntity}"/> containing the entities
-		/// that match the given paging criteria.
-		/// </returns>
-		/// <exception cref="NotSupportedException">
-		/// Thrown when the repository does not support paging.
-		/// </exception>
-		/// <exception cref="OperationException">
-		/// Thrown when an unknown error occurs while retrieving the page.
-		/// </exception>
-		/// <remarks>
-		/// This method is obsolete. Use <see cref="GetPageAsync(PageRequest, CancellationToken?)"/>
-		/// for simple pagination, or implement filtered/sorted paging in your repository
-		/// using the protected <c>QueryPageAsync(PageQuery{TEntity}, CancellationToken)</c> method.
-		/// </remarks>
-		[Obsolete("Use GetPageAsync(PageRequest, CancellationToken?) for simple pagination instead.", false)]
-		[ExcludeFromCodeCoverage]
-		public virtual async ValueTask<PageQueryResult<TEntity>> GetPageAsync(PageQuery<TEntity> query, CancellationToken? cancellationToken = null) {
-			ThrowIfDisposed();
-
-			try {
-				// log this operation
-
-				var result = await Repository.GetPageAsync(query, GetCancellationToken(cancellationToken));
-				return (PageQueryResult<TEntity>)result;
-			} catch (Exception ex) {
-				LogUnknownError(ex);
-				throw new OperationException(EntityErrorCodes.UnknownError, Domain, "Could not look for the entity", ex);
-			}
-		}
-
-		/// <summary>
 		/// A builtin interceptor that wraps the existing
 		/// <c>On*Async</c> protected virtual hooks of
 		/// <see cref="EntityManager{TEntity, TKey}"/>, so that
@@ -1699,7 +1649,7 @@ namespace Kista {
 		/// <see cref="PostWriteAsync"/>.
 		/// </para>
 		/// </remarks>
-		internal sealed class OnHooksEntityInterceptor : IEntityManagerInterceptor<TEntity, TKey> {
+		sealed class OnHooksEntityInterceptor : IEntityManagerInterceptor<TEntity, TKey> {
 			private readonly EntityManager<TEntity, TKey> _manager;
 
 			/// <summary>

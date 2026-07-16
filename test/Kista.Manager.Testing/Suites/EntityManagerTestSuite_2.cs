@@ -3,6 +3,7 @@
 using Bogus;
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 
 using Xunit;
@@ -48,8 +49,63 @@ public abstract class EntityManagerTestSuite<TManager, TPerson> : IAsyncLifetime
 	}
 
 	protected virtual void ConfigureServices(IServiceCollection services) {
-		services.AddEntityValidator<PersonValidator<TPerson>>();
-		services.AddEntityManager<TManager>();
+		RegisterManager(services, typeof(TManager));
+		RegisterValidator(services, typeof(PersonValidator<TPerson>));
+	}
+
+	private static void RegisterManager(IServiceCollection services, Type managerType) {
+		if (!managerType.IsClass || managerType.IsAbstract)
+			throw new ArgumentException($"The type {managerType} is not a concrete class");
+
+		var serviceTypes = new List<Type>();
+		var baseType = managerType;
+		while (baseType != null) {
+			if (baseType.IsGenericType) {
+				var genericType = baseType.GetGenericTypeDefinition();
+				var genericArgs = baseType.GetGenericArguments();
+
+				if (genericType == typeof(EntityManager<>)) {
+					serviceTypes.Add(genericType.MakeGenericType(genericArgs[0]));
+				} else if (genericType == typeof(EntityManager<,>)) {
+					serviceTypes.Add(genericType.MakeGenericType(genericArgs[0], genericArgs[1]));
+				}
+			}
+			baseType = baseType.BaseType;
+		}
+
+		if (serviceTypes.Count == 0)
+			throw new ArgumentException($"The type {managerType} is not a valid manager type");
+
+		if (!serviceTypes.Contains(managerType))
+			serviceTypes.Add(managerType);
+
+		foreach (var serviceType in serviceTypes) {
+			if (serviceType == managerType) {
+				services.Add(ServiceDescriptor.Describe(serviceType, managerType, ServiceLifetime.Scoped));
+			} else {
+				services.TryAdd(ServiceDescriptor.Describe(serviceType, managerType, ServiceLifetime.Scoped));
+			}
+		}
+	}
+
+	private static void RegisterValidator(IServiceCollection services, Type validatorType) {
+		if (!validatorType.IsClass || validatorType.IsAbstract)
+			throw new ArgumentException($"The type {validatorType} is not a concrete class");
+
+		foreach (var iface in validatorType.GetInterfaces()) {
+			if (!iface.IsGenericType) continue;
+			var def = iface.GetGenericTypeDefinition();
+			if (def == typeof(IEntityValidator<>)) {
+				var compareType = typeof(IEntityValidator<>).MakeGenericType(iface.GetGenericArguments()[0]);
+				services.TryAdd(new ServiceDescriptor(compareType, validatorType, ServiceLifetime.Transient));
+			} else if (def == typeof(IEntityValidator<,>)) {
+				var args = iface.GetGenericArguments();
+				var compareType = typeof(IEntityValidator<,>).MakeGenericType(args[0], args[1]);
+				services.TryAdd(new ServiceDescriptor(compareType, validatorType, ServiceLifetime.Transient));
+			}
+		}
+
+		services.Add(new ServiceDescriptor(validatorType, validatorType, ServiceLifetime.Transient));
 	}
 
 	public virtual async ValueTask InitializeAsync() {
@@ -375,7 +431,7 @@ public abstract class EntityManagerTestSuite<TManager, TPerson> : IAsyncLifetime
 		var query = new PageQuery<TPerson>(1, 10);
 
 		// Act
-		var page = await Manager.GetPageAsync(query);
+		var page = (PageQueryResult<TPerson>) await Repository.GetPageAsync(query);
 
 		// Assert
 		Assert.NotNull(page);
@@ -401,7 +457,7 @@ public abstract class EntityManagerTestSuite<TManager, TPerson> : IAsyncLifetime
 			.Where("FirstName.StartsWith(\"A\")");
 
 		// Act
-		var page = await Manager.GetPageAsync(query);
+		var page = (PageQueryResult<TPerson>) await Repository.GetPageAsync(query);
 
 		// Assert
 		Assert.NotNull(page);

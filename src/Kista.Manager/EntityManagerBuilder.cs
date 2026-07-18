@@ -186,30 +186,7 @@ namespace Kista {
 			if (!managerType.IsClass || managerType.IsAbstract)
 				throw new ArgumentException($"The type {managerType} is not a concrete class");
 
-			var serviceTypes = new List<Type>();
-
-			var baseType = managerType;
-			while (baseType != null) {
-				if (baseType.IsGenericType) {
-					var genericType = baseType.GetGenericTypeDefinition();
-					var genericArgs = baseType.GetGenericArguments();
-
-					if (genericType == typeof(EntityManager<>)) {
-						var entityType = genericArgs[0];
-						if (entityType == EntityType) {
-							serviceTypes.Add(genericType.MakeGenericType(entityType));
-						}
-					} else if (genericType == typeof(EntityManager<,>)) {
-						var entityType = genericArgs[0];
-						var keyType = genericArgs[1];
-						if (entityType == EntityType && keyType == EntityKeyType) {
-							serviceTypes.Add(genericType.MakeGenericType(entityType, keyType));
-						}
-					}
-				}
-
-				baseType = baseType.BaseType;
-			}
+			var serviceTypes = CollectManagerServiceTypes(managerType);
 
 			if (serviceTypes.Count == 0)
 				throw new ArgumentException($"The type {managerType} is not a valid manager type for entity {EntityType}");
@@ -217,6 +194,35 @@ namespace Kista {
 			if (!serviceTypes.Contains(managerType))
 				serviceTypes.Add(managerType);
 
+			RegisterServiceTypes(managerType, serviceTypes);
+
+			return this;
+		}
+
+		private List<Type> CollectManagerServiceTypes(Type managerType) {
+			var serviceTypes = new List<Type>();
+			var baseType = managerType;
+			while (baseType != null) {
+				if (baseType.IsGenericType)
+					CollectFromGenericType(baseType, serviceTypes);
+				baseType = baseType.BaseType;
+			}
+			return serviceTypes;
+		}
+
+		private void CollectFromGenericType(Type baseType, List<Type> serviceTypes) {
+			var genericType = baseType.GetGenericTypeDefinition();
+			var genericArgs = baseType.GetGenericArguments();
+
+			if (genericType == typeof(EntityManager<>) && genericArgs[0] == EntityType) {
+				serviceTypes.Add(genericType.MakeGenericType(genericArgs[0]));
+			} else if (genericType == typeof(EntityManager<,>)
+				&& genericArgs[0] == EntityType && genericArgs[1] == EntityKeyType) {
+				serviceTypes.Add(genericType.MakeGenericType(genericArgs[0], genericArgs[1]));
+			}
+		}
+
+		private void RegisterServiceTypes(Type managerType, List<Type> serviceTypes) {
 			foreach (var serviceType in serviceTypes) {
 				if (serviceType == managerType) {
 					Services.Add(new ServiceDescriptor(serviceType, managerType, _lifetime));
@@ -224,8 +230,6 @@ namespace Kista {
 					Services.Replace(new ServiceDescriptor(serviceType, managerType, _lifetime));
 				}
 			}
-
-			return this;
 		}
 
 		/// <summary>

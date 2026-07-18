@@ -11,6 +11,12 @@ namespace Kista;
 public class InterceptorPipelineTests {
 	private readonly PersonFaker _faker = new();
 
+	private Person CreatePerson(string id = "1") {
+		var person = _faker.Generate();
+		person.Id = id;
+		return person;
+	}
+
 	private static (EntityManager<Person, string> manager, IRepository<Person, string> repo) BuildManager(
 		IEnumerable<IEntityManagerInterceptor<Person, string>>? interceptors = null,
 		IUserAccessor<string>? userAccessor = null,
@@ -42,8 +48,7 @@ public class InterceptorPipelineTests {
 		var interceptorB = new RecordingInterceptor("B", callOrder);
 
 		var (manager, _) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptorA, interceptorB });
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 
 		await manager.AddAsync(person, TestContext.Current.CancellationToken);
 
@@ -57,8 +62,7 @@ public class InterceptorPipelineTests {
 		var interceptorB = new RecordingInterceptor("B", callOrder);
 
 		var (manager, repo) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptorA, interceptorB });
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 
 		var result = await manager.AddAsync(person, TestContext.Current.CancellationToken);
 
@@ -84,8 +88,7 @@ public class InterceptorPipelineTests {
 		var provider = services.BuildServiceProvider();
 		var manager = new EntityManager<Person, string>(repo, services: provider);
 
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 
 		var result = await manager.AddAsync(person, TestContext.Current.CancellationToken);
 
@@ -99,8 +102,7 @@ public class InterceptorPipelineTests {
 		var interceptor = new MutatingInterceptor(p => p.FirstName = "Mutated");
 
 		var (manager, repo) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor });
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 		person.FirstName = "Original";
 
 		await manager.AddAsync(person, TestContext.Current.CancellationToken);
@@ -116,8 +118,7 @@ public class InterceptorPipelineTests {
 		var interceptorB = new ItemsReadingInterceptor("key", "value-from-A");
 
 		var (manager, _) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptorA, interceptorB });
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 
 		await manager.AddAsync(person, TestContext.Current.CancellationToken);
 
@@ -131,8 +132,7 @@ public class InterceptorPipelineTests {
 		var userAccessor = new StaticUserAccessor<string>("user-42");
 
 		var (manager, _) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor }, userAccessor, testTime);
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 
 		await manager.AddAsync(person, TestContext.Current.CancellationToken);
 
@@ -145,11 +145,9 @@ public class InterceptorPipelineTests {
 		var interceptor = new ContextCapturingInterceptor();
 		var (manager, repo) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor });
 
-		var existing = _faker.Generate();
-		existing.Id = "1";
+		var existing = CreatePerson("1");
 		existing.FirstName = "OldName";
-		var updated = _faker.Generate();
-		updated.Id = "1";
+		var updated = CreatePerson("1");
 		updated.FirstName = "NewName";
 		repo.FindAsync("1", Arg.Any<CancellationToken>()).Returns(existing);
 		repo.UpdateAsync(Arg.Any<Person>(), Arg.Any<CancellationToken>()).Returns(true);
@@ -165,15 +163,13 @@ public class InterceptorPipelineTests {
 		var updateInterceptor = new ContextCapturingInterceptor();
 
 		var (createManager, _) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { createInterceptor });
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 
 		await createManager.AddAsync(person, TestContext.Current.CancellationToken);
 
 		Assert.Null(createInterceptor.CapturedOriginal);
 
-		var existing = _faker.Generate();
-		existing.Id = "1";
+		var existing = CreatePerson("1");
 		existing.FirstName = "OldName";
 		var repo = Substitute.For<IRepository<Person, string>>();
 		repo.GetEntityKey(Arg.Any<Person>()).Returns(c => c.Arg<Person>().Id);
@@ -185,8 +181,7 @@ public class InterceptorPipelineTests {
 		var provider = services.BuildServiceProvider();
 		var updateManager = new EntityManager<Person, string>(repo, services: provider);
 
-		var updated = _faker.Generate();
-		updated.Id = "1";
+		var updated = CreatePerson("1");
 		updated.FirstName = "NewName";
 		await updateManager.UpdateAsync(updated, TestContext.Current.CancellationToken);
 
@@ -198,8 +193,7 @@ public class InterceptorPipelineTests {
 	public async Task Should_PopulateKeyInContext() {
 		var interceptor = new ContextCapturingInterceptor();
 		var (manager, _) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor });
-		var person = _faker.Generate();
-		person.Id = "key-123";
+		var person = CreatePerson("key-123");
 
 		await manager.AddAsync(person, TestContext.Current.CancellationToken);
 

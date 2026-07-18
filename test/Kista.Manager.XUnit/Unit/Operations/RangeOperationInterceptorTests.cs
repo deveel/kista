@@ -13,21 +13,9 @@ public class RangeOperationInterceptorTests {
 	[Fact]
 	public async Task Should_CreateContextPerEntityInAddRange() {
 		var interceptor = new CountingInterceptor();
-		var repo = Substitute.For<IRepository<Person, string>>();
-		repo.GetEntityKey(Arg.Any<Person>()).Returns(c => c.Arg<Person>().Id);
-		repo.AddRangeAsync(Arg.Any<IEnumerable<Person>>(), Arg.Any<CancellationToken>()).Returns(ValueTask.CompletedTask);
-
-		var services = new ServiceCollection();
-		services.AddSingleton<IEntityManagerInterceptor<Person, string>>(interceptor);
-		var provider = services.BuildServiceProvider();
-		var manager = new EntityManager<Person, string>(repo, services: provider);
-
-		var people = new List<Person>();
-		for (var i = 0; i < 3; i++) {
-			var p = _faker.Generate();
-			p.Id = (i + 1).ToString();
-			people.Add(p);
-		}
+		var (manager, repo) = BuildManager(interceptor, r =>
+			r.AddRangeAsync(Arg.Any<IEnumerable<Person>>(), Arg.Any<CancellationToken>()).Returns(ValueTask.CompletedTask));
+		var people = GeneratePeople(3);
 
 		await manager.AddRangeAsync(people, TestContext.Current.CancellationToken);
 
@@ -38,21 +26,9 @@ public class RangeOperationInterceptorTests {
 	[Fact]
 	public async Task Should_ShortCircuitRangeOnSecondEntity() {
 		var interceptor = new ShortCircuitOnSecondInterceptor();
-		var repo = Substitute.For<IRepository<Person, string>>();
-		repo.GetEntityKey(Arg.Any<Person>()).Returns(c => c.Arg<Person>().Id);
-		repo.AddRangeAsync(Arg.Any<IEnumerable<Person>>(), Arg.Any<CancellationToken>()).Returns(ValueTask.CompletedTask);
-
-		var services = new ServiceCollection();
-		services.AddSingleton<IEntityManagerInterceptor<Person, string>>(interceptor);
-		var provider = services.BuildServiceProvider();
-		var manager = new EntityManager<Person, string>(repo, services: provider);
-
-		var people = new List<Person>();
-		for (var i = 0; i < 3; i++) {
-			var p = _faker.Generate();
-			p.Id = (i + 1).ToString();
-			people.Add(p);
-		}
+		var (manager, repo) = BuildManager(interceptor, r =>
+			r.AddRangeAsync(Arg.Any<IEnumerable<Person>>(), Arg.Any<CancellationToken>()).Returns(ValueTask.CompletedTask));
+		var people = GeneratePeople(3);
 
 		var result = await manager.AddRangeAsync(people, TestContext.Current.CancellationToken);
 
@@ -65,26 +41,38 @@ public class RangeOperationInterceptorTests {
 	[Fact]
 	public async Task Should_CreateContextPerEntityInRemoveRange() {
 		var interceptor = new CountingInterceptor();
-		var repo = Substitute.For<IRepository<Person, string>>();
-		repo.GetEntityKey(Arg.Any<Person>()).Returns(c => c.Arg<Person>().Id);
-		repo.RemoveRangeAsync(Arg.Any<IEnumerable<Person>>(), Arg.Any<CancellationToken>()).Returns(ValueTask.CompletedTask);
-
-		var services = new ServiceCollection();
-		services.AddSingleton<IEntityManagerInterceptor<Person, string>>(interceptor);
-		var provider = services.BuildServiceProvider();
-		var manager = new EntityManager<Person, string>(repo, services: provider);
-
-		var people = new List<Person>();
-		for (var i = 0; i < 2; i++) {
-			var p = _faker.Generate();
-			p.Id = (i + 1).ToString();
-			people.Add(p);
-		}
+		var (manager, _) = BuildManager(interceptor, r =>
+			r.RemoveRangeAsync(Arg.Any<IEnumerable<Person>>(), Arg.Any<CancellationToken>()).Returns(ValueTask.CompletedTask));
+		var people = GeneratePeople(2);
 
 		await manager.RemoveRangeAsync(people, TestContext.Current.CancellationToken);
 
 		Assert.Equal(2, interceptor.PreWriteCount);
 		Assert.Equal(2, interceptor.PostWriteCount);
+	}
+
+	private (EntityManager<Person, string> manager, IRepository<Person, string> repo) BuildManager(
+		IEntityManagerInterceptor<Person, string> interceptor,
+		Action<IRepository<Person, string>> configureRepo) {
+		var repo = Substitute.For<IRepository<Person, string>>();
+		repo.GetEntityKey(Arg.Any<Person>()).Returns(c => c.Arg<Person>().Id);
+		configureRepo(repo);
+
+		var services = new ServiceCollection();
+		services.AddSingleton<IEntityManagerInterceptor<Person, string>>(interceptor);
+		var provider = services.BuildServiceProvider();
+		var manager = new EntityManager<Person, string>(repo, services: provider);
+		return (manager, repo);
+	}
+
+	private List<Person> GeneratePeople(int count) {
+		var people = new List<Person>();
+		for (var i = 0; i < count; i++) {
+			var p = _faker.Generate();
+			p.Id = (i + 1).ToString();
+			people.Add(p);
+		}
+		return people;
 	}
 
 	private sealed class ShortCircuitOnSecondInterceptor : IEntityManagerInterceptor<Person, string> {

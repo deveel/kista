@@ -12,6 +12,12 @@ namespace Kista;
 public class InterceptorPipelineCoverageTests {
 	private readonly PersonFaker _faker = new();
 
+	private Person CreatePerson(string? id = "1") {
+		var person = _faker.Generate();
+		person.Id = id;
+		return person;
+	}
+
 	private static (EntityManager<Person, string> manager, IRepository<Person, string> repo) BuildManager(
 		IEnumerable<IEntityManagerInterceptor<Person, string>>? interceptors = null,
 		IUserAccessor<string>? userAccessor = null,
@@ -46,8 +52,7 @@ public class InterceptorPipelineCoverageTests {
 		var interceptor = new CustomResultInterceptor(customResult);
 
 		var (manager, repo) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor });
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 
 		var result = await manager.AddAsync(person, TestContext.Current.CancellationToken);
 
@@ -61,8 +66,7 @@ public class InterceptorPipelineCoverageTests {
 		var interceptor = new CustomResultInterceptor(customResult);
 
 		var (manager, repo) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor });
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 
 		var result = await manager.AddAsync(person, TestContext.Current.CancellationToken);
 
@@ -76,8 +80,7 @@ public class InterceptorPipelineCoverageTests {
 		var interceptor = new CustomResultInterceptor(customResult);
 
 		var (manager, repo) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor });
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 
 		var result = await manager.AddAsync(person, TestContext.Current.CancellationToken);
 
@@ -93,8 +96,7 @@ public class InterceptorPipelineCoverageTests {
 		var userAccessor = new StaticUserAccessor<string>("user-99");
 
 		var (manager, _) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor }, userAccessor);
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 
 		await manager.AddAsync(person, TestContext.Current.CancellationToken);
 
@@ -107,8 +109,7 @@ public class InterceptorPipelineCoverageTests {
 		var userAccessor = new StaticUserAccessor<string>(null);
 
 		var (manager, _) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor }, userAccessor);
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 
 		await manager.AddAsync(person, TestContext.Current.CancellationToken);
 
@@ -120,8 +121,7 @@ public class InterceptorPipelineCoverageTests {
 		var interceptor = new ContextCapturingInterceptor();
 
 		var (manager, _) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor });
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 
 		await manager.AddAsync(person, TestContext.Current.CancellationToken);
 
@@ -135,8 +135,7 @@ public class InterceptorPipelineCoverageTests {
 		var interceptor = new ShortCircuitInterceptor();
 		var (manager, repo) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor });
 
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 		repo.FindAsync("1", Arg.Any<CancellationToken>()).Returns(person);
 
 		var result = await manager.RemoveAsync(person, TestContext.Current.CancellationToken);
@@ -153,11 +152,9 @@ public class InterceptorPipelineCoverageTests {
 		var interceptor = new ShortCircuitInterceptor();
 		var (manager, repo) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor });
 
-		var existing = _faker.Generate();
-		existing.Id = "1";
+		var existing = CreatePerson("1");
 		existing.FirstName = "Old";
-		var updated = _faker.Generate();
-		updated.Id = "1";
+		var updated = CreatePerson("1");
 		updated.FirstName = "New";
 		repo.FindAsync("1", Arg.Any<CancellationToken>()).Returns(existing);
 
@@ -174,8 +171,7 @@ public class InterceptorPipelineCoverageTests {
 		var interceptor = new ShortCircuitInterceptor();
 		var (manager, repo) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor });
 
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 		repo.FindAsync("1", Arg.Any<CancellationToken>()).Returns(person);
 
 		var result = await manager.HardDeleteAsync(person, TestContext.Current.CancellationToken);
@@ -193,8 +189,7 @@ public class InterceptorPipelineCoverageTests {
 
 		var (manager, repo) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor });
 
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 		repo.FindAsync("1", Arg.Any<CancellationToken>()).Returns(person);
 		repo.HardDeleteAsync(Arg.Any<Person>(), Arg.Any<CancellationToken>()).Returns(true);
 
@@ -212,8 +207,7 @@ public class InterceptorPipelineCoverageTests {
 
 		var (manager, repo) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor });
 
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 		repo.FindAsync("1", Arg.Any<CancellationToken>()).Returns(person);
 		repo.HardDeleteAsync(Arg.Any<Person>(), Arg.Any<CancellationToken>()).Returns(false);
 
@@ -225,8 +219,7 @@ public class InterceptorPipelineCoverageTests {
 	[Fact]
 	public async Task Should_ReturnNotFound_When_HardDeleteEntityNotFound() {
 		var (manager, _) = BuildManager();
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 
 		var result = await manager.HardDeleteAsync(person, TestContext.Current.CancellationToken);
 
@@ -237,8 +230,7 @@ public class InterceptorPipelineCoverageTests {
 	[Fact]
 	public async Task Should_ReturnFailed_When_HardDeleteEntityHasNoKey() {
 		var (manager, _) = BuildManager();
-		var person = _faker.Generate();
-		person.Id = null;
+		var person = CreatePerson(null);
 
 		var result = await manager.HardDeleteAsync(person, TestContext.Current.CancellationToken);
 
@@ -339,8 +331,7 @@ public class InterceptorPipelineCoverageTests {
 	[Fact]
 	public async Task Should_ReturnFailed_When_RestoreEntityNotSoftDeletable() {
 		var (manager, _) = BuildManager();
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 
 		var result = await manager.RestoreAsync(person, TestContext.Current.CancellationToken);
 
@@ -368,8 +359,7 @@ public class InterceptorPipelineCoverageTests {
 		var interceptor = new ShortCircuitInterceptor();
 		var (manager, repo) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor });
 
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 
 		var result = await manager.RemoveRangeAsync(new[] { person }, TestContext.Current.CancellationToken);
 
@@ -384,8 +374,7 @@ public class InterceptorPipelineCoverageTests {
 		var interceptor = new ShortCircuitInterceptor();
 		var (manager, repo) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor });
 
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 
 		var result = await manager.HardDeleteRangeAsync(new[] { person }, TestContext.Current.CancellationToken);
 
@@ -422,11 +411,9 @@ public class InterceptorPipelineCoverageTests {
 		var interceptor = new MutatingInterceptor(p => p.FirstName = "MutatedByInterceptor");
 		var (manager, repo) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor });
 
-		var existing = _faker.Generate();
-		existing.Id = "1";
+		var existing = CreatePerson("1");
 		existing.FirstName = "Old";
-		var updated = _faker.Generate();
-		updated.Id = "1";
+		var updated = CreatePerson("1");
 		updated.FirstName = "New";
 		repo.FindAsync("1", Arg.Any<CancellationToken>()).Returns(existing);
 		repo.UpdateAsync(Arg.Any<Person>(), Arg.Any<CancellationToken>()).Returns(true);
@@ -477,8 +464,7 @@ public class InterceptorPipelineCoverageTests {
 			.Throws(new InvalidOperationException("cache down"));
 
 		var (manager, repo) = BuildManager(cache: cache);
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 		repo.RemoveAsync(Arg.Any<Person>(), Arg.Any<CancellationToken>()).Returns(true);
 		repo.FindAsync("1", Arg.Any<CancellationToken>()).Returns(person);
 
@@ -496,8 +482,7 @@ public class InterceptorPipelineCoverageTests {
 			.Throws(new InvalidOperationException("cache down"));
 
 		var (manager, _) = BuildManager(cache: cache);
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 
 		var result = await manager.AddAsync(person, TestContext.Current.CancellationToken);
 
@@ -519,8 +504,7 @@ public class InterceptorPipelineCoverageTests {
 		var provider = services.BuildServiceProvider();
 		var manager = new EntityManager<Person>(repo, services: provider);
 
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 
 		await manager.AddAsync(person, TestContext.Current.CancellationToken);
 
@@ -571,8 +555,7 @@ public class InterceptorPipelineCoverageTests {
 		var interceptor = new ContextCapturingInterceptor();
 		var (manager, repo) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor });
 
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 		repo.FindAsync("1", Arg.Any<CancellationToken>()).Returns(person);
 		repo.RemoveAsync(Arg.Any<Person>(), Arg.Any<CancellationToken>()).Returns(true);
 
@@ -586,8 +569,7 @@ public class InterceptorPipelineCoverageTests {
 		var interceptor = new ContextCapturingInterceptor();
 		var (manager, repo) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor });
 
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 		repo.FindAsync("1", Arg.Any<CancellationToken>()).Returns(person);
 		repo.HardDeleteAsync(Arg.Any<Person>(), Arg.Any<CancellationToken>()).Returns(true);
 
@@ -601,8 +583,7 @@ public class InterceptorPipelineCoverageTests {
 		var interceptor = new ContextCapturingInterceptor();
 		var (manager, _) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor });
 
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 
 		await manager.AddRangeAsync(new[] { person }, TestContext.Current.CancellationToken);
 
@@ -614,8 +595,7 @@ public class InterceptorPipelineCoverageTests {
 		var interceptor = new ContextCapturingInterceptor();
 		var (manager, repo) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor });
 
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 		repo.RemoveRangeAsync(Arg.Any<IEnumerable<Person>>(), Arg.Any<CancellationToken>()).Returns(ValueTask.CompletedTask);
 
 		await manager.RemoveRangeAsync(new[] { person }, TestContext.Current.CancellationToken);
@@ -628,8 +608,7 @@ public class InterceptorPipelineCoverageTests {
 		var interceptor = new ContextCapturingInterceptor();
 		var (manager, repo) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor });
 
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 		repo.HardDeleteRangeAsync(Arg.Any<IEnumerable<Person>>(), Arg.Any<CancellationToken>()).Returns(ValueTask.CompletedTask);
 
 		await manager.HardDeleteRangeAsync(new[] { person }, TestContext.Current.CancellationToken);
@@ -644,8 +623,7 @@ public class InterceptorPipelineCoverageTests {
 		var interceptor = new ResultCapturingInterceptor();
 		var (manager, repo) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor });
 
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 		repo.AddAsync(Arg.Any<Person>(), Arg.Any<CancellationToken>()).Returns(ValueTask.CompletedTask);
 
 		await manager.AddAsync(person, TestContext.Current.CancellationToken);
@@ -661,8 +639,7 @@ public class InterceptorPipelineCoverageTests {
 		var interceptor = new ItemsPrePostInterceptor();
 		var (manager, _) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor });
 
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 
 		await manager.AddAsync(person, TestContext.Current.CancellationToken);
 
@@ -676,8 +653,7 @@ public class InterceptorPipelineCoverageTests {
 		var interceptor = new ContextCapturingInterceptor();
 		var (manager, repo) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor });
 
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 		person.FirstName = "LoadedFromRepo";
 		repo.FindAsync("1", Arg.Any<CancellationToken>()).Returns(person);
 		repo.RemoveAsync(Arg.Any<Person>(), Arg.Any<CancellationToken>()).Returns(true);
@@ -693,8 +669,7 @@ public class InterceptorPipelineCoverageTests {
 		var interceptor = new ContextCapturingInterceptor();
 		var (manager, repo) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor });
 
-		var person = _faker.Generate();
-		person.Id = "1";
+		var person = CreatePerson("1");
 		repo.FindAsync("1", Arg.Any<CancellationToken>()).Returns(person);
 		repo.HardDeleteAsync(Arg.Any<Person>(), Arg.Any<CancellationToken>()).Returns(true);
 

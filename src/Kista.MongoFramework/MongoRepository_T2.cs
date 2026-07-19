@@ -159,7 +159,7 @@ namespace Kista {
 		/// Thrown when the entity set cannot be created.
 		/// </exception>
 		protected virtual IMongoDbSet<TEntity> MakeEntitySet() {
-			if (Context is IMongoDbTenantContext tenantContext &&
+			if (Context is IMongoDbTenantContext &&
 				typeof(IHaveTenantId).IsAssignableFrom(typeof(TEntity))) {
 				var dbSetType = typeof(MongoDbTenantSet<>).MakeGenericType(typeof(TEntity));
 				var result = (IMongoDbSet<TEntity>?)Activator.CreateInstance(dbSetType, new object[] { Context });
@@ -222,7 +222,7 @@ namespace Kista {
 		/// property of the entity managed by this repository.
 		/// </exception>
 		protected virtual TKey? ConvertKeyValue(TKey? key) {
-			if (key == null)
+			if (KeyHelper.IsNull(key))
 				return default(TKey?);
 
 			var idType = key.GetType();
@@ -511,7 +511,7 @@ namespace Kista {
 
 			var id = GetEntityKey(entity);
 
-			if (id == null)
+			if (KeyHelper.IsNull(id))
 				throw new ArgumentException("Cannot determine the identifier of the entity", nameof(entity));
 
 			Logger.TraceUpdating(id.ToString()!);

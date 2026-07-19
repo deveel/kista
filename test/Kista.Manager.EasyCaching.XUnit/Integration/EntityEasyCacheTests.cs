@@ -32,8 +32,7 @@ public class EntityEasyCacheTests
     [Fact]
     public async Task Should_ReturnCachedValue_When_KeyExists()
     {
-        var (provider, cache) = CreateCache();
-        var easyCache = provider.GetRequiredService<IEasyCachingProvider>();
+        var (_, cache) = CreateCache();
         var person = _faker.Generate();
         var cacheKey = $"person:{person.Id}";
 

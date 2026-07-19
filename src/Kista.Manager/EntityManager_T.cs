@@ -71,7 +71,7 @@ namespace Kista {
 			get {
 				ThrowIfDisposed();
 
-				return (Repository is ITrackingRepository<TEntity> trackingRepository);
+				return (Repository is ITrackingRepository<TEntity>);
 			}
 		}
 

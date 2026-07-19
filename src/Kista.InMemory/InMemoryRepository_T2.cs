@@ -326,7 +326,7 @@ namespace Kista {
 
 			try {
 				var key = GetEntityId(entity);
-				if (key == null)
+				if (KeyHelper.IsNull(key))
 				{
 					key = GenerateNewKey();
 					SetEntityId(entity, key);
@@ -367,11 +367,11 @@ namespace Kista {
 				// Consistent with AddAsync: only generate a key when the entity has none.
 				var items = entities.Select(item => {
 					var key = GetEntityId(item);
-					if (key == null) {
-						key = GenerateNewKey();
-						SetEntityId(item, key);
-					}
-					return (key, item);
+				if (KeyHelper.IsNull(key)) {
+					key = GenerateNewKey();
+					SetEntityId(item, key);
+				}
+				return (key, item);
 				}).ToList();
 
 				_lock.EnterWriteLock();
@@ -466,8 +466,6 @@ namespace Kista {
 				} finally {
 					_lock.ExitWriteLock();
 				}
-			} catch (RepositoryException) {
-				throw;
 			} catch (InvalidOperationException ex) {
 				throw new RepositoryException("Could not soft-delete the entity", ex);
 			}
@@ -481,7 +479,7 @@ namespace Kista {
 
 			try {
 				var entityId = GetEntityId(entity);
-				if (entityId == null)
+				if (KeyHelper.IsNull(entityId))
 					return new ValueTask<bool>(false);
 
 				_lock.EnterWriteLock();
@@ -565,8 +563,6 @@ namespace Kista {
 				}
 
 				await Task.CompletedTask;
-			} catch (RepositoryException) {
-				throw;
 			} catch (InvalidOperationException ex) {
 				throw new RepositoryException("Could not soft-delete the entities", ex);
 			}
@@ -810,7 +806,7 @@ namespace Kista {
 
 			try {
 				var entityId = GetEntityId(entity);
-				if (entityId == null)
+				if (KeyHelper.IsNull(entityId))
 					return new ValueTask<bool>(false);
 
 				_lock.EnterWriteLock();

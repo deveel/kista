@@ -37,7 +37,6 @@ public class PersonManagerCachingTests : EntityManagerTestSuite<PersonManager, P
 	[Fact]
 	public async Task Should_FindPersonByEmail_When_EntityExistsInCache() {
 		// Arrange
-		var cancellationToken = TestContext.Current.CancellationToken;
 		var person = People.Random(x => x.Email != null);
 
 		Assert.NotNull(person);

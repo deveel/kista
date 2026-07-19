@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System.ComponentModel;
 using System.Security.Claims;
 
 using Microsoft.AspNetCore.Http;
@@ -53,35 +52,7 @@ namespace Kista
 			if (value == null)
 				return default;
 
-			return ConvertValue(value);
-		}
-
-		private static TKey? ConvertValue(string value)
-		{
-			try
-			{
-				if (typeof(TKey) == typeof(string))
-					return (TKey)(object)value;
-
-				var converter = TypeDescriptor.GetConverter(typeof(TKey));
-				return (TKey?)converter.ConvertFromInvariantString(value);
-			}
-			catch (FormatException)
-			{
-				return default;
-			}
-			catch (NotSupportedException)
-			{
-				return default;
-			}
-			catch (ArgumentException)
-			{
-				return default;
-			}
-			catch (InvalidCastException)
-			{
-				return default;
-			}
+			return UserIdentifierConverter.Convert<TKey>(value);
 		}
 	}
 }

@@ -88,7 +88,7 @@ namespace Kista {
 		public ValueTask AddAsync(TEntity entity, CancellationToken cancellationToken = default) {
 			AssertMutable();
 
-			var id = SetId(entity);
+			SetId(entity);
 
 			AddEntity(entity);
 
@@ -115,7 +115,7 @@ namespace Kista {
 			AssertMutable();
 
 			foreach (var entity in entities) {
-				var id = SetId(entity);
+				SetId(entity);
 				AddEntity(entity);
 			}
 

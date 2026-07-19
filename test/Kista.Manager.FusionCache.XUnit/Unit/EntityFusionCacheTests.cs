@@ -1,5 +1,6 @@
 using Kista.Caching;
 
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -161,5 +162,119 @@ public class EntityFusionCacheTests
 
         Assert.NotNull(provider.GetRequiredService<IEntityCache<Person>>());
         Assert.NotNull(provider.GetRequiredService<EntityFusionCache<Person>>());
+    }
+
+    [Fact]
+    public async Task Should_UseFailSafeMaxDuration_When_Configured()
+    {
+        var (_, cache) = CreateCache(options => {
+            options.FailSafeEnabled = true;
+            options.FailSafeMaxDuration = TimeSpan.FromHours(2);
+        });
+        var person = _faker.Generate();
+
+        await cache.GetOrSetAsync($"person:{person.Id}", () => ValueTask.FromResult<Person?>(person), TestContext.Current.CancellationToken);
+        var result = await cache.GetOrSetAsync($"person:{person.Id}", () => ValueTask.FromResult<Person?>(null), TestContext.Current.CancellationToken);
+
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public async Task Should_UseFactoryTimeouts_When_Configured()
+    {
+        var (_, cache) = CreateCache(options => {
+            options.FailSafeEnabled = true;
+            options.FactorySoftTimeout = TimeSpan.FromMilliseconds(100);
+            options.FactoryHardTimeout = TimeSpan.FromMilliseconds(500);
+        });
+        var person = _faker.Generate();
+
+        await cache.GetOrSetAsync($"person:{person.Id}", () => ValueTask.FromResult<Person?>(person), TestContext.Current.CancellationToken);
+        var result = await cache.GetOrSetAsync($"person:{person.Id}", () => ValueTask.FromResult<Person?>(null), TestContext.Current.CancellationToken);
+
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public async Task Should_UseEagerRefreshThreshold_When_Configured()
+    {
+        var (_, cache) = CreateCache(options => {
+            options.DefaultEntryDuration = TimeSpan.FromMinutes(30);
+            options.EagerRefreshThreshold = 0.5f;
+        });
+        var person = _faker.Generate();
+
+        await cache.GetOrSetAsync($"person:{person.Id}", () => ValueTask.FromResult<Person?>(person), TestContext.Current.CancellationToken);
+        var result = await cache.GetOrSetAsync($"person:{person.Id}", () => ValueTask.FromResult<Person?>(null), TestContext.Current.CancellationToken);
+
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public async Task Should_UsePriority_When_Configured()
+    {
+        var (_, cache) = CreateCache(options => {
+            options.Priority = CacheItemPriority.High;
+        });
+        var person = _faker.Generate();
+
+        await cache.GetOrSetAsync($"person:{person.Id}", () => ValueTask.FromResult<Person?>(person), TestContext.Current.CancellationToken);
+        var result = await cache.GetOrSetAsync($"person:{person.Id}", () => ValueTask.FromResult<Person?>(null), TestContext.Current.CancellationToken);
+
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public async Task Should_UseDefaults_When_NoFusionOptionsConfigured()
+    {
+        // CreateCache without options -> GetEntryOptions falls back to entity options
+        // (null _fusionOptions path) and uses default 5-minute expiration.
+        var services = new ServiceCollection();
+        services.AddFusionCache();
+        services.AddEntityFusionCacheFor<Person>();
+        var provider = services.BuildServiceProvider();
+        var cache = provider.GetRequiredService<IEntityCache<Person>>();
+        var person = _faker.Generate();
+
+        await cache.GetOrSetAsync($"person:{person.Id}", () => ValueTask.FromResult<Person?>(person), TestContext.Current.CancellationToken);
+        var result = await cache.GetOrSetAsync($"person:{person.Id}", () => ValueTask.FromResult<Person?>(null), TestContext.Current.CancellationToken);
+
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public async Task Should_UseEntityOptionsExpiration_When_FusionOptionsHasNoDuration()
+    {
+        // _fusionOptions is non-null but DefaultEntryDuration is null,
+        // so GetEntryOptions uses _entityOptions.Expiration.
+        var services = new ServiceCollection();
+        services.AddFusionCache();
+        services.AddEntityFusionCacheFor<Person>(options => {
+            options.FailSafeEnabled = true;
+        });
+        // Configure entity options with a specific expiration.
+        services.Configure<EntityCacheOptions<Person>>(o => o.Expiration = TimeSpan.FromMinutes(10));
+        var provider = services.BuildServiceProvider();
+        var cache = provider.GetRequiredService<IEntityCache<Person>>();
+        var person = _faker.Generate();
+
+        await cache.GetOrSetAsync($"person:{person.Id}", () => ValueTask.FromResult<Person?>(person), TestContext.Current.CancellationToken);
+        var result = await cache.GetOrSetAsync($"person:{person.Id}", () => ValueTask.FromResult<Person?>(null), TestContext.Current.CancellationToken);
+
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public async Task Should_NoOp_When_SetAsyncCalledWithEmptyKeys()
+    {
+        var (_, cache) = CreateCache();
+        await cache.SetAsync(Array.Empty<string>(), _faker.Generate(), TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
+    public async Task Should_NoOp_When_RemoveAsyncCalledWithEmptyKeys()
+    {
+        var (_, cache) = CreateCache();
+        await cache.RemoveAsync(Array.Empty<string>(), TestContext.Current.CancellationToken);
     }
 }

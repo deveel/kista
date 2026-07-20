@@ -95,7 +95,7 @@ namespace Kista {
 			return ValueTask.CompletedTask;
 		}
 
-		private string SetId(TEntity entity) {
+		private void SetId(TEntity entity) {
 			var member = DiscoverKeyMember();
 			var entityId = Guid.NewGuid().ToString("N");
 
@@ -106,8 +106,6 @@ namespace Kista {
 			} else {
 				throw new NotSupportedException("The entity Id is not supported");
 			}
-
-			return entityId;
 		}
 
 		/// <inheritdoc/>

@@ -10,6 +10,7 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 
 using MongoFramework;
+using NSubstitute.Core;
 
 namespace Kista.HealthChecks.Tests;
 
@@ -26,6 +27,41 @@ namespace Kista.HealthChecks.Tests;
 [Trait("Layer", "HealthChecks")]
 [Trait("Feature", "DriverHealthChecks")]
 public class DriverHealthCheckExtensionTests {
+    private const string MongoTag = "mongo";
+    private const string EfTag = "ef";
+    private const string InMemoryTag = "im";
+    private static readonly TimeSpan HealthCheckTimeout = TimeSpan.FromSeconds(30);
+
+    private static HealthCheckContext BuildHealthCheckContext(string tag)
+        => new() {
+            Registration = new HealthCheckRegistration(
+                tag, DummyHealthCheck.Instance, HealthStatus.Unhealthy, null, HealthCheckTimeout)
+        };
+
+    private static EntityFrameworkHealthCheck<TestEntity, Guid> CreateEfHealthCheck(bool testQuery)
+        => new(new TestOptions<EntityFrameworkHealthCheckOptions>(
+            new EntityFrameworkHealthCheckOptions { TestQuery = testQuery }));
+
+    private static MongoHealthCheck<TestEntity, Guid> CreateMongoHealthCheck()
+        => new(new TestOptions<MongoHealthCheckOptions>(new MongoHealthCheckOptions()));
+
+    private static IServiceProvider BuildMongoServices(Func<CallInfo, Task<BsonDocument>> runCommand)
+        => new ServiceCollection()
+            .AddSingleton(BuildMongoContext(runCommand))
+            .BuildServiceProvider();
+
+    private static IMongoDbContext BuildMongoContext(Func<CallInfo, Task<BsonDocument>> runCommand) {
+        var contextMock = Substitute.For<IMongoDbContext>();
+        var connectionMock = Substitute.For<IMongoDbConnection>();
+        var databaseMock = Substitute.For<IMongoDatabase>();
+        contextMock.Connection.Returns(connectionMock);
+        connectionMock.GetDatabase().Returns(databaseMock);
+        databaseMock.RunCommandAsync<BsonDocument>(
+            Arg.Any<BsonDocumentCommand<BsonDocument>>(),
+            cancellationToken: Arg.Any<CancellationToken>())
+            .Returns(runCommand);
+        return contextMock;
+    }
     [Fact]
     public void EntityFramework_WithHealthChecks_RegistersMarkerAndOptions() {
         var services = new ServiceCollection();
@@ -61,10 +97,7 @@ public class DriverHealthCheckExtensionTests {
 
     [Fact]
     public async Task EntityFramework_HealthCheck_ReturnsHealthy_WhenCanConnect() {
-        var options = new TestOptions<EntityFrameworkHealthCheckOptions>(
-            new EntityFrameworkHealthCheckOptions { TestQuery = false });
-
-        var healthCheck = new EntityFrameworkHealthCheck<TestEntity, Guid>(options);
+        var healthCheck = CreateEfHealthCheck(testQuery: false);
 
         var services = new ServiceCollection()
             .AddDbContext<TestDbContext>(o => o.UseInMemoryDatabase("health-check"))
@@ -72,22 +105,14 @@ public class DriverHealthCheckExtensionTests {
             .BuildServiceProvider();
 
         using var scope = services.CreateScope();
-        var scopedProvider = scope.ServiceProvider;
-        var registration = new HealthCheckRegistration(
-            "ef", DummyHealthCheck.Instance, HealthStatus.Unhealthy, null, TimeSpan.FromSeconds(30));
-        var context = new HealthCheckContext { Registration = registration };
-
-        var result = await healthCheck.CheckHealthAsync(context, scopedProvider, CancellationToken.None);
+        var result = await healthCheck.CheckHealthAsync(BuildHealthCheckContext(EfTag), scope.ServiceProvider, CancellationToken.None);
         Assert.Equal(HealthStatus.Healthy, result.Status);
         Assert.Contains("DbContextType", result.Data.Keys);
     }
 
     [Fact]
     public async Task EntityFramework_HealthCheck_ReturnsHealthyWithTestQuery_WhenTestQueryEnabled() {
-        var options = new TestOptions<EntityFrameworkHealthCheckOptions>(
-            new EntityFrameworkHealthCheckOptions { TestQuery = true });
-
-        var healthCheck = new EntityFrameworkHealthCheck<TestEntity, Guid>(options);
+        var healthCheck = CreateEfHealthCheck(testQuery: true);
 
         var services = new ServiceCollection()
             .AddDbContext<TestDbContext>(o => o.UseInMemoryDatabase("health-check-tq"))
@@ -95,20 +120,14 @@ public class DriverHealthCheckExtensionTests {
             .BuildServiceProvider();
 
         using var scope = services.CreateScope();
-        var registration = new HealthCheckRegistration(
-            "ef", DummyHealthCheck.Instance, HealthStatus.Unhealthy, null, TimeSpan.FromSeconds(30));
-        var context = new HealthCheckContext { Registration = registration };
-
-        var result = await healthCheck.CheckHealthAsync(context, scope.ServiceProvider, CancellationToken.None);
+        var result = await healthCheck.CheckHealthAsync(BuildHealthCheckContext(EfTag), scope.ServiceProvider, CancellationToken.None);
         Assert.Equal(HealthStatus.Healthy, result.Status);
         Assert.Contains("EntityExists", result.Data.Keys);
     }
 
     [Fact]
     public async Task EntityFramework_HealthCheck_ReturnsUnhealthy_When_CannotConnect() {
-        var options = new TestOptions<EntityFrameworkHealthCheckOptions>(
-            new EntityFrameworkHealthCheckOptions { TestQuery = false });
-        var healthCheck = new EntityFrameworkHealthCheck<TestEntity, Guid>(options);
+        var healthCheck = CreateEfHealthCheck(testQuery: false);
 
         var services = new ServiceCollection();
         services.AddDbContext<InMemoryTestDbContext>(o => o.UseInMemoryDatabase("cannot-connect"));
@@ -119,22 +138,16 @@ public class DriverHealthCheckExtensionTests {
         // Dispose the context so CanConnectAsync throws ObjectDisposedException,
         // exercising the generic catch branch of the EF health check.
         var ctx = scope.ServiceProvider.GetRequiredService<InMemoryTestDbContext>();
-        ctx.Dispose();
+        await ctx.DisposeAsync();
 
-        var registration = new HealthCheckRegistration(
-            "ef", DummyHealthCheck.Instance, HealthStatus.Unhealthy, null, TimeSpan.FromSeconds(30));
-        var context = new HealthCheckContext { Registration = registration };
-
-        var result = await healthCheck.CheckHealthAsync(context, scope.ServiceProvider, CancellationToken.None);
+        var result = await healthCheck.CheckHealthAsync(BuildHealthCheckContext(EfTag), scope.ServiceProvider, CancellationToken.None);
         Assert.Equal(HealthStatus.Unhealthy, result.Status);
         Assert.NotNull(result.Exception);
     }
 
     [Fact]
     public async Task EntityFramework_HealthCheck_ReturnsUnhealthy_When_DbContextThrowsInvalidOperationException() {
-        var options = new TestOptions<EntityFrameworkHealthCheckOptions>(
-            new EntityFrameworkHealthCheckOptions { TestQuery = false });
-        var healthCheck = new EntityFrameworkHealthCheck<TestEntity, Guid>(options);
+        var healthCheck = CreateEfHealthCheck(testQuery: false);
 
         // Registering a DbContext without a provider causes CanConnectAsync
         // to throw InvalidOperationException, exercising that catch branch.
@@ -147,11 +160,7 @@ public class DriverHealthCheckExtensionTests {
         using var provider = services.BuildServiceProvider();
 
         using var scope = provider.CreateScope();
-        var registration = new HealthCheckRegistration(
-            "ef", DummyHealthCheck.Instance, HealthStatus.Unhealthy, null, TimeSpan.FromSeconds(30));
-        var context = new HealthCheckContext { Registration = registration };
-
-        var result = await healthCheck.CheckHealthAsync(context, scope.ServiceProvider, CancellationToken.None);
+        var result = await healthCheck.CheckHealthAsync(BuildHealthCheckContext(EfTag), scope.ServiceProvider, CancellationToken.None);
         Assert.Equal(HealthStatus.Unhealthy, result.Status);
         Assert.NotNull(result.Exception);
     }
@@ -175,15 +184,11 @@ public class DriverHealthCheckExtensionTests {
 
     [Fact]
     public async Task InMemory_HealthCheck_AlwaysReturnsHealthy() {
-        var options = new TestOptions<InMemoryHealthCheckOptions>(new InMemoryHealthCheckOptions());
-        var healthCheck = new InMemoryHealthCheck<TestEntity, Guid>(options);
+        var healthCheck = new InMemoryHealthCheck<TestEntity, Guid>(
+            new TestOptions<InMemoryHealthCheckOptions>(new InMemoryHealthCheckOptions()));
 
         var services = new ServiceCollection().BuildServiceProvider();
-        var registration = new HealthCheckRegistration(
-            "im", DummyHealthCheck.Instance, HealthStatus.Unhealthy, null, TimeSpan.FromSeconds(30));
-        var context = new HealthCheckContext { Registration = registration };
-
-        var result = await healthCheck.CheckHealthAsync(context, services, CancellationToken.None);
+        var result = await healthCheck.CheckHealthAsync(BuildHealthCheckContext(InMemoryTag), services, CancellationToken.None);
         Assert.Equal(HealthStatus.Healthy, result.Status);
         Assert.Equal("In-memory repository is available", result.Description);
     }
@@ -209,142 +214,53 @@ public class DriverHealthCheckExtensionTests {
 
     [Fact]
     public async Task Mongo_HealthCheck_ReturnsHealthy_WhenPingSucceeds() {
-        var options = new TestOptions<MongoHealthCheckOptions>(new MongoHealthCheckOptions());
-        var healthCheck = new MongoHealthCheck<TestEntity, Guid>(options);
+        var healthCheck = CreateMongoHealthCheck();
+        var services = BuildMongoServices(_ => Task.FromResult(new BsonDocument()));
 
-        var contextMock = Substitute.For<IMongoDbContext>();
-        var connectionMock = Substitute.For<IMongoDbConnection>();
-        var databaseMock = Substitute.For<IMongoDatabase>();
-        contextMock.Connection.Returns(connectionMock);
-        connectionMock.GetDatabase().Returns(databaseMock);
-        databaseMock.RunCommandAsync<BsonDocument>(
-            Arg.Any<BsonDocumentCommand<BsonDocument>>(),
-            cancellationToken: Arg.Any<CancellationToken>())
-            .Returns(new BsonDocument());
-
-        var services = new ServiceCollection()
-            .AddSingleton(contextMock)
-            .BuildServiceProvider();
-
-        var registration = new HealthCheckRegistration(
-            "mongo", DummyHealthCheck.Instance, HealthStatus.Unhealthy, null, TimeSpan.FromSeconds(30));
-        var context = new HealthCheckContext { Registration = registration };
-
-        var result = await healthCheck.CheckHealthAsync(context, services, CancellationToken.None);
+        var result = await healthCheck.CheckHealthAsync(BuildHealthCheckContext(MongoTag), services, CancellationToken.None);
         Assert.Equal(HealthStatus.Healthy, result.Status);
     }
 
     [Fact]
     public async Task Mongo_HealthCheck_ReturnsUnhealthy_OnMongoException() {
-        var options = new TestOptions<MongoHealthCheckOptions>(new MongoHealthCheckOptions());
-        var healthCheck = new MongoHealthCheck<TestEntity, Guid>(options);
+        var healthCheck = CreateMongoHealthCheck();
+        var services = BuildMongoServices(_ => throw new MongoConnectionException(null, null));
 
-        var contextMock = Substitute.For<IMongoDbContext>();
-        var connectionMock = Substitute.For<IMongoDbConnection>();
-        var databaseMock = Substitute.For<IMongoDatabase>();
-        contextMock.Connection.Returns(connectionMock);
-        connectionMock.GetDatabase().Returns(databaseMock);
-        databaseMock.RunCommandAsync<BsonDocument>(
-            Arg.Any<BsonDocumentCommand<BsonDocument>>(),
-            cancellationToken: Arg.Any<CancellationToken>())
-            .Returns<Task<BsonDocument>>(_ => throw new MongoConnectionException(null, null));
-
-        var services = new ServiceCollection()
-            .AddSingleton(contextMock)
-            .BuildServiceProvider();
-
-        var registration = new HealthCheckRegistration(
-            "mongo", DummyHealthCheck.Instance, HealthStatus.Unhealthy, null, TimeSpan.FromSeconds(30));
-        var context = new HealthCheckContext { Registration = registration };
-
-        var result = await healthCheck.CheckHealthAsync(context, services, CancellationToken.None);
+        var result = await healthCheck.CheckHealthAsync(BuildHealthCheckContext(MongoTag), services, CancellationToken.None);
         Assert.Equal(HealthStatus.Unhealthy, result.Status);
         Assert.Contains("ExceptionType", result.Data.Keys);
     }
 
     [Fact]
     public async Task Mongo_HealthCheck_ReturnsUnhealthy_OnTimeoutException() {
-        var options = new TestOptions<MongoHealthCheckOptions>(new MongoHealthCheckOptions());
-        var healthCheck = new MongoHealthCheck<TestEntity, Guid>(options);
+        var healthCheck = CreateMongoHealthCheck();
+        var services = BuildMongoServices(_ => throw new TimeoutException("ping timed out"));
 
-        var contextMock = Substitute.For<IMongoDbContext>();
-        var connectionMock = Substitute.For<IMongoDbConnection>();
-        var databaseMock = Substitute.For<IMongoDatabase>();
-        contextMock.Connection.Returns(connectionMock);
-        connectionMock.GetDatabase().Returns(databaseMock);
-        databaseMock.RunCommandAsync<BsonDocument>(
-            Arg.Any<BsonDocumentCommand<BsonDocument>>(),
-            cancellationToken: Arg.Any<CancellationToken>())
-            .Returns<Task<BsonDocument>>(_ => throw new TimeoutException("ping timed out"));
-
-        var services = new ServiceCollection()
-            .AddSingleton(contextMock)
-            .BuildServiceProvider();
-
-        var registration = new HealthCheckRegistration(
-            "mongo", DummyHealthCheck.Instance, HealthStatus.Unhealthy, null, TimeSpan.FromSeconds(30));
-        var context = new HealthCheckContext { Registration = registration };
-
-        var result = await healthCheck.CheckHealthAsync(context, services, CancellationToken.None);
+        var result = await healthCheck.CheckHealthAsync(BuildHealthCheckContext(MongoTag), services, CancellationToken.None);
         Assert.Equal(HealthStatus.Unhealthy, result.Status);
         Assert.Contains("ExceptionType", result.Data.Keys);
     }
 
     [Fact]
     public async Task Mongo_HealthCheck_ReturnsUnhealthy_OnGenericException() {
-        var options = new TestOptions<MongoHealthCheckOptions>(new MongoHealthCheckOptions());
-        var healthCheck = new MongoHealthCheck<TestEntity, Guid>(options);
+        var healthCheck = CreateMongoHealthCheck();
+        var services = BuildMongoServices(_ => throw new InvalidOperationException("boom"));
 
-        var contextMock = Substitute.For<IMongoDbContext>();
-        var connectionMock = Substitute.For<IMongoDbConnection>();
-        var databaseMock = Substitute.For<IMongoDatabase>();
-        contextMock.Connection.Returns(connectionMock);
-        connectionMock.GetDatabase().Returns(databaseMock);
-        databaseMock.RunCommandAsync<BsonDocument>(
-            Arg.Any<BsonDocumentCommand<BsonDocument>>(),
-            cancellationToken: Arg.Any<CancellationToken>())
-            .Returns<Task<BsonDocument>>(_ => throw new InvalidOperationException("boom"));
-
-        var services = new ServiceCollection()
-            .AddSingleton(contextMock)
-            .BuildServiceProvider();
-
-        var registration = new HealthCheckRegistration(
-            "mongo", DummyHealthCheck.Instance, HealthStatus.Unhealthy, null, TimeSpan.FromSeconds(30));
-        var context = new HealthCheckContext { Registration = registration };
-
-        var result = await healthCheck.CheckHealthAsync(context, services, CancellationToken.None);
+        var result = await healthCheck.CheckHealthAsync(BuildHealthCheckContext(MongoTag), services, CancellationToken.None);
         Assert.Equal(HealthStatus.Unhealthy, result.Status);
         Assert.Contains("ExceptionType", result.Data.Keys);
     }
 
     [Fact]
     public async Task Mongo_HealthCheck_Throws_OnUserCancellation() {
-        var options = new TestOptions<MongoHealthCheckOptions>(new MongoHealthCheckOptions());
-        var healthCheck = new MongoHealthCheck<TestEntity, Guid>(options);
+        var healthCheck = CreateMongoHealthCheck();
+        var services = BuildMongoServices(_ => throw new OperationCanceledException());
 
-        var contextMock = Substitute.For<IMongoDbContext>();
-        var connectionMock = Substitute.For<IMongoDbConnection>();
-        var databaseMock = Substitute.For<IMongoDatabase>();
-        contextMock.Connection.Returns(connectionMock);
-        connectionMock.GetDatabase().Returns(databaseMock);
-        databaseMock.RunCommandAsync<BsonDocument>(
-            Arg.Any<BsonDocumentCommand<BsonDocument>>(),
-            cancellationToken: Arg.Any<CancellationToken>())
-            .Returns<Task<BsonDocument>>(_ => throw new OperationCanceledException());
-
-        var services = new ServiceCollection()
-            .AddSingleton(contextMock)
-            .BuildServiceProvider();
-
-        var cts = new CancellationTokenSource();
-        cts.Cancel();
-        var registration = new HealthCheckRegistration(
-            "mongo", DummyHealthCheck.Instance, HealthStatus.Unhealthy, null, TimeSpan.FromSeconds(30));
-        var context = new HealthCheckContext { Registration = registration };
+        using var cts = new CancellationTokenSource();
+        await cts.CancelAsync();
 
         await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            healthCheck.CheckHealthAsync(context, services, cts.Token).AsTask());
+            healthCheck.CheckHealthAsync(BuildHealthCheckContext(MongoTag), services, cts.Token).AsTask());
     }
 }
 
@@ -352,7 +268,7 @@ public class DriverHealthCheckExtensionTests {
 /// Minimal in-memory DbContext used to exercise the EF health check
 /// without requiring a real database connection.
 /// </summary>
-file class InMemoryTestDbContext : DbContext {
+file sealed class InMemoryTestDbContext : DbContext {
     public InMemoryTestDbContext(DbContextOptions<InMemoryTestDbContext> options) : base(options) { }
     public DbSet<TestEntity> Entities => Set<TestEntity>();
 
@@ -367,7 +283,7 @@ file class InMemoryTestDbContext : DbContext {
 /// throws <see cref="InvalidOperationException"/> ("No database provider configured"),
 /// exercising the InvalidOperationException catch branch of the EF health check.
 /// </summary>
-file class NoProviderDbContext : DbContext {
+file sealed class NoProviderDbContext : DbContext {
     public NoProviderDbContext(DbContextOptions<NoProviderDbContext> options) : base(options) { }
     public DbSet<TestEntity> Entities => Set<TestEntity>();
 

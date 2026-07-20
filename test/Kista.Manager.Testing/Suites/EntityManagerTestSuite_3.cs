@@ -4,7 +4,11 @@ using Xunit;
 
 namespace Kista;
 
-public abstract class EntityManagerTestSuite<TManager, TPerson, TKey> : EntityManagerTestSuiteBase<TPerson, TKey>, IAsyncLifetime, IAsyncDisposable
+// NOSONAR: S2436 — the 3rd generic parameter (TKey) is intentional and required
+// to model both the keyed (TPerson<TKey>) and no-key (TPerson) manager variants
+// from a single suite hierarchy; collapsing below 3 type parameters would
+// force duplicating the entire suite.
+public abstract class EntityManagerTestSuite<TManager, TPerson, TKey> : EntityManagerTestSuiteBase<TPerson, TKey>, IAsyncLifetime
 	where TManager : EntityManager<TPerson, TKey>
 	where TPerson : class, IPerson<TKey>, new()
 	where TKey : notnull {

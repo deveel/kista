@@ -19,10 +19,12 @@ namespace Kista.HealthChecks.Tests;
 [Trait("Layer", "HealthChecks")]
 [Trait("Feature", "AspNetCoreEndpoints")]
 public class HealthCheckEndpointExtensionsTests {
+    private const string HealthEndpoint = "/health";
+
     private static async Task<(WebApplication app, HttpClient client)> BuildApp(
         Action<RepositoryHealthCheckEndpointOptions>? configure = null,
         Action<IHealthChecksBuilder>? configureHealthChecks = null,
-        string pattern = "/health") {
+        string pattern = HealthEndpoint) {
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
         configureHealthChecks?.Invoke(builder.Services.AddHealthChecks());
@@ -38,7 +40,7 @@ public class HealthCheckEndpointExtensionsTests {
         var (app, client) = await BuildApp(configureHealthChecks: b => b.AddCheck("ok", () => HealthCheckResult.Healthy("ok")));
 
         using (app) {
-            var response = await client.GetAsync("/health");
+            var response = await client.GetAsync(HealthEndpoint);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             Assert.Equal("application/json", response.Content.Headers.ContentType?.MediaType);
             var body = await response.Content.ReadAsStringAsync();
@@ -54,7 +56,7 @@ public class HealthCheckEndpointExtensionsTests {
             configureHealthChecks: b => b.AddCheck("ok", () => HealthCheckResult.Healthy("ok")));
 
         using (app) {
-            var response = await client.GetAsync("/health");
+            var response = await client.GetAsync(HealthEndpoint);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             Assert.Equal("text/plain", response.Content.Headers.ContentType?.MediaType);
             var body = await response.Content.ReadAsStringAsync();
@@ -69,7 +71,7 @@ public class HealthCheckEndpointExtensionsTests {
             configureHealthChecks: b => b.AddCheck("bad", () => HealthCheckResult.Unhealthy("down")));
 
         using (app) {
-            var response = await client.GetAsync("/health");
+            var response = await client.GetAsync(HealthEndpoint);
             Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
         }
     }
@@ -83,7 +85,7 @@ public class HealthCheckEndpointExtensionsTests {
             configureHealthChecks: b => b.AddCheck("degraded", () => HealthCheckResult.Degraded("slow")));
 
         using (app) {
-            var response = await client.GetAsync("/health");
+            var response = await client.GetAsync(HealthEndpoint);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
     }
@@ -110,7 +112,7 @@ public class HealthCheckEndpointExtensionsTests {
             });
 
         using (app) {
-            var response = await client.GetAsync("/health");
+            var response = await client.GetAsync(HealthEndpoint);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             var body = await response.Content.ReadAsStringAsync();
             Assert.Contains("kista-check", body);
@@ -125,7 +127,7 @@ public class HealthCheckEndpointExtensionsTests {
                 HealthCheckResult.Healthy("ok", data: new Dictionary<string, object?> { { "metric", 42 } })));
 
         using (app) {
-            var response = await client.GetAsync("/health");
+            var response = await client.GetAsync(HealthEndpoint);
             var body = await response.Content.ReadAsStringAsync();
             Assert.Contains("\"data\"", body);
             Assert.Contains("42", body);

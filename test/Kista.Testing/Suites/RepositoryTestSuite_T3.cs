@@ -409,55 +409,22 @@ public abstract class RepositoryTestSuite<TPerson, TKey, TRelationship> : Reposi
 	[Trait("Category", "Integration")]
 	[Trait("Layer", "Infrastructure")]
 	[Trait("Feature", "Repository")]
-	public async Task Should_AddRelationship_When_UpdatePersonWithNewRelationship() {
-		// Arrange
-		var person = People!.Random(x => x.Relationships == null || !x.Relationships.Any());
-		Assert.NotNull(person);
-
-		var relationship = GenerateRelationship();
-		var toUpdate = await Repository.FindAsync(person.Id!, TestContext.Current.CancellationToken);
-		Assert.NotNull(toUpdate);
-
-		await AddRelationshipAsync(toUpdate, relationship);
-
-		// Act
-		var result = await Repository.UpdateAsync(toUpdate, TestContext.Current.CancellationToken);
-
-		// Assert
-		Assert.True(result);
-
-		var updated = await Repository.FindAsync(person.Id!, TestContext.Current.CancellationToken);
-		Assert.NotNull(updated);
-		Assert.NotNull(updated.Relationships);
-		Assert.NotEmpty(updated.Relationships);
-		Assert.Single(updated.Relationships);
-	}
+	public async Task Should_AddRelationship_When_UpdatePersonWithNewRelationship()
+		=> await RelationshipTestCases.AddRelationshipOnUpdateAsync<TPerson, TKey, TRelationship>(
+			People!,
+			p => Repository.FindAsync(p.Id!, TestContext.Current.CancellationToken).AsTask(),
+			AddRelationshipAsync,
+			GenerateRelationship,
+			toUpdate => Repository.UpdateAsync(toUpdate, TestContext.Current.CancellationToken).AsTask());
 
 	[Fact]
 	[Trait("Category", "Integration")]
 	[Trait("Layer", "Infrastructure")]
 	[Trait("Feature", "Repository")]
-	public async Task Should_RemoveRelationship_When_UpdatePersonWithRelationshipRemoved() {
-		// Arrange
-		var person = People!.Random(x => x.Relationships?.Any() ?? false);
-		Assert.NotNull(person);
-
-		var toUpdate = await Repository.FindAsync(person.Id!, TestContext.Current.CancellationToken);
-		Assert.NotNull(toUpdate);
-
-		var relCount = toUpdate.Relationships.Count();
-
-		await RemoveRelationshipAsync(toUpdate, (TRelationship)toUpdate.Relationships!.First());
-
-		// Act
-		var result = await Repository.UpdateAsync(toUpdate, TestContext.Current.CancellationToken);
-
-		// Assert
-		Assert.True(result);
-
-		var updated = await Repository.FindAsync(person.Id!, TestContext.Current.CancellationToken);
-		Assert.NotNull(updated);
-		Assert.NotNull(updated.Relationships);
-		Assert.Equal(relCount - 1, updated.Relationships.Count());
-	}
+	public async Task Should_RemoveRelationship_When_UpdatePersonWithRelationshipRemoved()
+		=> await RelationshipTestCases.RemoveRelationshipOnUpdateAsync<TPerson, TKey, TRelationship>(
+			People!,
+			p => Repository.FindAsync(p.Id!, TestContext.Current.CancellationToken).AsTask(),
+			RemoveRelationshipAsync,
+			toUpdate => Repository.UpdateAsync(toUpdate, TestContext.Current.CancellationToken).AsTask());
 }

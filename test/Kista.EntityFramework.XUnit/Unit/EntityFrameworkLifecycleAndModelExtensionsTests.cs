@@ -108,7 +108,7 @@ public class EntityFrameworkRepositoryLifecycleHandlerTests {
         // A disposed DbContext throws ObjectDisposedException when accessing Database;
         // the handler should wrap it in RepositoryException.
         var context = new LifecycleDbContext(CreateInMemoryOptions("exists-throws"));
-        context.Dispose();
+        await context.DisposeAsync();
         var handler = new EntityFrameworkRepositoryLifecycleHandler<SoftDeletableDbPerson>(context);
 
         var ex = await Assert.ThrowsAsync<RepositoryException>(() => handler.ExistsAsync().AsTask());
@@ -118,7 +118,7 @@ public class EntityFrameworkRepositoryLifecycleHandlerTests {
     [Fact]
     public async Task CreateAsync_WrapsExceptionsInRepositoryException() {
         var context = new LifecycleDbContext(CreateInMemoryOptions("create-throws"));
-        context.Dispose();
+        await context.DisposeAsync();
         var handler = new EntityFrameworkRepositoryLifecycleHandler<SoftDeletableDbPerson>(context);
 
         var ex = await Assert.ThrowsAsync<RepositoryException>(() => handler.CreateAsync().AsTask());
@@ -128,7 +128,7 @@ public class EntityFrameworkRepositoryLifecycleHandlerTests {
     [Fact]
     public async Task DropAsync_WrapsExceptionsInRepositoryException() {
         var context = new LifecycleDbContext(CreateInMemoryOptions("drop-throws"));
-        context.Dispose();
+        await context.DisposeAsync();
         var handler = new EntityFrameworkRepositoryLifecycleHandler<SoftDeletableDbPerson>(context);
 
         var ex = await Assert.ThrowsAsync<RepositoryException>(() => handler.DropAsync().AsTask());
@@ -144,12 +144,12 @@ public class EntityFrameworkRepositoryLifecycleHandlerTests {
 [Trait("Layer", "Infrastructure")]
 [Trait("Feature", "SoftDelete")]
 public class SoftDeleteModelBuilderExtensionsTests {
-    private class NonSoftDeletableEntity {
+    private sealed class NonSoftDeletableEntity {
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
     }
 
-    private class SoftDeleteDbContext : DbContext {
+    private sealed class SoftDeleteDbContext : DbContext {
         public SoftDeleteDbContext(DbContextOptions<SoftDeleteDbContext> options) : base(options) { }
         public DbSet<SoftDeletableDbPerson> People => Set<SoftDeletableDbPerson>();
         public DbSet<NonSoftDeletableEntity> Others => Set<NonSoftDeletableEntity>();
@@ -239,7 +239,7 @@ public class SoftDeleteModelBuilderExtensionsTests {
 [Trait("Layer", "Infrastructure")]
 [Trait("Feature", "OwnerFilter")]
 public class EntityTypeBuilderExtensionsTests {
-    private class OwnedEntity : IHaveOwner<string> {
+    private sealed class OwnedEntity : IHaveOwner<string> {
         public Guid Id { get; set; }
         [DataOwner]
         public string OwnerId { get; set; } = string.Empty;
@@ -249,7 +249,7 @@ public class EntityTypeBuilderExtensionsTests {
         public void SetOwner(string owner) => OwnerId = owner;
     }
 
-    private class OwnerDbContext : DbContext {
+    private sealed class OwnerDbContext : DbContext {
         public OwnerDbContext(DbContextOptions<OwnerDbContext> options) : base(options) { }
         public DbSet<OwnedEntity> Owned => Set<OwnedEntity>();
 
@@ -316,7 +316,7 @@ public class EntityTypeBuilderExtensionsTests {
         Assert.Contains(nameof(NoAttributeEntity), ex.Message);
     }
 
-    private class NoAttributeEntity : IHaveOwner<string> {
+    private sealed class NoAttributeEntity : IHaveOwner<string> {
         public Guid Id { get; set; }
         public string OwnerId { get; set; } = string.Empty;
 

@@ -37,7 +37,7 @@ namespace Kista;
 /// <c>AddAsync</c>/<c>FindAsync</c>/<c>GetEntityKey</c>/<c>GetPageAsync</c>
 /// helpers and the person property hooks.
 /// </typeparam>
-public abstract class RepositoryTestSuiteBase<TPerson> : IAsyncLifetime, IAsyncDisposable
+public abstract class RepositoryTestSuiteBase<TPerson> : IAsyncLifetime
 	where TPerson : class {
 	private IServiceProvider? rootServiceProvider;
 	private AsyncServiceScope scope;
@@ -746,7 +746,7 @@ public abstract class RepositoryTestSuiteBase<TPerson> : IAsyncLifetime, IAsyncD
 		Assert.Equal(10, result.Items.Count());
 
 		for (int i = 0; i < sorted.Count; i++) {
-			Assert.Equal(GetLastName(sorted[i]), GetLastName(result.Items.ElementAt(i)));
+			Assert.Equal(GetLastName(sorted[i]), GetLastName(result.Items[i]));
 		}
 	}
 
@@ -810,7 +810,7 @@ public abstract class RepositoryTestSuiteBase<TPerson> : IAsyncLifetime, IAsyncD
 		// Compare via ToString() to handle entities that expose the key
 		// both as a strongly-typed value (e.g. ObjectId) and as a string
 		// through an explicit interface implementation (e.g. IPerson.Id).
-		Assert.Equal(GetPersonKey(person)?.ToString(), id?.ToString());
+		Assert.Equal(GetPersonKey(person)?.ToString(), id.ToString());
 	}
 
 	[Fact]

@@ -15,6 +15,8 @@ namespace Kista;
 [Trait("Feature", "MongoRepositoryLifecycle")]
 [Collection(nameof(MongoSingleDatabaseCollection))]
 public class MongoRepositoryLifecycleHandlerTests {
+    private const string CollectionName = "persons";
+
     private readonly MongoSingleDatabase mongo;
 
     public MongoRepositoryLifecycleHandlerTests(MongoSingleDatabase mongo) {
@@ -28,7 +30,6 @@ public class MongoRepositoryLifecycleHandlerTests {
     /// </summary>
     private string LifecycleConnectionString {
         get {
-            var url = new MongoUrl(mongo.ConnectionString);
             return new MongoUrlBuilder(mongo.ConnectionString) {
                 DatabaseName = "lifecycle_db"
             }.ToString();
@@ -44,7 +45,7 @@ public class MongoRepositoryLifecycleHandlerTests {
     private IMongoCollection<MongoPerson> GetPeopleCollection() {
         var url = new MongoUrl(LifecycleConnectionString);
         return new MongoClient(LifecycleConnectionString).GetDatabase(url.DatabaseName)
-            .GetCollection<MongoPerson>("persons");
+            .GetCollection<MongoPerson>(CollectionName);
     }
 
     [Fact]
@@ -52,7 +53,7 @@ public class MongoRepositoryLifecycleHandlerTests {
         var ctx = CreateContext();
         var handler = new MongoRepositoryLifecycleHandler<MongoPerson>(ctx);
 
-        await ctx.Connection.GetDatabase().DropCollectionAsync("persons", TestContext.Current.CancellationToken);
+        await ctx.Connection.GetDatabase().DropCollectionAsync(CollectionName, TestContext.Current.CancellationToken);
 
         var exists = await handler.ExistsAsync(TestContext.Current.CancellationToken);
         Assert.False(exists);
@@ -63,7 +64,7 @@ public class MongoRepositoryLifecycleHandlerTests {
         var ctx = CreateContext();
         var handler = new MongoRepositoryLifecycleHandler<MongoPerson>(ctx);
 
-        await ctx.Connection.GetDatabase().DropCollectionAsync("persons", TestContext.Current.CancellationToken);
+        await ctx.Connection.GetDatabase().DropCollectionAsync(CollectionName, TestContext.Current.CancellationToken);
         await handler.CreateAsync(TestContext.Current.CancellationToken);
 
         var exists = await handler.ExistsAsync(TestContext.Current.CancellationToken);
@@ -75,7 +76,7 @@ public class MongoRepositoryLifecycleHandlerTests {
         var ctx = CreateContext();
         var handler = new MongoRepositoryLifecycleHandler<MongoPerson>(ctx);
 
-        await ctx.Connection.GetDatabase().DropCollectionAsync("persons", TestContext.Current.CancellationToken);
+        await ctx.Connection.GetDatabase().DropCollectionAsync(CollectionName, TestContext.Current.CancellationToken);
         await handler.CreateAsync(TestContext.Current.CancellationToken);
         Assert.True(await handler.ExistsAsync(TestContext.Current.CancellationToken));
 
@@ -88,7 +89,7 @@ public class MongoRepositoryLifecycleHandlerTests {
         var ctx = CreateContext();
         var handler = new MongoRepositoryLifecycleHandler<MongoPerson>(ctx);
 
-        await ctx.Connection.GetDatabase().DropCollectionAsync("persons", TestContext.Current.CancellationToken);
+        await ctx.Connection.GetDatabase().DropCollectionAsync(CollectionName, TestContext.Current.CancellationToken);
         await handler.CreateAsync(TestContext.Current.CancellationToken);
 
         var faker = new MongoPersonFaker();
@@ -104,7 +105,7 @@ public class MongoRepositoryLifecycleHandlerTests {
         var ctx = CreateContext();
         var handler = new MongoRepositoryLifecycleHandler<MongoPerson>(ctx);
 
-        await ctx.Connection.GetDatabase().DropCollectionAsync("persons", TestContext.Current.CancellationToken);
+        await ctx.Connection.GetDatabase().DropCollectionAsync(CollectionName, TestContext.Current.CancellationToken);
         await handler.CreateAsync(TestContext.Current.CancellationToken);
 
         var person = new MongoPersonFaker().Generate();
@@ -119,7 +120,7 @@ public class MongoRepositoryLifecycleHandlerTests {
         var ctx = CreateContext();
         var handler = new MongoRepositoryLifecycleHandler<MongoPerson>(ctx);
 
-        await ctx.Connection.GetDatabase().DropCollectionAsync("persons", TestContext.Current.CancellationToken);
+        await ctx.Connection.GetDatabase().DropCollectionAsync(CollectionName, TestContext.Current.CancellationToken);
         await handler.CreateAsync(TestContext.Current.CancellationToken);
 
         var person = new MongoPersonFaker().Generate();
@@ -134,7 +135,7 @@ public class MongoRepositoryLifecycleHandlerTests {
         var ctx = CreateContext();
         var handler = new MongoRepositoryLifecycleHandler<MongoPerson>(ctx);
 
-        await ctx.Connection.GetDatabase().DropCollectionAsync("persons", TestContext.Current.CancellationToken);
+        await ctx.Connection.GetDatabase().DropCollectionAsync(CollectionName, TestContext.Current.CancellationToken);
         await handler.CreateAsync(TestContext.Current.CancellationToken);
 
         await handler.SeedAsync(null, TestContext.Current.CancellationToken);

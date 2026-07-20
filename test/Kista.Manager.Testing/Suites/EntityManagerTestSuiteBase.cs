@@ -396,7 +396,7 @@ public abstract class EntityManagerTestSuiteBase<TPerson, TKey>
 		// Arrange
 		var peopleCount = People.Count();
 		var people = People
-			.Where(x => x.FirstName.StartsWith("A"))
+			.Where(x => x.FirstName.StartsWith('A'))
 			.ToList();
 
 		// Act
@@ -496,7 +496,7 @@ public abstract class EntityManagerTestSuiteBase<TPerson, TKey>
 		Assert.Equal(perPage, page.Items.Count);
 	}
 
-	private class TestSystemTime : ISystemTime {
+	private sealed class TestSystemTime : ISystemTime {
 		public TestSystemTime() {
 			UtcNow = DateTimeOffset.UtcNow;
 			Now = DateTimeOffset.Now;

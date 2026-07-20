@@ -13,6 +13,8 @@ namespace Kista.Owners.XUnit.Unit;
 [Trait("Layer", "Domain")]
 [Trait("Feature", "OwnerScoping")]
 public class UserScopedRepositoryDecoratorBranchTests {
+    private const string TestUserKey = "user1";
+
     private sealed class NullUserAccessor : IUserAccessor<string> {
         public string? GetUserId() => null;
     }
@@ -62,13 +64,20 @@ public class UserScopedRepositoryDecoratorBranchTests {
         public ValueTask AddRangeAsync(IEnumerable<StringEntity> entities, CancellationToken cancellationToken = default) { _items.AddRange(entities); return ValueTask.CompletedTask; }
         public ValueTask<bool> UpdateAsync(StringEntity entity, CancellationToken cancellationToken = default) => ValueTask.FromResult(true);
         public ValueTask<bool> RemoveAsync(StringEntity entity, CancellationToken cancellationToken = default) => ValueTask.FromResult(_items.Remove(entity));
-        public ValueTask RemoveRangeAsync(IEnumerable<StringEntity> entities, CancellationToken cancellationToken = default) { foreach (var e in entities) _items.Remove(e); return ValueTask.CompletedTask; }
+        public ValueTask RemoveRangeAsync(IEnumerable<StringEntity> entities, CancellationToken cancellationToken = default) {
+            foreach (var e in entities) {
+                _items.Remove(e);
+            }
+            return ValueTask.CompletedTask;
+        }
         public ValueTask<StringEntity?> FindAsync(string key, CancellationToken cancellationToken = default) =>
             ValueTask.FromResult(_items.FirstOrDefault(e => e.Id == key));
-        public ValueTask<IReadOnlyList<StringEntity>> FindAllAsync(IQuery query, CancellationToken cancellationToken = default) => throw new NotSupportedException();
-        public ValueTask<StringEntity?> FindFirstAsync(IQuery query, CancellationToken cancellationToken = default) => throw new NotSupportedException();
-        public ValueTask<long> CountAsync(IQueryFilter filter, CancellationToken cancellationToken = default) => throw new NotSupportedException();
-        public ValueTask<bool> ExistsAsync(IQueryFilter filter, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        // NOSONAR: S2325 — these are interface implementations of IRepository<,>;
+        // C# does not permit static methods to implement interface members.
+        public ValueTask<IReadOnlyList<StringEntity>> FindAllAsync(IQuery _query, CancellationToken _cancellationToken = default) => throw new NotSupportedException();
+        public ValueTask<StringEntity?> FindFirstAsync(IQuery _query, CancellationToken _cancellationToken = default) => throw new NotSupportedException();
+        public ValueTask<long> CountAsync(IQueryFilter _filter, CancellationToken _cancellationToken = default) => throw new NotSupportedException();
+        public ValueTask<bool> ExistsAsync(IQueryFilter _filter, CancellationToken _cancellationToken = default) => throw new NotSupportedException();
         public ValueTask<PageResult<StringEntity>> GetPageAsync(PageRequest request, CancellationToken cancellationToken = default) =>
             ValueTask.FromResult(new PageResult<StringEntity>(request, _items.Count, _items));
         public string? GetEntityKey(StringEntity entity) => entity.Id;
@@ -135,7 +144,7 @@ public class UserScopedRepositoryDecoratorBranchTests {
     [Fact]
     public async Task FindAllAsync_Throws_When_InnerRepositoryIsNotRepository() {
         var inner = new NonRepositoryRepo();
-        var accessor = new StaticUserAccessorWrapper("user1");
+        var accessor = new StaticUserAccessorWrapper(TestUserKey);
         var decorator = new UserScopedRepositoryDecorator<StringEntity, string, string>(inner, accessor);
 
         await Assert.ThrowsAsync<NotSupportedException>(() => decorator.FindAllAsync(Kista.Query.Empty).AsTask());
@@ -144,7 +153,7 @@ public class UserScopedRepositoryDecoratorBranchTests {
     [Fact]
     public async Task FindFirstAsync_Throws_When_InnerRepositoryIsNotRepository_AndUserIsSet() {
         var inner = new NonRepositoryRepo();
-        var accessor = new StaticUserAccessorWrapper("user1");
+        var accessor = new StaticUserAccessorWrapper(TestUserKey);
         var decorator = new UserScopedRepositoryDecorator<StringEntity, string, string>(inner, accessor);
 
         await Assert.ThrowsAsync<NotSupportedException>(() => decorator.FindFirstAsync(Kista.Query.Empty).AsTask());
@@ -153,7 +162,7 @@ public class UserScopedRepositoryDecoratorBranchTests {
     [Fact]
     public async Task CountAsync_Throws_When_InnerRepositoryIsNotRepository_AndUserIsSet() {
         var inner = new NonRepositoryRepo();
-        var accessor = new StaticUserAccessorWrapper("user1");
+        var accessor = new StaticUserAccessorWrapper(TestUserKey);
         var decorator = new UserScopedRepositoryDecorator<StringEntity, string, string>(inner, accessor);
 
         await Assert.ThrowsAsync<NotSupportedException>(() => decorator.CountAsync(Kista.QueryFilter.Empty).AsTask());
@@ -162,7 +171,7 @@ public class UserScopedRepositoryDecoratorBranchTests {
     [Fact]
     public async Task ExistsAsync_Throws_When_InnerRepositoryIsNotRepository_AndUserIsSet() {
         var inner = new NonRepositoryRepo();
-        var accessor = new StaticUserAccessorWrapper("user1");
+        var accessor = new StaticUserAccessorWrapper(TestUserKey);
         var decorator = new UserScopedRepositoryDecorator<StringEntity, string, string>(inner, accessor);
 
         await Assert.ThrowsAsync<NotSupportedException>(() => decorator.ExistsAsync(Kista.QueryFilter.Empty).AsTask());

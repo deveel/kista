@@ -10,9 +10,9 @@ namespace Kista;
 [Trait("Layer", "Application")]
 [Trait("Feature", "OperationPipeline")]
 public class InterceptorPipelineCoverageTests {
-	private readonly PersonFaker _faker = new();
+	private static readonly PersonFaker _faker = new();
 
-	private Person CreatePerson(string? id = "1") {
+	private static Person CreatePerson(string? id = "1") {
 		var person = _faker.Generate();
 		person.Id = id;
 		return person;
@@ -128,57 +128,62 @@ public class InterceptorPipelineCoverageTests {
 		Assert.Null(interceptor.CapturedActor);
 	}
 
-	// --- Short-circuit in RemoveAsync ---
+	// --- Short-circuit in RemoveAsync / UpdateAsync / HardDeleteAsync ---
+	//
+	// The three single-entity short-circuit tests share the same shape
+	// (build manager with a ShortCircuitInterceptor, seed the repo so that
+	// FindAsync returns the existing person, invoke the operation, assert
+	// the result is not successful and the underlying repo call was never
+	// made). They are expressed below as calls to a single helper that takes
+	// the operation and the assertion-on-the-repo as delegates, so the
+	// duplicated setup/assert scaffolding lives in one place.
 
-	[Fact]
-	public async Task Should_ShortCircuitRemoveAsync() {
+	private static async Task AssertShortCircuits(
+		Func<EntityManager<Person, string>, IRepository<Person, string>, Task> invokeAndAssertRepoUntouched) {
 		var interceptor = new ShortCircuitInterceptor();
 		var (manager, repo) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor });
-
-		var person = CreatePerson("1");
-		repo.FindAsync("1", Arg.Any<CancellationToken>()).Returns(person);
-
-		var result = await manager.RemoveAsync(person, TestContext.Current.CancellationToken);
-
-		Assert.False(result.IsSuccess());
-		await repo.DidNotReceive().RemoveAsync(Arg.Any<Person>(), Arg.Any<CancellationToken>());
-		await repo.DidNotReceive().UpdateAsync(Arg.Any<Person>(), Arg.Any<CancellationToken>());
+		await invokeAndAssertRepoUntouched(manager, repo);
 	}
-
-	// --- Short-circuit in UpdateAsync ---
 
 	[Fact]
-	public async Task Should_ShortCircuitUpdateAsync() {
-		var interceptor = new ShortCircuitInterceptor();
-		var (manager, repo) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor });
+	public async Task Should_ShortCircuitRemoveAsync()
+		=> await AssertShortCircuits(async (manager, repo) => {
+			var person = CreatePerson("1");
+			repo.FindAsync("1", Arg.Any<CancellationToken>()).Returns(person);
 
-		var existing = CreatePerson("1");
-		existing.FirstName = "Old";
-		var updated = CreatePerson("1");
-		updated.FirstName = "New";
-		repo.FindAsync("1", Arg.Any<CancellationToken>()).Returns(existing);
+			var result = await manager.RemoveAsync(person, TestContext.Current.CancellationToken);
 
-		var result = await manager.UpdateAsync(updated, TestContext.Current.CancellationToken);
-
-		Assert.False(result.IsSuccess());
-		await repo.DidNotReceive().UpdateAsync(Arg.Any<Person>(), Arg.Any<CancellationToken>());
-	}
-
-	// --- Short-circuit in HardDeleteAsync ---
+			Assert.False(result.IsSuccess());
+			await repo.DidNotReceive().RemoveAsync(Arg.Any<Person>(), Arg.Any<CancellationToken>());
+			await repo.DidNotReceive().UpdateAsync(Arg.Any<Person>(), Arg.Any<CancellationToken>());
+		});
 
 	[Fact]
-	public async Task Should_ShortCircuitHardDeleteAsync() {
-		var interceptor = new ShortCircuitInterceptor();
-		var (manager, repo) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor });
+	public async Task Should_ShortCircuitUpdateAsync()
+		=> await AssertShortCircuits(async (manager, repo) => {
+			var existing = CreatePerson("1");
+			existing.FirstName = "Old";
+			var updated = CreatePerson("1");
+			updated.FirstName = "New";
+			repo.FindAsync("1", Arg.Any<CancellationToken>()).Returns(existing);
 
-		var person = CreatePerson("1");
-		repo.FindAsync("1", Arg.Any<CancellationToken>()).Returns(person);
+			var result = await manager.UpdateAsync(updated, TestContext.Current.CancellationToken);
 
-		var result = await manager.HardDeleteAsync(person, TestContext.Current.CancellationToken);
+			Assert.False(result.IsSuccess());
+			await repo.DidNotReceive().UpdateAsync(Arg.Any<Person>(), Arg.Any<CancellationToken>());
+		});
 
-		Assert.False(result.IsSuccess());
-		await repo.DidNotReceive().HardDeleteAsync(Arg.Any<Person>(), Arg.Any<CancellationToken>());
-	}
+	[Fact]
+	public async Task Should_ShortCircuitHardDeleteAsync()
+		=> await AssertShortCircuits(async (manager, repo) => {
+			var person = CreatePerson("1");
+			repo.FindAsync("1", Arg.Any<CancellationToken>()).Returns(person);
+
+			var result = await manager.HardDeleteAsync(person, TestContext.Current.CancellationToken);
+
+			Assert.False(result.IsSuccess());
+			await repo.DidNotReceive().HardDeleteAsync(Arg.Any<Person>(), Arg.Any<CancellationToken>());
+		});
 
 	// --- HardDeleteAsync success path through pipeline ---
 
@@ -549,34 +554,40 @@ public class InterceptorPipelineCoverageTests {
 	}
 
 	// --- Pipeline context kind for each operation ---
+	//
+	// The Remove/HardDelete kind-capture tests share the same shape (build
+	// manager with a ContextCapturingInterceptor, seed FindAsync, configure
+	// the underlying repo call to return true, invoke the operation, assert
+	// the captured kind). They are expressed below as calls to a single
+	// helper that takes the operation and the expected kind as parameters.
 
-	[Fact]
-	public async Task Should_PopulateRemoveKind_InContext() {
+	private static async Task AssertCapturesKind(
+		EntityOperationKind expected,
+		Func<EntityManager<Person, string>, IRepository<Person, string>, Person, Task> invokeAndSeedRepo) {
 		var interceptor = new ContextCapturingInterceptor();
 		var (manager, repo) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor });
 
 		var person = CreatePerson("1");
 		repo.FindAsync("1", Arg.Any<CancellationToken>()).Returns(person);
-		repo.RemoveAsync(Arg.Any<Person>(), Arg.Any<CancellationToken>()).Returns(true);
 
-		await manager.RemoveAsync(person, TestContext.Current.CancellationToken);
+		await invokeAndSeedRepo(manager, repo, person);
 
-		Assert.Equal(EntityOperationKind.Remove, interceptor.CapturedKind);
+		Assert.Equal(expected, interceptor.CapturedKind);
 	}
 
 	[Fact]
-	public async Task Should_PopulateHardDeleteKind_InContext() {
-		var interceptor = new ContextCapturingInterceptor();
-		var (manager, repo) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor });
+	public async Task Should_PopulateRemoveKind_InContext()
+		=> await AssertCapturesKind(EntityOperationKind.Remove, async (manager, repo, person) => {
+			repo.RemoveAsync(Arg.Any<Person>(), Arg.Any<CancellationToken>()).Returns(true);
+			await manager.RemoveAsync(person, TestContext.Current.CancellationToken);
+		});
 
-		var person = CreatePerson("1");
-		repo.FindAsync("1", Arg.Any<CancellationToken>()).Returns(person);
-		repo.HardDeleteAsync(Arg.Any<Person>(), Arg.Any<CancellationToken>()).Returns(true);
-
-		await manager.HardDeleteAsync(person, TestContext.Current.CancellationToken);
-
-		Assert.Equal(EntityOperationKind.HardDelete, interceptor.CapturedKind);
-	}
+	[Fact]
+	public async Task Should_PopulateHardDeleteKind_InContext()
+		=> await AssertCapturesKind(EntityOperationKind.HardDelete, async (manager, repo, person) => {
+			repo.HardDeleteAsync(Arg.Any<Person>(), Arg.Any<CancellationToken>()).Returns(true);
+			await manager.HardDeleteAsync(person, TestContext.Current.CancellationToken);
+		});
 
 	[Fact]
 	public async Task Should_PopulateCreateKind_InContext_ForAddRange() {
@@ -647,35 +658,43 @@ public class InterceptorPipelineCoverageTests {
 	}
 
 	// --- Original pre-image on Remove and HardDelete ---
+	//
+	// The two Original-pre-image tests share the same shape (build manager
+	// with a ContextCapturingInterceptor, seed FindAsync, configure the
+	// underlying repo call to return true, invoke the operation, assert
+	// the interceptor captured the original). They are expressed below as
+	// calls to a single helper that takes the operation and the repo-setup
+	// as delegates.
 
-	[Fact]
-	public async Task Should_PopulateOriginal_OnRemove() {
-		var interceptor = new ContextCapturingInterceptor();
+	private static async Task AssertCapturesOriginal(
+		ContextCapturingInterceptor interceptor,
+		Func<EntityManager<Person, string>, IRepository<Person, string>, Person, Task> invokeAndSeedRepo) {
 		var (manager, repo) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor });
 
 		var person = CreatePerson("1");
 		person.FirstName = "LoadedFromRepo";
 		repo.FindAsync("1", Arg.Any<CancellationToken>()).Returns(person);
-		repo.RemoveAsync(Arg.Any<Person>(), Arg.Any<CancellationToken>()).Returns(true);
 
-		await manager.RemoveAsync(person, TestContext.Current.CancellationToken);
+		await invokeAndSeedRepo(manager, repo, person);
 
 		Assert.NotNull(interceptor.CapturedOriginal);
-		Assert.Same(person, interceptor.CapturedOriginal);
 	}
 
 	[Fact]
-	public async Task Should_PopulateOriginal_OnHardDelete() {
+	public async Task Should_PopulateOriginal_OnRemove() {
 		var interceptor = new ContextCapturingInterceptor();
-		var (manager, repo) = BuildManager(new IEntityManagerInterceptor<Person, string>[] { interceptor });
-
-		var person = CreatePerson("1");
-		repo.FindAsync("1", Arg.Any<CancellationToken>()).Returns(person);
-		repo.HardDeleteAsync(Arg.Any<Person>(), Arg.Any<CancellationToken>()).Returns(true);
-
-		await manager.HardDeleteAsync(person, TestContext.Current.CancellationToken);
-
-		Assert.NotNull(interceptor.CapturedOriginal);
+		await AssertCapturesOriginal(interceptor, async (manager, repo, person) => {
+			repo.RemoveAsync(Arg.Any<Person>(), Arg.Any<CancellationToken>()).Returns(true);
+			await manager.RemoveAsync(person, TestContext.Current.CancellationToken);
+			Assert.Same(person, interceptor.CapturedOriginal);
+		});
 	}
+
+	[Fact]
+	public async Task Should_PopulateOriginal_OnHardDelete()
+		=> await AssertCapturesOriginal(new ContextCapturingInterceptor(), async (manager, repo, person) => {
+			repo.HardDeleteAsync(Arg.Any<Person>(), Arg.Any<CancellationToken>()).Returns(true);
+			await manager.HardDeleteAsync(person, TestContext.Current.CancellationToken);
+		});
 
 }

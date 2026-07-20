@@ -10,6 +10,8 @@ public class SampleDbContext : DbContext
     {
     }
 
+    // SONAR: S2325 — a DbSet<T> property on a DbContext cannot be static;
+    // the analyzer flags this as a false positive. Suppressed intentionally.
     public DbSet<TaskItem> Tasks => Set<TaskItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

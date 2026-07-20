@@ -13,7 +13,7 @@ public class RangeOperationInterceptorTests {
 	[Fact]
 	public async Task Should_CreateContextPerEntityInAddRange() {
 		var interceptor = new CountingInterceptor();
-		var (manager, repo) = BuildManager(interceptor, r =>
+		var (manager, _) = BuildManager(interceptor, r =>
 			r.AddRangeAsync(Arg.Any<IEnumerable<Person>>(), Arg.Any<CancellationToken>()).Returns(ValueTask.CompletedTask));
 		var people = GeneratePeople(3);
 
@@ -51,7 +51,7 @@ public class RangeOperationInterceptorTests {
 		Assert.Equal(2, interceptor.PostWriteCount);
 	}
 
-	private (EntityManager<Person, string> manager, IRepository<Person, string> repo) BuildManager(
+	private static (EntityManager<Person, string> manager, IRepository<Person, string> repo) BuildManager(
 		IEntityManagerInterceptor<Person, string> interceptor,
 		Action<IRepository<Person, string>> configureRepo) {
 		var repo = Substitute.For<IRepository<Person, string>>();

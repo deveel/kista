@@ -35,7 +35,7 @@ namespace Kista
 		{
 			AddDbContext(services);
 
-			services.AddRepository<DbTenantPersonRepository>();
+			services.AddRepositoryContext().AddRepository<DbTenantPersonRepository>(_ => { });
 
 			base.ConfigureServices(services);
 		}

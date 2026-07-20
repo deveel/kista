@@ -19,9 +19,9 @@ public class MongoDbContextTests {
     public void Should_ResolveDefaultContext_When_DirectConnectionConfigured() {
         // Arrange
         var services = new ServiceCollection();
-        services.AddMongoDbContext<MongoDbContext>(builder => {
+        services.AddRepositoryContext().UseMongoDB<MongoDbContext>(mongoBuilder => mongoBuilder.WithConnection(builder => {
             builder.UseConnection("mongodb://localhost:27017/testdb");
-        });
+        }));
 
         // Act
         var provider = services.BuildServiceProvider();
@@ -35,7 +35,7 @@ public class MongoDbContextTests {
     public void Should_ResolveDefaultContext_When_TenantConnectionUsed() {
         // Arrange
         var services = new ServiceCollection();
-        services.AddMongoDbContext<MongoDbContext>(builder => builder.UseTenantConnection());
+        services.AddRepositoryContext().UseMongoDB<MongoDbContext>(mongoBuilder => mongoBuilder.WithConnection(builder => builder.UseTenantConnection()));
         services.AddMongoTenantContext(new MongoDbTenantInfo {
             Id = Guid.NewGuid().ToString(),
             Identifier = "test-tenant",
@@ -62,9 +62,9 @@ public class MongoDbContextTests {
             Id = Guid.NewGuid().ToString(),
             Identifier = "test-tenant"
         });
-        services.AddMongoDbContext<MongoDbMultiTenantContext>(builder => {
+        services.AddRepositoryContext().UseMongoDB<MongoDbMultiTenantContext>(mongoBuilder => mongoBuilder.WithConnection(builder => {
             builder.UseConnection("mongodb://localhost:27017/testdb");
-        });
+        }));
 
         // Act
         var provider = services.BuildServiceProvider();
@@ -79,7 +79,7 @@ public class MongoDbContextTests {
     public void Should_ResolveMultiTenantContext_When_TenantConnectionUsed() {
         // Arrange
         var services = new ServiceCollection();
-        services.AddMongoDbContext<MongoDbMultiTenantContext>(builder => builder.UseTenantConnection());
+        services.AddRepositoryContext().UseMongoDB<MongoDbMultiTenantContext>(mongoBuilder => mongoBuilder.WithConnection(builder => builder.UseTenantConnection()));
         services.AddMongoTenantContext(new MongoDbTenantInfo {
             Id = Guid.NewGuid().ToString(),
             Identifier = "test-tenant",
@@ -103,9 +103,9 @@ public class MongoDbContextTests {
     public void Should_ResolveCustomContext_When_SimpleContextRegistered() {
         // Arrange
         var services = new ServiceCollection();
-        services.AddMongoDbContext<MyMongoContext>(builder => {
+        services.AddRepositoryContext().UseMongoDB<MyMongoContext>(mongoBuilder => mongoBuilder.WithConnection(builder => {
             builder.UseConnection("mongodb://localhost:27017/testdb");
-        });
+        }));
 
         // Act
         var provider = services.BuildServiceProvider();
@@ -120,7 +120,7 @@ public class MongoDbContextTests {
     public void Should_ResolveCustomContext_When_TenantConnectionConfigured() {
         // Arrange
         var services = new ServiceCollection();
-        services.AddMongoDbContext<MyMongoContext>(builder => builder.UseTenantConnection());
+        services.AddRepositoryContext().UseMongoDB<MyMongoContext>(mongoBuilder => mongoBuilder.WithConnection(builder => builder.UseTenantConnection()));
         services.AddMongoTenantContext(new MongoDbTenantInfo {
             Id = Guid.NewGuid().ToString(),
             Identifier = "test-tenant",
@@ -140,9 +140,9 @@ public class MongoDbContextTests {
     public void Should_ResolveContextWithBaseConnection_When_ContextAcceptsBaseConnectionType() {
         // Arrange
         var services = new ServiceCollection();
-        services.AddMongoDbContext<MyMongoContextWithConnection>(builder => {
+        services.AddRepositoryContext().UseMongoDB<MyMongoContextWithConnection>(mongoBuilder => mongoBuilder.WithConnection(builder => {
             builder.UseConnection("mongodb://localhost:27017/testdb");
-        });
+        }));
 
         // Act
         var provider = services.BuildServiceProvider();
@@ -161,9 +161,9 @@ public class MongoDbContextTests {
             Id = Guid.NewGuid().ToString(),
             Identifier = "test-tenant"
         });
-        services.AddMongoDbContext<MyMongoTenantContext>(builder => {
+        services.AddRepositoryContext().UseMongoDB<MyMongoTenantContext>(mongoBuilder => mongoBuilder.WithConnection(builder => {
             builder.UseConnection("mongodb://localhost:27017/testdb");
-        });
+        }));
 
         // Act
         var provider = services.BuildServiceProvider();
@@ -178,7 +178,7 @@ public class MongoDbContextTests {
     public void Should_ResolveCustomTenantContext_When_TenantConnectionConfigured() {
         // Arrange
         var services = new ServiceCollection();
-        services.AddMongoDbContext<MyMongoTenantContext>(builder => builder.UseTenantConnection());
+        services.AddRepositoryContext().UseMongoDB<MyMongoTenantContext>(mongoBuilder => mongoBuilder.WithConnection(builder => builder.UseTenantConnection()));
         services.AddMongoTenantContext(new MongoDbTenantInfo {
             Id = Guid.NewGuid().ToString(),
             Identifier = "test-tenant",

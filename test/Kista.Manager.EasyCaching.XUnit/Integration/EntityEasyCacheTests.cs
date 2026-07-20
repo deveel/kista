@@ -19,10 +19,11 @@ public class EntityEasyCacheTests
     {
         var services = new ServiceCollection();
         services.AddEasyCaching(options => options.UseInMemory("default"));
-        services.AddEntityEasyCacheFor<Person>(options =>
-        {
-            options.Expiration = TimeSpan.FromMinutes(15);
-        });
+        services.AddRepositoryContext()
+            .AddRepository<InMemoryRepository<Person, string>>(repo => repo
+                .WithManagement(mgmt => mgmt.WithEasyCaching(options => {
+                    options.DefaultExpiration = TimeSpan.FromMinutes(15);
+                })));
         var provider = services.BuildServiceProvider();
         var cache = provider.GetRequiredService<IEntityCache<Person>>();
         return (provider, cache);
@@ -31,8 +32,7 @@ public class EntityEasyCacheTests
     [Fact]
     public async Task Should_ReturnCachedValue_When_KeyExists()
     {
-        var (provider, cache) = CreateCache();
-        var easyCache = provider.GetRequiredService<IEasyCachingProvider>();
+        var (_, cache) = CreateCache();
         var person = _faker.Generate();
         var cacheKey = $"person:{person.Id}";
 
@@ -148,6 +148,6 @@ public class EntityEasyCacheTests
         var (provider, _) = CreateCache();
 
         Assert.NotNull(provider.GetRequiredService<IEntityCache<Person>>());
-        Assert.NotNull(provider.GetRequiredService<EntityEasyCache<Person, Person>>());
+        Assert.NotNull(provider.GetRequiredService<EntityEasyCache<Person>>());
     }
 }

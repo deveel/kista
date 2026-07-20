@@ -443,17 +443,17 @@ public class RepositoryCoreTests {
     }
 
     [Fact]
-    public void ServiceCollectionExtensions_AddRepository_Obsolete_StillWorks() {
+    public void ServiceCollectionExtensions_AddRepository_Generic_Works() {
         var services = new ServiceCollection();
-        services.AddRepository<ScanTestRepo>();
+        services.AddRepositoryContext().AddRepository<ScanTestRepo>(_ => { });
         var provider = services.BuildServiceProvider();
         Assert.NotNull(provider.GetService<IRepository<ScanEntity>>());
     }
 
     [Fact]
-    public void ServiceCollectionExtensions_AddRepository_Type_StillWorks() {
+    public void ServiceCollectionExtensions_AddRepository_Type_Works() {
         var services = new ServiceCollection();
-        services.AddRepository(typeof(ScanTestRepo));
+        services.AddRepositoryContext().AddRepository(typeof(ScanTestRepo));
         var provider = services.BuildServiceProvider();
         Assert.NotNull(provider.GetService<IRepository<ScanEntity>>());
     }

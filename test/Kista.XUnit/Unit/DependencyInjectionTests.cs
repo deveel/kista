@@ -25,7 +25,8 @@ public class DependencyInjectionTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddRepository<MyPersonRepository>();
+        services.AddRepositoryContext()
+            .AddRepository<MyPersonRepository>(_ => { });
 
         // Act
         var provider = services.BuildServiceProvider();

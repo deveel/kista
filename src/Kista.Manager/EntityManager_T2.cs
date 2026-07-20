@@ -37,8 +37,8 @@ namespace Kista {
 	/// <typeparam name="TKey">
 	/// The type of the key of the entity managed by the service.
 	/// </typeparam>
-	public class EntityManager<TEntity, TKey> : IDisposable, IAsyncDisposable 
-		where TEntity : class 
+	public class EntityManager<TEntity, TKey> : IDisposable, IAsyncDisposable
+		where TEntity : class
 		where TKey : notnull {
 		private bool disposedValue;
 
@@ -145,6 +145,54 @@ namespace Kista {
 		/// it is added or updated in the repository.
 		/// </summary>
 		protected IEntityValidator<TEntity, TKey>? EntityValidator { get; }
+
+		/// <summary>
+		/// Gets the builtin interceptor that wraps the
+		/// <c>On*Async</c> protected virtual hooks, so that subclass
+		/// overrides keep working and coexist with user-registered
+		/// interceptors in the pipeline.
+		/// </summary>
+		private OnHooksEntityInterceptor? _hooksInterceptor;
+
+		/// <summary>
+		/// Resolves the user-registered interceptors for the current
+		/// entity and key types from DI (excluding the builtin
+		/// <see cref="OnHooksEntityInterceptor"/>).
+		/// </summary>
+		/// <remarks>
+		/// When no interceptor is registered in DI, an empty sequence
+		/// is returned.
+		/// </remarks>
+		protected virtual IEnumerable<IEntityManagerInterceptor<TEntity, TKey>> GetUserInterceptors()
+			=> Services?.GetService<IEnumerable<IEntityManagerInterceptor<TEntity, TKey>>>()
+				?? Array.Empty<IEntityManagerInterceptor<TEntity, TKey>>();
+
+		/// <summary>
+		/// Resolves the full interceptor chain for the current entity
+		/// and key types: user-registered interceptors (in registration
+		/// order) followed by the builtin
+		/// <see cref="OnHooksEntityInterceptor"/> that wraps the
+		/// <c>On*Async</c> hooks (always appended last).
+		/// </summary>
+		/// <remarks>
+		/// <para>
+		/// When no interceptor is registered in DI, only the builtin
+		/// hooks interceptor is returned, preserving the behavior of
+		/// the <c>On*Async</c> hooks.
+		/// </para>
+		/// <para>
+		/// The single-key <see cref="EntityManager{TEntity}"/> overrides
+		/// <see cref="GetUserInterceptors"/> to also resolve single-key
+		/// interceptors (<see cref="IEntityManagerInterceptor{TEntity}"/>)
+		/// and wrap them through
+		/// <see cref="EntityManagerInterceptorWrapper{TEntity}"/>.
+		/// </para>
+		/// </remarks>
+		protected IEnumerable<IEntityManagerInterceptor<TEntity, TKey>> GetInterceptors() {
+			_hooksInterceptor ??= new OnHooksEntityInterceptor(this);
+
+			return GetUserInterceptors().Append(_hooksInterceptor);
+		}
 
 		/// <summary>
 		/// Gets the logger used to log messages from the service.
@@ -290,6 +338,92 @@ namespace Kista {
 				return GenerateCacheKeyFrom(key);
 
 			return generator.GenerateKey(key);
+		}
+
+		/// <summary>
+		/// Creates a new operation context for the given write operation.
+		/// </summary>
+		/// <param name="kind">
+		/// The kind of the operation being performed.
+		/// </param>
+		/// <param name="entity">
+		/// The entity targeted by the operation (mutated by interceptors).
+		/// </param>
+		/// <param name="original">
+		/// The pre-image of the entity loaded from the repository, or
+		/// <c>null</c> for create operations.
+		/// </param>
+		/// <param name="cancellationToken">
+		/// The cancellation token associated with the operation.
+		/// </param>
+		/// <returns>
+		/// Returns a new instance of
+		/// <see cref="IEntityOperationContext{TEntity, TKey}"/> carrying
+		/// the operation information to the interceptors.
+		/// </returns>
+		protected virtual IEntityOperationContext<TEntity, TKey> CreateOperationContext(
+			EntityOperationKind kind,
+			TEntity entity,
+			TEntity? original,
+			CancellationToken cancellationToken) {
+			var key = GetEntityKey(entity);
+			var actor = UserAccessor?.GetUserId()?.ToString();
+			var timestamp = Time.UtcNow;
+
+			return new EntityOperationContext<TEntity, TKey>(
+				kind, entity, original, key, actor, timestamp, cancellationToken);
+		}
+
+		/// <summary>
+		/// Runs the <c>PreWriteAsync</c> phase of the operation pipeline,
+		/// invoking each interceptor in registration order (followed by
+		/// the builtin <see cref="OnHooksEntityInterceptor"/> that wraps
+		/// the <c>On*Async</c> hooks).
+		/// </summary>
+		/// <param name="context">
+		/// The operation context carrying the mutable entity.
+		/// </param>
+		/// <returns>
+		/// Returns <c>null</c> if no interceptor short-circuited the
+		/// chain (the write may proceed), or a failed
+		/// <see cref="IOperationResult"/> if an interceptor
+		/// short-circuited the operation (the write must be skipped and
+		/// the result returned to the caller).
+		/// </returns>
+		protected virtual async ValueTask<IOperationResult?> InvokePreWriteAsync(
+			IEntityOperationContext<TEntity, TKey> context) {
+			foreach (var interceptor in GetInterceptors()) {
+				var result = await interceptor.PreWriteAsync(context);
+				if (result != null) {
+					Logger.LogInterceptorShortCircuited(typeof(TEntity), context.Kind, interceptor.GetType());
+					return result;
+				}
+			}
+
+			return null;
+		}
+
+		/// <summary>
+		/// Runs the <c>PostWriteAsync</c> phase of the operation pipeline,
+		/// invoking each interceptor in registration order (followed by
+		/// the builtin <see cref="OnHooksEntityInterceptor"/>).
+		/// </summary>
+		/// <param name="context">
+		/// The operation context carrying the persisted entity.
+		/// </param>
+		/// <param name="result">
+		/// The result of the operation (success or not-changed).
+		/// </param>
+		/// <returns>
+		/// Returns a <see cref="ValueTask"/> that completes when all
+		/// the post-write side effects have been applied.
+		/// </returns>
+		protected virtual async ValueTask InvokePostWriteAsync(
+			IEntityOperationContext<TEntity, TKey> context,
+			IOperationResult result) {
+			foreach (var interceptor in GetInterceptors()) {
+				await interceptor.PostWriteAsync(context, result);
+			}
 		}
 
 		/// <summary>
@@ -447,6 +581,30 @@ namespace Kista {
 		/// an entity.
 		/// </returns>
 		protected OperationResult NotChanged() => OperationResult.NotChanged;
+
+		/// <summary>
+		/// Converts an <see cref="IOperationResult"/> produced by an
+		/// interceptor short-circuit into an
+		/// <see cref="OperationResult"/> that can be returned to the
+		/// caller.
+		/// </summary>
+		/// <param name="result">
+		/// The operation result returned by an interceptor's
+		/// <c>PreWriteAsync</c>.
+		/// </param>
+		/// <returns>
+		/// Returns an <see cref="OperationResult"/> equivalent to the
+		/// given <paramref name="result"/>.
+		/// </returns>
+		protected virtual OperationResult ToOperationResult(IOperationResult result) {
+			if (result is OperationResult opResult)
+				return opResult;
+
+			if (result.Error != null)
+				return OperationResult.Fail(result.Error);
+
+			return result.IsSuccess() ? Success() : Fail(EntityErrorCodes.UnknownError);
+		}
 
 		/// <summary>
 		/// Validates the given entity before it is added or updated
@@ -756,7 +914,13 @@ namespace Kista {
 					return ValidationFailed(EntityErrorCodes.NotValid, validation);
 				}
 
-				entity = await OnAddingEntityAsync(entity);
+				var context = CreateOperationContext(EntityOperationKind.Create, entity, null, token);
+
+				var shortCircuit = await InvokePreWriteAsync(context);
+				if (shortCircuit != null)
+					return ToOperationResult(shortCircuit);
+
+				entity = context.Entity;
 
 				await Repository.AddAsync(entity, token);
 
@@ -764,7 +928,10 @@ namespace Kista {
 
 				await SetToCacheAsync(entity, token);
 
-				return Success();
+				var result = Success();
+				await InvokePostWriteAsync(context, result);
+
+				return result;
 			} catch (Exception ex) {
 				LogUnknownError(ex);
 				return Fail(EntityErrorCodes.UnknownError);
@@ -807,25 +974,35 @@ namespace Kista {
 				var token = GetCancellationToken(cancellationToken);
 
 				var toBeAdded = new List<TEntity>();
+				var contexts = new List<IEntityOperationContext<TEntity, TKey>>();
 				foreach (var entity in entities) {
-					var item = await OnAddingEntityAsync(entity);
+					var context = CreateOperationContext(EntityOperationKind.Create, entity, null, token);
+
+					var shortCircuit = await InvokePreWriteAsync(context);
+					if (shortCircuit != null)
+						return ToOperationResult(shortCircuit);
+
+					var item = context.Entity;
 
 					var validation = await ValidateAsync(item, token);
 					if (validation != null && validation.Count > 0)
 						return ValidationFailed(EntityErrorCodes.NotValid, validation);
 
 					toBeAdded.Add(item);
+					contexts.Add(context);
 				}
 
 				await Repository.AddRangeAsync(toBeAdded, token);
 
 				Logger.LogEntityRangeAdded();
 
-				foreach (var item in entities) {
-					await SetToCacheAsync(item, token);
+				var success = Success();
+				foreach (var context in contexts) {
+					await SetToCacheAsync(context.Entity, token);
+					await InvokePostWriteAsync(context, success);
 				}
 
-				return Success();
+				return success;
 			} catch (Exception ex) {
 				LogUnknownError(ex);
 				return Fail(EntityErrorCodes.UnknownError);
@@ -965,7 +1142,13 @@ namespace Kista {
 					return ValidationFailed(EntityErrorCodes.NotValid, validation);
 				}
 
-				entity = await OnUpdatingEntityAsync(entity);
+				var context = CreateOperationContext(EntityOperationKind.Update, entity, existing, token);
+
+				var shortCircuit = await InvokePreWriteAsync(context);
+				if (shortCircuit != null)
+					return ToOperationResult(shortCircuit);
+
+				entity = context.Entity;
 
 				if (!await Repository.UpdateAsync(entity, token)) {
 					Logger.LogEntityNotModified(typeof(TEntity), entityKey);
@@ -976,7 +1159,10 @@ namespace Kista {
 
 				await SetToCacheAsync(entity, token);
 
-				return Success();
+				var result = Success();
+				await InvokePostWriteAsync(context, result);
+
+				return result;
 			} catch (Exception ex) {
 				LogEntityUnknownError(entityKey, ex);
 				return Fail(EntityErrorCodes.UnknownError);
@@ -1037,34 +1223,43 @@ namespace Kista {
 					return Fail(EntityErrorCodes.NotFound);
 				}
 
-				var found = foundResult.Value!;
-				var isSoftDeletable = found is ISoftDeletable;
+			var found = foundResult.Value!;
+			var isSoftDeletable = found is ISoftDeletable;
 
-				if (isSoftDeletable) {
-					found = await OnRemovingEntityAsync(found, token);
+			var context = CreateOperationContext(EntityOperationKind.Remove, found, found, token);
 
-					if (!await Repository.UpdateAsync(found, token)) {
-						Logger.LogEntityNotRemoved(typeof(TEntity), entityKey);
-						return NotChanged();
-					}
+			var shortCircuit = await InvokePreWriteAsync(context);
+			if (shortCircuit != null)
+				return ToOperationResult(shortCircuit);
 
-					Logger.LogEntityUpdated(entityKey);
-					await SetToCacheAsync(found, token);
-				} else {
-					if (!await Repository.RemoveAsync(found, token)) {
-						Logger.LogEntityNotRemoved(typeof(TEntity), entityKey);
-						return NotChanged();
-					}
+			found = context.Entity;
 
-					await EvictAsync(found, token);
+			if (isSoftDeletable) {
+				if (!await Repository.UpdateAsync(found, token)) {
+					Logger.LogEntityNotRemoved(typeof(TEntity), entityKey);
+					return NotChanged();
 				}
 
-				return Success();
-			} catch (Exception ex) {
-				LogEntityUnknownError(entityKey, ex);
-				return Fail(EntityErrorCodes.UnknownError);
+				Logger.LogEntityUpdated(entityKey);
+				await SetToCacheAsync(found, token);
+			} else {
+				if (!await Repository.RemoveAsync(found, token)) {
+					Logger.LogEntityNotRemoved(typeof(TEntity), entityKey);
+					return NotChanged();
+				}
+
+				await EvictAsync(found, token);
 			}
+
+			var result = Success();
+			await InvokePostWriteAsync(context, result);
+
+			return result;
+		} catch (Exception ex) {
+			LogEntityUnknownError(entityKey, ex);
+			return Fail(EntityErrorCodes.UnknownError);
 		}
+	}
 
 		/// <summary>
 		/// Removes the given range of entities from the repository.
@@ -1087,17 +1282,29 @@ namespace Kista {
 
 				var token = GetCancellationToken(cancellationToken);
 
-				// should we check for the entities to be valid?
+				var list = entities.ToList();
+				var contexts = new List<IEntityOperationContext<TEntity, TKey>>();
+				foreach (var entity in list) {
+					var context = CreateOperationContext(EntityOperationKind.Remove, entity, entity, token);
 
-				await Repository.RemoveRangeAsync(entities, token);
+					var shortCircuit = await InvokePreWriteAsync(context);
+					if (shortCircuit != null)
+						return ToOperationResult(shortCircuit);
+
+					contexts.Add(context);
+				}
+
+				await Repository.RemoveRangeAsync(list, token);
 
 				Logger.LogEntityRangeRemoved();
 
-				foreach (var entity in entities) {
-					await EvictAsync(entity, token);
+				var success = Success();
+				foreach (var context in contexts) {
+					await EvictAsync(context.Entity, token);
+					await InvokePostWriteAsync(context, success);
 				}
 
-				return Success();
+				return success;
 			} catch (Exception ex) {
 				LogUnknownError(ex);
 				return Fail(EntityErrorCodes.UnknownError);
@@ -1147,28 +1354,37 @@ namespace Kista {
 
 				var token = GetCancellationToken(cancellationToken);
 
-				var deleted = await FindDeletedAsync(entityKey, token);
-				if (deleted == null) {
-					LogEntityNotFound(entityKey);
-					return Fail(EntityErrorCodes.NotFound);
-				}
-
-				deleted = await OnRestoringEntityAsync(deleted, token);
-
-				if (!await Repository.UpdateAsync(deleted, token)) {
-					Logger.LogEntityNotModified(typeof(TEntity), entityKey);
-					return NotChanged();
-				}
-
-				Logger.LogEntityUpdated(entityKey);
-				await SetToCacheAsync(deleted, token);
-
-				return Success();
-			} catch (InvalidOperationException ex) {
-				LogEntityUnknownError(entityKey, ex);
-				return Fail(EntityErrorCodes.UnknownError);
+			var deleted = await FindDeletedAsync(entityKey, token);
+			if (deleted == null) {
+				LogEntityNotFound(entityKey);
+				return Fail(EntityErrorCodes.NotFound);
 			}
+
+			var context = CreateOperationContext(EntityOperationKind.Restore, deleted, deleted, token);
+
+			var shortCircuit = await InvokePreWriteAsync(context);
+			if (shortCircuit != null)
+				return ToOperationResult(shortCircuit);
+
+			deleted = context.Entity;
+
+			if (!await Repository.UpdateAsync(deleted, token)) {
+				Logger.LogEntityNotModified(typeof(TEntity), entityKey);
+				return NotChanged();
+			}
+
+			Logger.LogEntityUpdated(entityKey);
+			await SetToCacheAsync(deleted, token);
+
+			var result = Success();
+			await InvokePostWriteAsync(context, result);
+
+			return result;
+		} catch (InvalidOperationException ex) {
+			LogEntityUnknownError(entityKey, ex);
+			return Fail(EntityErrorCodes.UnknownError);
 		}
+	}
 
 		/// <summary>
 		/// Permanently removes the given entity from the repository,
@@ -1207,27 +1423,36 @@ namespace Kista {
 
 				Logger.LogRemovingEntity(typeof(TEntity), entityKey);
 
-				var found = await FindIncludingDeletedAsync(entityKey, token);
-				if (found == null) {
-					LogEntityNotFound(entityKey);
-					return Fail(EntityErrorCodes.NotFound);
-				}
-
-				found = await OnHardRemovingEntityAsync(found, token);
-
-				if (!await Repository.HardDeleteAsync(found, token)) {
-					Logger.LogEntityNotRemoved(typeof(TEntity), entityKey);
-					return NotChanged();
-				}
-
-				await EvictAsync(found, token);
-
-				return Success();
-			} catch (Exception ex) {
-				LogEntityUnknownError(entityKey, ex);
-				return Fail(EntityErrorCodes.UnknownError);
+			var found = await FindIncludingDeletedAsync(entityKey, token);
+			if (found == null) {
+				LogEntityNotFound(entityKey);
+				return Fail(EntityErrorCodes.NotFound);
 			}
+
+			var context = CreateOperationContext(EntityOperationKind.HardDelete, found, found, token);
+
+			var shortCircuit = await InvokePreWriteAsync(context);
+			if (shortCircuit != null)
+				return ToOperationResult(shortCircuit);
+
+			found = context.Entity;
+
+			if (!await Repository.HardDeleteAsync(found, token)) {
+				Logger.LogEntityNotRemoved(typeof(TEntity), entityKey);
+				return NotChanged();
+			}
+
+			await EvictAsync(found, token);
+
+			var result = Success();
+			await InvokePostWriteAsync(context, result);
+
+			return result;
+		} catch (Exception ex) {
+			LogEntityUnknownError(entityKey, ex);
+			return Fail(EntityErrorCodes.UnknownError);
 		}
+	}
 
 		/// <summary>
 		/// Permanently removes the given range of entities from the
@@ -1252,18 +1477,28 @@ namespace Kista {
 				var token = GetCancellationToken(cancellationToken);
 
 				var list = entities.ToList();
-				foreach (var entity in list)
-					await OnHardRemovingEntityAsync(entity, token);
+				var contexts = new List<IEntityOperationContext<TEntity, TKey>>();
+				foreach (var entity in list) {
+					var context = CreateOperationContext(EntityOperationKind.HardDelete, entity, entity, token);
+
+					var shortCircuit = await InvokePreWriteAsync(context);
+					if (shortCircuit != null)
+						return ToOperationResult(shortCircuit);
+
+					contexts.Add(context);
+				}
 
 				await Repository.HardDeleteRangeAsync(list, token);
 
 				Logger.LogEntityRangeRemoved();
 
-				foreach (var entity in list) {
-					await EvictAsync(entity, token);
+				var success = Success();
+				foreach (var context in contexts) {
+					await EvictAsync(context.Entity, token);
+					await InvokePostWriteAsync(context, success);
 				}
 
-				return Success();
+				return success;
 			} catch (Exception ex) {
 				LogUnknownError(ex);
 				return Fail(EntityErrorCodes.UnknownError);
@@ -1394,53 +1629,68 @@ namespace Kista {
 		}
 
 		/// <summary>
-		/// Retrieves a page of entities from the repository based on the given query.
+		/// A builtin interceptor that wraps the existing
+		/// <c>On*Async</c> protected virtual hooks of
+		/// <see cref="EntityManager{TEntity, TKey}"/>, so that
+		/// subclass overrides keep working and coexist with
+		/// user-registered interceptors in the pipeline.
 		/// </summary>
-		/// <example>
-		/// <code>
-		/// var manager = new EntityManager&lt;MyEntity&gt;(repository);
-		/// var pageQuery = new PageQuery&lt;MyEntity&gt;(1, 10);
-		/// var page = await manager.GetPageAsync(pageQuery);
-		/// foreach (var entity in page.Items) {
-		///     Console.WriteLine(entity);
-		/// }
-		/// </code>
-		/// </example>
-		/// <param name="query">
-		/// The paging and filtering criteria to apply to the query.
-		/// </param>
-		/// <param name="cancellationToken">
-		/// A token used to cancel the operation.
-		/// </param>
-		/// <returns>
-		/// Returns a <see cref="PageQueryResult{TEntity}"/> containing the entities
-		/// that match the given paging criteria.
-		/// </returns>
-		/// <exception cref="NotSupportedException">
-		/// Thrown when the repository does not support paging.
-		/// </exception>
-		/// <exception cref="OperationException">
-		/// Thrown when an unknown error occurs while retrieving the page.
-		/// </exception>
 		/// <remarks>
-		/// This method is obsolete. Use <see cref="GetPageAsync(PageRequest, CancellationToken?)"/>
-		/// for simple pagination, or implement filtered/sorted paging in your repository
-		/// using the protected <c>QueryPageAsync(PageQuery{TEntity}, CancellationToken)</c> method.
+		/// <para>
+		/// This interceptor is always appended as the last interceptor
+		/// in the chain (after any user-registered interceptors), so
+		/// that user interceptors run before the framework's
+		/// timestamp/soft-delete stamping hooks.
+		/// </para>
+		/// <para>
+		/// The interceptor never short-circuits the chain: it always
+		/// returns <c>null</c> from
+		/// <see cref="PreWriteAsync"/> and performs no work in
+		/// <see cref="PostWriteAsync"/>.
+		/// </para>
 		/// </remarks>
-		[Obsolete("Use GetPageAsync(PageRequest, CancellationToken?) for simple pagination instead.", false)]
-		[ExcludeFromCodeCoverage]
-		public virtual async ValueTask<PageQueryResult<TEntity>> GetPageAsync(PageQuery<TEntity> query, CancellationToken? cancellationToken = null) {
-			ThrowIfDisposed();
+		sealed class OnHooksEntityInterceptor : IEntityManagerInterceptor<TEntity, TKey> {
+			private readonly EntityManager<TEntity, TKey> _manager;
 
-			try {
-				// log this operation
-
-				var result = await Repository.GetPageAsync(query, GetCancellationToken(cancellationToken));
-				return (PageQueryResult<TEntity>)result;
-			} catch (Exception ex) {
-				LogUnknownError(ex);
-				throw new OperationException(EntityErrorCodes.UnknownError, Domain, "Could not look for the entity", ex);
+			/// <summary>
+			/// Constructs the interceptor around the given manager
+			/// instance, to invoke its protected virtual hooks.
+			/// </summary>
+			/// <param name="manager">
+			/// The manager whose <c>On*Async</c> hooks will be invoked.
+			/// </param>
+			public OnHooksEntityInterceptor(EntityManager<TEntity, TKey> manager) {
+				_manager = manager;
 			}
+
+			/// <inheritdoc/>
+			public async ValueTask<IOperationResult?> PreWriteAsync(IEntityOperationContext<TEntity, TKey> context) {
+				switch (context.Kind) {
+					case EntityOperationKind.Create:
+						context.Entity = await _manager.OnAddingEntityAsync(context.Entity);
+						break;
+					case EntityOperationKind.Update:
+						context.Entity = await _manager.OnUpdatingEntityAsync(context.Entity);
+						break;
+					case EntityOperationKind.Remove:
+						context.Entity = await _manager.OnRemovingEntityAsync(context.Entity, context.CancellationToken);
+						break;
+					case EntityOperationKind.Restore:
+						context.Entity = await _manager.OnRestoringEntityAsync(context.Entity, context.CancellationToken);
+						break;
+					case EntityOperationKind.HardDelete:
+						context.Entity = await _manager.OnHardRemovingEntityAsync(context.Entity, context.CancellationToken);
+						break;
+					default:
+						break;
+				}
+
+				return null;
+			}
+
+			/// <inheritdoc/>
+			public ValueTask PostWriteAsync(IEntityOperationContext<TEntity, TKey> context, IOperationResult result)
+				=> ValueTask.CompletedTask;
 		}
 	}
 }

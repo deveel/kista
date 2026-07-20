@@ -88,14 +88,14 @@ namespace Kista {
 		public ValueTask AddAsync(TEntity entity, CancellationToken cancellationToken = default) {
 			AssertMutable();
 
-			var id = SetId(entity);
+			SetId(entity);
 
 			AddEntity(entity);
 
 			return ValueTask.CompletedTask;
 		}
 
-		private string SetId(TEntity entity) {
+		private void SetId(TEntity entity) {
 			var member = DiscoverKeyMember();
 			var entityId = Guid.NewGuid().ToString("N");
 
@@ -106,8 +106,6 @@ namespace Kista {
 			} else {
 				throw new NotSupportedException("The entity Id is not supported");
 			}
-
-			return entityId;
 		}
 
 		/// <inheritdoc/>
@@ -115,7 +113,7 @@ namespace Kista {
 			AssertMutable();
 
 			foreach (var entity in entities) {
-				var id = SetId(entity);
+				SetId(entity);
 				AddEntity(entity);
 			}
 

@@ -18,6 +18,34 @@ using Microsoft.Extensions.Options;
 
 namespace Kista.Caching {
 	/// <summary>
+	/// Shared registration helpers for EasyCaching-based entity caches,
+	/// used by both the <see cref="EntityManagerBuilder"/> and
+	/// <see cref="RepositoryContextBuilder"/> extension methods to avoid
+	/// duplicating the per-entity registration logic.
+	/// </summary>
+	internal static class EntityEasyCacheRegistrar {
+		public static void Register(IServiceCollection services, Type entityType, ServiceLifetime lifetime, EasyCachingOptions options) {
+			var cacheType = typeof(EntityEasyCache<>).MakeGenericType(entityType);
+			var cacheInterface = typeof(IEntityCache<>).MakeGenericType(entityType);
+
+			services.TryAdd(new ServiceDescriptor(cacheInterface, cacheType, lifetime));
+			services.TryAdd(new ServiceDescriptor(cacheType, cacheType, lifetime));
+
+			if (options.DefaultExpiration.HasValue || !string.IsNullOrEmpty(options.CacheKeyPrefix)) {
+				var entityOptionsType = typeof(EntityCacheOptions<>).MakeGenericType(entityType);
+				var expiration = options.DefaultExpiration;
+				var prefix = options.CacheKeyPrefix;
+
+				services.AddSingleton(typeof(IConfigureOptions<>).MakeGenericType(entityOptionsType), sp => {
+					return Activator.CreateInstance(
+						typeof(ConfiguredEntityCacheOptions<>).MakeGenericType(entityType),
+						expiration, prefix)!;
+				});
+			}
+		}
+	}
+
+	/// <summary>
 	/// Extension methods for configuring EasyCaching on an <see cref="EntityManagerBuilder"/>.
 	/// </summary>
 	public static class EntityManagerBuilderExtensions {
@@ -42,23 +70,7 @@ namespace Kista.Caching {
 			var options = new EasyCachingOptions();
 			configure?.Invoke(options);
 
-			var cacheType = typeof(EntityEasyCache<>).MakeGenericType(entityType);
-			var cacheInterface = typeof(IEntityCache<>).MakeGenericType(entityType);
-
-			builder.Services.TryAdd(new ServiceDescriptor(cacheInterface, cacheType, lifetime));
-			builder.Services.TryAdd(new ServiceDescriptor(cacheType, cacheType, lifetime));
-
-			if (options.DefaultExpiration.HasValue || !string.IsNullOrEmpty(options.CacheKeyPrefix)) {
-				var entityOptionsType = typeof(EntityCacheOptions<>).MakeGenericType(entityType);
-				var expiration = options.DefaultExpiration;
-				var prefix = options.CacheKeyPrefix;
-
-				builder.Services.AddSingleton(typeof(IConfigureOptions<>).MakeGenericType(entityOptionsType), sp => {
-					return Activator.CreateInstance(
-						typeof(ConfiguredEntityCacheOptions<>).MakeGenericType(entityType),
-						expiration, prefix)!;
-				});
-			}
+			EntityEasyCacheRegistrar.Register(builder.Services, entityType, lifetime, options);
 
 			return builder;
 		}
@@ -116,25 +128,8 @@ namespace Kista.Caching {
 			var options = new EasyCachingOptions();
 			configure?.Invoke(options);
 
-			foreach (var entityType in builder.RegisteredEntityTypes) {
-				var cacheType = typeof(EntityEasyCache<>).MakeGenericType(entityType);
-				var cacheInterface = typeof(IEntityCache<>).MakeGenericType(entityType);
-
-				builder.Services.TryAdd(new ServiceDescriptor(cacheInterface, cacheType, lifetime));
-				builder.Services.TryAdd(new ServiceDescriptor(cacheType, cacheType, lifetime));
-
-				if (options.DefaultExpiration.HasValue || !string.IsNullOrEmpty(options.CacheKeyPrefix)) {
-					var entityOptionsType = typeof(EntityCacheOptions<>).MakeGenericType(entityType);
-					var expiration = options.DefaultExpiration;
-					var prefix = options.CacheKeyPrefix;
-
-					builder.Services.AddSingleton(typeof(IConfigureOptions<>).MakeGenericType(entityOptionsType), sp => {
-						return Activator.CreateInstance(
-							typeof(ConfiguredEntityCacheOptions<>).MakeGenericType(entityType),
-							expiration, prefix)!;
-					});
-				}
-			}
+			foreach (var entityType in builder.RegisteredEntityTypes)
+				EntityEasyCacheRegistrar.Register(builder.Services, entityType, lifetime, options);
 
 			return builder;
 		}

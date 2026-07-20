@@ -241,7 +241,7 @@ namespace Kista
 		/// Thrown when the given string is not a valid identifier for the entity.
 		/// </exception>
 		protected virtual TKey? ConvertEntityKey(TKey? key) {
-			if (key == null)
+			if (KeyHelper.IsNull(key))
 				return default(TKey?);
 
 			var keyType = PrimaryKey.GetKeyType();
@@ -331,7 +331,7 @@ namespace Kista
 
 				await Entities.AddRangeAsync(toAdd, cancellationToken);
 
-				var count = await Context.SaveChangesAsync(true, cancellationToken);
+				await Context.SaveChangesAsync(true, cancellationToken);
 			} catch (Exception ex) {
 				Logger.LogUnknownError(ex, typeof(TEntity));
 				throw new RepositoryException("Unknown error while trying to add a range of entities to the repository", ex);
@@ -403,8 +403,6 @@ namespace Kista
 			} catch (DbUpdateConcurrencyException) {
 				Logger.WarnEntityNotFound(typeof(TEntity), GetEntityKey(entity)!);
 				return false;
-			} catch (RepositoryException) {
-				throw;
 			} catch (DbUpdateException ex) {
 				Logger.LogUnknownError(ex, typeof(TEntity));
 				throw new RepositoryException("Unable to soft-delete the entity", ex);

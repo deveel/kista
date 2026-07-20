@@ -36,7 +36,8 @@ public class InMemoryRepositoryNoKeyTests : NoKeyRepositoryTestSuite<Person, Per
 	}
 
 	protected virtual void AddRepository(IServiceCollection services) {
-		services.AddRepository<InMemoryRepository<Person>>();
-		services.AddRepositoryController();
+		services.AddRepositoryContext()
+			.AddRepository<InMemoryRepository<Person>>(_ => { })
+			.ConfigureLifecycle();
 	}
 }

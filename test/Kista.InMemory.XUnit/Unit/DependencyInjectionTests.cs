@@ -48,7 +48,8 @@ public class DependencyInjectionTests {
         var services = new ServiceCollection();
 
         // Act
-        services.AddRepository<InMemoryRepository<Person>>();
+        services.AddRepositoryContext()
+            .AddRepository<InMemoryRepository<Person>>(_ => { });
         var provider = services.BuildServiceProvider();
 
         // Assert
@@ -64,7 +65,8 @@ public class DependencyInjectionTests {
         var services = new ServiceCollection();
 
         // Act
-        services.AddRepository<PersonRepository>();
+        services.AddRepositoryContext()
+            .AddRepository<PersonRepository>(_ => { });
         var provider = services.BuildServiceProvider();
 
         // Assert

@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//    http://www.apache.org/licenses/LICENSE-2.0
+//    http://www.apache.org/LICENSE-2.0
 // 
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,10 +20,7 @@ namespace Kista {
 	/// <typeparam name="TEntity">
 	/// The type of entity the specification applies to.
 	/// </typeparam>
-	public sealed class AndSpecification<TEntity> : Specification<TEntity> where TEntity : class {
-		private readonly ISpecification<TEntity> left;
-		private readonly ISpecification<TEntity> right;
-
+	public sealed class AndSpecification<TEntity> : BinaryCompositeSpecification<TEntity> where TEntity : class {
 		/// <summary>
 		/// Constructs the specification that combines the two given
 		/// specifications with a logical AND.
@@ -37,33 +34,8 @@ namespace Kista {
 		/// <exception cref="ArgumentNullException">
 		/// Thrown if either of the given specifications is <c>null</c>.
 		/// </exception>
-		public AndSpecification(ISpecification<TEntity> left, ISpecification<TEntity> right) {
-			ArgumentNullException.ThrowIfNull(left);
-			ArgumentNullException.ThrowIfNull(right);
-
-			this.left = left;
-			this.right = right;
-		}
-
-		/// <inheritdoc/>
-		public override IQuery ToQuery() {
-			var leftQuery = left.ToQuery();
-			var rightQuery = right.ToQuery();
-
-			var filters = new List<IQueryFilter>(2);
-			if (leftQuery.Filter != null && !leftQuery.Filter.IsEmpty())
-				filters.Add(leftQuery.Filter);
-			if (rightQuery.Filter != null && !rightQuery.Filter.IsEmpty())
-				filters.Add(rightQuery.Filter);
-
-			if (filters.Count == 0)
-				return Query.Empty;
-
-			var combined = filters.Count == 1
-				? filters[0]
-				: new CombinedQueryFilter(filters, FilterLogicalOperator.And);
-
-			return new Query(combined);
+		public AndSpecification(ISpecification<TEntity> left, ISpecification<TEntity> right)
+			: base(left, right, FilterLogicalOperator.And) {
 		}
 	}
 }

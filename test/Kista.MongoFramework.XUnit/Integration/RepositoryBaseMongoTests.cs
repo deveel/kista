@@ -30,7 +30,7 @@ public class RepositoryBaseMongoTests : IAsyncLifetime {
 	public async ValueTask InitializeAsync() {
 		var services = new ServiceCollection();
 
-		services.AddMongoDbContext<MongoDbContext>(builder => builder.UseConnection(mongo.ConnectionString));
+		services.AddRepositoryContext().UseMongoDB<MongoDbContext>(mongoBuilder => mongoBuilder.WithConnection(builder => builder.UseConnection(mongo.ConnectionString)));
 
 		services.AddSingleton<TestMongoRepository>();
 

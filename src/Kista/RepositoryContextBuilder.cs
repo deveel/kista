@@ -130,7 +130,16 @@ namespace Kista {
 		if (repositoryType.IsGenericTypeDefinition) {
 			RegisterOpenGenericRepository(repositoryType, lifetime);
 		} else {
-			_services.AddRepository(repositoryType, lifetime);
+			if (!RepositoryRegistrationUtil.IsValidRepositoryType(repositoryType))
+				throw new ArgumentException($"The type '{repositoryType}' is not a valid repository type", nameof(repositoryType));
+
+			var serviceTypes = RepositoryRegistrationUtil.GetRepositoryServiceTypes(repositoryType);
+
+			foreach (var serviceType in serviceTypes) {
+				_services.TryAdd(new ServiceDescriptor(serviceType, repositoryType, lifetime));
+			}
+
+			_services.Add(new ServiceDescriptor(repositoryType, repositoryType, lifetime));
 		}
 		TrackRepositoryType(repositoryType);
 		return this;

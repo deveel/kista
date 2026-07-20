@@ -22,9 +22,9 @@ public class DependencyInjectionTests {
     public void Should_ResolveMongoDbContext_When_DefaultConnectionStringProvided() {
         // Arrange
         var services = new ServiceCollection();
-        services.AddMongoDbContext<MongoDbContext>(builder => {
+        services.AddRepositoryContext().UseMongoDB<MongoDbContext>(mongoBuilder => mongoBuilder.WithConnection(builder => {
             builder.UseConnection("mongodb://localhost:27017/testdb");
-        });
+        }));
 
         // Act
         var provider = services.BuildServiceProvider();
@@ -45,7 +45,7 @@ public class DependencyInjectionTests {
     public void Should_ResolveMongoDbContext_When_TenantConnectionUsed() {
         // Arrange
         var services = new ServiceCollection();
-        services.AddMongoDbContext<MongoDbContext>(builder => builder.UseTenantConnection());
+        services.AddRepositoryContext().UseMongoDB<MongoDbContext>(mongoBuilder => mongoBuilder.WithConnection(builder => builder.UseTenantConnection()));
         services.AddMongoTenantContext(new MongoDbTenantInfo {
             Id = Guid.NewGuid().ToString(),
             Identifier = "test-tenant",
@@ -73,9 +73,9 @@ public class DependencyInjectionTests {
             Id = Guid.NewGuid().ToString(),
             Identifier = "test-tenant"
         });
-        services.AddMongoDbContext<MongoDbMultiTenantContext>(builder => {
+        services.AddRepositoryContext().UseMongoDB<MongoDbMultiTenantContext>(mongoBuilder => mongoBuilder.WithConnection(builder => {
             builder.UseTenantConnection("mongodb://localhost:27017/testdb");
-        });
+        }));
 
         // Act
         var provider = services.BuildServiceProvider();
@@ -98,12 +98,11 @@ public class DependencyInjectionTests {
     public void Should_ResolveAllRepositoryInterfaces_When_DefaultMongoRepositoryRegistered() {
         // Arrange
         var services = new ServiceCollection();
-        services.AddMongoDbContext<MongoDbContext>(builder => {
-            builder.UseConnection("mongodb://localhost:27017/testdb");
-        });
-
-        // Act
-        services.AddRepository<MongoRepository<MongoPerson>>();
+        services.AddRepositoryContext()
+            .UseMongoDB<MongoDbContext>(mongoBuilder => mongoBuilder.WithConnection(builder => {
+                builder.UseConnection("mongodb://localhost:27017/testdb");
+            }))
+            .AddRepository(typeof(MongoRepository<MongoPerson>));
         var provider = services.BuildServiceProvider();
 
         // Assert
@@ -115,12 +114,11 @@ public class DependencyInjectionTests {
     public void Should_ResolveCustomRepository_When_CustomMongoRepositoryRegistered() {
         // Arrange
         var services = new ServiceCollection();
-        services.AddMongoDbContext<MongoDbContext>(builder => {
-            builder.UseConnection("mongodb://localhost:27017/testdb");
-        });
-
-        // Act
-        services.AddRepository<MyMongoPersonRepositoryNoKey>();
+        services.AddRepositoryContext()
+            .UseMongoDB<MongoDbContext>(mongoBuilder => mongoBuilder.WithConnection(builder => {
+                builder.UseConnection("mongodb://localhost:27017/testdb");
+            }))
+            .AddRepository(typeof(MyMongoPersonRepositoryNoKey));
         var provider = services.BuildServiceProvider();
 
         // Assert

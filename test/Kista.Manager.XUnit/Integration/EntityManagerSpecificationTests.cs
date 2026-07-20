@@ -30,8 +30,10 @@ public class EntityManagerSpecificationTests : IAsyncLifetime, IAsyncDisposable 
     private void CreateServices() {
         var services = new ServiceCollection();
         services.AddLogging(logging => logging.AddXUnit(testOutput));
-        services.AddRepository<TestPersonRepositoryStub>();
-        services.AddEntityManager<EntityManager<Person, string>>();
+        services.AddRepositoryContext()
+            .AddRepository<TestPersonRepositoryStub>(repo => repo
+                .WithManagement(mgmt => mgmt
+                    .UsingManager<EntityManager<Person, string>>()));
         scope = services.BuildServiceProvider().CreateAsyncScope();
     }
 

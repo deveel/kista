@@ -17,6 +17,7 @@ using Deveel;
 using Kista.Caching;
 
 
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Kista {
@@ -70,7 +71,7 @@ namespace Kista {
 			get {
 				ThrowIfDisposed();
 
-				return (Repository is ITrackingRepository<TEntity> trackingRepository);
+				return (Repository is ITrackingRepository<TEntity>);
 			}
 		}
 
@@ -88,6 +89,19 @@ namespace Kista {
 
 		private static IEntityValidator<TEntity, object>? WrapValidator(IEntityValidator<TEntity>? validator) => 
 			validator == null ? null : new EntityValidatorWrapper(validator);
+
+		/// <inheritdoc/>
+		protected override IEnumerable<IEntityManagerInterceptor<TEntity, object>> GetUserInterceptors() {
+			var twoKeyInterceptors = base.GetUserInterceptors();
+
+			var oneKeyInterceptors = Services?.GetService<IEnumerable<IEntityManagerInterceptor<TEntity>>>()
+				?? Array.Empty<IEntityManagerInterceptor<TEntity>>();
+
+			var wrapped = oneKeyInterceptors
+				.Select(i => new EntityManagerInterceptorWrapper<TEntity>(i));
+
+			return twoKeyInterceptors.Concat(wrapped);
+		}
 
 		class EntityValidatorWrapper : IEntityValidator<TEntity, object> {
 			private readonly IEntityValidator<TEntity> validator;

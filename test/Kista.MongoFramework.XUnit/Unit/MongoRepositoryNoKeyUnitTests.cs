@@ -15,9 +15,9 @@ public class MongoRepositoryNoKeyUnitTests
 	{
 		// Arrange
 		var services = new ServiceCollection();
-		services.AddMongoDbContext<TestMongoContext>(builder => {
+		services.AddRepositoryContext().UseMongoDB<TestMongoContext>(mongoBuilder => mongoBuilder.WithConnection(builder => {
 			builder.UseConnection("mongodb://localhost:27017/testdb");
-		});
+		}));
 
 		var provider = services.BuildServiceProvider();
 		var context = provider.GetRequiredService<TestMongoContext>();
@@ -34,9 +34,9 @@ public class MongoRepositoryNoKeyUnitTests
 	{
 		// Arrange
 		var services = new ServiceCollection();
-		services.AddMongoDbContext<TestMongoContext>(builder => {
+		services.AddRepositoryContext().UseMongoDB<TestMongoContext>(mongoBuilder => mongoBuilder.WithConnection(builder => {
 			builder.UseConnection("mongodb://localhost:27017/testdb");
-		});
+		}));
 
 		var provider = services.BuildServiceProvider();
 		var context = provider.GetRequiredService<TestMongoContext>();

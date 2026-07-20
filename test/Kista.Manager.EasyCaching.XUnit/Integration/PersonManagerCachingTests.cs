@@ -22,19 +22,21 @@ public class PersonManagerCachingTests : EntityManagerTestSuite<PersonManager, P
 	}
 
 	protected override void ConfigureServices(IServiceCollection services) {
-		services.AddRepository<InMemoryRepository<Person>>();
 		services.AddEasyCaching(options => options.UseInMemory("default"));
-		services.AddEntityEasyCacheFor<Person>(options => {
-			options.Expiration = TimeSpan.FromMinutes(15);
-		});
-		services.AddEntityCacheKeyGenerator<PersonCacheKeyGenerator>();
+		services.AddRepositoryContext()
+			.AddRepository<InMemoryRepository<Person, string>>(repo => repo
+				.WithManagement(mgmt => {
+					mgmt.WithEasyCaching(options => {
+						options.DefaultExpiration = TimeSpan.FromMinutes(15);
+					});
+					mgmt.WithCacheKeyGenerator<PersonCacheKeyGenerator>();
+				}));
 		base.ConfigureServices(services);
 	}
 
 	[Fact]
 	public async Task Should_FindPersonByEmail_When_EntityExistsInCache() {
 		// Arrange
-		var cancellationToken = TestContext.Current.CancellationToken;
 		var person = People.Random(x => x.Email != null);
 
 		Assert.NotNull(person);

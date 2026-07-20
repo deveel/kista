@@ -69,6 +69,13 @@ namespace Kista {
 		/// </summary>
 		public const int SoftDeleteActorMissing = 1006;
 
+		/// <summary>
+		/// An interceptor short-circuited a write operation by
+		/// returning a failed operation result from
+		/// <c>PreWriteAsync</c>.
+		/// </summary>
+		public const int InterceptorShortCircuit = 1007;
+
 
 		// Debugs
 

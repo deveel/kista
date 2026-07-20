@@ -40,20 +40,19 @@ namespace Kista
 
 		protected virtual void AddRepository(IServiceCollection services)
 		{
-			services
-				.AddMongoDbContext<MongoDbMultiTenantContext>(builder => {
+			services.AddRepositoryContext()
+				.UseMongoDB<MongoDbMultiTenantContext>(mongoBuilder => mongoBuilder.WithConnection(builder => {
 					builder.UseTenantConnection(mongo.ConnectionString);
-				})
-				.AddRepositoryController();
-
-			services.AddRepository<MongoRepository<MongoTenantPerson, ObjectId>>();
+				}))
+				.ConfigureLifecycle()
+				.AddRepository<MongoRepository<MongoTenantPerson, ObjectId>>();
 		}
 
 		protected override async ValueTask InitializeAsync()
 		{
 			foreach (var tenantId in TenantIds)
 			{
-				await ExecuteInTenantScopeAsync(tenantId, async (IRepositoryController controller) =>
+				await ExecuteInTenantScopeAsync(tenantId, async (IRepositoryLifecycleService controller) =>
 				{
 					await controller.CreateRepositoryAsync<MongoTenantPerson, ObjectId>();
 				});
@@ -66,7 +65,7 @@ namespace Kista
 		{
 			foreach (var tenantId in TenantIds)
 			{
-				await ExecuteInTenantScopeAsync(tenantId, async (IRepositoryController controller) =>
+				await ExecuteInTenantScopeAsync(tenantId, async (IRepositoryLifecycleService controller) =>
 				{
 					await controller.DropRepositoryAsync<MongoTenantPerson, ObjectId>();
 				});

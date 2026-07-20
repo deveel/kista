@@ -13,11 +13,9 @@
 // limitations under the License.
 
 using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using System.Linq;
 
 namespace Kista {
 	/// <summary>
@@ -25,123 +23,6 @@ namespace Kista {
 	/// repositories and providers.
 	/// </summary>
 	public static partial class ServiceCollectionExtensions {
-		/// <summary>
-		/// Registers a repository of the given type in the service collection.
-		/// </summary>
-		/// <typeparam name="TRepository">
-		/// The type of the repository to register.
-		/// </typeparam>
-		/// <param name="services">
-		/// The service collection to register the repository.
-		/// </param>
-		/// <param name="lifetime">
-		/// The lifetime of the repository in the service collection.
-		/// </param>
-		/// <returns>
-		/// Returns the same <see cref="IServiceCollection"/> to allow chaining.
-		/// </returns>
-		/// <seealso cref="AddRepository(IServiceCollection, Type, ServiceLifetime)"/>
-		[Obsolete("Use AddRepositoryContext().AddRepository<TRepository>() instead.", false)]
-		[ExcludeFromCodeCoverage]
-		public static IServiceCollection AddRepository<TRepository>(this IServiceCollection services, ServiceLifetime lifetime = ServiceLifetime.Scoped)
-			=> services.AddRepository(typeof(TRepository), lifetime);
-
-		/// <summary>
-		/// Registers a repository of the given type in the service collection.
-		/// </summary>
-		/// <param name="services">
-		/// The service collection to register the repository.
-		/// </param>
-		/// <param name="repositoryType">
-		/// The type of the repository to register.
-		/// </param>
-		/// <param name="lifetime">
-		/// the lifetime of the repository in the service collection.
-		/// </param>
-		/// <returns>
-		/// Returns the same <see cref="IServiceCollection"/> to allow chaining.
-		/// </returns>
-		/// <exception cref="ArgumentNullException">
-		/// Thrown when the given <paramref name="repositoryType"/> is <c>null</c>.
-		/// </exception>
-		/// <exception cref="ArgumentException">
-		/// Thrown when the given <paramref name="repositoryType"/> is not
-		/// a class or is abstract.
-		/// </exception>
-		/// <exception cref="RepositoryException">
-		/// Thrown when the given <paramref name="repositoryType"/> is not a valid
-		/// repository type.
-		/// </exception>
-		[Obsolete("Use AddRepositoryContext().AddRepository() instead.", false)]
-		[ExcludeFromCodeCoverage]
-		public static IServiceCollection AddRepository(this IServiceCollection services, Type repositoryType, ServiceLifetime lifetime = ServiceLifetime.Scoped) {
-			ArgumentNullException.ThrowIfNull(repositoryType);
-
-			if (!repositoryType.IsClass || repositoryType.IsAbstract)
-				throw new ArgumentException($"The type '{repositoryType}' is not a valid repository type", nameof(repositoryType));
-
-			if (!RepositoryRegistrationUtil.IsValidRepositoryType(repositoryType))
-				throw new ArgumentException($"The type '{repositoryType}' is not a valid repository type", nameof(repositoryType));
-				
-			var serviceTypes = RepositoryRegistrationUtil.GetRepositoryServiceTypes(repositoryType);
-
-			foreach (var serviceType in serviceTypes) {
-				services.TryAdd(new ServiceDescriptor(serviceType, repositoryType, lifetime));
-			}
-
-			services.Add(new ServiceDescriptor(repositoryType, repositoryType, lifetime));
-
-			return services;
-		}
-
-        /// <summary>
-        /// Registers a repository controller of the given type in the service collection.
-        /// </summary>
-        /// <typeparam name="TController">
-        /// The type of the repository controller to register.
-        /// </typeparam>
-        /// <param name="services">
-        /// The service collection to register the controller.
-        /// </param>
-        /// <param name="configure">
-        /// An optional action to configure the repository controller options.
-        /// </param>
-        /// <returns>
-        /// Returns the same <see cref="IServiceCollection"/> to allow chaining.
-        /// </returns>
-        [Obsolete("Use AddRepositoryContext().ConfigureLifecycle() instead.", false)]
-        [ExcludeFromCodeCoverage]
-        public static IServiceCollection AddRepositoryController<TController>(this IServiceCollection services, Action<RepositoryControllerOptions>? configure = null)
-            where TController : class, IRepositoryController {
-
-            var options = services.AddOptions<RepositoryControllerOptions>();
-
-            if (configure != null)
-                options.Configure(configure);
-
-            services.AddSingleton<IRepositoryController, TController>();
-            services.AddSingleton<TController>();
-
-            return services;
-        }
-
-        /// <summary>
-        /// Registers the default repository controller in the service collection.
-        /// </summary>
-        /// <param name="services">
-        /// The service collection to register the controller.
-        /// </param>
-        /// <param name="configure">
-        /// An optional action to configure the repository controller options.
-        /// </param>
-        /// <returns>
-        /// Returns the same <see cref="IServiceCollection"/> to allow chaining.
-        /// </returns>
-        [Obsolete("Use AddRepositoryContext().ConfigureLifecycle() instead.", false)]
-        [ExcludeFromCodeCoverage]
-        public static IServiceCollection AddRepositoryController(this IServiceCollection services, Action<RepositoryControllerOptions>? configure = null)
-            => services.AddRepositoryController<DefaultRepositoryController>(configure);
-
 		/// <summary>
 		/// Registers a singleton <see cref="ISystemTime"/> service of the
 		/// given <typeparamref name="TTime"/> type.

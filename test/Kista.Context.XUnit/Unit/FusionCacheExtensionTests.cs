@@ -69,7 +69,7 @@ public class FusionCacheExtensionTests {
             .AddRepository<CachingTestRepository>(_ => { })
             .WithFusionCaching(opts => opts.DefaultEntryDuration = TimeSpan.FromHours(1));
 
-        services.AddEntityCacheOptions<CachingTestEntity>(opts => opts.Expiration = TimeSpan.FromMinutes(5));
+        services.AddOptions<EntityCacheOptions<CachingTestEntity>>().Configure(opts => opts.Expiration = TimeSpan.FromMinutes(5));
 
         var provider = services.BuildServiceProvider();
         var entityOptions = provider.GetRequiredService<IOptions<EntityCacheOptions<CachingTestEntity>>>();

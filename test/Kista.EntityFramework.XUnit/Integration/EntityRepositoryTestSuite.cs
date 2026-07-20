@@ -47,7 +47,7 @@ namespace Kista {
 		protected override void ConfigureServices(IServiceCollection services) {
 			AddDbContext(services);
 
-			services.AddRepository<DbPersonRepository>();
+			services.AddRepositoryContext().AddRepository<DbPersonRepository>(_ => { });
 
 			base.ConfigureServices(services);
 		}

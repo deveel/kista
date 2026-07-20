@@ -11,10 +11,14 @@ public class EntityManagerCachingTests : EntityManagerTests {
 
     protected override void ConfigureServices(IServiceCollection services) {
         services.AddEasyCaching(options => options.UseInMemory("default"));
-        services.AddEntityEasyCacheFor<Person>(options => {
-            options.Expiration = TimeSpan.FromMinutes(15);
-        });
-        services.AddEntityCacheKeyGenerator<PersonCacheKeyGenerator>();
+        services.AddRepositoryContext()
+            .AddRepository<InMemoryRepository<Person, string>>(repo => repo
+                .WithManagement(mgmt => {
+                    mgmt.WithEasyCaching(options => {
+                        options.DefaultExpiration = TimeSpan.FromMinutes(15);
+                    });
+                    mgmt.WithCacheKeyGenerator<PersonCacheKeyGenerator>();
+                }));
         base.ConfigureServices(services);
     }
 }

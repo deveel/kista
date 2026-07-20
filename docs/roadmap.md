@@ -43,7 +43,7 @@ Features: Unified Repository Setup Builder, Pluggable Cache Provider Abstraction
 **Release Target:** Q4 2026 (early)  
 **Theme:** Soft delete, entity states, domain event emission
 
-Features: Soft Delete Support, Entity State Machine, Domain Event Emission from EntityManager.
+Features: Soft Delete Support, Entity State Machine, Extensible Operation Pipeline on EntityManager, Domain Event Emission from EntityManager (Kista.Manager.Events base + Kista.Manager.Hermodr CloudEvents adapter, built on the pipeline), Cache Alignment to the Operation Pipeline (builtin CacheInterceptor replacing inline SetToCacheAsync/EvictAsync glue).
 
 ### Completed in v1.7.0
 

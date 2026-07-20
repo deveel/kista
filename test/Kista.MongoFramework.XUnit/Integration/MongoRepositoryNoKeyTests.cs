@@ -21,10 +21,10 @@ public class MongoRepositoryNoKeyTests : MongoRepositoryNoKeyTestSuite<MongoPers
 	}
 
 	protected virtual void AddRepository(IServiceCollection services) {
-		services
-			.AddMongoDbContext<MongoDbContext>(builder => builder.UseConnection(ConnectionString))
-			.AddRepositoryController();
-		services.AddRepository<TestMongoPersonNoKeyRepository>();
+		services.AddRepositoryContext()
+			.UseMongoDB<MongoDbContext>(mongoBuilder => mongoBuilder.WithConnection(builder => builder.UseConnection(ConnectionString)))
+			.ConfigureLifecycle()
+			.AddRepository<TestMongoPersonNoKeyRepository>();
 	}
 
 	protected async Task<MongoPerson?> FindPerson(ObjectId id) {

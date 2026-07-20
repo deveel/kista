@@ -123,6 +123,116 @@ namespace Kista {
 		}
 
 		/// <summary>
+		/// Registers an interceptor type by scanning its implemented
+		/// <see cref="IEntityManagerInterceptor{TEntity}"/> and
+		/// <see cref="IEntityManagerInterceptor{TEntity, TKey}"/>
+		/// interfaces, filtering for those matching the current entity
+		/// and key types.
+		/// </summary>
+		/// <typeparam name="TInterceptor">
+		/// The type of the interceptor to register.
+		/// </typeparam>
+		/// <returns>This builder for chaining.</returns>
+		public EntityManagerBuilder WithInterceptor<TInterceptor>()
+			where TInterceptor : class {
+			var interceptorType = typeof(TInterceptor);
+
+			if (!interceptorType.IsClass || interceptorType.IsAbstract)
+				throw new ArgumentException($"The type {interceptorType} is not a concrete class");
+
+			var interfaceTypes = interceptorType.GetInterfaces().Where(x => x.IsGenericType);
+			foreach (var interfaceType in interfaceTypes) {
+				var genericDef = interfaceType.GetGenericTypeDefinition();
+
+				if (genericDef == typeof(IEntityManagerInterceptor<>)) {
+					var entityType = interfaceType.GetGenericArguments()[0];
+					if (entityType == EntityType) {
+						var compareType = typeof(IEntityManagerInterceptor<>).MakeGenericType(entityType);
+						Services.TryAdd(new ServiceDescriptor(compareType, interceptorType, _lifetime));
+					}
+				} else if (genericDef == typeof(IEntityManagerInterceptor<,>)) {
+					var args = interfaceType.GetGenericArguments();
+					if (args[0] == EntityType && args[1] == EntityKeyType) {
+						var compareType = typeof(IEntityManagerInterceptor<,>).MakeGenericType(args[0], args[1]);
+						Services.TryAdd(new ServiceDescriptor(compareType, interceptorType, _lifetime));
+					}
+				}
+			}
+
+			Services.Add(new ServiceDescriptor(interceptorType, interceptorType, _lifetime));
+			return this;
+		}
+
+		/// <summary>
+		/// Registers a custom <see cref="EntityManager{TEntity}"/> or
+		/// <see cref="EntityManager{TEntity, TKey}"/> subclass as the
+		/// manager for the current entity (and key) type, replacing the
+		/// default <see cref="EntityManager{TEntity}"/> registration.
+		/// </summary>
+		/// <typeparam name="TManager">
+		/// The type of the custom manager to register. Must be a concrete
+		/// class deriving from <see cref="EntityManager{TEntity}"/> or
+		/// <see cref="EntityManager{TEntity, TKey}"/>.
+		/// </typeparam>
+		/// <returns>This builder for chaining.</returns>
+		/// <exception cref="ArgumentException">
+		/// Thrown when <typeparamref name="TManager"/> is not a concrete
+		/// class or does not derive from a valid <see cref="EntityManager{TEntity}"/>.
+		/// </exception>
+		public EntityManagerBuilder UsingManager<TManager>()
+			where TManager : class {
+			var managerType = typeof(TManager);
+
+			if (!managerType.IsClass || managerType.IsAbstract)
+				throw new ArgumentException($"The type {managerType} is not a concrete class");
+
+			var serviceTypes = CollectManagerServiceTypes(managerType);
+
+			if (serviceTypes.Count == 0)
+				throw new ArgumentException($"The type {managerType} is not a valid manager type for entity {EntityType}");
+
+			if (!serviceTypes.Contains(managerType))
+				serviceTypes.Add(managerType);
+
+			RegisterServiceTypes(managerType, serviceTypes);
+
+			return this;
+		}
+
+		private List<Type> CollectManagerServiceTypes(Type managerType) {
+			var serviceTypes = new List<Type>();
+			var baseType = managerType;
+			while (baseType != null) {
+				if (baseType.IsGenericType)
+					CollectFromGenericType(baseType, serviceTypes);
+				baseType = baseType.BaseType;
+			}
+			return serviceTypes;
+		}
+
+		private void CollectFromGenericType(Type baseType, List<Type> serviceTypes) {
+			var genericType = baseType.GetGenericTypeDefinition();
+			var genericArgs = baseType.GetGenericArguments();
+
+			if (genericType == typeof(EntityManager<>) && genericArgs[0] == EntityType) {
+				serviceTypes.Add(genericType.MakeGenericType(genericArgs[0]));
+			} else if (genericType == typeof(EntityManager<,>)
+				&& genericArgs[0] == EntityType && genericArgs[1] == EntityKeyType) {
+				serviceTypes.Add(genericType.MakeGenericType(genericArgs[0], genericArgs[1]));
+			}
+		}
+
+		private void RegisterServiceTypes(Type managerType, List<Type> serviceTypes) {
+			foreach (var serviceType in serviceTypes) {
+				if (serviceType == managerType) {
+					Services.Add(new ServiceDescriptor(serviceType, managerType, _lifetime));
+				} else {
+					Services.Replace(new ServiceDescriptor(serviceType, managerType, _lifetime));
+				}
+			}
+		}
+
+		/// <summary>
 		/// Registers an operation error factory for the current entity type.
 		/// </summary>
 		/// <typeparam name="TFactory">

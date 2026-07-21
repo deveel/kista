@@ -131,7 +131,7 @@ After registration the following services are resolvable from the DI container (
 | `IRepository<TEntity>` | Core CRUD, single-entity look-up (`FindAsync`), and unsorted pagination (`GetPageAsync`) |
 | `ITrackingRepository<TEntity>` | Change tracking and original value look-ups |
 
-> **Note:** The legacy interfaces `IQueryableRepository`, `IPageableRepository`, and `IFilterableRepository` were **removed in 1.7.1**. Query capabilities are provided through `protected` members of `Repository<TEntity, TKey>`. For domain-specific queries, extend the base repository with custom methods. If you are upgrading from 1.7.0, see the [Migration from 1.7 guide](docs/migrating-from-1.7.md); for full documentation see [docs/index.md](docs/index.md).
+> **Note:** The legacy interfaces `IQueryableRepository`, `IPageableRepository`, and `IFilterableRepository` were **removed in 1.7.1**. Query capabilities are provided through `protected` members of `Repository<TEntity, TKey>`. For domain-specific queries, extend the base repository with custom methods. If you are upgrading from 1.7.0, see the [Migration from 1.7 guide](docs/migrating-from-1.7.md); if you are upgrading from 1.7.2, see [Migration from 1.7.2](docs/migrating-from-1.7.2.md) for the obsolete-API removal in 1.7.3. For full documentation see [docs/index.md](docs/index.md).
 
 ### 3. Consume the repository in your services
 
@@ -173,6 +173,23 @@ For more details, see the [Health Checks documentation](docs/health-checks/overv
 
 For driver-specific configuration, multi-tenancy, and guidance on writing a custom repository, refer to the [full documentation](docs/index.md) or browse it online at [kista.deveel.org](https://kista.deveel.org/).
 
+### 5. Cross-cutting Concerns via the Operation Pipeline (Optional)
+
+`EntityManager<TEntity>` runs every write through an extensible interceptor chain — register interceptors for audit, validation short-circuit, tracing, or events:
+
+```csharp
+builder.Services.AddRepositoryContext()
+    .AddRepository<TaskRepository>(repo => repo
+        .WithManagement(mgmt => mgmt
+            .WithInterceptor<AuditInterceptor>()           // logs every successful write
+            .WithInterceptor<BusinessHoursInterceptor>())) // short-circuits writes outside business hours
+    .UseInMemory();
+```
+
+A `PreWriteAsync` interceptor returning a failed `IOperationResult` short-circuits the chain and skips the repository write — no exception thrown.
+
+→ See [Operation Pipeline](docs/entity-manager/operation-pipeline.md) for full details.
+
 ---
 
 ## Documentation and Guides
@@ -183,12 +200,14 @@ For driver-specific configuration, multi-tenancy, and guidance on writing a cust
 | [Entity Framework Core driver](docs/repository-implementations/ef-core.md) | Storing entities via EF Core |
 | [MongoDB driver](docs/repository-implementations/mongodb.md) | Storing entities in MongoDB |
 | [In-Memory driver](docs/repository-implementations/in-memory.md) | In-process volatile storage |
-| [Entity Manager](docs/entity-manager/) | Business layer with validation, caching, and events |
+| [Entity Manager](docs/entity-manager/) | Business layer with validation, caching, events, and the operation pipeline |
+| [Operation Pipeline](docs/entity-manager/operation-pipeline.md) | Extensible interceptor chain on `EntityManager` for audit, events, tracing |
 | [Custom repositories](docs/custom-repository/) | Write your own driver |
 | [Multi-Tenancy](docs/multi-tenancy.md) | Tenant-isolated repositories |
 | [Soft-Delete](docs/soft-delete.md) | Logical deletion with automatic query filtering and restore |
 | [User Entities](docs/user-entities/) | User-scoped entities with owner filtering |
 | [Health Checks](docs/health-checks/overview.md) | Repository connectivity monitoring |
+| [Migrating from 1.7.2](docs/migrating-from-1.7.2.md) | Update from 1.7.2 after the obsolete-API removal in 1.7.3 |
 
 Full documentation is also available on [kista.deveel.org](https://kista.deveel.org/).
 
@@ -221,6 +240,7 @@ We are actively building Kista toward a comprehensive, production-ready framewor
   - [x] Soft Delete Support
   - [ ] Entity State Machine
   - [ ] Domain Event Emission from EntityManager
+  - [x] Extensible Operation Pipeline on EntityManager
   - [x] Specification Pattern Support
 
 - [ ] **v1.8.0** — "Scale & Throughput"

@@ -88,6 +88,7 @@ const sidebars: SidebarsConfig = {
       label: 'Migrate',
       items: [
         'migrating-from-1.7',
+        'migrating-from-1.7.2',
       ],
     },
     'roadmap',

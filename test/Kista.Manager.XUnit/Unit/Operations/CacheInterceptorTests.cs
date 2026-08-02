@@ -199,7 +199,7 @@ public class CacheInterceptorTests {
 
 		await cache.Received().SetAsync(
 			Arg.Any<string[]>(),
-			Arg.Is<SoftDeletablePerson>(p => p.IsDeleted == false),
+			Arg.Is<SoftDeletablePerson>(p => !p.IsDeleted),
 			Arg.Any<CancellationToken>());
 	}
 
@@ -219,7 +219,7 @@ public class CacheInterceptorTests {
 
 		await cache.Received().SetAsync(
 			Arg.Any<string[]>(),
-			Arg.Is<SoftDeletablePerson>(p => p.IsDeleted == true),
+			Arg.Is<SoftDeletablePerson>(p => p.IsDeleted),
 			Arg.Any<CancellationToken>());
 		await cache.DidNotReceive().RemoveAsync(Arg.Any<string[]>(), Arg.Any<CancellationToken>());
 	}
@@ -289,7 +289,7 @@ public class CacheInterceptorTests {
 
 		await cache.Received().SetAsync(
 			Arg.Any<string[]>(),
-			Arg.Is<SoftDeletablePerson>(p => p.IsDeleted == true),
+			Arg.Is<SoftDeletablePerson>(p => p.IsDeleted),
 			Arg.Any<CancellationToken>());
 		await cache.DidNotReceive().RemoveAsync(Arg.Any<string[]>(), Arg.Any<CancellationToken>());
 	}
@@ -428,7 +428,7 @@ public class CacheInterceptorTests {
 		// sets IsDeleted=true before the soft-delete branch re-caches the entity.
 		await cache.Received().SetAsync(
 			Arg.Any<string[]>(),
-			Arg.Is<SoftDeletablePerson>(p => p.IsDeleted == true),
+			Arg.Is<SoftDeletablePerson>(p => p.IsDeleted),
 			Arg.Any<CancellationToken>());
 		Assert.True(person.IsDeleted);
 	}

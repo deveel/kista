@@ -1,5 +1,7 @@
 #pragma warning disable CS8618
 
+using System.Reflection;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Kista.Caching;
@@ -665,34 +667,83 @@ public class CacheInterceptorTests {
 		await repo.Received().FindAsync("1", Arg.Any<CancellationToken>());
 	}
 
-	// --- Direct CacheInterceptor unit tests (builtin internal type) ---
+	// --- Defensive branches of the builtin CacheInterceptor (internal type) ---
+	//
+	// The builtin `CacheInterceptor<TEntity, TKey>` is `internal sealed`, so
+	// the tests below reach its defensive branches (the `default` switch arm
+	// and the two constructor null-guards) through the public surface: a
+	// test-only `EntityManager` subclass overrides `CreateOperationContext`
+	// to force an unrecognized `EntityOperationKind`, and reflection is used
+	// to invoke the internal constructor with null arguments. No
+	// `InternalsVisibleTo` grant is required on the `Kista.Manager` package.
 
 	[Fact]
-	public async Task Should_ReturnNullFromPreWrite_When_InvokedDirectly() {
-		// PreWriteAsync never short-circuits: it always returns null so the
-		// repository write proceeds. This is the contract that makes the cache
-		// a pure write-path concern.
-		var interceptor = new CacheInterceptor<Person, string>(
-			CreateCache<Person>(),
-			CreateKeyGenerator<Person>(),
-			p => p.Id);
+	public async Task Should_NotInteractWithCache_When_OperationKindIsUnknown() {
+		// Exercises the defensive `default` branch of CacheInterceptor.PostWriteAsync
+		// through the public pipeline: a test-only EntityManager subclass overrides
+		// CreateOperationContext to force an unrecognized EntityOperationKind, then
+		// drives a real AddAsync. The cache interceptor's default arm must leave
+		// the cache untouched, and the write must still succeed (PreWriteAsync
+		// returns null for any kind, OnHooksEntityInterceptor's default is a no-op).
+		var cache = CreateCache<Person>();
+		var keyGen = CreateKeyGenerator<Person>();
 
-		var context = new EntityOperationContext<Person, string>(
-			EntityOperationKind.Create, CreatePerson("1"), original: null, "1",
-			actor: null, DateTimeOffset.UtcNow, CancellationToken.None);
+		var repo = Substitute.For<IRepository<Person, string>>();
+		repo.GetEntityKey(Arg.Any<Person>()).Returns(c => c.Arg<Person>().Id);
+		repo.AddAsync(Arg.Any<Person>(), Arg.Any<CancellationToken>()).Returns(ValueTask.CompletedTask);
+		cache.GetOrSetAsync(Arg.Any<string>(), Arg.Any<Func<ValueTask<Person?>>>(), Arg.Any<CancellationToken>())
+			.Returns(callInfo => callInfo.Arg<Func<ValueTask<Person?>>>()());
 
-		var result = await interceptor.PreWriteAsync(context);
+		var services = new ServiceCollection();
+		services.AddSingleton(keyGen);
+		var provider = services.BuildServiceProvider();
 
-		Assert.Null(result);
+		var manager = new UnknownKindEntityManager(repo, cache, provider);
+		var person = CreatePerson("1");
+
+		var result = await manager.AddAsync(person, TestContext.Current.CancellationToken);
+
+		Assert.True(result.IsSuccess());
+		await cache.DidNotReceive().SetAsync(Arg.Any<string[]>(), Arg.Any<Person>(), Arg.Any<CancellationToken>());
+		await cache.DidNotReceive().RemoveAsync(Arg.Any<string[]>(), Arg.Any<CancellationToken>());
 	}
 
 	[Fact]
-	public async Task Should_SkipCache_When_PostWriteReceivesNotChangedResult() {
-		// Direct unit test of the !IsSuccess early-return: a NotChanged result
-		// must leave the cache untouched regardless of the operation kind.
+	public void Should_Throw_When_CacheInterceptorConstructedWithNullCache() {
+		// The cache dependency is required (the interceptor is only constructed
+		// by the manager when an IEntityCache<TEntity> is registered). The guard
+		// is reached through reflection since the constructor is internal.
+		var ctor = ResolveCacheInterceptorConstructor();
+		var ex = Assert.Throws<TargetInvocationException>(() =>
+			ctor.Invoke(new object?[] { null, null, (Func<Person, string?>)(p => p.Id), null }));
+		var inner = Assert.IsType<ArgumentNullException>(ex.InnerException);
+		Assert.Equal("cache", inner.ParamName);
+	}
+
+	[Fact]
+	public void Should_Throw_When_CacheInterceptorConstructedWithNullKeyGetter() {
+		// The getEntityKey delegate is always a non-null method-group when the
+		// manager constructs the interceptor; the guard is reached here through
+		// reflection since the constructor is internal.
+		var ctor = ResolveCacheInterceptorConstructor();
+		var ex = Assert.Throws<TargetInvocationException>(() =>
+			ctor.Invoke(new object?[] { CreateCache<Person>(), null, null, null }));
+		var inner = Assert.IsType<ArgumentNullException>(ex.InnerException);
+		Assert.Equal("getEntityKey", inner.ParamName);
+	}
+
+	[Fact]
+	public async Task Should_DefaultToNullLogger_When_CacheInterceptorConstructedWithNullLogger() {
+		// Covers the `logger ?? NullLogger.Instance` fallback: the interceptor
+		// is constructed via reflection with a null logger, then PostWriteAsync
+		// is invoked with a NotChanged result. The NullLogger fallback means no
+		// NullReferenceException is thrown, and the !IsSuccess early-return
+		// (line 184) leaves the cache untouched.
 		var cache = CreateCache<Person>();
-		var keyGen = CreateKeyGenerator<Person>();
-		var interceptor = new CacheInterceptor<Person, string>(cache, keyGen, p => p.Id);
+		var ctor = ResolveCacheInterceptorConstructor();
+		var interceptor = (IEntityManagerInterceptor<Person, string>)ctor.Invoke(new object?[] {
+			cache, CreateKeyGenerator<Person>(), (Func<Person, string?>)(p => p.Id), null
+		});
 
 		var person = CreatePerson("1");
 		var context = new EntityOperationContext<Person, string>(
@@ -705,178 +756,25 @@ public class CacheInterceptorTests {
 		await cache.DidNotReceive().RemoveAsync(Arg.Any<string[]>(), Arg.Any<CancellationToken>());
 	}
 
-	[Fact]
-	public async Task Should_SkipCache_When_PostWriteReceivesFailedResult() {
-		var cache = CreateCache<Person>();
-		var keyGen = CreateKeyGenerator<Person>();
-		var interceptor = new CacheInterceptor<Person, string>(cache, keyGen, p => p.Id);
-
-		var person = CreatePerson("1");
-		var context = new EntityOperationContext<Person, string>(
-			EntityOperationKind.Update, person, original: person, "1",
-			actor: null, DateTimeOffset.UtcNow, CancellationToken.None);
-
-		await interceptor.PostWriteAsync(context, OperationResult.Fail(new OperationError("ERR", "Test", "boom")));
-
-		await cache.DidNotReceive().SetAsync(Arg.Any<string[]>(), Arg.Any<Person>(), Arg.Any<CancellationToken>());
-		await cache.DidNotReceive().RemoveAsync(Arg.Any<string[]>(), Arg.Any<CancellationToken>());
+	private static ConstructorInfo ResolveCacheInterceptorConstructor() {
+		var asm = typeof(EntityManager<Person, string>).Assembly;
+		var open = asm.GetType("Kista.Caching.CacheInterceptor`2", throwOnError: true);
+		var closed = open!.MakeGenericType(typeof(Person), typeof(string));
+		return closed.GetConstructor(new[] {
+			typeof(IEntityCache<Person>),
+			typeof(IEntityCacheKeyGenerator<Person>),
+			typeof(Func<Person, string?>),
+			typeof(ILogger)
+		})!;
 	}
 
-	[Fact]
-	public async Task Should_NotInteractWithCache_When_PostWriteKindIsUnknown() {
-		// Defensive default branch of the switch: an unrecognized operation
-		// kind must leave the cache untouched (no Set, no Remove).
-		var cache = CreateCache<Person>();
-		var keyGen = CreateKeyGenerator<Person>();
-		var interceptor = new CacheInterceptor<Person, string>(cache, keyGen, p => p.Id);
+	private sealed class UnknownKindEntityManager : EntityManager<Person, string> {
+		public UnknownKindEntityManager(IRepository<Person, string> repo, IEntityCache<Person> cache, IServiceProvider services)
+			: base(repo, cache: cache, services: services) { }
 
-		var person = CreatePerson("1");
-		var context = new EntityOperationContext<Person, string>(
-			(EntityOperationKind)999, person, original: null, "1",
-			actor: null, DateTimeOffset.UtcNow, CancellationToken.None);
-
-		await interceptor.PostWriteAsync(context, OperationResult.Success);
-
-		await cache.DidNotReceive().SetAsync(Arg.Any<string[]>(), Arg.Any<Person>(), Arg.Any<CancellationToken>());
-		await cache.DidNotReceive().RemoveAsync(Arg.Any<string[]>(), Arg.Any<CancellationToken>());
-	}
-
-	[Fact]
-	public async Task Should_ReCacheEntity_When_PostWriteKindIsRestore_InvokedDirectly() {
-		// Direct coverage of the Restore branch of the switch (Create/Update/Restore
-		// all share the SetAsync branch).
-		var cache = CreateCache<SoftDeletablePerson>();
-		var keyGen = CreateKeyGenerator<SoftDeletablePerson>();
-		var interceptor = new CacheInterceptor<SoftDeletablePerson, string>(cache, keyGen, p => p.Id);
-
-		var person = CreateSoftPerson("1");
-		var context = new EntityOperationContext<SoftDeletablePerson, string>(
-			EntityOperationKind.Restore, person, original: person, "1",
-			actor: null, DateTimeOffset.UtcNow, CancellationToken.None);
-
-		await interceptor.PostWriteAsync(context, OperationResult.Success);
-
-		await cache.Received().SetAsync(
-			Arg.Any<string[]>(),
-			Arg.Is<SoftDeletablePerson>(p => p.Id == "1"),
-			Arg.Any<CancellationToken>());
-	}
-
-	[Fact]
-	public async Task Should_EvictEntity_When_PostWriteKindIsHardDelete_InvokedDirectly() {
-		var cache = CreateCache<Person>();
-		var keyGen = CreateKeyGenerator<Person>();
-		var interceptor = new CacheInterceptor<Person, string>(cache, keyGen, p => p.Id);
-
-		var person = CreatePerson("1");
-		var context = new EntityOperationContext<Person, string>(
-			EntityOperationKind.HardDelete, person, original: person, "1",
-			actor: null, DateTimeOffset.UtcNow, CancellationToken.None);
-
-		await interceptor.PostWriteAsync(context, OperationResult.Success);
-
-		await cache.Received().RemoveAsync(Arg.Any<string[]>(), Arg.Any<CancellationToken>());
-		await cache.DidNotReceive().SetAsync(Arg.Any<string[]>(), Arg.Any<Person>(), Arg.Any<CancellationToken>());
-	}
-
-	[Fact]
-	public async Task Should_ReCacheSoftDeletable_When_PostWriteKindIsRemove_InvokedDirectly() {
-		var cache = CreateCache<SoftDeletablePerson>();
-		var keyGen = CreateKeyGenerator<SoftDeletablePerson>();
-		var interceptor = new CacheInterceptor<SoftDeletablePerson, string>(cache, keyGen, p => p.Id);
-
-		var person = CreateSoftPerson("1");
-		var context = new EntityOperationContext<SoftDeletablePerson, string>(
-			EntityOperationKind.Remove, person, original: person, "1",
-			actor: null, DateTimeOffset.UtcNow, CancellationToken.None);
-
-		await interceptor.PostWriteAsync(context, OperationResult.Success);
-
-		await cache.Received().SetAsync(Arg.Any<string[]>(), Arg.Any<SoftDeletablePerson>(), Arg.Any<CancellationToken>());
-		await cache.DidNotReceive().RemoveAsync(Arg.Any<string[]>(), Arg.Any<CancellationToken>());
-	}
-
-	[Fact]
-	public async Task Should_EvictNonSoftDeletable_When_PostWriteKindIsRemove_InvokedDirectly() {
-		var cache = CreateCache<Person>();
-		var keyGen = CreateKeyGenerator<Person>();
-		var interceptor = new CacheInterceptor<Person, string>(cache, keyGen, p => p.Id);
-
-		var person = CreatePerson("1");
-		var context = new EntityOperationContext<Person, string>(
-			EntityOperationKind.Remove, person, original: person, "1",
-			actor: null, DateTimeOffset.UtcNow, CancellationToken.None);
-
-		await interceptor.PostWriteAsync(context, OperationResult.Success);
-
-		await cache.Received().RemoveAsync(Arg.Any<string[]>(), Arg.Any<CancellationToken>());
-		await cache.DidNotReceive().SetAsync(Arg.Any<string[]>(), Arg.Any<Person>(), Arg.Any<CancellationToken>());
-	}
-
-	[Fact]
-	public async Task Should_SkipCacheSet_When_KeyGeneratorReturnsEmptyKeys_InvokedDirectly() {
-		// The interceptor's SetToCacheAsync early-returns when the key generator
-		// yields an empty array of keys (the entity cannot be addressed in the cache).
-		var cache = CreateCache<Person>();
-		var keyGen = Substitute.For<IEntityCacheKeyGenerator<Person>>();
-		keyGen.GenerateAllKeys(Arg.Any<Person>()).Returns(Array.Empty<string>());
-		var interceptor = new CacheInterceptor<Person, string>(cache, keyGen, p => p.Id);
-
-		var person = CreatePerson("1");
-		var context = new EntityOperationContext<Person, string>(
-			EntityOperationKind.Create, person, original: null, "1",
-			actor: null, DateTimeOffset.UtcNow, CancellationToken.None);
-
-		await interceptor.PostWriteAsync(context, OperationResult.Success);
-
-		await cache.DidNotReceive().SetAsync(Arg.Any<string[]>(), Arg.Any<Person>(), Arg.Any<CancellationToken>());
-	}
-
-	[Fact]
-	public async Task Should_LogAndContinue_When_CacheSetThrows_InvokedDirectly() {
-		// Direct coverage of the catch block in SetToCacheAsync: a cache failure
-		// is logged and swallowed, PostWriteAsync completes without throwing.
-		var cache = CreateCache<Person>();
-		cache.SetAsync(Arg.Any<string[]>(), Arg.Any<Person>(), Arg.Any<CancellationToken>())
-			.Throws(new InvalidOperationException("cache down"));
-		var interceptor = new CacheInterceptor<Person, string>(cache, CreateKeyGenerator<Person>(), p => p.Id);
-
-		var person = CreatePerson("1");
-		var context = new EntityOperationContext<Person, string>(
-			EntityOperationKind.Create, person, original: null, "1",
-			actor: null, DateTimeOffset.UtcNow, CancellationToken.None);
-
-		await interceptor.PostWriteAsync(context, OperationResult.Success);
-	}
-
-	[Fact]
-	public async Task Should_LogAndContinue_When_CacheEvictionThrows_InvokedDirectly() {
-		// Direct coverage of the catch block in EvictAsync: a cache failure
-		// is logged and swallowed, PostWriteAsync completes without throwing.
-		var cache = CreateCache<Person>();
-		cache.RemoveAsync(Arg.Any<string[]>(), Arg.Any<CancellationToken>())
-			.Throws(new InvalidOperationException("cache down"));
-		var interceptor = new CacheInterceptor<Person, string>(cache, CreateKeyGenerator<Person>(), p => p.Id);
-
-		var person = CreatePerson("1");
-		var context = new EntityOperationContext<Person, string>(
-			EntityOperationKind.HardDelete, person, original: person, "1",
-			actor: null, DateTimeOffset.UtcNow, CancellationToken.None);
-
-		await interceptor.PostWriteAsync(context, OperationResult.Success);
-	}
-
-	[Fact]
-	public void Should_Throw_When_CacheInterceptorConstructedWithNullCache() {
-		// Constructor guard: the cache dependency is required (the interceptor is
-		// only constructed when an IEntityCache<TEntity> is registered).
-		Assert.Throws<ArgumentNullException>(() =>
-			new CacheInterceptor<Person, string>(cache: null!, keyGenerator: null, p => p.Id));
-	}
-
-	[Fact]
-	public void Should_Throw_When_CacheInterceptorConstructedWithNullKeyGetter() {
-		Assert.Throws<ArgumentNullException>(() =>
-			new CacheInterceptor<Person, string>(CreateCache<Person>(), null, getEntityKey: null!));
+		protected override IEntityOperationContext<Person, string> CreateOperationContext(
+			EntityOperationKind kind, Person entity, Person? original, CancellationToken cancellationToken)
+			=> new EntityOperationContext<Person, string>(
+				(EntityOperationKind)999, entity, original, "1", actor: null, DateTimeOffset.UtcNow, cancellationToken);
 	}
 }

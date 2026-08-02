@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Builtin `OnHooksEntityInterceptor` wraps the existing `protected virtual On*Async` hooks and is always appended last, so subclass overrides keep working and user interceptors run before timestamp / soft-delete stamping.
   - `RemoveRangeAsync` and `AddRangeAsync` now flow through the pipeline (one context per entity, mirroring the per-entity `On*Async` behavior).
   - See [Operation Pipeline](docs/entity-manager/operation-pipeline.md).
+- **Builtin `CacheInterceptor`** — the entity cache is now aligned to the operation pipeline, replacing the former inline `SetToCacheAsync` / `EvictAsync` helpers duplicated across the write methods of `EntityManager`.
+  - `Create`, `Update`, and `Restore` re-cache the written entity; `Remove` re-caches soft-deletable entities and evicts non-soft-deletable ones; `HardDelete` evicts.
+  - The interceptor is only appended to the chain when an `IEntityCache<TEntity>` is registered, making the cache concern removable for tests or custom cache strategies without subclassing the manager.
+  - The private `SetToCacheAsync` / `EvictAsync` helpers and their inline call sites are removed from `EntityManager`; cache behavior is preserved by default through the interceptor.
+  - No change to `IEntityCache<TEntity>`, `IEntityCacheKeyGenerator<TEntity>`, or any `Kista.Manager.*` cache extension package — they register `IEntityCache<TEntity>`, the interceptor consumes it.
+  - `FindAsync`'s read-through `GetOrSetByKeyAsync` stays inline — read-path caching is unchanged.
 - **`UsingManager<TManager>()`** on `EntityManagerBuilder` — registers a custom `EntityManager` subclass against the entity / key types inferred from the manager type, replacing the obsolete `AddEntityManager<TManager>()` extension.
 - **`RegisterAdditionalContextTypes()`** on `MongoRepositoryBuilder` — preserves tenant context type registrations (`IMongoDbTenantContext`, `MongoDbContext`, `MongoDbTenantContext`) previously handled by the obsolete `AddMongoDbContext`.
 - **`Kista.SampleApp.OperationPipeline`** sample app — ASP.NET Core reference demonstrating `AuditInterceptor` and `BusinessHoursInterceptor` (short-circuit) wired through `WithInterceptor<T>()`. See [Sample Application](docs/sample-app.md).
@@ -44,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Kista.SampleApp.OperationPipeline` joins the samples solution alongside `Kista.SampleApp`, `Kista.SampleApp.Owners`, and `Kista.SampleApp.SoftDelete`.
 - Sonar code-smell cleanup (43 PR code smells cleared) and new-code duplication reduced below 3%.
 - Test interceptor helpers deduplicated across the operation-pipeline test suite.
+- **`RemoveRangeAsync` cache behavior aligned with `RemoveAsync`**: soft-deletable entities in a range Remove are now re-cached instead of evicted (the builtin `CacheInterceptor` handles each entity in the batch per the same `ISoftDeletable` rule as the single `RemoveAsync`). Non-soft-deletable entities in a range Remove continue to be evicted.
 
 ### Fixed
 

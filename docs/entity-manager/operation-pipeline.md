@@ -95,6 +95,39 @@ A builtin `OnHooksEntityInterceptor` wraps these hooks and is **always appended 
 - User interceptors run **before** the framework's timestamp/soft-delete stamping, so they can observe or transform the entity before stamping.
 - The pipeline and the hooks coexist cleanly.
 
+## Builtin `CacheInterceptor`
+
+The cache concern is aligned to the pipeline through a builtin `CacheInterceptor<TEntity, TKey>` that replaces the former inline `SetToCacheAsync` / `EvictAsync` glue duplicated across the write methods of the manager.
+
+### When is it active?
+
+The interceptor is **only appended to the chain when an `IEntityCache<TEntity>` is registered** in the dependency injection container. Not registering a cache means no cache side effects — the cache concern is removable for tests or custom cache strategies, without subclassing the manager.
+
+It runs **after** the `OnHooksEntityInterceptor`, so the cache sees the entity as persisted (with timestamp / soft-delete stamping already applied). `PreWriteAsync` never short-circuits the chain: the cache is a write-path concern that fires only after a successful write.
+
+### What does it do in `PostWriteAsync`?
+
+| Operation kind | Cache action |
+|----------------|--------------|
+| `Create`, `Update`, `Restore` | Re-cache the written entity (`IEntityCache<T>.SetAsync`) |
+| `Remove` (entity implements `ISoftDeletable`) | Re-cache the soft-deleted entity (`SetAsync`) |
+| `Remove` (entity does not implement `ISoftDeletable`) | Evict the entity (`IEntityCache<T>.RemoveAsync`) |
+| `HardDelete` | Evict the entity (`RemoveAsync`) |
+
+The action is only taken when the operation **succeeded**: a not-changed or failed result leaves the cache untouched, matching the former inline behavior that fired only after a successful repository write. Cache keys are generated through `IEntityCacheKeyGenerator<TEntity>` resolved from DI — when no generator is registered (or it returns an empty array of keys), the entity is not cached.
+
+### Failure resilience
+
+Failures in the cache are logged and swallowed, so a cache outage never propagates to the caller of the write operation. This preserves the behavior of the former inline helpers.
+
+### Behavior change in `RemoveRangeAsync`
+
+Before the alignment, `RemoveRangeAsync` always evicted every entity in the batch, even `ISoftDeletable` ones — inconsistent with `RemoveAsync`, which re-caches soft-deletable entities. The builtin `CacheInterceptor` now handles the batch per entity, so `RemoveRangeAsync` is **aligned with `RemoveAsync`**: soft-deletable entities in a range Remove are re-cached, while non-soft-deletable entities are evicted.
+
+### Read-through cache is unchanged
+
+`FindAsync`'s read-through `GetOrSetByKeyAsync` stays inline — read-path caching is out of scope for this feature.
+
 ## Short-circuit example
 
 An interceptor that rejects writes outside business hours:

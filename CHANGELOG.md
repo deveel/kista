@@ -9,6 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Builtin `CacheInterceptor<TEntity, TKey>`** — the entity cache is aligned to the operation pipeline, replacing the former inline `SetToCacheAsync` / `EvictAsync` helpers duplicated across the write methods of `EntityManager` with an interceptor that runs in `PostWriteAsync`.
+  - `Create`, `Update`, and `Restore` re-cache the written entity; `Remove` re-caches soft-deletable entities and evicts non-soft-deletable ones; `HardDelete` evicts; cache failures are logged and swallowed.
+  - The interceptor is appended to the chain only when an `IEntityCache<TEntity>` is registered, so the cache concern is removable for tests or custom cache strategies without subclassing the manager.
+  - The private `SetToCacheAsync` / `EvictAsync` helpers and their nine inline call sites across the write methods are removed; `GenerateCacheKeys` / `GenerateCacheKey` are kept as protected extension points used by `FindAsync`'s read-through path (unchanged).
+  - No change to `IEntityCache<TEntity>`, `IEntityCacheKeyGenerator<TEntity>`, or any `Kista.Manager.*` cache backend package — only the call site moves from inline helpers to `PostWriteAsync`.
+  - See [Builtin `CacheInterceptor`](docs/entity-manager/operation-pipeline.md#builtin-cacheinterceptor).
+- **`Migrating from 1.7.3`** guide — covers the `RemoveRangeAsync` cache-behavior change and the removal of the inline `SetToCacheAsync` / `EvictAsync` helpers. See [Migrating from 1.7.3](docs/migrating-from-1.7.3.md).
+
+### Changed
+
+- **`RemoveRangeAsync` cache behavior aligned with `RemoveAsync`**: soft-deletable entities in a range Remove are now re-cached (the cached entry is refreshed with the soft-delete stamp applied) instead of evicted, matching the single `RemoveAsync`; non-soft-deletable entities in a range Remove continue to be evicted.
+
+### Fixed
+
+- None.
+
+### Chores
+
+- Bump `@docusaurus/*` from 3.10.1 to 3.10.2 and override 11 transitive vulnerable dependencies in `website/package-lock.json` (7 high, 3 medium, 1 low — `brace-expansion`, `body-parser`, `js-yaml`, `webpack-dev-server`, `shell-quote`, `fast-uri`, `svgo`); `npm audit` reports 0 vulnerabilities.
+
+## [1.7.3] - 2026-07-21
+
+### Added
+
 - **Extensible Operation Pipeline on `EntityManager`** — every write operation (`AddAsync`, `AddRangeAsync`, `UpdateAsync`, `RemoveAsync`, `RemoveRangeAsync`, `RestoreAsync`, `HardDeleteAsync`, `HardDeleteRangeAsync`) now runs through an ordered chain of interceptors that can observe, transform, or short-circuit each write before it reaches the repository, and react to it after it succeeds.
   - `IEntityManagerInterceptor<TEntity, TKey>` (and single-key `IEntityManagerInterceptor<TEntity>`) with `PreWriteAsync` / `PostWriteAsync`.
   - `IEntityOperationContext<TEntity, TKey>` carrying operation kind, mutable entity, pre-image, key, actor, timestamp, cancellation token, and a per-operation `Items` bag.
@@ -18,12 +42,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Builtin `OnHooksEntityInterceptor` wraps the existing `protected virtual On*Async` hooks and is always appended last, so subclass overrides keep working and user interceptors run before timestamp / soft-delete stamping.
   - `RemoveRangeAsync` and `AddRangeAsync` now flow through the pipeline (one context per entity, mirroring the per-entity `On*Async` behavior).
   - See [Operation Pipeline](docs/entity-manager/operation-pipeline.md).
-- **Builtin `CacheInterceptor`** — the entity cache is now aligned to the operation pipeline, replacing the former inline `SetToCacheAsync` / `EvictAsync` helpers duplicated across the write methods of `EntityManager`.
-  - `Create`, `Update`, and `Restore` re-cache the written entity; `Remove` re-caches soft-deletable entities and evicts non-soft-deletable ones; `HardDelete` evicts.
-  - The interceptor is only appended to the chain when an `IEntityCache<TEntity>` is registered, making the cache concern removable for tests or custom cache strategies without subclassing the manager.
-  - The private `SetToCacheAsync` / `EvictAsync` helpers and their inline call sites are removed from `EntityManager`; cache behavior is preserved by default through the interceptor.
-  - No change to `IEntityCache<TEntity>`, `IEntityCacheKeyGenerator<TEntity>`, or any `Kista.Manager.*` cache extension package — they register `IEntityCache<TEntity>`, the interceptor consumes it.
-  - `FindAsync`'s read-through `GetOrSetByKeyAsync` stays inline — read-path caching is unchanged.
 - **`UsingManager<TManager>()`** on `EntityManagerBuilder` — registers a custom `EntityManager` subclass against the entity / key types inferred from the manager type, replacing the obsolete `AddEntityManager<TManager>()` extension.
 - **`RegisterAdditionalContextTypes()`** on `MongoRepositoryBuilder` — preserves tenant context type registrations (`IMongoDbTenantContext`, `MongoDbContext`, `MongoDbTenantContext`) previously handled by the obsolete `AddMongoDbContext`.
 - **`Kista.SampleApp.OperationPipeline`** sample app — ASP.NET Core reference demonstrating `AuditInterceptor` and `BusinessHoursInterceptor` (short-circuit) wired through `WithInterceptor<T>()`. See [Sample Application](docs/sample-app.md).
@@ -50,7 +68,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Kista.SampleApp.OperationPipeline` joins the samples solution alongside `Kista.SampleApp`, `Kista.SampleApp.Owners`, and `Kista.SampleApp.SoftDelete`.
 - Sonar code-smell cleanup (43 PR code smells cleared) and new-code duplication reduced below 3%.
 - Test interceptor helpers deduplicated across the operation-pipeline test suite.
-- **`RemoveRangeAsync` cache behavior aligned with `RemoveAsync`**: soft-deletable entities in a range Remove are now re-cached instead of evicted (the builtin `CacheInterceptor` handles each entity in the batch per the same `ISoftDeletable` rule as the single `RemoveAsync`). Non-soft-deletable entities in a range Remove continue to be evicted.
 
 ### Fixed
 

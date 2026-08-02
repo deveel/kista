@@ -155,6 +155,16 @@ namespace Kista {
 		private OnHooksEntityInterceptor? _hooksInterceptor;
 
 		/// <summary>
+		/// Gets the builtin interceptor that aligns the entity cache
+		/// to the operation pipeline, re-caching or evicting the
+		/// written entity in <c>PostWriteAsync</c>. This interceptor is
+		/// only appended to the chain when an
+		/// <see cref="IEntityCache{TEntity}"/> is registered, making the
+		/// cache concern removable for tests or custom cache strategies.
+		/// </summary>
+		private CacheInterceptor<TEntity, TKey>? _cacheInterceptor;
+
+		/// <summary>
 		/// Resolves the user-registered interceptors for the current
 		/// entity and key types from DI (excluding the builtin
 		/// <see cref="OnHooksEntityInterceptor"/>).
@@ -172,13 +182,18 @@ namespace Kista {
 		/// and key types: user-registered interceptors (in registration
 		/// order) followed by the builtin
 		/// <see cref="OnHooksEntityInterceptor"/> that wraps the
-		/// <c>On*Async</c> hooks (always appended last).
+		/// <c>On*Async</c> hooks (always appended last), and finally by
+		/// the builtin <see cref="CacheInterceptor{TEntity, TKey}"/> when
+		/// an <see cref="IEntityCache{TEntity}"/> is registered.
 		/// </summary>
 		/// <remarks>
 		/// <para>
 		/// When no interceptor is registered in DI, only the builtin
 		/// hooks interceptor is returned, preserving the behavior of
-		/// the <c>On*Async</c> hooks.
+		/// the <c>On*Async</c> hooks. The cache interceptor is only
+		/// appended when an <see cref="IEntityCache{TEntity}"/> is
+		/// available, so the cache concern is removable by not
+		/// registering a cache in the dependency injection container.
 		/// </para>
 		/// <para>
 		/// The single-key <see cref="EntityManager{TEntity}"/> overrides
@@ -191,7 +206,15 @@ namespace Kista {
 		protected IEnumerable<IEntityManagerInterceptor<TEntity, TKey>> GetInterceptors() {
 			_hooksInterceptor ??= new OnHooksEntityInterceptor(this);
 
-			return GetUserInterceptors().Append(_hooksInterceptor);
+			var chain = GetUserInterceptors().Append(_hooksInterceptor);
+
+			if (EntityCache != null) {
+				_cacheInterceptor ??= new CacheInterceptor<TEntity, TKey>(
+					EntityCache, EntityCacheKeyGenerator, GetEntityKey, Logger);
+				chain = chain.Append(_cacheInterceptor);
+			}
+
+			return chain;
 		}
 
 		/// <summary>
@@ -784,31 +807,6 @@ namespace Kista {
 			return generator.GenerateAllKeys(entity);
 		}
 
-		private async ValueTask SetToCacheAsync(TEntity entity, CancellationToken cancellationToken) {
-			if (EntityCache == null)
-				return;
-
-			try {
-				// optimize this
-				var keys = GenerateCacheKeys(entity);
-				await EntityCache.SetAsync(keys, entity, cancellationToken);
-			} catch (Exception ex) {
-				Logger.LogEntityNotCached(ex, typeof(TEntity), GetEntityKey(entity));
-			}
-		}
-
-		private async ValueTask EvictAsync(TEntity entity, CancellationToken cancellationToken) {
-			if (EntityCache == null)
-				return;
-
-			try {
-				var keys = GenerateCacheKeys(entity);
-				await EntityCache.RemoveAsync(keys, cancellationToken);
-			} catch (Exception ex) {
-				Logger.LogEntityNotEvicted(ex, typeof(TEntity), GetEntityKey(entity));
-			}
-		}
-
 		/// <summary>
 		/// Attempts to get the entity with the given entity key from the cache,
 		/// and eventually uses the given factory to create the entity
@@ -926,8 +924,6 @@ namespace Kista {
 
 				Logger.LogEntityAdded(GetEntityKey(entity)!);
 
-				await SetToCacheAsync(entity, token);
-
 				var result = Success();
 				await InvokePostWriteAsync(context, result);
 
@@ -998,7 +994,6 @@ namespace Kista {
 
 				var success = Success();
 				foreach (var context in contexts) {
-					await SetToCacheAsync(context.Entity, token);
 					await InvokePostWriteAsync(context, success);
 				}
 
@@ -1157,8 +1152,6 @@ namespace Kista {
 
 				Logger.LogEntityUpdated(entityKey);
 
-				await SetToCacheAsync(entity, token);
-
 				var result = Success();
 				await InvokePostWriteAsync(context, result);
 
@@ -1241,14 +1234,11 @@ namespace Kista {
 				}
 
 				Logger.LogEntityUpdated(entityKey);
-				await SetToCacheAsync(found, token);
 			} else {
 				if (!await Repository.RemoveAsync(found, token)) {
 					Logger.LogEntityNotRemoved(typeof(TEntity), entityKey);
 					return NotChanged();
 				}
-
-				await EvictAsync(found, token);
 			}
 
 			var result = Success();
@@ -1300,7 +1290,6 @@ namespace Kista {
 
 				var success = Success();
 				foreach (var context in contexts) {
-					await EvictAsync(context.Entity, token);
 					await InvokePostWriteAsync(context, success);
 				}
 
@@ -1374,7 +1363,6 @@ namespace Kista {
 			}
 
 			Logger.LogEntityUpdated(entityKey);
-			await SetToCacheAsync(deleted, token);
 
 			var result = Success();
 			await InvokePostWriteAsync(context, result);
@@ -1442,8 +1430,6 @@ namespace Kista {
 				return NotChanged();
 			}
 
-			await EvictAsync(found, token);
-
 			var result = Success();
 			await InvokePostWriteAsync(context, result);
 
@@ -1494,7 +1480,6 @@ namespace Kista {
 
 				var success = Success();
 				foreach (var context in contexts) {
-					await EvictAsync(context.Entity, token);
 					await InvokePostWriteAsync(context, success);
 				}
 

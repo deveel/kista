@@ -528,7 +528,7 @@ Cache warming and eviction are hardwired into `EntityManager` as private `SetToC
 - Existing `Kista.Manager.EasyCaching` / `MemoryCache` / `DistributedCache` / `FusionCache` packages keep working unchanged — they register `IEntityCache<TEntity>`, the interceptor calls it
 - The same pipeline serves v1.9.0 audit trail and OpenTelemetry — no second extension point to invent
 
-**Status:** 🔲 Planned for v1.7.0. Depends on the Extensible Operation Pipeline feature.
+**Status:** ✅ Completed. See [Operation Pipeline documentation](docs/entity-manager/operation-pipeline.md#builtin-cacheinterceptor).
 
 ---
 

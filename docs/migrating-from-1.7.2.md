@@ -192,9 +192,22 @@ If you previously subclassed `EntityManager` to add cross-cutting concerns (audi
 
 See [Operation Pipeline](entity-manager/operation-pipeline.md) for the full contract, registration, and short-circuit examples.
 
+## Cache alignment to the operation pipeline
+
+The entity cache is now aligned to the operation pipeline through a builtin `CacheInterceptor` (see [Builtin `CacheInterceptor`](entity-manager/operation-pipeline.md#builtin-cacheinterceptor)). This is a non-breaking change for the vast majority of consumers: the cache backend packages (`Kista.Manager.EasyCaching`, `MemoryCache`, `DistributedCache`, `FusionCache`) register `IEntityCache<TEntity>` unchanged, and the interceptor consumes it — only the call site moves from inline `SetToCacheAsync` / `EvictAsync` helpers (now removed from `EntityManager`) to `PostWriteAsync`.
+
+### Behavior change: `RemoveRangeAsync` and soft-deletable entities
+
+Before this release, `RemoveRangeAsync` **always evicted** every entity in the batch from the cache, even `ISoftDeletable` ones — inconsistent with `RemoveAsync`, which re-caches soft-deletable entities (the soft-deleted row still exists in the repository). The builtin `CacheInterceptor` now handles each entity in the batch per the same `ISoftDeletable` rule as the single `RemoveAsync`:
+
+- **Soft-deletable entities** in a range Remove are now **re-cached** (the cached entry is refreshed with the soft-delete stamp applied), matching `RemoveAsync`.
+- **Non-soft-deletable entities** in a range Remove continue to be **evicted**, matching `RemoveAsync` and `HardDeleteAsync`.
+
+If you relied on the old per-entity eviction of soft-deletable entities in `RemoveRangeAsync`, register a custom interceptor that calls `IEntityCache<TEntity>.RemoveAsync` in `PostWriteAsync` for `EntityOperationKind.Remove` on `ISoftDeletable` entities, or do not register a cache.
+
 ## Reference
 
-- [Operation Pipeline](entity-manager/operation-pipeline.md) — the new interceptor chain on `EntityManager`
+- [Operation Pipeline](entity-manager/operation-pipeline.md) — the new interceptor chain on `EntityManager` (including the builtin `CacheInterceptor`)
 - [The Entity Manager](entity-manager/) — registration, validation, caching, HTTP request cancellation
 - [Migrating from 1.7](migrating-from-1.7.md) — the prior 1.7.0 → 1.7.1 migration (`IQueryableRepository` / `IPageableRepository` / `IFilterableRepository` removal)
 - [Repository Lifecycle](repository-lifecycle/) — the `IRepositoryLifecycleService` replacement for `IRepositoryController`

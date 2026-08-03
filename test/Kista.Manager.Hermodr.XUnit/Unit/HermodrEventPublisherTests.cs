@@ -11,6 +11,9 @@ namespace Kista;
 public class HermodrEventPublisherTests {
 	private readonly PersonFaker _faker = new();
 
+	private static readonly Uri ExpectedSource = new("kista://person");
+	private static readonly Uri SchemaBaseUri = new("https://schemas.example.com/");
+
 	private Person CreatePerson(string id = "1") {
 		var person = _faker.Generate();
 		person.Id = id;
@@ -54,7 +57,7 @@ public class HermodrEventPublisherTests {
 
 		var evt = Assert.Single(publishedEvents);
 		Assert.Equal("kista.entity.created", evt.Type);
-		Assert.Equal(new Uri("kista://person"), evt.Source);
+		Assert.Equal(ExpectedSource, evt.Source);
 		Assert.Equal("1", evt.Subject);
 		Assert.Equal("application/json", evt.DataContentType);
 		Assert.IsType<EntityCreatedData<Person>>(evt.Data);
@@ -137,7 +140,7 @@ public class HermodrEventPublisherTests {
 		var person = faker.Generate();
 		person.Id = "1";
 		await manager.AddAsync(person, TestContext.Current.CancellationToken);
-		publishedEvents.Clear();
+		publishedEvents.Clear(); // SONAR: S4158 — false positive: AddAsync populates the list via the AddTestChannel callback
 
 		await manager.RemoveAsync(person, TestContext.Current.CancellationToken);
 
@@ -177,7 +180,7 @@ public class HermodrEventPublisherTests {
 		person.Id = "1";
 		person.IsDeleted = true;
 		await manager.AddAsync(person, TestContext.Current.CancellationToken);
-		publishedEvents.Clear();
+		publishedEvents.Clear(); // SONAR: S4158 — false positive: AddAsync populates the list via the AddTestChannel callback
 
 		await manager.RestoreAsync(person, TestContext.Current.CancellationToken);
 
@@ -197,7 +200,7 @@ public class HermodrEventPublisherTests {
 		builder.AddTestChannel(e => publishedEvents.Add(e));
 
 		var options = new HermodrEventsOptions {
-			DataSchemaBaseUri = new Uri("https://schemas.example.com/")
+			DataSchemaBaseUri = SchemaBaseUri
 		};
 		services.AddSingleton(options);
 

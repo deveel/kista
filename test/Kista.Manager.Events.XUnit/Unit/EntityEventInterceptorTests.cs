@@ -93,7 +93,7 @@ public class EntityEventInterceptorTests {
 		Assert.Same(updated, updatedEvt.Entity);
 		Assert.Equal(EntityOperationKind.Update, updatedEvt.OperationKind);
 		Assert.NotNull(updatedEvt.Original);
-		Assert.Equal("Old", updatedEvt.Original!.FirstName);
+		Assert.Equal("Old", updatedEvt.Original.FirstName);
 		Assert.Equal("1", updatedEvt.Key);
 	}
 

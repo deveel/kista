@@ -31,7 +31,7 @@ public class InMemoryEntityEventPublisherTests {
 		var publisher = new InMemoryEntityEventPublisher<Person>();
 
 		await Assert.ThrowsAsync<ArgumentNullException>(() =>
-			publisher.PublishAsync(null!, TestContext.Current.CancellationToken).AsTask());
+			publisher.PublishAsync(null, TestContext.Current.CancellationToken).AsTask());
 	}
 
 	[Fact]

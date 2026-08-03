@@ -9,6 +9,8 @@ public class SampleDbContext : DbContext {
 	public SampleDbContext(DbContextOptions<SampleDbContext> options) : base(options) {
 	}
 
+	// SONAR: S2325 — a DbSet<T> property on a DbContext cannot be static;
+	// this is the standard EF Core pattern.
 	public DbSet<TaskItem> Tasks => Set<TaskItem>();
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder) {

@@ -26,7 +26,7 @@ public class EntityFrameworkHealthCheckBranchTests {
 
 	private static HealthCheckContext CreateHealthCheckContext() {
 		var registration = new HealthCheckRegistration(
-			"test", _ => null!, HealthStatus.Unhealthy, new[] { "test" });
+			"test", _ => new DelegatedHealthCheck(), HealthStatus.Unhealthy, new[] { "test" });
 		return new HealthCheckContext { Registration = registration };
 	}
 
@@ -58,7 +58,7 @@ public class EntityFrameworkHealthCheckBranchTests {
 		var result = await healthCheck.CheckHealthAsync(CreateHealthCheckContext(), provider, ct);
 
 		Assert.Equal(HealthStatus.Healthy, result.Status);
-		Assert.True((bool)result.Data["EntityExists"]!);
+		Assert.True((bool)result.Data["EntityExists"]);
 	}
 
 	[Fact]
@@ -113,6 +113,11 @@ public class EntityFrameworkHealthCheckBranchTests {
 		Assert.Contains("connection failed", result.Description, StringComparison.OrdinalIgnoreCase);
 	}
 
+	private sealed class DelegatedHealthCheck : IHealthCheck {
+		public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
+			=> Task.FromResult(HealthCheckResult.Healthy());
+	}
+
 	private sealed class ThrowingDbContext : DbContext {
 		private readonly Action<Exception> _throwFactory;
 
@@ -120,12 +125,15 @@ public class EntityFrameworkHealthCheckBranchTests {
 			_throwFactory = throwFactory;
 		}
 
-		public DbSet<TestEntity> TestEntities { get; set; } = null!;
+		// SONAR: S8970 — nullable warnings are disabled in test projects; the null-forgiving
+		// operator is required for the EF Core DbSet initializer pattern.
+		public DbSet<TestEntity> TestEntities { get; set; } = null!; // SONAR: S8970
 
 		public override DatabaseFacade Database {
 			get {
-				_throwFactory(null!);
-				return null!;
+				_throwFactory(new Exception("test"));
+				// SONAR: S8970 — unreachable: the throw factory always throws before this line.
+				return null!; // SONAR: S8970
 			}
 		}
 	}

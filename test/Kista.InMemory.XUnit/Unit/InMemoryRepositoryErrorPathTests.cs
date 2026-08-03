@@ -8,13 +8,15 @@ namespace Kista;
 [Trait("Layer", "InMemory")]
 [Trait("Feature", "InMemoryRepository")]
 public class InMemoryRepositoryErrorPathTests {
+	private const string MissingKey = "missing";
+
 	private readonly PersonFaker _faker = new();
 
 	[Fact]
 	public async Task Should_ReturnFalse_When_UpdatingEntityWithNonExistentKey() {
 		var repo = new InMemoryRepository<Person, string>();
 		var person = _faker.Generate();
-		person.Id = "missing";
+		person.Id = MissingKey;
 		var ct = TestContext.Current.CancellationToken;
 
 		var result = await repo.UpdateAsync(person, ct);
@@ -27,7 +29,7 @@ public class InMemoryRepositoryErrorPathTests {
 		var repo = new InMemoryRepository<Person, string>();
 		var ct = TestContext.Current.CancellationToken;
 
-		var result = await repo.FindOriginalAsync("missing", ct);
+		var result = await repo.FindOriginalAsync(MissingKey, ct);
 
 		Assert.Null(result);
 	}
@@ -36,7 +38,7 @@ public class InMemoryRepositoryErrorPathTests {
 	public async Task Should_ReturnFalse_When_HardDeleteEntityWithNonExistentKey() {
 		var repo = new InMemoryRepository<Person, string>();
 		var person = _faker.Generate();
-		person.Id = "missing";
+		person.Id = MissingKey;
 		var ct = TestContext.Current.CancellationToken;
 
 		var result = await repo.HardDeleteAsync(person, ct);
@@ -60,7 +62,7 @@ public class InMemoryRepositoryErrorPathTests {
 	public async Task Should_ReturnFalse_When_RemoveEntityWithNonExistentKey() {
 		var repo = new InMemoryRepository<Person, string>();
 		var person = _faker.Generate();
-		person.Id = "missing";
+		person.Id = MissingKey;
 		var ct = TestContext.Current.CancellationToken;
 
 		var result = await repo.RemoveAsync(person, ct);

@@ -14,4 +14,4 @@ if (app.Environment.IsDevelopment()) {
 
 app.MapTaskEndpoints();
 
-app.Run();
+await app.RunAsync();

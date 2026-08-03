@@ -9,6 +9,8 @@ namespace Kista;
 public class HermodrEventsRegistrationTests {
 	private readonly PersonFaker _faker = new();
 
+	private static readonly Uri ExpectedSource = new("kista://person");
+
 	[Fact]
 	public async Task WithHermodrEvents_RegistersHermodrPublisherAndInterceptor() {
 		var services = new ServiceCollection();
@@ -37,7 +39,7 @@ public class HermodrEventsRegistrationTests {
 	public async Task WithHermodrEvents_PublishesCloudEventThroughHermodrPipeline() {
 		var services = new ServiceCollection();
 		services.AddLogging();
-		var builder = services.AddRepositoryContext()
+		services.AddRepositoryContext()
 			.AddRepository<InMemoryRepository<Person, string>>(repo => repo
 				.WithManagement(mgmt => mgmt
 					.WithHermodrEvents()))
@@ -59,7 +61,7 @@ public class HermodrEventsRegistrationTests {
 
 		var evt = Assert.Single(publishedEvents);
 		Assert.Equal("kista.entity.created", evt.Type);
-		Assert.Equal(new Uri("kista://person"), evt.Source);
+		Assert.Equal(ExpectedSource, evt.Source);
 	}
 
 	[Fact]

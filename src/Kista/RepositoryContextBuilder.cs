@@ -78,22 +78,13 @@ namespace Kista {
 		public Type GetEntityKeyType(Type entityType) {
 			ArgumentNullException.ThrowIfNull(entityType);
 
-			// SONAR: S3267 — the loop body has branching logic (IsGenericType check,
-			// GetGenericTypeDefinition comparison, and args[0] == entityType filter)
-			// that cannot be expressed as a simple Select projection.
-			foreach (var descriptor in _services) {
-				var serviceType = descriptor.ServiceType;
-				if (!serviceType.IsGenericType) continue;
-
-				var genericDef = serviceType.GetGenericTypeDefinition();
-				if (genericDef == typeof(IRepository<,>)) {
-					var args = serviceType.GetGenericArguments();
-					if (args[0] == entityType)
-						return args[1];
-				}
-			}
-
-			return typeof(object);
+			return _services
+				.Select(d => d.ServiceType)
+				.Where(st => st.IsGenericType && st.GetGenericTypeDefinition() == typeof(IRepository<,>))
+				.Select(st => st.GetGenericArguments())
+				.Where(args => args[0] == entityType)
+				.Select(args => args[1])
+				.FirstOrDefault() ?? typeof(object);
 		}
 
 		/// <summary>

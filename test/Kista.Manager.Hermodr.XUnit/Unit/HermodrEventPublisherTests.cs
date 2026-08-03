@@ -140,11 +140,11 @@ public class HermodrEventPublisherTests {
 		var person = faker.Generate();
 		person.Id = "1";
 		await manager.AddAsync(person, TestContext.Current.CancellationToken);
-		publishedEvents.Clear(); // SONAR: S4158 — false positive: AddAsync populates the list via the AddTestChannel callback
 
 		await manager.RemoveAsync(person, TestContext.Current.CancellationToken);
 
-		var evt = Assert.Single(publishedEvents);
+		Assert.Equal(2, publishedEvents.Count);
+		var evt = publishedEvents[1];
 		Assert.Equal("kista.entity.deleted", evt.Type);
 		Assert.Equal("Soft", (string?)evt["kistadeletekind"]);
 	}
@@ -180,11 +180,11 @@ public class HermodrEventPublisherTests {
 		person.Id = "1";
 		person.IsDeleted = true;
 		await manager.AddAsync(person, TestContext.Current.CancellationToken);
-		publishedEvents.Clear(); // SONAR: S4158 — false positive: AddAsync populates the list via the AddTestChannel callback
 
 		await manager.RestoreAsync(person, TestContext.Current.CancellationToken);
 
-		var evt = Assert.Single(publishedEvents);
+		Assert.Equal(2, publishedEvents.Count);
+		var evt = publishedEvents[1];
 		Assert.Equal("kista.entity.restored", evt.Type);
 		Assert.Equal("1", evt.Subject);
 		Assert.IsType<EntityRestoredData<SoftDeletablePerson>>(evt.Data);

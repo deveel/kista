@@ -125,15 +125,14 @@ public class EntityFrameworkHealthCheckBranchTests {
 			_throwFactory = throwFactory;
 		}
 
-		// SONAR: S8970 — nullable warnings are disabled in test projects; the null-forgiving
-		// operator is required for the EF Core DbSet initializer pattern.
-		public DbSet<TestEntity> TestEntities { get; set; } = null!; // SONAR: S8970
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor.
+		public DbSet<TestEntity> TestEntities { get; set; }
+#pragma warning restore CS8618
 
 		public override DatabaseFacade Database {
 			get {
 				_throwFactory(new Exception("test"));
-				// SONAR: S8970 — unreachable: the throw factory always throws before this line.
-				return null!; // SONAR: S8970
+				throw new NotSupportedException("Unreachable: the throw factory always throws before this line.");
 			}
 		}
 	}

@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Hermodr.TestPublisher" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Kista.Manager.Hermodr\Kista.Manager.Hermodr.csproj" />
+    <ProjectReference Include="..\Kista.Manager.XUnit\Kista.Manager.XUnit.csproj" />
+  </ItemGroup>
+
+</Project>

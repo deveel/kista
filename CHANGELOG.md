@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`Kista.Manager.Events`** — a new opt-in base package providing a framework-agnostic domain event model for `EntityManager`, surfacing every meaningful lifecycle change (create, update, delete, restore) as a strongly-typed event through the [Operation Pipeline](docs/entity-manager/operation-pipeline.md).
+  - `IEntityEventPublisher<TEntity>` abstraction and an `EntityEventData<TEntity>` base class with per-operation POCO subclasses — `EntityCreatedData<TEntity>`, `EntityUpdatedData<TEntity>` (carries the pre-image), `EntityDeletedData<TEntity>` (carries a `DeleteKind` `Soft`/`Hard` discriminator), and `EntityRestoredData<TEntity>`.
+  - A builtin `EntityEventInterceptor<TEntity, TKey>` that publishes through `IEntityEventPublisher<TEntity>` in `PostWriteAsync` after a successful write; `Remove` maps to `EntityDeletedData { Soft }` when the entity implements `ISoftDeletable`, `{ Hard }` otherwise; `HardDelete` always maps to `{ Hard }`.
+  - A default `InMemoryEntityEventPublisher<TEntity>` backed by an unbounded channel, with a `PublishedEvents` list for test assertions.
+  - `WithEntityEvents()` registration on `EntityManagerBuilder` and `RepositoryContextBuilder`, wiring the interceptor and the in-memory publisher (Scoped, mirroring `WithValidator`/`WithEasyCaching`).
+  - Publish failures are logged and swallowed, so an event outage never propagates to the caller of the write operation.
+  - See [Domain Events](docs/entity-manager/domain-events.md).
+- **`Kista.Manager.Hermodr`** — an adapter package that bridges `IEntityEventPublisher<TEntity>` with the [Hermodr](https://hermodr.deveel.org) CloudEvents framework.
+  - A `HermodrEventPublisher<TEntity>` maps the base POCO data to canonical CNCF CloudEvents (`kista.entity.created`, `kista.entity.updated`, `kista.entity.deleted`, `kista.entity.restored`) and dispatches them through Hermodr's `IEventPublisher`; the `DeleteKind` is carried as a `kistadeletekind` extension attribute.
+  - `WithHermodrEvents()` registration (mirroring `WithEasyCaching`) that calls `AddEventPublisher()` from `Hermodr.Publisher`, registers `HermodrEventPublisher` as `IEntityEventPublisher`, and registers `EntityEventInterceptor`.
+  - Pluggable transports through Hermodr channels (Azure Service Bus, RabbitMQ, MassTransit, Webhook) with zero application code change; the transactional outbox is deferred to the v1.9.0 audit-trail milestone.
+  - See [Domain Events](docs/entity-manager/domain-events.md).
+- **`GetEntityKeyType(Type)`** on `RepositoryContextBuilder` — resolves the key type registered for a given entity type by scanning the registered `IRepository<,>` services, enabling cross-cutting registrations (such as `WithEntityEvents()`) to be applied to all tracked entity types.
 - **Builtin `CacheInterceptor<TEntity, TKey>`** — the entity cache is aligned to the operation pipeline, replacing the former inline `SetToCacheAsync` / `EvictAsync` helpers duplicated across the write methods of `EntityManager` with an interceptor that runs in `PostWriteAsync`.
   - `Create`, `Update`, and `Restore` re-cache the written entity; `Remove` re-caches soft-deletable entities and evicts non-soft-deletable ones; `HardDelete` evicts; cache failures are logged and swallowed.
   - The interceptor is appended to the chain only when an `IEntityCache<TEntity>` is registered, so the cache concern is removable for tests or custom cache strategies without subclassing the manager.

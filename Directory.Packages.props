@@ -26,6 +26,11 @@
     <PackageVersion Include="EasyCaching.InMemory" Version="1.9.2" />
     <PackageVersion Include="ZiggyCreatures.FusionCache" Version="2.6.0" />
 
+    <!-- Hermodr CloudEvents framework -->
+    <PackageVersion Include="Hermodr.Publisher" Version="1.2.8" />
+    <PackageVersion Include="Hermodr.Subscriptions" Version="1.2.8" />
+    <PackageVersion Include="Hermodr.TestPublisher" Version="1.2.8" />
+
     <!-- DI / assembly scanning -->
     <PackageVersion Include="Scrutor" Version="5.1.1" />
 

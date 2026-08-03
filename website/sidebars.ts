@@ -25,6 +25,7 @@ const sidebars: SidebarsConfig = {
         'entity-manager/http-request-cancellation',
         'entity-manager/caching-entities',
         'entity-manager/operation-pipeline',
+        'entity-manager/domain-events',
       ],
     },
     {

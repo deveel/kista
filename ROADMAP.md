@@ -500,7 +500,7 @@ Repository writes are fire-and-forget from the framework's perspective. Teams ne
 - Works with any in-process pub/sub: Hermodr.Subscriptions, a raw `IEventPublishChannel`, or a custom `IEntityEventPublisher` implementation
 - Every handler receives the same strongly-typed event regardless of which driver triggered it
 
-**Status:** 🔲 Planned for v1.7.0. Depends on the Extensible Operation Pipeline feature.
+**Status:** ✅ Completed. See [Domain Events documentation](docs/entity-manager/domain-events.md).
 
 ---
 

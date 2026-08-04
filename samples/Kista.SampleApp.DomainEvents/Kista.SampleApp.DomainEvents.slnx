@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Kista.SampleApp.DomainEvents/Kista.SampleApp.DomainEvents.csproj" />
+  </Folder>
+</Solution>

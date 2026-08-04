@@ -60,6 +60,34 @@ namespace Kista {
 		}
 
 		/// <summary>
+		/// Resolves the key type registered for the given entity type, by
+		/// scanning the service collection for an
+		/// <see cref="IRepository{TEntity, TKey}"/> registration matching
+		/// the entity. Returns <c>typeof(object)</c> when only a
+		/// single-key <see cref="IRepository{TEntity}"/> registration is
+		/// found, mirroring the default key type of
+		/// <see cref="EntityManager{TEntity}"/>.
+		/// </summary>
+		/// <param name="entityType">
+		/// The entity type to resolve the key type for.
+		/// </param>
+		/// <returns>
+		/// The key type registered for the entity, or <c>typeof(object)</c>
+		/// if no two-key repository is registered.
+		/// </returns>
+		public Type GetEntityKeyType(Type entityType) {
+			ArgumentNullException.ThrowIfNull(entityType);
+
+			return _services
+				.Select(d => d.ServiceType)
+				.Where(st => st.IsGenericType && st.GetGenericTypeDefinition() == typeof(IRepository<,>))
+				.Select(st => st.GetGenericArguments())
+				.Where(args => args[0] == entityType)
+				.Select(args => args[1])
+				.FirstOrDefault() ?? typeof(object);
+		}
+
+		/// <summary>
 		/// Resolves entity types from the service collection by scanning registered repository types.
 		/// </summary>
 		private void ResolveEntityTypes() {

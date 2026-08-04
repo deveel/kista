@@ -6,6 +6,7 @@ The `EntityManager<TEntity>` (and `EntityManager<TEntity, TKey>`) is an optional
 - **Caching** — frequently accessed entities can be served from a second-level cache.
 - **Timestamping** — entities implementing `IHaveTimeStamp` are automatically stamped on create/update.
 - **Operation pipeline** — every write operation runs through an extensible chain of interceptors for cross-cutting concerns (audit, events, tracing). See [Operation Pipeline](operation-pipeline.md).
+- **Domain events** — every lifecycle change (create, update, delete, restore) can be published as a strongly-typed event to downstream subscribers, with a CloudEvents-native adapter available out of the box. See [Domain Events](domain-events.md).
 - **Structured error handling** — operations return structured error results rather than throwing raw exceptions.
 - **Logging** — all operations are logged through the standard `ILogger` infrastructure.
 
@@ -19,6 +20,8 @@ The entity manager is packaged separately from the core repository:
 |---------|-------------|
 | `Kista.Manager` | Base manager, validation abstractions, error factories |
 | `Kista.Manager.EasyCaching` | Second-level caching via EasyCaching |
+| `Kista.Manager.Events` | Framework-agnostic domain event model and in-memory publisher |
+| `Kista.Manager.Hermodr` | Hermodr CloudEvents adapter for domain events |
 | `Kista.Manager.AspNetCore` | Automatic HTTP request cancellation for ASP.NET Core |
 | `Kista.Manager.DynamicLinq` | Dynamic LINQ query extensions for the manager |
 

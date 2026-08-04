@@ -29,14 +29,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - No change to `IEntityCache<TEntity>`, `IEntityCacheKeyGenerator<TEntity>`, or any `Kista.Manager.*` cache backend package — only the call site moves from inline helpers to `PostWriteAsync`.
   - See [Builtin `CacheInterceptor`](docs/entity-manager/operation-pipeline.md#builtin-cacheinterceptor).
 - **`Migrating from 1.7.3`** guide — covers the `RemoveRangeAsync` cache-behavior change and the removal of the inline `SetToCacheAsync` / `EvictAsync` helpers. See [Migrating from 1.7.3](docs/migrating-from-1.7.3.md).
+- **`KistaParsingConfig`** (`Kista.DynamicLinq`) — a hardened `ParsingConfig` that blocks the `new` operator (`DisallowNewKeyword = true`) and fully-qualified type casts (`SupportCastingToFullyQualifiedTypeAsString = false`), closing remote-code-execution vectors when Dynamic LINQ expression strings originate from untrusted input. See [Dynamic LINQ Security](docs/filtering/dynamic-linq-security.md).
+
+### Security
+
+- **[Breaking] `AddHttpUserAccessor<TKey>` default chain is now claim-only** (`Kista.Owners`) — the query-string (`?user_id=`) and route (`userId`) fallback strategies have been removed from the default registration to prevent owner-scope impersonation by unauthenticated clients. Consumers who need the old behavior must explicitly opt in via `AddHttpUserAccessor<TKey>(b => b.AddClaim().AddQueryString().AddRoute())`. The query-string and route strategies are client-controlled and must only be enabled behind a trusted gateway.
+- **[Breaking] Write paths verify ownership** (`Kista.Owners`) — `UpdateAsync`, `RemoveAsync`, and `RemoveRangeAsync` on `UserScopedRepositoryDecorator` now fetch the persisted entity and verify that its owner matches the current user before forwarding to the inner repository. An `UnauthorizedAccessException` is thrown on mismatch or when the entity cannot be found. Previously these methods forwarded directly with no owner check (IDOR on writes).
+- **[Breaking] `UserScopingOptions.ThrowWhenUserNotSet` defaults to `true`** (`Kista.Owners`) — the decorator now fails closed by default: when no user identity is resolvable, operations throw `InvalidOperationException` instead of silently returning empty results. The XML doc previously documented `true` as the default while the actual default was `false`; the code now matches the documentation. Set `ThrowWhenUserNotSet = false` to restore the fail-open behavior.
 
 ### Changed
 
 - **`RemoveRangeAsync` cache behavior aligned with `RemoveAsync`**: soft-deletable entities in a range Remove are now re-cached (the cached entry is refreshed with the soft-delete stamp applied) instead of evicted, matching the single `RemoveAsync`; non-soft-deletable entities in a range Remove continue to be evicted.
+- **`FilterExpression` and `DynamicLinqFilter` now use `KistaParsingConfig`** instead of `ParsingConfig.Default` — the `new` operator and fully-qualified type casts in expression strings are blocked. Legitimate filters (property access, comparisons, boolean logic) are unaffected.
 
 ### Fixed
 
-- None.
+- **`UserScopingOptions.ThrowWhenUserNotSet` XML doc corrected** — the documentation claimed the default was `true` while the actual default was `false`; the default is now `true` and the documentation is accurate.
 
 ### Chores
 

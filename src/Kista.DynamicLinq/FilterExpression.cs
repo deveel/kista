@@ -64,7 +64,7 @@ namespace Kista {
 		public static Expression<Func<T, bool>> AsLambda<T>(string paramName, string expression) {
 			try {
 				var paramExp = new[] { Expression.Parameter(typeof(T), paramName) };
-				var exp = DynamicExpressionParser.ParseLambda(ParsingConfig.Default, paramExp, typeof(bool), expression);
+				var exp = DynamicExpressionParser.ParseLambda(KistaParsingConfig.Instance, paramExp, typeof(bool), expression);
 
 				if (exp.ReturnType != typeof(bool))
 					throw new InvalidOperationException("The resulting expression is not a filter");
@@ -214,7 +214,7 @@ namespace Kista {
 					parameters[i] = Expression.Parameter(paramType, paramName);
 				}
 
-				var exp = DynamicExpressionParser.ParseLambda(ParsingConfig.Default, parameters, typeof(bool), expression);
+				var exp = DynamicExpressionParser.ParseLambda(KistaParsingConfig.Instance, parameters, typeof(bool), expression);
 
 				if (exp.ReturnType != typeof(bool))
 					throw new InvalidOperationException("The resulting expression is not a filter");

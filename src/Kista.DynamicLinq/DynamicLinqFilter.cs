@@ -31,6 +31,15 @@ namespace Kista {
 	/// For example: <c>"x.FirstName == \"John\" &amp;&amp; x.Age > 18"</c>.
 	/// </para>
 	/// <para>
+	/// <b>Security.</b> Kista parses expression strings with a hardened
+	/// <see cref="KistaParsingConfig"/> that blocks the <c>new</c> operator and
+	/// fully-qualified type casts. This is defense-in-depth, not a complete sandbox:
+	/// if the expression string originates from untrusted input (e.g. an API client),
+	/// you must additionally apply an application-level allow-list of permitted fields
+	/// and operators before constructing a <see cref="DynamicLinqFilter"/>. Never pass
+	/// raw client input as the expression string without validation.
+	/// </para>
+	/// <para>
 	/// When an <see cref="IExpressionCache"/> is provided via the constructor, the
 	/// <see cref="AsLambda{TEntity}"/> method will cache parsed expressions to avoid
 	/// re-parsing the same expression string on subsequent calls. This is particularly

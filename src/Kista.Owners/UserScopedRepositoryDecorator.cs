@@ -51,6 +51,7 @@ namespace Kista
 	{
 		private const string UserContextNotSetMessage = "User context is not set";
 		private const string InnerRepositoryNoFilterMessage = "The inner repository does not support filtering";
+		private const string OwnershipViolationMessage = "The entity does not belong to the current user";
 		private static readonly Lazy<PropertyInfo> _ownerProperty = new(DiscoverOwnerProperty);
 
 		private readonly IRepository<TEntity, TKey> _inner;
@@ -133,16 +134,36 @@ namespace Kista
 		}
 
 		/// <inheritdoc />
-		public ValueTask<bool> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
-			=> _inner.UpdateAsync(entity, cancellationToken);
+		public async ValueTask<bool> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default) {
+			System.ArgumentNullException.ThrowIfNull(entity);
+
+			var userId = ResolveUserOrThrow();
+			await VerifyOwnershipAsync(entity, userId, cancellationToken).ConfigureAwait(false);
+			return await _inner.UpdateAsync(entity, cancellationToken).ConfigureAwait(false);
+		}
 
 		/// <inheritdoc />
-		public ValueTask<bool> RemoveAsync(TEntity entity, CancellationToken cancellationToken = default)
-			=> _inner.RemoveAsync(entity, cancellationToken);
+		public async ValueTask<bool> RemoveAsync(TEntity entity, CancellationToken cancellationToken = default) {
+			System.ArgumentNullException.ThrowIfNull(entity);
+
+			var userId = ResolveUserOrThrow();
+			await VerifyOwnershipAsync(entity, userId, cancellationToken).ConfigureAwait(false);
+			return await _inner.RemoveAsync(entity, cancellationToken).ConfigureAwait(false);
+		}
 
 		/// <inheritdoc />
-		public ValueTask RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
-			=> _inner.RemoveRangeAsync(entities, cancellationToken);
+		public async ValueTask RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) {
+			System.ArgumentNullException.ThrowIfNull(entities);
+
+			var userId = ResolveUserOrThrow();
+			// Materialize once: we need to verify ownership of each entity before
+			// forwarding the range to the inner repository.
+			var list = entities as IList<TEntity> ?? entities.ToList();
+			foreach (var entity in list)
+				await VerifyOwnershipAsync(entity, userId, cancellationToken).ConfigureAwait(false);
+
+			await _inner.RemoveRangeAsync(list, cancellationToken).ConfigureAwait(false);
+		}
 
 		/// <inheritdoc />
 		public TKey? GetEntityKey(TEntity entity) => _inner.GetEntityKey(entity);
@@ -187,6 +208,50 @@ namespace Kista
 			=> ApplyOwnerFilterAndCallAsyncPage(request, r => _inner.GetPageAsync(r, cancellationToken));
 
 		// === Helpers ===
+
+		/// <summary>
+		/// Resolves the current user identifier, throwing when no user context is
+		/// available and <see cref="UserScopingOptions.ThrowWhenUserNotSet"/> is set.
+		/// </summary>
+		/// <returns>
+		/// The resolved user identifier, or <c>default(TUserKey)</c> when no user is
+		/// resolvable and <see cref="UserScopingOptions.ThrowWhenUserNotSet"/> is <c>false</c>.
+		/// </returns>
+		private TUserKey ResolveUserOrThrow()
+		{
+			var userId = _userAccessor.GetUserId();
+			if (EqualityComparer<TUserKey>.Default.Equals(userId, default))
+			{
+				if (Options.ThrowWhenUserNotSet)
+					throw new System.InvalidOperationException(UserContextNotSetMessage);
+			}
+			return userId!;
+		}
+
+		/// <summary>
+		/// Verifies that the given entity belongs to the current user by fetching the
+		/// persisted entity by its key and comparing the owner field. Throws an
+		/// <see cref="System.UnauthorizedAccessException"/> when the entity is not owned
+		/// by the current user, or when it cannot be found (defensive: treat unknown as
+		/// not owned).
+		/// </summary>
+		private async ValueTask VerifyOwnershipAsync(TEntity entity, TUserKey userId, CancellationToken cancellationToken)
+		{
+			if (EqualityComparer<TUserKey>.Default.Equals(userId, default))
+				return; // fail-open path: no user context, AllowOnlyIfConfigured handled by ResolveUserOrThrow
+
+			var key = _inner.GetEntityKey(entity);
+			if (key == null)
+				throw new System.UnauthorizedAccessException(OwnershipViolationMessage);
+
+			var persisted = await _inner.FindAsync(key, cancellationToken).ConfigureAwait(false);
+			if (persisted == null)
+				throw new System.UnauthorizedAccessException(OwnershipViolationMessage);
+
+			var persistedOwner = _ownerProperty.Value.GetValue(persisted);
+			if (persistedOwner == null || !Equals(userId, persistedOwner))
+				throw new System.UnauthorizedAccessException(OwnershipViolationMessage);
+		}
 
 		private ValueTask ApplyOwnerAndCallAsync(TEntity entity, Func<ValueTask> action)
 		{

@@ -32,13 +32,26 @@ builder.Services.AddUserAccessor<string>(b => {
 });
 ```
 
-**HTTP application with fallback chain:**
+**HTTP application (secure default — claim only):**
+
+```csharp
+builder.Services.AddHttpUserAccessor<string>();
+// Resolves exclusively from the "sub" claim of the authenticated ClaimsPrincipal.
+// Unauthenticated requests yield no user identity (fail-closed).
+```
+
+**HTTP application with explicit fallback chain (opt-in, advanced):**
+
+> **Security warning:** The query-string and route fallbacks are <b>client-controlled</b>.
+> Enabling them allows any caller to impersonate another user by appending
+> <c>?user_id=&lt;victim&gt;</c> or crafting a route. Only enable these strategies behind a
+> trusted gateway or an authorization layer that validates the resolved identity.
 
 ```csharp
 builder.Services.AddHttpUserAccessor<string>(b => {
     b.AddClaim("sub");              // Try JWT "sub" claim first
-    b.AddQueryString("user_id");    // Fallback to query string
-    b.AddRoute("userId");           // Fallback to route value
+    b.AddQueryString("user_id");    // Fallback to query string (UNSAFE without gateway)
+    b.AddRoute("userId");           // Fallback to route value   (UNSAFE without gateway)
 });
 ```
 

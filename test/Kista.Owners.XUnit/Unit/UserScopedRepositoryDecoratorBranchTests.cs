@@ -112,12 +112,25 @@ public class UserScopedRepositoryDecoratorBranchTests {
     }
 
     [Fact]
-    public async Task RemoveRangeAsync_PassesThroughToInnerRepository() {
+    public async Task RemoveRangeAsync_Throws_When_NoUserAndDefaultOptions() {
+        // After the C3 fix, ThrowWhenUserNotSet defaults to true (fail-closed).
         var inner = new NonRepositoryRepo();
         var entity = new StringEntity { Name = "X" };
         await inner.AddAsync(entity);
 
         var decorator = new UserScopedRepositoryDecorator<StringEntity, string, string>(inner, new NullUserAccessor());
+        await Assert.ThrowsAsync<InvalidOperationException>(() => decorator.RemoveRangeAsync(new[] { entity }).AsTask());
+    }
+
+    [Fact]
+    public async Task RemoveRangeAsync_PassesThrough_When_NoUserAndThrowDisabled() {
+        // When ThrowWhenUserNotSet is explicitly false, RemoveRange passes through (fail-open).
+        var inner = new NonRepositoryRepo();
+        var entity = new StringEntity { Name = "X" };
+        await inner.AddAsync(entity);
+
+        var decorator = new UserScopedRepositoryDecorator<StringEntity, string, string>(
+            inner, new NullUserAccessor(), new UserScopingOptions { ThrowWhenUserNotSet = false });
         await decorator.RemoveRangeAsync(new[] { entity });
 
         Assert.Null(await inner.FindAsync(entity.Id));

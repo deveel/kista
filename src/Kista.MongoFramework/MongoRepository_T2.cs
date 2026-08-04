@@ -672,41 +672,53 @@ namespace Kista {
 		/// A token used to cancel the operation.
 		/// </param>
 		protected virtual async ValueTask SoftDeleteRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken) {
-			try {
-				if (entities.Any(x => DbSet.Context.ChangeTracker.GetEntry(x) == null))
-					throw new RepositoryException("The list contains entities that are not tracked by the repository");
+		try {
+			// Materialize once to avoid double-enumeration of a possibly-deferred source.
+			var list = entities as IList<TEntity> ?? entities.ToList();
 
 			var now = ResolveSystemTime().UtcNow;
 
-			foreach (var softDeletable in entities.OfType<ISoftDeletable>()) {
-				softDeletable.IsDeleted = true;
-				softDeletable.DeletedAtUtc = now;
+			// Fold the tracked-check into the update loop instead of a separate Any() scan.
+			foreach (var item in list) {
+				if (DbSet.Context.ChangeTracker.GetEntry(item) == null)
+					throw new RepositoryException("The list contains entities that are not tracked by the repository");
+
+				if (item is ISoftDeletable softDeletable) {
+					softDeletable.IsDeleted = true;
+					softDeletable.DeletedAtUtc = now;
+				}
 			}
 
-				DbSet.UpdateRange(entities);
+			DbSet.UpdateRange(list);
 
-				await Context.SaveChangesAsync(cancellationToken);
-			} catch (Exception ex) {
-				Logger.LogUnknownError(ex);
-				throw new RepositoryException("Could not soft-delete the list of entities", ex);
-			}
+			await Context.SaveChangesAsync(cancellationToken);
+		} catch (Exception ex) {
+			Logger.LogUnknownError(ex);
+			throw new RepositoryException("Could not soft-delete the list of entities", ex);
 		}
+	}
 
 		/// <inheritdoc/>
 		public override async ValueTask HardDeleteRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) {
-			ArgumentNullException.ThrowIfNull(entities);
+		ArgumentNullException.ThrowIfNull(entities);
 
-			ThrowIfDisposed();
-			cancellationToken.ThrowIfCancellationRequested();
+		ThrowIfDisposed();
+		cancellationToken.ThrowIfCancellationRequested();
 
-			try {
-				if (entities.Any(x => DbSet.Context.ChangeTracker.GetEntry(x) == null))
+		try {
+			// Materialize once to avoid double-enumeration of a possibly-deferred source.
+			var list = entities as IList<TEntity> ?? entities.ToList();
+
+			// Fold the tracked-check into the removal loop instead of a separate Any() scan.
+			foreach (var item in list) {
+				if (DbSet.Context.ChangeTracker.GetEntry(item) == null)
 					throw new RepositoryException("The list contains entities that are not tracked by the repository");
+			}
 
-				DbSet.RemoveRange(entities);
+			DbSet.RemoveRange(list);
 
-				await Context.SaveChangesAsync(cancellationToken);
-			} catch (Exception ex) {
+			await Context.SaveChangesAsync(cancellationToken);
+		} catch (Exception ex) {
 				Logger.LogUnknownError(ex);
 				throw new RepositoryException("Could not delete the list of entities", ex);
 			}
@@ -846,12 +858,12 @@ namespace Kista {
 			}
 		}
 
-		/// <inheritdoc/>
-		protected override ValueTask<long> CountAsync(IQueryable<TEntity> queryable, CancellationToken cancellationToken = default) {
-			ArgumentNullException.ThrowIfNull(queryable);
+	/// <inheritdoc/>
+	protected override async ValueTask<long> CountAsync(IQueryable<TEntity> queryable, CancellationToken cancellationToken = default) {
+		ArgumentNullException.ThrowIfNull(queryable);
 
-			return new ValueTask<long>(queryable.Count());
-		}
+		return await queryable.CountAsync(cancellationToken).ConfigureAwait(false);
+	}
 
 		#region Dispose
 

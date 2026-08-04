@@ -96,8 +96,9 @@ namespace Kista.Events {
 		private static readonly CloudEventAttribute DeleteKindAttribute =
 			CloudEventAttribute.CreateExtension(DeleteKindAttributeName, CloudEventAttributeType.String);
 
-		private readonly IEventPublisher _publisher;
-		private readonly HermodrEventsOptions _options;
+	private readonly IEventPublisher _publisher;
+	private readonly HermodrEventsOptions _options;
+	private readonly Uri _sourceUri;
 
 		/// <summary>
 		/// Constructs the publisher with the Hermodr <see cref="IEventPublisher"/>
@@ -111,11 +112,12 @@ namespace Kista.Events {
 		/// default <see cref="HermodrEventsOptions"/> are used.
 		/// </param>
 		public HermodrEventPublisher(
-			IEventPublisher publisher,
-			IOptions<HermodrEventsOptions>? options = null) {
-			_publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
-			_options = options?.Value ?? new HermodrEventsOptions();
-		}
+		IEventPublisher publisher,
+		IOptions<HermodrEventsOptions>? options = null) {
+		_publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
+		_options = options?.Value ?? new HermodrEventsOptions();
+		_sourceUri = BuildSourceUri();
+	}
 
 		/// <inheritdoc/>
 		public async ValueTask PublishAsync(EntityEventData<TEntity> data, CancellationToken cancellationToken) {
@@ -139,9 +141,9 @@ namespace Kista.Events {
 		/// through Hermodr.
 		/// </returns>
 		protected virtual CloudEvent BuildCloudEvent(EntityEventData<TEntity> data) {
-			var eventType = GetCloudEventType(data);
-			var source = BuildSourceUri();
-			var subject = data.Key?.ToString();
+		var eventType = GetCloudEventType(data);
+		var source = _sourceUri;
+		var subject = data.Key?.ToString();
 
 			var cloudEvent = new CloudEvent {
 				Type = eventType,

@@ -65,6 +65,7 @@ namespace Kista
 				throw new NotSupportedException("The repository does not support entities with composite primary keys");
 
 			PrimaryKey = entityKey;
+			_primaryKeyGetter = PrimaryKey.Properties[0].GetGetter().GetClrValue;
 		}
 
 		/// <summary>
@@ -82,15 +83,22 @@ namespace Kista
 		/// <inheritdoc />
 		protected override IServiceProvider? Services { get; }
 
-		/// <summary>
-		/// Gets a reference to the primary key of the entity.
-		/// </summary>
-		protected IKey PrimaryKey { get; }
+	/// <summary>
+	/// Gets a reference to the primary key of the entity.
+	/// </summary>
+	protected IKey PrimaryKey { get; }
 
-		/// <summary>
-		/// Gets the logger used by the repository.
-		/// </summary>
-		protected ILogger Logger { get; }
+	/// <summary>
+	/// Cached getter for the single primary-key property, avoiding
+	/// <c>PrimaryKey.Properties.ToList()</c> allocation on every
+	/// <see cref="GetEntityKey"/> call.
+	/// </summary>
+	private readonly Func<TEntity, object?> _primaryKeyGetter;
+
+	/// <summary>
+	/// Gets the logger used by the repository.
+	/// </summary>
+	protected ILogger Logger { get; }
 
 		/// <summary>
 		/// Gets the <see cref="DbSet{TEntity}"/> used by the repository to access the data.
@@ -284,15 +292,10 @@ namespace Kista
 
 		/// <inheritdoc/>
 		protected override TKey? GetEntityKey(TEntity entity) {
-			ArgumentNullException.ThrowIfNull(entity);
+		ArgumentNullException.ThrowIfNull(entity);
 
-			var props = PrimaryKey.Properties.ToList();
-			if (props.Count > 1)
-				throw new RepositoryException($"The entity '{typeof(TEntity)}' has more than one property has primary key");
-
-			var getter = props[0].GetGetter();
-			return (TKey?) getter.GetClrValue(entity);
-		}
+		return (TKey?) _primaryKeyGetter(entity);
+	}
 
 		/// <summary>
 		/// A method that is invoked when an entity is 
@@ -337,19 +340,39 @@ namespace Kista
 
 		/// <inheritdoc/>
 		public override async ValueTask AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) {
-			ThrowIfDisposed();
+		ThrowIfDisposed();
 
-			try {
-				var toAdd = entities.Select(OnAddingEntity).ToList();
+		try {
+			// Apply OnAddingEntity lazily without force-materializing into an
+			// intermediate List when the projection is the identity (the default).
+			var toAdd = OnAddingEntityIsIdentity
+				? entities
+				: entities.Select(OnAddingEntity);
 
-				await Entities.AddRangeAsync(toAdd, cancellationToken);
+			await Entities.AddRangeAsync(toAdd, cancellationToken);
 
-				await Context.SaveChangesAsync(true, cancellationToken);
-			} catch (Exception ex) {
-				Logger.LogUnknownError(ex, typeof(TEntity));
-				throw new RepositoryException("Unknown error while trying to add a range of entities to the repository", ex);
-			}
+			await Context.SaveChangesAsync(true, cancellationToken);
+		} catch (Exception ex) {
+			Logger.LogUnknownError(ex, typeof(TEntity));
+			throw new RepositoryException("Unknown error while trying to add a range of entities to the repository", ex);
 		}
+	}
+
+	/// <summary>
+	/// Gets a value indicating whether <see cref="OnAddingEntity"/> is the
+	/// identity function (default), allowing <see cref="AddRangeAsync"/> to
+	// skip the intermediate <c>.Select(...).ToList()</c> materialization.
+	/// </summary>
+	private static bool OnAddingEntityIsIdentity {
+		get {
+			var method = typeof(EntityRepository<TEntity, TKey>)
+				.GetMethod(nameof(OnAddingEntity), System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public)
+				?.GetBaseDefinition();
+
+			// The base implementation is declared on EntityRepository itself.
+			return method?.DeclaringType == typeof(EntityRepository<TEntity, TKey>);
+		}
+	}
 
 		/// <inheritdoc/>
 		public override async ValueTask<bool> RemoveAsync(TEntity entity, CancellationToken cancellationToken = default) {

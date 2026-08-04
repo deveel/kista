@@ -152,6 +152,19 @@ namespace Kista
 			};
 		}
 
+		/// <summary>
+		/// Determines whether the query should return tracked entities based
+		/// on the <see cref="IQueryOptions.TrackEntities"/> flag.
+		/// </summary>
+		/// <param name="options">The query options, or <c>null</c> for defaults.</param>
+		/// <returns>
+		/// <c>true</c> if entities should be tracked; <c>false</c> (default)
+		/// for <c>AsNoTracking</c> read paths.
+		/// </returns>
+		private static bool ShouldTrackEntities(IQueryOptions? options) {
+			return options?.TrackEntities == true;
+		}
+
 		/// <inheritdoc />
 		protected override bool IsQueryable => true;
 
@@ -513,6 +526,15 @@ namespace Kista
 			try {
 				var now = ResolveSystemTime().UtcNow;
 
+				// Build an O(1) lookup from the change tracker's Local entries once,
+				// instead of calling Local.FirstOrDefault (O(N)) per entity → O(N²).
+				var trackedByKey = new Dictionary<TKey, TEntity>();
+				foreach (var local in Entities.Local) {
+					var localKey = GetEntityKey(local);
+					if (localKey != null && !EqualityComparer<TKey>.Default.Equals(localKey, default))
+						trackedByKey[localKey] = local;
+				}
+
 				foreach (var item in entities) {
 					var entityId = GetEntityKey(item);
 					if (EqualityComparer<TKey>.Default.Equals(entityId, default))
@@ -520,7 +542,7 @@ namespace Kista
 
 					var entry = Context.Entry(item);
 					if (entry.State == EntityState.Detached) {
-						entry = ResolveEntryForEntityKey(item, entityId);
+						entry = ResolveEntryForEntityKey(item, entityId, trackedByKey);
 					}
 
 					if (item is ISoftDeletable softDeletable) {
@@ -548,6 +570,15 @@ namespace Kista
 			ThrowIfDisposed();
 
 			try {
+				// Build an O(1) lookup from the change tracker's Local entries once,
+				// instead of calling Local.FirstOrDefault (O(N)) per entity → O(N²).
+				var trackedByKey = new Dictionary<TKey, TEntity>();
+				foreach (var local in Entities.Local) {
+					var localKey = GetEntityKey(local);
+					if (localKey != null && !EqualityComparer<TKey>.Default.Equals(localKey, default))
+						trackedByKey[localKey] = local;
+				}
+
 				foreach (var item in entities) {
 					var entityId = GetEntityKey(item);
 					if (EqualityComparer<TKey>.Default.Equals(entityId, default))
@@ -555,7 +586,7 @@ namespace Kista
 
 					var entry = Context.Entry(item);
 					if (entry.State == EntityState.Detached) {
-						entry = ResolveEntryForEntityKey(item, entityId);
+						entry = ResolveEntryForEntityKey(item, entityId, trackedByKey);
 					}
 
 					entry.State = EntityState.Deleted;
@@ -716,6 +747,8 @@ namespace Kista
 			try {
 				InitializeFilter(query.Filter);
 				var queryable = ApplySoftDeleteMode(Queryable(), query.Options);
+				if (!ShouldTrackEntities(query.Options))
+					queryable = queryable.AsNoTracking();
 				var result = EfQueryNormalizer.Normalize(query.Apply(queryable));
 
 				return await result.FirstOrDefaultAsync(cancellationToken);
@@ -772,6 +805,8 @@ namespace Kista
 			try {
 				InitializeFilter(query.Filter);
 				var queryable = ApplySoftDeleteMode(Queryable(), query.Options);
+				if (!ShouldTrackEntities(query.Options))
+					queryable = queryable.AsNoTracking();
 				var result = EfQueryNormalizer.Normalize(query.Apply(queryable));
 				return await result.ToListAsync(cancellationToken);
 			} catch (Exception ex) {
@@ -787,8 +822,13 @@ namespace Kista
 			return EfQueryNormalizer.Normalize(filter.Apply(query));
 		}
 
-		private EntityEntry<TEntity> ResolveEntryForEntityKey(TEntity entity, TKey entityId) {
-			var tracked = Entities.Local.FirstOrDefault(x => EqualityComparer<TKey>.Default.Equals(GetEntityKey(x)!, entityId));
+		private EntityEntry<TEntity> ResolveEntryForEntityKey(TEntity entity, TKey entityId, Dictionary<TKey, TEntity>? trackedByKey = null) {
+			TEntity? tracked = null;
+			if (trackedByKey != null) {
+				trackedByKey.TryGetValue(entityId, out tracked);
+			} else {
+				tracked = Entities.Local.FirstOrDefault(x => EqualityComparer<TKey>.Default.Equals(GetEntityKey(x)!, entityId));
+			}
 			if (tracked != null)
 				return Context.Entry(tracked);
 
@@ -823,25 +863,42 @@ namespace Kista
 			try {
 				if (request is PageQuery<TEntity> pageQuery) {
 					var queryable = ApplySoftDeleteMode(Queryable(), pageQuery.Options);
+					if (!ShouldTrackEntities(pageQuery.Options))
+						queryable = queryable.AsNoTracking();
 					var querySet = EfQueryNormalizer.Normalize(pageQuery.ApplyQuery(queryable));
-					var totalCount = await querySet.CountAsync(cancellationToken);
 
 					var items = await querySet
 						.Skip(request.Offset)
 						.Take(request.Size)
 						.ToListAsync(cancellationToken);
 
+					// Skip the CountAsync round-trip for partial pages: if the page
+					// is not full, the total count is implied (offset + items.Count).
+					int totalCount;
+					if (items.Count < request.Size) {
+						totalCount = request.Offset + items.Count;
+					} else {
+						totalCount = (int) await querySet.CountAsync(cancellationToken);
+					}
+
 					return new PageQueryResult<TEntity>(pageQuery, totalCount, items);
 				}
 
 				var allQueryable = ApplySoftDeleteMode(Queryable(), null);
+				allQueryable = allQueryable.AsNoTracking();
 				var allQuerySet = EfQueryNormalizer.Normalize(allQueryable);
-				var allTotalCount = await allQuerySet.CountAsync(cancellationToken);
 
 				var allItems = await allQuerySet
 					.Skip(request.Offset)
 					.Take(request.Size)
 					.ToListAsync(cancellationToken);
+
+				int allTotalCount;
+				if (allItems.Count < request.Size) {
+					allTotalCount = request.Offset + allItems.Count;
+				} else {
+					allTotalCount = (int) await allQuerySet.CountAsync(cancellationToken);
+				}
 
 				return new PageResult<TEntity>(request, allTotalCount, allItems);
 			} catch (Exception ex) {

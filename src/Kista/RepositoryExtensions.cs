@@ -39,6 +39,7 @@ namespace Kista {
 		/// Returns a string that uniquely identifies the created entity
 		/// within the underlying storage.
 		/// </returns>
+		[Obsolete("Use AddAsync instead. Sync-over-async can cause threadpool starvation.")]
 		public static void Add<TEntity>(this IRepository<TEntity> repository, TEntity entity)
             where TEntity : class
             => repository.AddAsync(entity).ConfigureAwait(false).GetAwaiter().GetResult();
@@ -62,6 +63,7 @@ namespace Kista {
 		/// Returns a string that uniquely identifies the created entity
 		/// within the underlying storage.
 		/// </returns>
+		[Obsolete("Use AddAsync instead. Sync-over-async can cause threadpool starvation.")]
 		public static void Add<TEntity, TKey>(this IRepository<TEntity, TKey> repository, TEntity entity)
 			where TEntity : class
 			where TKey : notnull
@@ -87,6 +89,7 @@ namespace Kista {
 		/// in async contexts to avoid potential deadlocks.
 		/// </para>
 		/// </remarks>
+		[Obsolete("Use AddRangeAsync instead. Sync-over-async can cause threadpool starvation.")]
 		public static void AddRange<TEntity>(this IRepository<TEntity> repository, IEnumerable<TEntity> entities)
 			where TEntity : class
 			=> repository.AddRangeAsync(entities).ConfigureAwait(false).GetAwaiter().GetResult();
@@ -114,6 +117,7 @@ namespace Kista {
 		/// in async contexts to avoid potential deadlocks.
 		/// </para>
 		/// </remarks>
+		[Obsolete("Use AddRangeAsync instead. Sync-over-async can cause threadpool starvation.")]
 		public static void AddRange<TEntity, TKey>(this IRepository<TEntity, TKey> repository, IEnumerable<TEntity> entities)
 			where TEntity : class
 			=> repository.AddRangeAsync(entities).ConfigureAwait(false).GetAwaiter().GetResult();
@@ -140,6 +144,7 @@ namespace Kista {
 		/// otherwise <c>false</c>.
 		/// </returns>
 		/// <seealso cref="IRepository{TEntity,TKey}.RemoveAsync(TEntity, CancellationToken)"/>
+		[Obsolete("Use RemoveAsync instead. Sync-over-async can cause threadpool starvation.")]
 		public static bool Remove<TEntity>(this IRepository<TEntity> repository, TEntity entity)
             where TEntity : class
             => repository.RemoveAsync(entity).ConfigureAwait(false).GetAwaiter().GetResult();
@@ -164,6 +169,7 @@ namespace Kista {
 		/// otherwise <c>false</c>.
 		/// </returns>
 		/// <seealso cref="IRepository{TEntity,TKey}.RemoveAsync(TEntity, CancellationToken)"/>
+		[Obsolete("Use RemoveAsync instead. Sync-over-async can cause threadpool starvation.")]
 		public static bool Remove<TEntity, TKey>(this IRepository<TEntity, TKey> repository, TEntity entity)
 			where TEntity : class
 			where TKey : notnull
@@ -249,6 +255,7 @@ namespace Kista {
 		/// otherwise it returns <c>false</c>.
 		/// </returns>
 		/// <seealso cref="IRepository{TEntity,TKey}.RemoveAsync(TEntity, CancellationToken)"/>
+		[Obsolete("Use RemoveByKeyAsync instead. Sync-over-async can cause threadpool starvation.")]
 		public static bool RemoveByKey<TEntity>(this IRepository<TEntity> repository, object key)
             where TEntity : class
             => repository.RemoveByKeyAsync(key).ConfigureAwait(false).GetAwaiter().GetResult();
@@ -274,6 +281,7 @@ namespace Kista {
 		/// otherwise it returns <c>false</c>.
 		/// </returns>
 		/// <seealso cref="IRepository{TEntity,TKey}.RemoveAsync(TEntity, CancellationToken)"/>
+		[Obsolete("Use RemoveByKeyAsync instead. Sync-over-async can cause threadpool starvation.")]
 		public static bool RemoveByKey<TEntity, TKey>(this IRepository<TEntity, TKey> repository, TKey key)
 			where TEntity : class
 			=> repository.RemoveByKeyAsync(key).ConfigureAwait(false).GetAwaiter().GetResult();
@@ -357,6 +365,7 @@ namespace Kista {
 		/// Returns <c>true</c> if the entity was hard-deleted successfully,
 		/// otherwise <c>false</c>.
 		/// </returns>
+		[Obsolete("Use HardDeleteByKeyAsync instead. Sync-over-async can cause threadpool starvation.")]
 		public static bool HardDeleteByKey<TEntity>(this IRepository<TEntity> repository, object key)
 			where TEntity : class
 			=> repository.HardDeleteByKeyAsync(key).ConfigureAwait(false).GetAwaiter().GetResult();
@@ -382,6 +391,7 @@ namespace Kista {
 		/// Returns <c>true</c> if the entity was hard-deleted successfully,
 		/// otherwise <c>false</c>.
 		/// </returns>
+		[Obsolete("Use HardDeleteByKeyAsync instead. Sync-over-async can cause threadpool starvation.")]
 		public static bool HardDeleteByKey<TEntity, TKey>(this IRepository<TEntity, TKey> repository, TKey key)
 			where TEntity : class
 			=> repository.HardDeleteByKeyAsync(key).ConfigureAwait(false).GetAwaiter().GetResult();
@@ -403,6 +413,7 @@ namespace Kista {
 		/// Returns <c>true</c> if the entity was hard-deleted successfully,
 		/// otherwise <c>false</c>.
 		/// </returns>
+		[Obsolete("Use HardDeleteAsync instead. Sync-over-async can cause threadpool starvation.")]
 		public static bool HardDelete<TEntity>(this IRepository<TEntity> repository, TEntity entity)
 			where TEntity : class
 			=> repository.HardDeleteAsync(entity).ConfigureAwait(false).GetAwaiter().GetResult();
@@ -427,6 +438,7 @@ namespace Kista {
 		/// Returns <c>true</c> if the entity was hard-deleted successfully,
 		/// otherwise <c>false</c>.
 		/// </returns>
+		[Obsolete("Use HardDeleteAsync instead. Sync-over-async can cause threadpool starvation.")]
 		public static bool HardDelete<TEntity, TKey>(this IRepository<TEntity, TKey> repository, TEntity entity)
 			where TEntity : class
 			=> repository.HardDeleteAsync(entity).ConfigureAwait(false).GetAwaiter().GetResult();
@@ -451,6 +463,7 @@ namespace Kista {
 		/// in async contexts to avoid potential deadlocks.
 		/// </para>
 		/// </remarks>
+		[Obsolete("Use RemoveRangeAsync instead. Sync-over-async can cause threadpool starvation.")]
 		public static void RemoveRange<TEntity>(this IRepository<TEntity> repository, IEnumerable<TEntity> entities)
 			where TEntity : class
 			=> repository.RemoveRangeAsync(entities).ConfigureAwait(false).GetAwaiter().GetResult();
@@ -478,6 +491,7 @@ namespace Kista {
 		/// in async contexts to avoid potential deadlocks.
 		/// </para>
 		/// </remarks>
+		[Obsolete("Use RemoveRangeAsync instead. Sync-over-async can cause threadpool starvation.")]
 		public static void RemoveRange<TEntity, TKey>(this IRepository<TEntity, TKey> repository, IEnumerable<TEntity> entities)
 			where TEntity : class
 			=> repository.RemoveRangeAsync(entities).ConfigureAwait(false).GetAwaiter().GetResult();
@@ -503,6 +517,7 @@ namespace Kista {
 		/// Returns <c>true</c> if the entity was updated successfully,
 		/// otherwise <c>false</c>.
 		/// </returns>
+		[Obsolete("Use UpdateAsync instead. Sync-over-async can cause threadpool starvation.")]
 		public static bool Update<TEntity>(this IRepository<TEntity> repository, TEntity entity)
             where TEntity : class
             => repository.UpdateAsync(entity).ConfigureAwait(false).GetAwaiter().GetResult();
@@ -526,6 +541,7 @@ namespace Kista {
 		/// Returns <c>true</c> if the entity was updated successfully,
 		/// otherwise <c>false</c>.
 		/// </returns>
+		[Obsolete("Use UpdateAsync instead. Sync-over-async can cause threadpool starvation.")]
 		public static bool Update<TEntity, TKey>(this IRepository<TEntity, TKey> repository, TEntity entity)
 			where TEntity : class
 			=> repository.UpdateAsync(entity).ConfigureAwait(false).GetAwaiter().GetResult();
@@ -641,6 +657,7 @@ namespace Kista {
         /// <exception cref="NotSupportedException">
         /// Thrown when the repository does not support paging.
         /// </exception>
+		[Obsolete("Use GetPageAsync instead. Sync-over-async can cause threadpool starvation.")]
 		public static PageResult<TEntity> GetPage<TEntity, TKey>(this IRepository<TEntity, TKey> repository, PageRequest request)
 			where TEntity : class
 			=> repository.GetPageAsync(request).GetAwaiter().GetResult();
@@ -679,6 +696,7 @@ namespace Kista {
 		/// <exception cref="NotSupportedException">
 		/// Thrown when the repository does not support paging.
 		/// </exception>
+		[Obsolete("Use GetPageAsync instead. Sync-over-async can cause threadpool starvation.")]
 		public static PageResult<TEntity> GetPage<TEntity, TKey>(this IRepository<TEntity, TKey> repository, int page, int size)
 			where TEntity : class
 			=> repository.GetPage(new PageRequest(page, size));
@@ -709,6 +727,7 @@ namespace Kista {
 		/// with the given key exists in the repository.
 		/// </returns>
 		/// <seealso cref="IRepository{TEntity, TKey}.FindAsync(TKey, CancellationToken)"/>
+		[Obsolete("Use FindAsync instead. Sync-over-async can cause threadpool starvation.")]
 		public static TEntity? Find<TEntity, TKey>(this IRepository<TEntity, TKey> repository, TKey key)
             where TEntity : class
             => repository.FindAsync(key).ConfigureAwait(false).GetAwaiter().GetResult();
@@ -738,6 +757,7 @@ namespace Kista {
 		/// in async contexts to avoid potential deadlocks.
 		/// </para>
 		/// </remarks>
+		[Obsolete("Use FindAsync instead. Sync-over-async can cause threadpool starvation.")]
 		public static TEntity? Find<TEntity>(this IRepository<TEntity> repository, object key)
 			where TEntity : class
 			=> repository.FindAsync(key).ConfigureAwait(false).GetAwaiter().GetResult();

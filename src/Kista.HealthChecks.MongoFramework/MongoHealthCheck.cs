@@ -30,6 +30,9 @@ public class MongoHealthCheck<TEntity, TKey> : RepositoryHealthCheckBase<TEntity
     where TEntity : class {
     
     private readonly MongoHealthCheckOptions _options;
+    private readonly SemaphoreSlim _probeSemaphore = new(1, 1);
+    private HealthCheckResult? _cachedResult;
+    private DateTimeOffset _cacheExpiry;
     
     /// <summary>
     /// Initializes a new instance of the <see cref="MongoHealthCheck{TEntity, TKey}"/> class.
@@ -43,7 +46,35 @@ public class MongoHealthCheck<TEntity, TKey> : RepositoryHealthCheckBase<TEntity
     public override string DriverType => "MongoDB";
     
     /// <inheritdoc/>
-    protected override async ValueTask<HealthCheckResult> CheckHealthAsyncCore(
+		protected override async ValueTask<HealthCheckResult> CheckHealthAsyncCore(
+        IServiceProvider serviceProvider,
+        CancellationToken cancellationToken) {
+
+        // Fast-path: if already cancelled, throw before entering the semaphore
+        // to preserve the OperationCanceledException type contract.
+        cancellationToken.ThrowIfCancellationRequested();
+
+        // Return a cached result if still valid, to avoid hitting the DB on every probe.
+        if (_cachedResult is { } cached && DateTimeOffset.UtcNow < _cacheExpiry)
+            return cached;
+
+        // Coalesce concurrent probes: only one thread hits the DB, others wait.
+        await _probeSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try {
+            // Double-check after acquiring the lock — another thread may have refreshed.
+            if (_cachedResult is { } refreshed && DateTimeOffset.UtcNow < _cacheExpiry)
+                return refreshed;
+
+            var result = await CheckHealthAsyncInner(serviceProvider, cancellationToken).ConfigureAwait(false);
+            _cachedResult = result;
+            _cacheExpiry = DateTimeOffset.UtcNow + _options.CacheDuration;
+            return result;
+        } finally {
+            _probeSemaphore.Release();
+        }
+    }
+
+    private async ValueTask<HealthCheckResult> CheckHealthAsyncInner(
         IServiceProvider serviceProvider,
         CancellationToken cancellationToken) {
         

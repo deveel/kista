@@ -59,6 +59,16 @@ namespace Kista.Events {
 	/// are pluggable through Hermodr channel packages (Azure Service Bus,
 	/// RabbitMQ, MassTransit, Webhook) with zero application code change.
 	/// </para>
+	/// <para>
+	/// <b>Performance note.</b> Unlike <c>InMemoryEntityEventPublisher</c>,
+	/// which enqueues events into a channel and returns immediately, this
+	/// publisher awaits the full Hermodr middleware chain inline on the
+	/// caller's request thread. If any middleware performs I/O (outbox DB
+	/// write, webhook HTTP), the user-facing write latency includes event
+	/// publication. To decouple publication from the request thread, wrap
+	/// the publisher in a bounded-channel-based buffer with a background
+	/// consumer.
+	/// </para>
 	/// </remarks>
 	public class HermodrEventPublisher<TEntity> : IEntityEventPublisher<TEntity>
 		where TEntity : class {

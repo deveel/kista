@@ -20,6 +20,17 @@ namespace Kista {
 /// <summary>
 	/// Extension methods for logging entity manager events.
 	/// </summary>
+	/// <remarks>
+	/// <para>
+	/// <b>PII notice.</b> Several log messages carry the <c>{EntityKey}</c> or
+	/// <c>{Query}</c> parameters. When the entity key is an email, username,
+	/// national ID, or other personally identifiable information, and the
+	/// application has <c>Debug</c> logging enabled in production, that PII
+	/// will be written to logs. To redact PII from logs, register a custom
+	/// <c>ILoggerProvider</c> that scrubs these parameters, or lower the
+	/// logger category for <c>EntityManager</c> to <c>Trace</c> in production.
+	/// </para>
+	/// </remarks>
 	[ExcludeFromCodeCoverage]
 	static partial class LoggerExtensions {
         /// <summary>

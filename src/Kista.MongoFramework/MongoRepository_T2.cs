@@ -46,6 +46,14 @@ namespace Kista {
 		private bool disposed;
 
 		/// <summary>
+		/// Cached set of valid public property and field names for
+		/// <typeparamref name="TEntity"/>, used to validate the
+		/// <see cref="Field(string)"/> argument and prevent schema-oracle
+		/// attacks when the field name originates from user input.
+		/// </summary>
+		private static readonly HashSet<string> s_validFieldNames = BuildMemberSet(typeof(TEntity));
+
+		/// <summary>
 		/// Constructs the repository with the given context and logger.
 		/// </summary>
 		/// <param name="context">
@@ -62,6 +70,10 @@ namespace Kista {
 			Context = context;
 			Logger = logger ?? NullLogger.Instance;
 			Services = services;
+			_lazyCollection = new Lazy<IMongoCollection<TEntity>>(() => {
+				var entityDef = EntityMapping.GetOrCreateDefinition(typeof(TEntity));
+				return context.Connection.GetDatabase().GetCollection<TEntity>(entityDef.CollectionName);
+			});
 		}
 
 		/// <summary>
@@ -126,16 +138,15 @@ namespace Kista {
 		/// <inheritdoc />
 		protected override bool IsQueryable => true;
 
-		/// <summary>
+	/// <summary>
 		/// Gets the <see cref="IMongoCollection{TEntity}"/> instance that is used
-		/// to handle the data in the repository.
+		/// to handle the data in the repository. The collection is resolved once
+		/// and cached in a <see cref="Lazy{T}"/> to avoid repeated mapping
+		/// lookups and <c>GetDatabase().GetCollection()</c> calls on every access.
 		/// </summary>
-		protected IMongoCollection<TEntity> Collection {
-			get {
-				var entityDef = EntityMapping.GetOrCreateDefinition(typeof(TEntity));
-				return Context.Connection.GetDatabase().GetCollection<TEntity>(entityDef.CollectionName);
-			}
-		}
+		protected IMongoCollection<TEntity> Collection => _lazyCollection.Value;
+
+		private readonly Lazy<IMongoCollection<TEntity>> _lazyCollection;
 
 		/// <summary>
 		/// Throws an exception if the repository has been disposed.
@@ -191,16 +202,21 @@ namespace Kista {
 		/// </returns>
 		protected override TKey? GetEntityKey(TEntity entity) {
 			ArgumentNullException.ThrowIfNull(entity);
-
-			var entityDef = EntityMapping.GetOrCreateDefinition(typeof(TEntity));
-
-			var idProperty = entityDef.GetIdProperty();
-
-			if (idProperty == null)
-				throw new RepositoryException($"The type '{typeof(TEntity)}' has no ID property specified");
-
-			return (TKey?) entityDef.GetIdValue(entity);
+			return (TKey?) CachedIdValueGetter.Value(entity);
 		}
+
+		/// <summary>
+		/// Cached entity mapping definition, resolved once per closed generic
+		/// type to avoid repeated <c>EntityMapping.GetOrCreateDefinition</c>
+		/// calls on every <see cref="GetEntityKey"/> invocation.
+		/// </summary>
+		private static readonly Lazy<Func<TEntity, object?>> CachedIdValueGetter = new(() => {
+			var entityDef = EntityMapping.GetOrCreateDefinition(typeof(TEntity));
+			var idProperty = entityDef.GetIdProperty();
+			if (idProperty == null)
+				return _ => throw new RepositoryException($"The type '{typeof(TEntity)}' has no ID property specified");
+			return entityDef.GetIdValue;
+		});
 
 		/// <summary>
 		/// Converts the given value to the type of the ID property of the
@@ -254,13 +270,25 @@ namespace Kista {
 		/// to access the field in the entity.
 		/// </summary>
 		/// <param name="fieldName">
-		/// The name of the field to be resolved.
+		/// The name of the field to be resolved. Must be a known public
+		/// property or field of <typeparamref name="TEntity"/>.
 		/// </param>
 		/// <returns>
 		/// Returns an instance of <see cref="Expression{TDelegate}"/> that
 		/// is used to access the field in the entity.
 		/// </returns>
-		protected virtual Expression<Func<TEntity, object>> Field(string fieldName) {
+		/// <exception cref="ArgumentException">
+		/// Thrown when <paramref name="fieldName"/> is not a known member
+		/// of <typeparamref name="TEntity"/>.
+		/// </exception>
+		protected internal virtual Expression<Func<TEntity, object>> Field(string fieldName) {
+			ArgumentException.ThrowIfNullOrWhiteSpace(fieldName);
+
+			if (!s_validFieldNames.Contains(fieldName))
+				throw new ArgumentException(
+					$"'{fieldName}' is not a known public property or field of '{typeof(TEntity).Name}'.",
+					nameof(fieldName));
+
 			var param = Expression.Parameter(typeof(TEntity), "x");
 			var body = Expression.PropertyOrField(param, fieldName);
 
@@ -918,5 +946,14 @@ namespace Kista {
 		}
 
 		#endregion
+
+		private static HashSet<string> BuildMemberSet(Type type) {
+			var set = new HashSet<string>(StringComparer.Ordinal);
+			foreach (var prop in type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+				set.Add(prop.Name);
+			foreach (var field in type.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+				set.Add(field.Name);
+			return set;
+		}
 	}
 }

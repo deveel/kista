@@ -115,6 +115,20 @@ namespace Kista
 		/// Returns the <see cref="IQueryable{T}"/> produced by
 		/// <see cref="Entities"/>.AsQueryable().
 		/// </returns>
+		/// <remarks>
+		/// <para>
+		/// <b>Include / AsSplitQuery guardrail.</b> When a subclass overrides
+		/// this method or the query to add <c>Include</c> / <c>ThenInclude</c>
+		/// for multi-navigation entities, EF Core produces a cartesian product
+		/// that can cause severe performance degradation. Always chain
+		/// <c>.AsSplitQuery()</c> after any <c>Include</c> call to avoid the
+		/// cartesian explosion:
+		/// <code>
+		/// protected override IQueryable&lt;TEntity&gt; Queryable() =>
+		///     Entities.Include(e => e.Related).AsSplitQuery();
+		/// </code>
+		/// </para>
+		/// </remarks>
 		protected override IQueryable<TEntity> Queryable() => Entities.AsQueryable();
 
 		/// <summary>
@@ -142,6 +156,15 @@ namespace Kista
 		/// applied here; <see cref="SoftDeleteMode.IncludeDeleted"/> and
 		/// <see cref="SoftDeleteMode.OnlyDeleted"/> call
 		/// <c>IgnoreQueryFilters()</c> to surface soft-deleted records.
+		/// </para>
+		/// <para>
+		/// <b>Multi-tenant warning.</b> When using <c>Kista.EntityFramework.MultiTenant</c>
+		/// with a shared tenant database, Finbuckle.MultiTenant applies tenant
+		/// isolation via a global query filter. Calling <c>IgnoreQueryFilters()</c>
+		/// (as <c>IncludeDeleted</c> and <c>OnlyDeleted</c> do) also removes the
+		/// tenant filter, potentially exposing cross-tenant data. Ensure that any
+		/// query using these modes includes an explicit tenant-scoped predicate
+		/// when operating in a shared-database multi-tenant configuration.
 		/// </para>
 		/// </remarks>
 		protected override IQueryable<TEntity> ApplySoftDeleteMode(IQueryable<TEntity> queryable, IQueryOptions? options) {
@@ -802,26 +825,26 @@ namespace Kista
 			}
 		}
 
-		/// <inheritdoc/>
+	/// <inheritdoc/>
 		public virtual async ValueTask<TEntity?> FindOriginalAsync(TKey key, CancellationToken cancellationToken = default) {
-			ThrowIfDisposed();
+		ThrowIfDisposed();
 
-			try {
-				var result = await Entities.FindAsync(new object?[] { ConvertEntityKey(key) }, cancellationToken);
-				if (result == null)
-					return result;
+		try {
+			var result = await Entities.FindAsync(new object?[] { ConvertEntityKey(key) }, cancellationToken);
+			if (result == null)
+				return result;
 
-				var entry = Context.Entry(result);
-				
-				// find a way to get the original values
-				//      of related entities...
+			var entry = Context.Entry(result);
+			
+			// find a way to get the original values
+			//      of related entities...
 
-				return (TEntity) entry.OriginalValues.ToObject();
-			} catch (Exception ex) {
-				Logger.LogUnknownError(ex, typeof(TEntity));
-				throw new RepositoryException("Unable to find an entity int he repository because of an error", ex);
-			}
+			return (TEntity) entry.OriginalValues.ToObject();
+		} catch (Exception ex) {
+			Logger.LogUnknownError(ex, typeof(TEntity));
+			throw new RepositoryException("Unable to find an entity int he repository because of an error", ex);
 		}
+	}
 
 		/// <inheritdoc/>
 		protected override async ValueTask<IReadOnlyList<TEntity>> FindAllAsync(IQuery query, CancellationToken cancellationToken = default) {

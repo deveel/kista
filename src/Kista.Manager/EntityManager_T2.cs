@@ -1556,10 +1556,10 @@ namespace Kista {
 			return await Repository.FindAsync(key, cancellationToken);
 		}
 
-		private static PropertyInfo? CachedKeyProperty =>
-			s_keyProperty ??= typeof(TEntity).GetProperty("Id");
+		private static readonly System.Collections.Concurrent.ConcurrentDictionary<Type, PropertyInfo?> s_keyPropertyCache = new();
 
-		private static PropertyInfo? s_keyProperty;
+		private static PropertyInfo? CachedKeyProperty =>
+			s_keyPropertyCache.GetOrAdd(typeof(TEntity), t => t.GetProperty("Id"));
 
 		private static IQueryFilter BuildKeyFilter(PropertyInfo keyProperty, TKey key) {
 			var parameter = Expression.Parameter(typeof(TEntity), "e");

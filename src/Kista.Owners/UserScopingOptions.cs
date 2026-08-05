@@ -19,8 +19,6 @@ namespace Kista
 	/// </summary>
 	public class UserScopingOptions
 	{
-		private bool _throwWhenUserNotSet = true;
-
 		/// <summary>
 		/// Gets or sets whether to throw an <see cref="System.InvalidOperationException"/>
 		/// when no user context is available. Defaults to <c>true</c> (fail-closed).
@@ -38,11 +36,7 @@ namespace Kista
 		/// decorated repository.
 		/// </para>
 		/// </remarks>
-		public bool ThrowWhenUserNotSet
-		{
-			get => _throwWhenUserNotSet;
-			set => _throwWhenUserNotSet = value;
-		}
+		public bool ThrowWhenUserNotSet { get; set; } = true;
 
 		/// <summary>
 		/// Gets or sets the name of the owner property to use, overriding automatic discovery.

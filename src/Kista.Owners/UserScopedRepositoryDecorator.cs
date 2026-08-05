@@ -220,12 +220,9 @@ namespace Kista
 		private TUserKey ResolveUserOrThrow()
 		{
 			var userId = _userAccessor.GetUserId();
-			if (EqualityComparer<TUserKey>.Default.Equals(userId, default))
-			{
-				if (Options.ThrowWhenUserNotSet)
-					throw new System.InvalidOperationException(UserContextNotSetMessage);
-			}
-			return userId!;
+			if (EqualityComparer<TUserKey>.Default.Equals(userId, default) && Options.ThrowWhenUserNotSet)
+				throw new System.InvalidOperationException(UserContextNotSetMessage);
+			return userId;
 		}
 
 		/// <summary>
@@ -241,7 +238,7 @@ namespace Kista
 				return; // fail-open path: no user context, AllowOnlyIfConfigured handled by ResolveUserOrThrow
 
 			var key = _inner.GetEntityKey(entity);
-			if (key == null)
+			if (KeyHelper.IsNull(key))
 				throw new System.UnauthorizedAccessException(OwnershipViolationMessage);
 
 			var persisted = await _inner.FindAsync(key, cancellationToken).ConfigureAwait(false);

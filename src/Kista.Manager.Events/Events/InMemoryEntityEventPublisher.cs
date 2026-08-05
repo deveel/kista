@@ -50,7 +50,6 @@ namespace Kista.Events {
 		where TEntity : class {
 		private readonly ConcurrentQueue<EntityEventData<TEntity>> _events = new();
 		private readonly Channel<EntityEventData<TEntity>> _channel;
-		private readonly InMemoryEventPublisherOptions _options;
 
 		/// <summary>
 		/// Initializes a new instance with default options (capacity 1024,
@@ -67,11 +66,11 @@ namespace Kista.Events {
 		/// The configuration options. When <c>null</c>, defaults are used.
 		/// </param>
 		public InMemoryEntityEventPublisher(InMemoryEventPublisherOptions? options) {
-			_options = options ?? new InMemoryEventPublisherOptions();
+			var opts = options ?? new InMemoryEventPublisherOptions();
 
 			_channel = Channel.CreateBounded<EntityEventData<TEntity>>(
-				new BoundedChannelOptions(_options.Capacity) {
-					FullMode = _options.FullMode,
+				new BoundedChannelOptions(opts.Capacity) {
+					FullMode = opts.FullMode,
 					SingleReader = false,
 					SingleWriter = false,
 				});

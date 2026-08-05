@@ -39,7 +39,7 @@ namespace Kista {
 			this.entities = entities ?? throw new ArgumentNullException(nameof(entities));
 		}
 
-		private Func<TEntity, bool> GetCompiledFilter(IQueryFilter filter) {
+		private static Func<TEntity, bool> GetCompiledFilter(IQueryFilter filter) {
 			return _compiledFilters.GetOrAdd(filter, f => f.AsLambda<TEntity>().Compile());
 		}
 
@@ -219,7 +219,7 @@ namespace Kista {
 				result = query.Apply(queryable).FirstOrDefault();
 			} else {
 			if (query.HasFilter()) {
-				result = entities.FirstOrDefault(GetCompiledFilter(query.Filter!));
+				result = entities.FirstOrDefault(GetCompiledFilter(query.Filter));
 			} else {
 					result = entities.FirstOrDefault();
 				}
@@ -236,7 +236,7 @@ namespace Kista {
 				result = query.Apply(queryable);
 			} else {
 			if (query.HasFilter()) {
-				result = entities.Where(GetCompiledFilter(query.Filter!));
+				result = entities.Where(GetCompiledFilter(query.Filter));
 			} else {
 					result = entities;
 				}

@@ -624,9 +624,9 @@ namespace Kista
 			// instead of calling Local.FirstOrDefault (O(N)) per entity → O(N²).
 			var trackedByKey = new Dictionary<TKey, TEntity>();
 			foreach (var local in Entities.Local) {
-				var localKey = GetEntityKey(local);
-				if (localKey != null && !EqualityComparer<TKey>.Default.Equals(localKey, default))
-					trackedByKey[localKey] = local;
+			var localKey = GetEntityKey(local);
+			if (!KeyHelper.IsNull(localKey) && !EqualityComparer<TKey>.Default.Equals(localKey, default))
+				trackedByKey[localKey] = local;
 			}
 
 			foreach (var item in entities) {
@@ -879,7 +879,7 @@ namespace Kista
 			if (trackedByKey != null) {
 				trackedByKey.TryGetValue(entityId, out tracked);
 			} else {
-				tracked = Entities.Local.FirstOrDefault(x => EqualityComparer<TKey>.Default.Equals(GetEntityKey(x)!, entityId));
+				tracked = Entities.Local.FirstOrDefault(x => EqualityComparer<TKey>.Default.Equals(GetEntityKey(x), entityId));
 			}
 			if (tracked != null)
 				return Context.Entry(tracked);
@@ -930,7 +930,7 @@ namespace Kista
 					if (items.Count < request.Size) {
 						totalCount = request.Offset + items.Count;
 					} else {
-						totalCount = (int) await querySet.CountAsync(cancellationToken);
+						totalCount = await querySet.CountAsync(cancellationToken);
 					}
 
 					return new PageQueryResult<TEntity>(pageQuery, totalCount, items);
@@ -949,7 +949,7 @@ namespace Kista
 				if (allItems.Count < request.Size) {
 					allTotalCount = request.Offset + allItems.Count;
 				} else {
-					allTotalCount = (int) await allQuerySet.CountAsync(cancellationToken);
+					allTotalCount = await allQuerySet.CountAsync(cancellationToken);
 				}
 
 				return new PageResult<TEntity>(request, allTotalCount, allItems);

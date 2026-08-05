@@ -7,6 +7,9 @@ namespace Kista.Owners.XUnit.Unit;
 [Trait("Layer", "Domain")]
 [Trait("Feature", "Security")]
 public class UserScopedRepositorySecurityTests {
+    private const string AliceUserId = "alice";
+    private const string OwnershipViolationSnippet = "does not belong";
+
     #region C1 — Secure default chain (claim-only)
 
     [Fact]
@@ -48,7 +51,7 @@ public class UserScopedRepositorySecurityTests {
     [Fact]
     public async Task Should_ThrowOnUpdate_When_EntityOwnedByAnotherUser() {
         // Arrange — alice creates an entity, then bob tries to update it.
-        var aliceServices = CreateDefaultServices("alice");
+        var aliceServices = CreateDefaultServices(AliceUserId);
         var aliceRepo = aliceServices.GetRequiredService<IRepository<SecNoteEntity, Guid>>();
 
         var entity = new SecNoteEntity { Title = "Alice's Note" };
@@ -61,13 +64,13 @@ public class UserScopedRepositorySecurityTests {
         entity.Title = "Hacked by Bob";
         var ex = await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
             bobRepo.UpdateAsync(entity).AsTask());
-        Assert.Contains("does not belong", ex.Message);
+        Assert.Contains(OwnershipViolationSnippet, ex.Message);
     }
 
     [Fact]
     public async Task Should_ThrowOnRemove_When_EntityOwnedByAnotherUser() {
         // Arrange — alice creates an entity, then bob tries to delete it.
-        var aliceServices = CreateDefaultServices("alice");
+        var aliceServices = CreateDefaultServices(AliceUserId);
         var aliceRepo = aliceServices.GetRequiredService<IRepository<SecNoteEntity, Guid>>();
 
         var entity = new SecNoteEntity { Title = "Alice's Note" };
@@ -79,13 +82,13 @@ public class UserScopedRepositorySecurityTests {
         // Act + Assert — bob must not be able to remove alice's entity.
         var ex = await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
             bobRepo.RemoveAsync(entity).AsTask());
-        Assert.Contains("does not belong", ex.Message);
+        Assert.Contains(OwnershipViolationSnippet, ex.Message);
     }
 
     [Fact]
     public async Task Should_ThrowOnRemoveRange_When_AnyEntityOwnedByAnotherUser() {
         // Arrange — alice owns two entities, bob owns one; bob tries to remove all three.
-        var aliceServices = CreateDefaultServices("alice");
+        var aliceServices = CreateDefaultServices(AliceUserId);
         var aliceRepo = aliceServices.GetRequiredService<IRepository<SecNoteEntity, Guid>>();
 
         var aliceEntity1 = new SecNoteEntity { Title = "Alice 1" };
@@ -101,13 +104,13 @@ public class UserScopedRepositorySecurityTests {
         // Act + Assert — bob must not be able to remove a range containing alice's entities.
         var ex = await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
             bobRepo.RemoveRangeAsync(new[] { bobEntity, aliceEntity1 }).AsTask());
-        Assert.Contains("does not belong", ex.Message);
+        Assert.Contains(OwnershipViolationSnippet, ex.Message);
     }
 
     [Fact]
     public async Task Should_AllowUpdate_When_EntityOwnedByCurrentUser() {
         // Arrange — alice creates and then updates her own entity.
-        var services = CreateDefaultServices("alice");
+        var services = CreateDefaultServices(AliceUserId);
         var repo = services.GetRequiredService<IRepository<SecNoteEntity, Guid>>();
 
         var entity = new SecNoteEntity { Title = "Original" };
@@ -121,13 +124,13 @@ public class UserScopedRepositorySecurityTests {
         Assert.True(result);
         var found = await repo.FindAsync(entity.Id);
         Assert.NotNull(found);
-        Assert.Equal("Updated", found!.Title);
+        Assert.Equal("Updated", found.Title);
     }
 
     [Fact]
     public async Task Should_AllowRemove_When_EntityOwnedByCurrentUser() {
         // Arrange — alice creates and then deletes her own entity.
-        var services = CreateDefaultServices("alice");
+        var services = CreateDefaultServices(AliceUserId);
         var repo = services.GetRequiredService<IRepository<SecNoteEntity, Guid>>();
 
         var entity = new SecNoteEntity { Title = "To Delete" };
@@ -145,7 +148,7 @@ public class UserScopedRepositorySecurityTests {
     [Fact]
     public async Task Should_AllowRemoveRange_When_AllEntitiesOwnedByCurrentUser() {
         // Arrange — alice owns all entities in the range.
-        var services = CreateDefaultServices("alice");
+        var services = CreateDefaultServices(AliceUserId);
         var repo = services.GetRequiredService<IRepository<SecNoteEntity, Guid>>();
 
         var e1 = new SecNoteEntity { Title = "A" };
@@ -164,7 +167,7 @@ public class UserScopedRepositorySecurityTests {
     [Fact]
     public async Task Should_ThrowOnUpdate_When_EntityNotFound() {
         // Arrange — an entity that was never persisted; the ownership check must reject it.
-        var services = CreateDefaultServices("alice");
+        var services = CreateDefaultServices(AliceUserId);
         var repo = services.GetRequiredService<IRepository<SecNoteEntity, Guid>>();
 
         var phantom = new SecNoteEntity { Title = "Phantom" };
@@ -172,7 +175,7 @@ public class UserScopedRepositorySecurityTests {
         // Act + Assert — cannot verify ownership of a non-existent entity.
         var ex = await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
             repo.UpdateAsync(phantom).AsTask());
-        Assert.Contains("does not belong", ex.Message);
+        Assert.Contains(OwnershipViolationSnippet, ex.Message);
     }
 
     #endregion
@@ -265,7 +268,7 @@ public class UserScopedRepositorySecurityTests {
         [DataOwner]
         public string? OwnerId { get; set; }
 
-        string IHaveOwner<string>.Owner => OwnerId!;
+        string IHaveOwner<string>.Owner => OwnerId;
         void IHaveOwner<string>.SetOwner(string owner) => OwnerId = owner;
     }
 

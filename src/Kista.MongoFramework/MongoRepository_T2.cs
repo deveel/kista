@@ -738,10 +738,9 @@ namespace Kista {
 			var list = entities as IList<TEntity> ?? entities.ToList();
 
 			// Fold the tracked-check into the removal loop instead of a separate Any() scan.
-			foreach (var item in list) {
-				if (DbSet.Context.ChangeTracker.GetEntry(item) == null)
-					throw new RepositoryException("The list contains entities that are not tracked by the repository");
-			}
+			var untracked = list.FirstOrDefault(item => DbSet.Context.ChangeTracker.GetEntry(item) == null);
+			if (untracked != null)
+				throw new RepositoryException("The list contains entities that are not tracked by the repository");
 
 			DbSet.RemoveRange(list);
 

@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace Kista.HealthChecks;
@@ -26,6 +26,8 @@ namespace Kista.HealthChecks;
 /// Extension methods for mapping Kista repository health check endpoints.
 /// </summary>
 public static class HealthCheckEndpointExtensions {
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
     /// <summary>
     /// Adds Kista repository health check endpoint with sensible defaults.
     /// </summary>
@@ -43,7 +45,7 @@ public static class HealthCheckEndpointExtensions {
         
         var healthCheckOptions = new HealthCheckOptions {
             ResponseWriter = options.ResponseType == HealthCheckResponseFormat.Json
-                ? JsonResponseWriter
+                ? (context, healthReport) => WriteJsonResponse(context, healthReport, options)
                 : TextResponseWriter,
             ResultStatusCodes = {
                 [HealthStatus.Healthy] = options.SuccessStatusCode,
@@ -58,40 +60,48 @@ public static class HealthCheckEndpointExtensions {
         
         return endpoints.MapHealthChecks(pattern, healthCheckOptions);
     }
-    
-    private static Task JsonResponseWriter(HttpContext context, HealthReport healthReport) {
+
+    private static async Task WriteJsonResponse(
+        HttpContext context,
+        HealthReport healthReport,
+        RepositoryHealthCheckEndpointOptions options) {
         context.Response.ContentType = "application/json; charset=utf-8";
-        
-        var options = new JsonWriterOptions { Indented = true };
-        
-        using var memoryStream = new MemoryStream();
-        using (var jsonWriter = new Utf8JsonWriter(memoryStream, options)) {
+
+        var writerOptions = new JsonWriterOptions { Indented = true };
+
+        await using var memoryStream = new MemoryStream();
+        using (var jsonWriter = new Utf8JsonWriter(memoryStream, writerOptions)) {
             jsonWriter.WriteStartObject();
             jsonWriter.WriteString("status", healthReport.Status.ToString());
             jsonWriter.WriteStartObject("results");
-            
-            foreach (var healthReportEntry in healthReport.Entries) {
-                jsonWriter.WriteStartObject(healthReportEntry.Key);
-                jsonWriter.WriteString("status", healthReportEntry.Value.Status.ToString());
-                jsonWriter.WriteString("description", healthReportEntry.Value.Description);
-                jsonWriter.WriteStartObject("data");
-                
-                foreach (var item in healthReportEntry.Value.Data) {
-                    jsonWriter.WritePropertyName(item.Key);
-                    JsonSerializer.Serialize(jsonWriter, item.Value,
-                        item.Value?.GetType() ?? typeof(object));
+
+            foreach (var entry in healthReport.Entries) {
+                jsonWriter.WriteStartObject(entry.Key);
+                jsonWriter.WriteString("status", entry.Value.Status.ToString());
+
+                if (options.IncludeExceptionDetails) {
+                    jsonWriter.WriteString("description", entry.Value.Description);
+                    jsonWriter.WriteStartObject("data");
+
+                    foreach (var item in entry.Value.Data) {
+                        jsonWriter.WritePropertyName(item.Key);
+                        JsonSerializer.Serialize(jsonWriter, item.Value, typeof(object), JsonOptions);
+                    }
+
+                    jsonWriter.WriteEndObject();
                 }
-                
-                jsonWriter.WriteEndObject();
+
                 jsonWriter.WriteEndObject();
             }
-            
+
             jsonWriter.WriteEndObject();
             jsonWriter.WriteEndObject();
         }
-        
-        return context.Response.WriteAsync(
-            Encoding.UTF8.GetString(memoryStream.ToArray()));
+
+        // Write the buffered JSON to the response stream asynchronously
+        // (Kestrel disallows synchronous IO by default).
+        memoryStream.Position = 0;
+        await memoryStream.CopyToAsync(context.Response.Body, 8192, context.RequestAborted).ConfigureAwait(false);
     }
     
     private static Task TextResponseWriter(HttpContext context, HealthReport healthReport) {

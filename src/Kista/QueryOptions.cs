@@ -20,16 +20,21 @@ namespace Kista {
 		/// <summary>
 		/// Gets the default query options, where
 		/// <see cref="IQueryOptions.SoftDeleteMode"/> is
-		/// <see cref="SoftDeleteMode.Default"/>.
+		/// <see cref="SoftDeleteMode.Default"/> and
+		/// <see cref="IQueryOptions.TrackEntities"/> is <c>false</c>.
 		/// </summary>
-		public static IQueryOptions Default { get; } = new QueryOptions(SoftDeleteMode.Default);
+		public static IQueryOptions Default { get; } = new QueryOptions(SoftDeleteMode.Default, false);
 
-		private QueryOptions(SoftDeleteMode softDeleteMode) {
+		private QueryOptions(SoftDeleteMode softDeleteMode, bool trackEntities) {
 			SoftDeleteMode = softDeleteMode;
+			TrackEntities = trackEntities;
 		}
 
 		/// <inheritdoc />
 		public SoftDeleteMode SoftDeleteMode { get; }
+
+		/// <inheritdoc />
+		public bool TrackEntities { get; }
 
 		/// <summary>
 		/// Returns a new <see cref="IQueryOptions"/> with the given
@@ -41,6 +46,16 @@ namespace Kista {
 		/// <returns>
 		/// Returns a new <see cref="IQueryOptions"/> carrying the given mode.
 		/// </returns>
-		public static IQueryOptions WithSoftDeleteMode(SoftDeleteMode mode) => new QueryOptions(mode);
+		public static IQueryOptions WithSoftDeleteMode(SoftDeleteMode mode) => new QueryOptions(mode, false);
+
+		/// <summary>
+		/// Returns a new <see cref="IQueryOptions"/> with
+		/// <see cref="TrackEntities"/> set to <c>true</c>.
+		/// </summary>
+		/// <returns>
+		/// Returns a new <see cref="IQueryOptions"/> that enables change
+		/// tracking on the query.
+		/// </returns>
+		public static IQueryOptions WithTracking() => new QueryOptions(SoftDeleteMode.Default, true);
 	}
 }

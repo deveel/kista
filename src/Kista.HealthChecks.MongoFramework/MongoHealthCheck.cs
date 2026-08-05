@@ -30,7 +30,7 @@ public class MongoHealthCheck<TEntity, TKey> : RepositoryHealthCheckBase<TEntity
     where TEntity : class {
     
     private readonly MongoHealthCheckOptions _options;
-    
+
     /// <summary>
     /// Initializes a new instance of the <see cref="MongoHealthCheck{TEntity, TKey}"/> class.
     /// </summary>
@@ -43,7 +43,15 @@ public class MongoHealthCheck<TEntity, TKey> : RepositoryHealthCheckBase<TEntity
     public override string DriverType => "MongoDB";
     
     /// <inheritdoc/>
-    protected override async ValueTask<HealthCheckResult> CheckHealthAsyncCore(
+		protected override async ValueTask<HealthCheckResult> CheckHealthAsyncCore(
+        IServiceProvider serviceProvider,
+        CancellationToken cancellationToken)
+        => await ExecuteCachedProbeAsync(
+            () => CheckHealthAsyncInner(serviceProvider, cancellationToken),
+            _options.CacheDuration,
+            cancellationToken);
+
+    private async ValueTask<HealthCheckResult> CheckHealthAsyncInner(
         IServiceProvider serviceProvider,
         CancellationToken cancellationToken) {
         

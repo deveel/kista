@@ -121,8 +121,9 @@ public class HealthCheckEndpointExtensionsTests {
     }
 
     [Fact]
-    public async Task MapRepositoryHealthChecks_Json_IncludesEntryData() {
+    public async Task MapRepositoryHealthChecks_Json_IncludesEntryData_When_IncludeExceptionDetailsIsTrue() {
         var (app, client) = await BuildApp(
+            configure: opts => opts.IncludeExceptionDetails = true,
             configureHealthChecks: b => b.AddCheck("WithData", () =>
                 HealthCheckResult.Healthy("ok", data: new Dictionary<string, object?> { { "metric", 42 } })));
 
@@ -135,6 +136,20 @@ public class HealthCheckEndpointExtensionsTests {
     }
 
     [Fact]
+    public async Task MapRepositoryHealthChecks_Json_OmitsEntryData_ByDefault() {
+        var (app, client) = await BuildApp(
+            configureHealthChecks: b => b.AddCheck("WithData", () =>
+                HealthCheckResult.Healthy("ok", data: new Dictionary<string, object?> { { "metric", 42 } })));
+
+        using (app) {
+            var response = await client.GetAsync(HealthEndpoint);
+            var body = await response.Content.ReadAsStringAsync();
+            Assert.DoesNotContain("\"data\"", body);
+            Assert.DoesNotContain("42", body);
+        }
+    }
+
+    [Fact]
     public void RepositoryHealthCheckEndpointOptions_Defaults_AreExpected() {
         var opts = new RepositoryHealthCheckEndpointOptions();
         Assert.Equal(HealthCheckResponseFormat.Json, opts.ResponseType);
@@ -143,6 +158,7 @@ public class HealthCheckEndpointExtensionsTests {
         Assert.Equal(503, opts.UnhealthyStatusCode);
         Assert.False(opts.AllowCaching);
         Assert.Null(opts.TagFilter);
+        Assert.False(opts.IncludeExceptionDetails);
     }
 
     [Fact]

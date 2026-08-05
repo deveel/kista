@@ -71,7 +71,11 @@ namespace Kista {
 			} else {
 				errorDomain = EntityErrorCodes.UnknownDomain;
 				errorCode = EntityErrorCodes.UnknownError;
-				errorMessage = exception.Message;
+				// Do not surface raw exception messages for non-OperationException:
+				// they may disclose infrastructure details (DB error text, connection
+				// strings, file paths). The error code conveys the meaning; the host
+				// application can map it to a localized user-facing message.
+				errorMessage = null;
 			}
 
 			return new OperationError(errorCode, errorDomain, errorMessage);

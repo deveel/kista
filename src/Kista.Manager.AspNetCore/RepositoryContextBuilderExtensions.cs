@@ -30,18 +30,24 @@ namespace Kista {
 			return builder;
 		}
 
-	/// <summary>
-	/// Registers an HTTP-based user accessor that resolves the current
-	/// user identifier from the request using default strategies:
-	/// claim ("sub") → query string ("user_id") → route value ("userId").
-	/// </summary>
-	/// <typeparam name="TKey">The type of the user identifier key.</typeparam>
-	/// <param name="builder">The repository context builder to configure.</param>
-	/// <returns>Returns the same builder instance for chaining.</returns>
-	public static RepositoryContextBuilder WithHttpUserAccessor<TKey>(this RepositoryContextBuilder builder) {
-		builder.Services.AddHttpUserAccessor<TKey>();
-		return builder;
-	}
+/// <summary>
+/// Registers an HTTP-based user accessor that resolves the current
+/// user identifier from the request using the secure default strategy:
+/// claim ("sub") only.
+/// </summary>
+/// <typeparam name="TKey">The type of the user identifier key.</typeparam>
+/// <param name="builder">The repository context builder to configure.</param>
+/// <returns>Returns the same builder instance for chaining.</returns>
+/// <remarks>
+/// To enable the pre-1.8.0 query-string ("user_id") and route ("userId") fallbacks,
+/// use the overload that accepts a configuration delegate and call
+/// <c>AddQueryString()</c> / <c>AddRoute()</c> explicitly. Those fallbacks are
+/// client-controlled and must only be enabled behind a trusted gateway.
+/// </remarks>
+public static RepositoryContextBuilder WithHttpUserAccessor<TKey>(this RepositoryContextBuilder builder) {
+	builder.Services.AddHttpUserAccessor<TKey>();
+	return builder;
+}
 
 	/// <summary>
 	/// Registers an HTTP-based user accessor with custom strategy configuration.

@@ -25,6 +25,8 @@ namespace Kista {
 	/// Extension methods for configuring MongoDB multi-tenancy on a <see cref="MongoRepositoryBuilder"/>.
 	/// </summary>
 	public static class RepositoryContextBuilderExtensions {
+		private static readonly System.Collections.Concurrent.ConcurrentDictionary<Type, Microsoft.Extensions.DependencyInjection.ObjectFactory> _connectionFactories = new();
+
 		/// <summary>
 		/// Configures tenant-specific MongoDB connections using Finbuckle.MultiTenant.
 		/// </summary>
@@ -39,16 +41,17 @@ namespace Kista {
 			builder.Services.AddOptions<MongoTenantConnectionOptions>()
 				.Configure(options => options.DefaultConnectionString = defaultConnection);
 
-#pragma warning disable S3011 // Accessing internal builder field to extract context type for multi-tenant setup
-			var contextTypeField = builder.GetType().GetField("_contextType", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-#pragma warning restore S3011
-			var contextType = (Type?)contextTypeField?.GetValue(builder)
-				?? throw new InvalidOperationException("Cannot determine context type from builder.");
+			var contextType = builder.ContextType;
 
 			var connectionType = typeof(IMongoDbConnection<>).MakeGenericType(contextType);
 			builder.Services.TryAdd(ServiceDescriptor.Describe(connectionType, sp => {
-				var implementationType = typeof(MongoDbTenantConnection<>).MakeGenericType(contextType);
-				return ActivatorUtilities.CreateInstance(sp, implementationType);
+				// Cache the compiled factory per closed context type to avoid
+				// reflection-based ActivatorUtilities.CreateInstance on every request.
+				var factory = _connectionFactories.GetOrAdd(contextType, t => {
+					var implementationType = typeof(MongoDbTenantConnection<>).MakeGenericType(t);
+					return ActivatorUtilities.CreateFactory(implementationType, Type.EmptyTypes);
+				});
+				return factory(sp, null);
 			}, ServiceLifetime.Scoped));
 
 			builder.Services.TryAdd(ServiceDescriptor.Describe(typeof(IMongoDbConnection), sp => {

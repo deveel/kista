@@ -1544,7 +1544,7 @@ namespace Kista {
 
 					// The entity is either deleted or doesn't exist: try a
 					// property-based key filter that the driver can translate.
-					var keyProperty = typeof(TEntity).GetProperty("Id");
+					var keyProperty = CachedKeyProperty;
 					if (keyProperty != null && keyProperty.PropertyType == typeof(TKey)) {
 						var filter = BuildKeyFilter(keyProperty, key);
 						var queryWithOptions = new Query(filter, null, QueryOptions.WithSoftDeleteMode(SoftDeleteMode.IncludeDeleted));
@@ -1555,6 +1555,11 @@ namespace Kista {
 
 			return await Repository.FindAsync(key, cancellationToken);
 		}
+
+		private static readonly System.Collections.Concurrent.ConcurrentDictionary<Type, PropertyInfo?> s_keyPropertyCache = new();
+
+		private static PropertyInfo? CachedKeyProperty =>
+			s_keyPropertyCache.GetOrAdd(typeof(TEntity), t => t.GetProperty("Id"));
 
 		private static IQueryFilter BuildKeyFilter(PropertyInfo keyProperty, TKey key) {
 			var parameter = Expression.Parameter(typeof(TEntity), "e");

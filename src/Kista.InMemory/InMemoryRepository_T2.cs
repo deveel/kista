@@ -247,6 +247,8 @@ namespace Kista {
 
 		// Returns a queryable view of the entity collection.
 		// Must be called while the read (or write) lock is held.
+		// Uses the raw entities dictionary (not the Entities property) to
+		// avoid recursive read-lock acquisition.
 		private IQueryable<TEntity> GetEntityQueryable() =>
 			entities.Values.Select(x => x.Entity).AsQueryable();
 
@@ -845,7 +847,9 @@ namespace Kista {
 					_lock.Dispose();
 				}
 
-				entities = null!;
+				// Do NOT null the entities field: a concurrent in-flight
+				// reader that already passed the disposed check could
+				// NullReferenceException. Clearing is sufficient.
 				disposedValue = true;
 			}
 		}

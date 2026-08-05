@@ -55,27 +55,25 @@ namespace Kista {
 			public static StartsWithToLikeVisitor Instance { get; } = new StartsWithToLikeVisitor();
 
 			protected override Expression VisitMethodCall(MethodCallExpression node) {
-				if (node.Method.Name == nameof(string.StartsWith)
-					&& node.Object?.Type == typeof(string)
-					&& node.Arguments.Count == 1
-					&& node.Arguments[0].Type == typeof(string)) {
-					var instance = Visit(node.Object)
-						?? throw new InvalidOperationException("StartsWith instance cannot be null.");
-					var value = Visit(node.Arguments[0])
-						?? throw new InvalidOperationException("StartsWith argument cannot be null.");
+			if (node.Method.Name == nameof(string.StartsWith)
+				&& node.Object?.Type == typeof(string)
+				&& node.Arguments.Count == 1
+				&& node.Arguments[0].Type == typeof(string)) {
+				var instance = Visit(node.Object)
+					?? throw new InvalidOperationException("StartsWith instance cannot be null.");
+				var value = Visit(node.Arguments[0])
+					?? throw new InvalidOperationException("StartsWith argument cannot be null.");
 
-					var pattern = Expression.Call(StringConcatMethod, value, Expression.Constant("%"));
-					var functions = Expression.Property(null, FunctionsProperty);
-					var like = Expression.Call(LikeMethod, functions, instance, pattern);
-
-					var instanceNotNull = Expression.NotEqual(instance, Expression.Constant(null, typeof(string)));
-					var valueNotNull = Expression.NotEqual(value, Expression.Constant(null, typeof(string)));
-
-					return Expression.AndAlso(instanceNotNull, Expression.AndAlso(valueNotNull, like));
-				}
-
-				return base.VisitMethodCall(node);
+				var pattern = Expression.Call(StringConcatMethod, value, Expression.Constant("%"));
+				var functions = Expression.Property(null, FunctionsProperty);
+				// Emit bare LIKE — SQL LIKE is NULL-safe (NULL LIKE x yields NULL / false),
+				// so the explicit null-checks are redundant and can prevent the provider
+				// from using the index on the LIKE prefix.
+				return Expression.Call(LikeMethod, functions, instance, pattern);
 			}
+
+			return base.VisitMethodCall(node);
+		}
 		}
 	}
 }

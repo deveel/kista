@@ -53,4 +53,17 @@ public class RepositoryHealthCheckEndpointOptions {
     /// If null, all health checks are included.
     /// </summary>
     public Func<IEnumerable<string>, bool>? TagFilter { get; set; }
+
+    /// <summary>
+    /// Whether to include exception details (descriptions and diagnostic data)
+    /// in the health check response. Defaults to <c>false</c>.
+    /// </summary>
+    /// <remarks>
+    /// When <c>false</c>, the JSON response includes only the aggregate
+    /// <c>status</c> and the entry names — never exception messages or
+    /// diagnostic data that could disclose infrastructure details (connection
+    /// strings, table names, SQL/Mongo error text, file paths). Set to
+    /// <c>true</c> in development or behind a trusted gateway to aid debugging.
+    /// </remarks>
+    public bool IncludeExceptionDetails { get; set; } = false;
 }

@@ -54,17 +54,32 @@ namespace Kista
 		}
 
 		/// <summary>
-		/// Registers HTTP-based strategies for <see cref="IUserAccessor{TKey}"/> with default configuration:
-		/// claim ("sub") → query string ("user_id") → route value ("userId").
+		/// Registers HTTP-based strategies for <see cref="IUserAccessor{TKey}"/> with the secure
+		/// default configuration: claim ("sub") only.
 		/// </summary>
 		/// <typeparam name="TKey">The type of the user identifier key.</typeparam>
 		/// <param name="services">The collection of services to register the user accessor.</param>
 		/// <returns>The given collection of services for chaining calls.</returns>
+		/// <remarks>
+		/// <para>
+		/// The default chain resolves the user identifier exclusively from the <c>"sub"</c> claim
+		/// of the authenticated <see cref="System.Security.Claims.ClaimsPrincipal"/>. This is a
+		/// <b>secure-by-default</b> policy: unauthenticated requests yield no user identity, so
+		/// <see cref="UserScopedRepositoryDecorator{TEntity, TKey, TUserKey}"/> returns no data
+		/// (or throws, per <see cref="UserScopingOptions.ThrowWhenUserNotSet"/>).
+		/// </para>
+		/// <para>
+		/// To restore the pre-1.8.0 behavior that also fell back to the <c>user_id</c> query-string
+		/// parameter and the <c>userId</c> route value, call
+		/// <see cref="AddHttpUserAccessor{TKey}(IServiceCollection, Action{IHttpUserIdentifierStrategyBuilder{TKey}})"/>
+		/// and add <c>AddQueryString()</c> / <c>AddRoute()</c> explicitly. <b>Warning:</b> the
+		/// query-string and route fallbacks are client-controlled and must only be enabled behind a
+		/// trusted gateway or an authorization layer that validates the resolved identity.
+		/// </para>
+		/// </remarks>
 		public static IServiceCollection AddHttpUserAccessor<TKey>(this IServiceCollection services) {
 			return services.AddUserAccessor<TKey>(builder => {
 				builder.Add(new ClaimUserIdentifierStrategy<TKey>());
-				builder.Add(new QueryStringUserIdentifierStrategy<TKey>());
-				builder.Add(new RouteUserIdentifierStrategy<TKey>());
 			});
 		}
 

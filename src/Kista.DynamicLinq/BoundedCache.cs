@@ -19,7 +19,7 @@ namespace Kista {
 	/// </summary>
 	/// <typeparam name="TValue">The type of value stored in the cache.</typeparam>
 	public abstract class BoundedCache<TValue> {
-		private readonly SemaphoreSlim _semaphore = new(1, 1);
+		private readonly ReaderWriterLockSlim _lock = new();
 		private readonly Dictionary<string, LinkedListNode<CacheEntry>> _map;
 		private readonly LinkedList<CacheEntry> _order;
 		private readonly int _maxCapacity;
@@ -96,11 +96,17 @@ namespace Kista {
 		protected bool TryGetCore(string key, out TValue? value) {
 			ArgumentNullException.ThrowIfNull(key);
 
-			_semaphore.Wait();
+			_lock.EnterUpgradeableReadLock();
 			try {
 				if (_map.TryGetValue(key, out var node)) {
-					_order.Remove(node);
-					_order.AddFirst(node);
+					// Promote to MRU — requires write lock.
+					_lock.EnterWriteLock();
+					try {
+						_order.Remove(node);
+						_order.AddFirst(node);
+					} finally {
+						_lock.ExitWriteLock();
+					}
 					Interlocked.Increment(ref _hits);
 					value = node.Value.Value;
 					return true;
@@ -110,7 +116,7 @@ namespace Kista {
 				value = default;
 				return false;
 			} finally {
-				_semaphore.Release();
+				_lock.ExitUpgradeableReadLock();
 			}
 		}
 
@@ -125,11 +131,19 @@ namespace Kista {
 			ArgumentNullException.ThrowIfNull(key);
 			ArgumentNullException.ThrowIfNull(value);
 
-			_semaphore.Wait();
+			_lock.EnterWriteLock();
 			try {
 				if (_map.TryGetValue(key, out var existingNode)) {
+					// Update-in-place: reuse the existing node to avoid allocating
+					// a new CacheEntry + LinkedListNode on every cache update.
 					_order.Remove(existingNode);
-				} else if (_map.Count >= _maxCapacity) {
+					existingNode.Value = existingNode.Value with { Value = value };
+					_order.AddFirst(existingNode);
+					_map[key] = existingNode;
+					return;
+				}
+
+				if (_map.Count >= _maxCapacity) {
 					var lruNode = _order.Last;
 					if (lruNode != null) {
 						_order.RemoveLast();
@@ -141,7 +155,7 @@ namespace Kista {
 				var newNode = _order.AddFirst(entry);
 				_map[key] = newNode;
 			} finally {
-				_semaphore.Release();
+				_lock.ExitWriteLock();
 			}
 		}
 
@@ -149,12 +163,12 @@ namespace Kista {
 		/// Removes all entries from the cache. Does not reset the <see cref="Statistics"/> counters.
 		/// </summary>
 		public void Clear() {
-			_semaphore.Wait();
+			_lock.EnterWriteLock();
 			try {
 				_map.Clear();
 				_order.Clear();
 			} finally {
-				_semaphore.Release();
+				_lock.ExitWriteLock();
 			}
 		}
 	}

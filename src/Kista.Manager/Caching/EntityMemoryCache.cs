@@ -31,8 +31,11 @@ namespace Kista.Caching {
 	/// </para>
 	/// <para>
 	/// Expiration is configured via <see cref="EntityCacheOptions{TEntity}"/>.
-	/// When no expiration is configured, entities are cached indefinitely
-	/// (subject to memory pressure eviction by <see cref="IMemoryCache"/>).
+	/// When no expiration is configured, entities are cached for 5 minutes
+	/// by default (aligning with <c>EntityDistributedCache</c> and
+	/// <c>EntityFusionCache</c>). Set <see cref="EntityCacheOptions.Expiration"/>
+	/// to <c>null</c> explicitly to cache indefinitely (not recommended —
+	/// configure <c>MemoryCacheOptions.SizeLimit</c> to bound memory usage).
 	/// </para>
 	/// </remarks>
 	public class EntityMemoryCache<TEntity> : IEntityCache<TEntity>
@@ -58,9 +61,15 @@ namespace Kista.Caching {
 		}
 
 		/// <summary>
-		/// Gets the expiration time for cached entities.
+		/// Gets the expiration time for cached entities. Defaults to 5 minutes
+		/// when not configured, aligning with the distributed and FusionCache
+		/// backends.
 		/// </summary>
-		protected virtual TimeSpan? Expiration => _options?.Expiration;
+		protected virtual TimeSpan? Expiration => _options is null
+			? DefaultExpiration
+			: _options.Expiration;
+
+		private static readonly TimeSpan DefaultExpiration = TimeSpan.FromMinutes(5);
 
 		/// <inheritdoc/>
 		public async ValueTask<TEntity?> GetOrSetAsync(string cacheKey, Func<ValueTask<TEntity?>> valueFactory, CancellationToken cancellationToken = default) {

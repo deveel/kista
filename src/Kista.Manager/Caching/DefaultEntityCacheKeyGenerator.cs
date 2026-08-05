@@ -58,10 +58,10 @@ namespace Kista.Caching {
 		/// <inheritdoc/>
 		public string[] GenerateAllKeys(TEntity entity) {
 			ArgumentNullException.ThrowIfNull(entity);
-			// By default, generate a single key from the entity's ToString().
-			// Subclasses can override to produce additional keys (e.g. by
-			// alternate unique fields).
-			return new[] { Normalize(_prefix + entity.ToString()) };
+		// By default, generate a single key from the entity's string representation.
+		// Subclasses can override to produce additional keys (e.g. by
+		// alternate unique fields).
+		return new[] { Normalize(_prefix + entity) };
 		}
 
 		private static string Normalize(string key) {

@@ -924,14 +924,11 @@ namespace Kista
 						.Take(request.Size)
 						.ToListAsync(cancellationToken);
 
-					// Skip the CountAsync round-trip for partial pages: if the page
-					// is not full, the total count is implied (offset + items.Count).
-					int totalCount;
-					if (items.Count < request.Size) {
-						totalCount = request.Offset + items.Count;
-					} else {
-						totalCount = await querySet.CountAsync(cancellationToken);
-					}
+				// Skip the CountAsync round-trip for partial pages: if the page
+				// is not full, the total count is implied (offset + items.Count).
+				int totalCount = items.Count < request.Size
+					? request.Offset + items.Count
+					: await querySet.CountAsync(cancellationToken);
 
 					return new PageQueryResult<TEntity>(pageQuery, totalCount, items);
 				}
@@ -945,12 +942,9 @@ namespace Kista
 					.Take(request.Size)
 					.ToListAsync(cancellationToken);
 
-				int allTotalCount;
-				if (allItems.Count < request.Size) {
-					allTotalCount = request.Offset + allItems.Count;
-				} else {
-					allTotalCount = await allQuerySet.CountAsync(cancellationToken);
-				}
+			int allTotalCount = allItems.Count < request.Size
+				? request.Offset + allItems.Count
+				: await allQuerySet.CountAsync(cancellationToken);
 
 				return new PageResult<TEntity>(request, allTotalCount, allItems);
 			} catch (Exception ex) {

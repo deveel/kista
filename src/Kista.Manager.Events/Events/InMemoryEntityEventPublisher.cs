@@ -19,7 +19,7 @@ namespace Kista.Events {
 	/// <summary>
 	/// A default in-process implementation of
 	/// <see cref="IEntityEventPublisher{TEntity}"/> that enqueues published
-	/// events into an unbounded <see cref="Channel{T}"/> for asynchronous
+	/// events into a bounded <see cref="Channel{T}"/> for asynchronous
 	/// consumption, and also records them in a list for test assertions.
 	/// </summary>
 	/// <typeparam name="TEntity">
@@ -33,6 +33,12 @@ namespace Kista.Events {
 	/// without any messaging dependency.
 	/// </para>
 	/// <para>
+	/// The internal channel is bounded by <see cref="InMemoryEventPublisherOptions.Capacity"/>
+	/// (default 1024). When the channel is full, publishers wait
+	/// (<see cref="BoundedChannelFullMode.Wait"/>) instead of growing memory
+	/// without bound, applying backpressure to the write path.
+	/// </para>
+	/// <para>
 	/// The <see cref="PublishedEvents"/> property exposes a thread-safe
 	/// snapshot of all events published so far, for use in unit tests and
 	/// debugging scenarios. For production workloads with real message
@@ -43,8 +49,32 @@ namespace Kista.Events {
 	public class InMemoryEntityEventPublisher<TEntity> : IEntityEventPublisher<TEntity>
 		where TEntity : class {
 		private readonly ConcurrentQueue<EntityEventData<TEntity>> _events = new();
-		private readonly Channel<EntityEventData<TEntity>> _channel =
-			Channel.CreateUnbounded<EntityEventData<TEntity>>();
+		private readonly Channel<EntityEventData<TEntity>> _channel;
+
+		/// <summary>
+		/// Initializes a new instance with default options (capacity 1024,
+		/// <see cref="BoundedChannelFullMode.Wait"/>).
+		/// </summary>
+		public InMemoryEntityEventPublisher()
+			: this(options: null) {
+		}
+
+		/// <summary>
+		/// Initializes a new instance with the specified options.
+		/// </summary>
+		/// <param name="options">
+		/// The configuration options. When <c>null</c>, defaults are used.
+		/// </param>
+		public InMemoryEntityEventPublisher(InMemoryEventPublisherOptions? options) {
+			var opts = options ?? new InMemoryEventPublisherOptions();
+
+			_channel = Channel.CreateBounded<EntityEventData<TEntity>>(
+				new BoundedChannelOptions(opts.Capacity) {
+					FullMode = opts.FullMode,
+					SingleReader = false,
+					SingleWriter = false,
+				});
+		}
 
 		/// <summary>
 		/// Gets a readable channel of all published events, for asynchronous
@@ -55,14 +85,18 @@ namespace Kista.Events {
 		/// <summary>
 		/// Gets a thread-safe snapshot of all events published so far.
 		/// </summary>
+		/// <remarks>
+		/// This property is intended for unit tests and debugging. Each access
+		/// copies the entire event list (O(n)); avoid calling it in
+		/// production hot paths.
+		/// </remarks>
 		public IReadOnlyList<EntityEventData<TEntity>> PublishedEvents => _events.ToArray();
 
 		/// <inheritdoc/>
-		public ValueTask PublishAsync(EntityEventData<TEntity> data, CancellationToken cancellationToken) {
+		public async ValueTask PublishAsync(EntityEventData<TEntity> data, CancellationToken cancellationToken) {
 			ArgumentNullException.ThrowIfNull(data);
 			_events.Enqueue(data);
-			_channel.Writer.TryWrite(data);
-			return ValueTask.CompletedTask;
+			await _channel.Writer.WriteAsync(data, cancellationToken).ConfigureAwait(false);
 		}
 	}
 }

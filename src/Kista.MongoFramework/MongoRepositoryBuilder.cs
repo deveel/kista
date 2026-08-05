@@ -34,6 +34,12 @@ namespace Kista
         }
 
         /// <summary>
+        /// Gets the <see cref="Type"/> of the MongoFramework context being
+        /// configured by this builder.
+        /// </summary>
+        public Type ContextType => _contextType;
+
+        /// <summary>
         /// Sets the connection string for the MongoDB connection.
         /// </summary>
         public MongoRepositoryBuilder WithConnectionString(string connectionString) {

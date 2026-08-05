@@ -59,6 +59,16 @@ namespace Kista.Events {
 	/// are pluggable through Hermodr channel packages (Azure Service Bus,
 	/// RabbitMQ, MassTransit, Webhook) with zero application code change.
 	/// </para>
+	/// <para>
+	/// <b>Performance note.</b> Unlike <c>InMemoryEntityEventPublisher</c>,
+	/// which enqueues events into a channel and returns immediately, this
+	/// publisher awaits the full Hermodr middleware chain inline on the
+	/// caller's request thread. If any middleware performs I/O (outbox DB
+	/// write, webhook HTTP), the user-facing write latency includes event
+	/// publication. To decouple publication from the request thread, wrap
+	/// the publisher in a bounded-channel-based buffer with a background
+	/// consumer.
+	/// </para>
 	/// </remarks>
 	public class HermodrEventPublisher<TEntity> : IEntityEventPublisher<TEntity>
 		where TEntity : class {
@@ -96,8 +106,9 @@ namespace Kista.Events {
 		private static readonly CloudEventAttribute DeleteKindAttribute =
 			CloudEventAttribute.CreateExtension(DeleteKindAttributeName, CloudEventAttributeType.String);
 
-		private readonly IEventPublisher _publisher;
-		private readonly HermodrEventsOptions _options;
+	private readonly IEventPublisher _publisher;
+	private readonly HermodrEventsOptions _options;
+	private readonly Uri _sourceUri;
 
 		/// <summary>
 		/// Constructs the publisher with the Hermodr <see cref="IEventPublisher"/>
@@ -111,11 +122,12 @@ namespace Kista.Events {
 		/// default <see cref="HermodrEventsOptions"/> are used.
 		/// </param>
 		public HermodrEventPublisher(
-			IEventPublisher publisher,
-			IOptions<HermodrEventsOptions>? options = null) {
-			_publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
-			_options = options?.Value ?? new HermodrEventsOptions();
-		}
+		IEventPublisher publisher,
+		IOptions<HermodrEventsOptions>? options = null) {
+		_publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
+		_options = options?.Value ?? new HermodrEventsOptions();
+		_sourceUri = BuildSourceUri();
+	}
 
 		/// <inheritdoc/>
 		public async ValueTask PublishAsync(EntityEventData<TEntity> data, CancellationToken cancellationToken) {
@@ -139,9 +151,9 @@ namespace Kista.Events {
 		/// through Hermodr.
 		/// </returns>
 		protected virtual CloudEvent BuildCloudEvent(EntityEventData<TEntity> data) {
-			var eventType = GetCloudEventType(data);
-			var source = BuildSourceUri();
-			var subject = data.Key?.ToString();
+		var eventType = GetCloudEventType(data);
+		var source = _sourceUri;
+		var subject = data.Key?.ToString();
 
 			var cloudEvent = new CloudEvent {
 				Type = eventType,

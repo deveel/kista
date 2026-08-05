@@ -8,20 +8,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- None.
-
-### Changed
-- None.
-
-### Fixed
-- None.
-
-### Chores
-- None.
-
-## [1.7.5] - 2026-08-05
-
-### Added
 
 - **`Kista.Manager.Events`** — a new opt-in base package providing a framework-agnostic domain event model for `EntityManager`, surfacing every meaningful lifecycle change (create, update, delete, restore) as a strongly-typed event through the [Operation Pipeline](docs/entity-manager/operation-pipeline.md).
   - `IEntityEventPublisher<TEntity>` abstraction and an `EntityEventData<TEntity>` base class with per-operation POCO subclasses — `EntityCreatedData<TEntity>`, `EntityUpdatedData<TEntity>` (carries the pre-image), `EntityDeletedData<TEntity>` (carries a `DeleteKind` `Soft`/`Hard` discriminator), and `EntityRestoredData<TEntity>`.
@@ -36,21 +22,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Pluggable transports through Hermodr channels (Azure Service Bus, RabbitMQ, MassTransit, Webhook) with zero application code change; the transactional outbox is deferred to the v1.9.0 audit-trail milestone.
   - See [Domain Events](docs/entity-manager/domain-events.md).
 - **`GetEntityKeyType(Type)`** on `RepositoryContextBuilder` — resolves the key type registered for a given entity type by scanning the registered `IRepository<,>` services, enabling cross-cutting registrations (such as `WithEntityEvents()`) to be applied to all tracked entity types.
-
-### Changed
-- None.
-
-### Fixed
-- None.
-
-### Chores
-- Removed the `Kista.SampleApp.DomainEvents` sample from `Kista.sln` (net9.0-only, incompatible with the net8.0 CI matrix leg); the sample now ships its own `.slnx`, aligning with the `OperationPipeline`/`SoftDelete`/`Owners` sample pattern.
-- `Kista.sln`, `Directory.Packages.props`, and `website/sidebars.ts` updated for the two new packages, the new test projects (`Kista.Manager.Events.XUnit`, `Kista.Manager.Hermodr.XUnit`), and the Domain Events sample; `ROADMAP.md` updated, with the Domain Events feature marked ✅ Completed.
-
-## [1.7.4] - 2026-08-02
-
-### Added
-
 - **Builtin `CacheInterceptor<TEntity, TKey>`** — the entity cache is aligned to the operation pipeline, replacing the former inline `SetToCacheAsync` / `EvictAsync` helpers duplicated across the write methods of `EntityManager` with an interceptor that runs in `PostWriteAsync`.
   - `Create`, `Update`, and `Restore` re-cache the written entity; `Remove` re-caches soft-deletable entities and evicts non-soft-deletable ones; `HardDelete` evicts; cache failures are logged and swallowed.
   - The interceptor is appended to the chain only when an `IEntityCache<TEntity>` is registered, so the cache concern is removable for tests or custom cache strategies without subclassing the manager.
@@ -58,15 +29,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - No change to `IEntityCache<TEntity>`, `IEntityCacheKeyGenerator<TEntity>`, or any `Kista.Manager.*` cache backend package — only the call site moves from inline helpers to `PostWriteAsync`.
   - See [Builtin `CacheInterceptor`](docs/entity-manager/operation-pipeline.md#builtin-cacheinterceptor).
 - **`Migrating from 1.7.3`** guide — covers the `RemoveRangeAsync` cache-behavior change and the removal of the inline `SetToCacheAsync` / `EvictAsync` helpers. See [Migrating from 1.7.3](docs/migrating-from-1.7.3.md).
+- **`KistaParsingConfig`** (`Kista.DynamicLinq`) — a hardened `ParsingConfig` that blocks the `new` operator (`DisallowNewKeyword = true`) and fully-qualified type casts (`SupportCastingToFullyQualifiedTypeAsString = false`), closing remote-code-execution vectors when Dynamic LINQ expression strings originate from untrusted input. See [Dynamic LINQ Security](docs/filtering/dynamic-linq-security.md).
+
+### Security
+
+- **[Breaking] `AddHttpUserAccessor<TKey>` default chain is now claim-only** (`Kista.Owners`) — the query-string (`?user_id=`) and route (`userId`) fallback strategies have been removed from the default registration to prevent owner-scope impersonation by unauthenticated clients. Consumers who need the old behavior must explicitly opt in via `AddHttpUserAccessor<TKey>(b => b.AddClaim().AddQueryString().AddRoute())`. The query-string and route strategies are client-controlled and must only be enabled behind a trusted gateway.
+- **[Breaking] Write paths verify ownership** (`Kista.Owners`) — `UpdateAsync`, `RemoveAsync`, and `RemoveRangeAsync` on `UserScopedRepositoryDecorator` now fetch the persisted entity and verify that its owner matches the current user before forwarding to the inner repository. An `UnauthorizedAccessException` is thrown on mismatch or when the entity cannot be found. Previously these methods forwarded directly with no owner check (IDOR on writes).
+- **[Breaking] `UserScopingOptions.ThrowWhenUserNotSet` defaults to `true`** (`Kista.Owners`) — the decorator now fails closed by default: when no user identity is resolvable, operations throw `InvalidOperationException` instead of silently returning empty results. The XML doc previously documented `true` as the default while the actual default was `false`; the code now matches the documentation. Set `ThrowWhenUserNotSet = false` to restore the fail-open behavior.
 
 ### Changed
 
 - **`RemoveRangeAsync` cache behavior aligned with `RemoveAsync`**: soft-deletable entities in a range Remove are now re-cached (the cached entry is refreshed with the soft-delete stamp applied) instead of evicted, matching the single `RemoveAsync`; non-soft-deletable entities in a range Remove continue to be evicted.
+- **`FilterExpression` and `DynamicLinqFilter` now use `KistaParsingConfig`** instead of `ParsingConfig.Default` — the `new` operator and fully-qualified type casts in expression strings are blocked. Legitimate filters (property access, comparisons, boolean logic) are unaffected.
 
 ### Fixed
-- None.
+
+- **`UserScopingOptions.ThrowWhenUserNotSet` XML doc corrected** — the documentation claimed the default was `true` while the actual default was `false`; the default is now `true` and the documentation is accurate.
 
 ### Chores
+
 - Bump `@docusaurus/*` from 3.10.1 to 3.10.2 and override 11 transitive vulnerable dependencies in `website/package-lock.json` (7 high, 3 medium, 1 low — `brace-expansion`, `body-parser`, `js-yaml`, `webpack-dev-server`, `shell-quote`, `fast-uri`, `svgo`); `npm audit` reports 0 vulnerabilities.
 
 ## [1.7.3] - 2026-07-21

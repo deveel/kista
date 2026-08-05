@@ -65,6 +65,7 @@ namespace Kista
 				throw new NotSupportedException("The repository does not support entities with composite primary keys");
 
 			PrimaryKey = entityKey;
+			_primaryKeyGetter = PrimaryKey.Properties[0].GetGetter().GetClrValue;
 		}
 
 		/// <summary>
@@ -82,15 +83,22 @@ namespace Kista
 		/// <inheritdoc />
 		protected override IServiceProvider? Services { get; }
 
-		/// <summary>
-		/// Gets a reference to the primary key of the entity.
-		/// </summary>
-		protected IKey PrimaryKey { get; }
+	/// <summary>
+	/// Gets a reference to the primary key of the entity.
+	/// </summary>
+	protected IKey PrimaryKey { get; }
 
-		/// <summary>
-		/// Gets the logger used by the repository.
-		/// </summary>
-		protected ILogger Logger { get; }
+	/// <summary>
+	/// Cached getter for the single primary-key property, avoiding
+	/// <c>PrimaryKey.Properties.ToList()</c> allocation on every
+	/// <see cref="GetEntityKey"/> call.
+	/// </summary>
+	private readonly Func<TEntity, object?> _primaryKeyGetter;
+
+	/// <summary>
+	/// Gets the logger used by the repository.
+	/// </summary>
+	protected ILogger Logger { get; }
 
 		/// <summary>
 		/// Gets the <see cref="DbSet{TEntity}"/> used by the repository to access the data.
@@ -107,6 +115,20 @@ namespace Kista
 		/// Returns the <see cref="IQueryable{T}"/> produced by
 		/// <see cref="Entities"/>.AsQueryable().
 		/// </returns>
+		/// <remarks>
+		/// <para>
+		/// <b>Include / AsSplitQuery guardrail.</b> When a subclass overrides
+		/// this method or the query to add <c>Include</c> / <c>ThenInclude</c>
+		/// for multi-navigation entities, EF Core produces a cartesian product
+		/// that can cause severe performance degradation. Always chain
+		/// <c>.AsSplitQuery()</c> after any <c>Include</c> call to avoid the
+		/// cartesian explosion:
+		/// <code>
+		/// protected override IQueryable&lt;TEntity&gt; Queryable() =>
+		///     Entities.Include(e => e.Related).AsSplitQuery();
+		/// </code>
+		/// </para>
+		/// </remarks>
 		protected override IQueryable<TEntity> Queryable() => Entities.AsQueryable();
 
 		/// <summary>
@@ -135,6 +157,15 @@ namespace Kista
 		/// <see cref="SoftDeleteMode.OnlyDeleted"/> call
 		/// <c>IgnoreQueryFilters()</c> to surface soft-deleted records.
 		/// </para>
+		/// <para>
+		/// <b>Multi-tenant warning.</b> When using <c>Kista.EntityFramework.MultiTenant</c>
+		/// with a shared tenant database, Finbuckle.MultiTenant applies tenant
+		/// isolation via a global query filter. Calling <c>IgnoreQueryFilters()</c>
+		/// (as <c>IncludeDeleted</c> and <c>OnlyDeleted</c> do) also removes the
+		/// tenant filter, potentially exposing cross-tenant data. Ensure that any
+		/// query using these modes includes an explicit tenant-scoped predicate
+		/// when operating in a shared-database multi-tenant configuration.
+		/// </para>
 		/// </remarks>
 		protected override IQueryable<TEntity> ApplySoftDeleteMode(IQueryable<TEntity> queryable, IQueryOptions? options) {
 			ArgumentNullException.ThrowIfNull(queryable);
@@ -150,6 +181,19 @@ namespace Kista
 				SoftDeleteMode.OnlyDeleted => queryable.IgnoreQueryFilters().Where(e => ((ISoftDeletable)e).IsDeleted),
 				_ => queryable
 			};
+		}
+
+		/// <summary>
+		/// Determines whether the query should return tracked entities based
+		/// on the <see cref="IQueryOptions.TrackEntities"/> flag.
+		/// </summary>
+		/// <param name="options">The query options, or <c>null</c> for defaults.</param>
+		/// <returns>
+		/// <c>true</c> if entities should be tracked; <c>false</c> (default)
+		/// for <c>AsNoTracking</c> read paths.
+		/// </returns>
+		private static bool ShouldTrackEntities(IQueryOptions? options) {
+			return options?.TrackEntities == true;
 		}
 
 		/// <inheritdoc />
@@ -271,15 +315,10 @@ namespace Kista
 
 		/// <inheritdoc/>
 		protected override TKey? GetEntityKey(TEntity entity) {
-			ArgumentNullException.ThrowIfNull(entity);
+		ArgumentNullException.ThrowIfNull(entity);
 
-			var props = PrimaryKey.Properties.ToList();
-			if (props.Count > 1)
-				throw new RepositoryException($"The entity '{typeof(TEntity)}' has more than one property has primary key");
-
-			var getter = props[0].GetGetter();
-			return (TKey?) getter.GetClrValue(entity);
-		}
+		return (TKey?) _primaryKeyGetter(entity);
+	}
 
 		/// <summary>
 		/// A method that is invoked when an entity is 
@@ -324,19 +363,39 @@ namespace Kista
 
 		/// <inheritdoc/>
 		public override async ValueTask AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default) {
-			ThrowIfDisposed();
+		ThrowIfDisposed();
 
-			try {
-				var toAdd = entities.Select(OnAddingEntity).ToList();
+		try {
+			// Apply OnAddingEntity lazily without force-materializing into an
+			// intermediate List when the projection is the identity (the default).
+			var toAdd = OnAddingEntityIsIdentity
+				? entities
+				: entities.Select(OnAddingEntity);
 
-				await Entities.AddRangeAsync(toAdd, cancellationToken);
+			await Entities.AddRangeAsync(toAdd, cancellationToken);
 
-				await Context.SaveChangesAsync(true, cancellationToken);
-			} catch (Exception ex) {
-				Logger.LogUnknownError(ex, typeof(TEntity));
-				throw new RepositoryException("Unknown error while trying to add a range of entities to the repository", ex);
-			}
+			await Context.SaveChangesAsync(true, cancellationToken);
+		} catch (Exception ex) {
+			Logger.LogUnknownError(ex, typeof(TEntity));
+			throw new RepositoryException("Unknown error while trying to add a range of entities to the repository", ex);
 		}
+	}
+
+	/// <summary>
+	/// Gets a value indicating whether <see cref="OnAddingEntity"/> is the
+	/// identity function (default), allowing <see cref="AddRangeAsync"/> to
+	// skip the intermediate <c>.Select(...).ToList()</c> materialization.
+	/// </summary>
+	private static bool OnAddingEntityIsIdentity {
+		get {
+			var method = typeof(EntityRepository<TEntity, TKey>)
+				.GetMethod(nameof(OnAddingEntity), System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public)
+				?.GetBaseDefinition();
+
+			// The base implementation is declared on EntityRepository itself.
+			return method?.DeclaringType == typeof(EntityRepository<TEntity, TKey>);
+		}
+	}
 
 		/// <inheritdoc/>
 		public override async ValueTask<bool> RemoveAsync(TEntity entity, CancellationToken cancellationToken = default) {
@@ -511,30 +570,7 @@ namespace Kista
 		/// </param>
 		protected virtual async ValueTask SoftDeleteRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken) {
 			try {
-				var now = ResolveSystemTime().UtcNow;
-
-				foreach (var item in entities) {
-					var entityId = GetEntityKey(item);
-					if (EqualityComparer<TKey>.Default.Equals(entityId, default))
-						throw new RepositoryException("One of the entities has no primary key configured");
-
-					var entry = Context.Entry(item);
-					if (entry.State == EntityState.Detached) {
-						entry = ResolveEntryForEntityKey(item, entityId);
-					}
-
-					if (item is ISoftDeletable softDeletable) {
-						softDeletable.IsDeleted = true;
-						softDeletable.DeletedAtUtc = now;
-					}
-
-					if (!ReferenceEquals(entry.Entity, item))
-						entry.CurrentValues.SetValues(item);
-
-					entry.State = EntityState.Modified;
-				}
-
-				await Context.SaveChangesAsync(true, cancellationToken);
+				await ApplyRangeStateAsync(entities, EntityState.Modified, stampSoftDelete: true, cancellationToken);
 			} catch (DbUpdateConcurrencyException ex) {
 				throw new RepositoryException("One or more entities were not found in the repository", ex);
 			} catch (DbUpdateException ex) {
@@ -548,26 +584,73 @@ namespace Kista
 			ThrowIfDisposed();
 
 			try {
-				foreach (var item in entities) {
-					var entityId = GetEntityKey(item);
-					if (EqualityComparer<TKey>.Default.Equals(entityId, default))
-						throw new RepositoryException("One of the entities has no primary key configured");
-
-					var entry = Context.Entry(item);
-					if (entry.State == EntityState.Detached) {
-						entry = ResolveEntryForEntityKey(item, entityId);
-					}
-
-					entry.State = EntityState.Deleted;
-				}
-
-				await Context.SaveChangesAsync(true, cancellationToken);
+				await ApplyRangeStateAsync(entities, EntityState.Deleted, stampSoftDelete: false, cancellationToken);
 			} catch (DbUpdateConcurrencyException ex) {
 				throw new RepositoryException("One or more entities were not found in the repository", ex);
 			} catch (Exception ex) {
 				Logger.LogUnknownError(ex, typeof(TEntity));
 				throw new RepositoryException("Unknown error while trying to remove a range of entities from the repository", ex);
 			}
+		}
+
+		/// <summary>
+		/// Shared core of <see cref="SoftDeleteRangeAsync"/> and
+		/// <see cref="HardDeleteRangeAsync"/>: builds an O(1) lookup from the
+		/// change tracker's local entries, resolves a tracked entry for each
+		/// entity (attaching by key when detached), optionally stamps
+		/// <see cref="ISoftDeletable"/> fields, assigns the target
+		/// <paramref name="state"/> to every entry, and persists the batch.
+		/// </summary>
+		/// <param name="entities">The entities to delete (soft or hard).</param>
+		/// <param name="state">
+		/// The target <see cref="EntityState"/> —
+		/// <see cref="EntityState.Modified"/> for soft-delete,
+		/// <see cref="EntityState.Deleted"/> for hard-delete.
+		/// </param>
+		/// <param name="stampSoftDelete">
+		/// When <c>true</c>, sets <see cref="ISoftDeletable.IsDeleted"/> and
+		/// <see cref="ISoftDeletable.DeletedAtUtc"/> on each soft-deletable entity.
+		/// </param>
+		/// <param name="cancellationToken">A token to cancel the operation.</param>
+		private async ValueTask ApplyRangeStateAsync(
+			IEnumerable<TEntity> entities,
+			EntityState state,
+			bool stampSoftDelete,
+			CancellationToken cancellationToken) {
+
+			var now = stampSoftDelete ? ResolveSystemTime().UtcNow : DateTimeOffset.MinValue;
+
+			// Build an O(1) lookup from the change tracker's Local entries once,
+			// instead of calling Local.FirstOrDefault (O(N)) per entity → O(N²).
+			var trackedByKey = new Dictionary<TKey, TEntity>();
+			foreach (var local in Entities.Local) {
+			var localKey = GetEntityKey(local);
+			if (!KeyHelper.IsNull(localKey) && !EqualityComparer<TKey>.Default.Equals(localKey, default))
+				trackedByKey[localKey] = local;
+			}
+
+			foreach (var item in entities) {
+				var entityId = GetEntityKey(item);
+				if (EqualityComparer<TKey>.Default.Equals(entityId, default))
+					throw new RepositoryException("One of the entities has no primary key configured");
+
+				var entry = Context.Entry(item);
+				if (entry.State == EntityState.Detached) {
+					entry = ResolveEntryForEntityKey(item, entityId, trackedByKey);
+				}
+
+				if (stampSoftDelete && item is ISoftDeletable softDeletable) {
+					softDeletable.IsDeleted = true;
+					softDeletable.DeletedAtUtc = now;
+				}
+
+				if (!ReferenceEquals(entry.Entity, item))
+					entry.CurrentValues.SetValues(item);
+
+				entry.State = state;
+			}
+
+			await Context.SaveChangesAsync(true, cancellationToken);
 		}
 
 		/// <summary>
@@ -716,6 +799,8 @@ namespace Kista
 			try {
 				InitializeFilter(query.Filter);
 				var queryable = ApplySoftDeleteMode(Queryable(), query.Options);
+				if (!ShouldTrackEntities(query.Options))
+					queryable = queryable.AsNoTracking();
 				var result = EfQueryNormalizer.Normalize(query.Apply(queryable));
 
 				return await result.FirstOrDefaultAsync(cancellationToken);
@@ -746,32 +831,34 @@ namespace Kista
 			}
 		}
 
-		/// <inheritdoc/>
+	/// <inheritdoc/>
 		public virtual async ValueTask<TEntity?> FindOriginalAsync(TKey key, CancellationToken cancellationToken = default) {
-			ThrowIfDisposed();
+		ThrowIfDisposed();
 
-			try {
-				var result = await Entities.FindAsync(new object?[] { ConvertEntityKey(key) }, cancellationToken);
-				if (result == null)
-					return result;
+		try {
+			var result = await Entities.FindAsync(new object?[] { ConvertEntityKey(key) }, cancellationToken);
+			if (result == null)
+				return result;
 
-				var entry = Context.Entry(result);
-				
-				// find a way to get the original values
-				//      of related entities...
+			var entry = Context.Entry(result);
+			
+			// find a way to get the original values
+			//      of related entities...
 
-				return (TEntity) entry.OriginalValues.ToObject();
-			} catch (Exception ex) {
-				Logger.LogUnknownError(ex, typeof(TEntity));
-				throw new RepositoryException("Unable to find an entity int he repository because of an error", ex);
-			}
+			return (TEntity) entry.OriginalValues.ToObject();
+		} catch (Exception ex) {
+			Logger.LogUnknownError(ex, typeof(TEntity));
+			throw new RepositoryException("Unable to find an entity int he repository because of an error", ex);
 		}
+	}
 
 		/// <inheritdoc/>
 		protected override async ValueTask<IReadOnlyList<TEntity>> FindAllAsync(IQuery query, CancellationToken cancellationToken = default) {
 			try {
 				InitializeFilter(query.Filter);
 				var queryable = ApplySoftDeleteMode(Queryable(), query.Options);
+				if (!ShouldTrackEntities(query.Options))
+					queryable = queryable.AsNoTracking();
 				var result = EfQueryNormalizer.Normalize(query.Apply(queryable));
 				return await result.ToListAsync(cancellationToken);
 			} catch (Exception ex) {
@@ -787,8 +874,13 @@ namespace Kista
 			return EfQueryNormalizer.Normalize(filter.Apply(query));
 		}
 
-		private EntityEntry<TEntity> ResolveEntryForEntityKey(TEntity entity, TKey entityId) {
-			var tracked = Entities.Local.FirstOrDefault(x => EqualityComparer<TKey>.Default.Equals(GetEntityKey(x)!, entityId));
+		private EntityEntry<TEntity> ResolveEntryForEntityKey(TEntity entity, TKey entityId, Dictionary<TKey, TEntity>? trackedByKey = null) {
+			TEntity? tracked = null;
+			if (trackedByKey != null) {
+				trackedByKey.TryGetValue(entityId, out tracked);
+			} else {
+				tracked = Entities.Local.FirstOrDefault(x => EqualityComparer<TKey>.Default.Equals(GetEntityKey(x), entityId));
+			}
 			if (tracked != null)
 				return Context.Entry(tracked);
 
@@ -823,25 +915,36 @@ namespace Kista
 			try {
 				if (request is PageQuery<TEntity> pageQuery) {
 					var queryable = ApplySoftDeleteMode(Queryable(), pageQuery.Options);
+					if (!ShouldTrackEntities(pageQuery.Options))
+						queryable = queryable.AsNoTracking();
 					var querySet = EfQueryNormalizer.Normalize(pageQuery.ApplyQuery(queryable));
-					var totalCount = await querySet.CountAsync(cancellationToken);
 
 					var items = await querySet
 						.Skip(request.Offset)
 						.Take(request.Size)
 						.ToListAsync(cancellationToken);
 
+				// Skip the CountAsync round-trip for partial pages: if the page
+				// is not full, the total count is implied (offset + items.Count).
+				int totalCount = items.Count < request.Size
+					? request.Offset + items.Count
+					: await querySet.CountAsync(cancellationToken);
+
 					return new PageQueryResult<TEntity>(pageQuery, totalCount, items);
 				}
 
 				var allQueryable = ApplySoftDeleteMode(Queryable(), null);
+				allQueryable = allQueryable.AsNoTracking();
 				var allQuerySet = EfQueryNormalizer.Normalize(allQueryable);
-				var allTotalCount = await allQuerySet.CountAsync(cancellationToken);
 
 				var allItems = await allQuerySet
 					.Skip(request.Offset)
 					.Take(request.Size)
 					.ToListAsync(cancellationToken);
+
+			int allTotalCount = allItems.Count < request.Size
+				? request.Offset + allItems.Count
+				: await allQuerySet.CountAsync(cancellationToken);
 
 				return new PageResult<TEntity>(request, allTotalCount, allItems);
 			} catch (Exception ex) {

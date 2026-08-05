@@ -28,7 +28,7 @@ public class EntityFrameworkHealthCheck<TEntity, TKey> : RepositoryHealthCheckBa
     where TEntity : class {
     
     private readonly EntityFrameworkHealthCheckOptions _options;
-    
+
     /// <summary>
     /// Initializes a new instance of the <see cref="EntityFrameworkHealthCheck{TEntity, TKey}"/> class.
     /// </summary>
@@ -41,7 +41,15 @@ public class EntityFrameworkHealthCheck<TEntity, TKey> : RepositoryHealthCheckBa
     public override string DriverType => "EntityFramework";
     
     /// <inheritdoc/>
-    protected override async ValueTask<HealthCheckResult> CheckHealthAsyncCore(
+		protected override async ValueTask<HealthCheckResult> CheckHealthAsyncCore(
+        IServiceProvider serviceProvider,
+        CancellationToken cancellationToken)
+        => await ExecuteCachedProbeAsync(
+            () => CheckHealthAsyncInner(serviceProvider, cancellationToken),
+            _options.CacheDuration,
+            cancellationToken);
+
+    private async ValueTask<HealthCheckResult> CheckHealthAsyncInner(
         IServiceProvider serviceProvider,
         CancellationToken cancellationToken) {
         

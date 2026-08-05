@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Collections.Concurrent;
 using System.ComponentModel.DataAnnotations;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -27,8 +28,19 @@ namespace Kista {
 		private readonly IEnumerable<TEntity> entities;
 		private MemberInfo? idMember;
 
+		/// <summary>
+		/// Cache of compiled filter predicates, keyed by filter reference.
+		/// Avoids re-compiling the same <c>Expression.Compile()</c> on every
+		/// filtered read when the source is <c>IEnumerable</c> (not <c>IQueryable</c>).
+		/// </summary>
+		private static readonly ConcurrentDictionary<IQueryFilter, Func<TEntity, bool>> _compiledFilters = new();
+
 		public RepositoryWrapper(IEnumerable<TEntity> entities) {
 			this.entities = entities ?? throw new ArgumentNullException(nameof(entities));
+		}
+
+		private static Func<TEntity, bool> GetCompiledFilter(IQueryFilter filter) {
+			return _compiledFilters.GetOrAdd(filter, f => f.AsLambda<TEntity>().Compile());
 		}
 
 		private bool IsMutable => (entities is IList<TEntity> list && !list.IsReadOnly) || 
@@ -206,9 +218,9 @@ namespace Kista {
 			if (entities is IQueryable<TEntity> queryable) {
 				result = query.Apply(queryable).FirstOrDefault();
 			} else {
-				if (query.HasFilter()) {
-					result = entities.FirstOrDefault(query.Filter!.AsLambda<TEntity>().Compile());
-				} else {
+			if (query.HasFilter()) {
+				result = entities.FirstOrDefault(GetCompiledFilter(query.Filter));
+			} else {
 					result = entities.FirstOrDefault();
 				}
 			}
@@ -223,9 +235,9 @@ namespace Kista {
 			if (entities is IQueryable<TEntity> queryable) {
 				result = query.Apply(queryable);
 			} else {
-				if (query.HasFilter()) {
-					result = entities.Where(query.Filter!.AsLambda<TEntity>().Compile());
-				} else {
+			if (query.HasFilter()) {
+				result = entities.Where(GetCompiledFilter(query.Filter));
+			} else {
 					result = entities;
 				}
 			}
@@ -240,7 +252,7 @@ namespace Kista {
 			if (entities is IQueryable<TEntity> queryable) {
 				result = queryable.Any(filter.AsLambda<TEntity>());
 			} else {
-				result = entities.Any(filter.AsLambda<TEntity>().Compile());
+				result = entities.Any(GetCompiledFilter(filter));
 			}
 
 			return new ValueTask<bool>(result);
@@ -253,7 +265,7 @@ namespace Kista {
 			if (entities is IQueryable<TEntity> queryable) {
 				result = queryable.LongCount(filter.AsLambda<TEntity>());
 			} else {
-				result = entities.LongCount(filter.AsLambda<TEntity>().Compile());
+				result = entities.LongCount(GetCompiledFilter(filter));
 			}
 
 			return new ValueTask<long>(result);

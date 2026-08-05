@@ -21,12 +21,22 @@ namespace Kista
 	{
 		/// <summary>
 		/// Gets or sets whether to throw an <see cref="System.InvalidOperationException"/>
-		/// when no user context is available. Defaults to <c>true</c>.
+		/// when no user context is available. Defaults to <c>true</c> (fail-closed).
 		/// </summary>
 		/// <remarks>
-		/// When <c>false</c>, operations return empty results or <c>null</c> instead of throwing.
+		/// <para>
+		/// When <c>true</c> (the default), any read or write operation attempted without a
+		/// resolvable user identity throws <see cref="System.InvalidOperationException"/>,
+		/// preventing accidental data leakage or unowned writes.
+		/// </para>
+		/// <para>
+		/// When <c>false</c>, operations return empty results or <c>null</c> instead of
+		/// throwing. This is a fail-open policy: set it to <c>false</c> only when you have
+		/// another layer guaranteeing that unauthenticated requests cannot reach the
+		/// decorated repository.
+		/// </para>
 		/// </remarks>
-		public bool ThrowWhenUserNotSet { get; set; }
+		public bool ThrowWhenUserNotSet { get; set; } = true;
 
 		/// <summary>
 		/// Gets or sets the name of the owner property to use, overriding automatic discovery.

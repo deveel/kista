@@ -30,7 +30,27 @@ public class EntityFrameworkHealthCheckOptions {
     /// <summary>
     /// Whether to run a test query in addition to connection check.
     /// </summary>
+    /// <remarks>
+    /// When <c>true</c>, the health check runs a <c>SELECT EXISTS</c> against
+    /// the entity table on every probe. This doubles the DB load under probe
+    /// pressure (Kubernetes/App Service orchestrators typically probe every
+    /// 5–10s). Leave <c>false</c> for liveness probes; enable only for
+    /// readiness probes that must verify schema availability.
+    /// </remarks>
     public bool TestQuery { get; set; } = false;
+
+    /// <summary>
+    /// The duration for which a cached health-check result is reused before
+    /// hitting the database again. Defaults to 5 seconds.
+    /// </summary>
+    /// <remarks>
+    /// Orchestrators (Kubernetes, App Service, Docker) typically probe
+    /// <c>/health</c> every 5–10s, and on a rolling restart they probe all
+    /// replicas simultaneously. Without caching, each probe opens a physical
+    /// DB connection. This cache coalesces concurrent probes and prevents
+    /// thundering-herd DB load during deploys.
+    /// </remarks>
+    public TimeSpan CacheDuration { get; set; } = TimeSpan.FromSeconds(5);
     
     /// <summary>
     /// Tags to apply to the health check.

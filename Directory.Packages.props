@@ -13,7 +13,7 @@
     <PackageVersion Include="Deveel.Results" Version="1.2.2" />
 
     <!-- Dynamic LINQ -->
-    <PackageVersion Include="System.Linq.Dynamic.Core" Version="1.7.2" />
+    <PackageVersion Include="System.Linq.Dynamic.Core" Version="1.7.3" />
 
     <!-- MongoDB ecosystem -->
     <PackageVersion Include="MongoFramework" Version="0.29.0" />

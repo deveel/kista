@@ -40,11 +40,12 @@ public class OperationErrorFactoryTests {
         // Act
         var error = _factory.CreateError(exception);
 
-        // Assert
+        // Assert — the raw exception message must NOT be surfaced to avoid
+        // leaking infrastructure details; the error code conveys the meaning.
         Assert.NotNull(error);
         Assert.Equal(EntityErrorCodes.UnknownError, error.Code);
         Assert.Equal(EntityErrorCodes.UnknownDomain, error.Domain);
-        Assert.Equal("Something went wrong", error.Message);
+        Assert.Null(error.Message);
     }
 
     [Fact]

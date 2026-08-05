@@ -63,6 +63,9 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore -p:TargetFrameworks=${{ matrix.target-framework }}
 
+      - name: Audit vulnerable packages
+        run: dotnet list package --vulnerable --include-transitive || true
+
       - name: Build
         run: dotnet build --no-restore -c Release -f ${{ matrix.target-framework }}
 

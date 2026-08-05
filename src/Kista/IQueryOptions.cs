@@ -36,5 +36,29 @@ namespace Kista {
 		/// treated by the query.
 		/// </summary>
 		SoftDeleteMode SoftDeleteMode { get; }
+
+		/// <summary>
+		/// Gets a value indicating whether the query should return tracked
+		/// entities (change-tracking enabled) or non-tracked entities
+		/// (<c>AsNoTracking</c>).
+		/// </summary>
+		/// <remarks>
+		/// <para>
+		/// The default is <c>false</c> (non-tracked): read operations
+		/// (<c>FindFirst</c>, <c>FindAll</c>, <c>GetPage</c>) do not register
+		/// returned entities in the EF Core <c>ChangeTracker</c>, avoiding
+		/// memory bloat and slower <c>SaveChanges</c> on read-only paths.
+		/// </para>
+		/// <para>
+		/// Set to <c>true</c> only when you intend to mutate the returned
+		/// entities and call <c>UpdateAsync</c> on the same
+		/// <c>DbContext</c> scope.
+		/// </para>
+		/// <para>
+		/// This option is only consulted by EF Core-based drivers
+		/// (<c>Kista.EntityFramework</c>). Other drivers ignore it.
+		/// </para>
+		/// </remarks>
+		bool TrackEntities { get; }
 	}
 }

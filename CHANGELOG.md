@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- None.
+
+### Changed
+- None.
+
+### Fixed
+- None.
+
+### Chores
+- None.
+
+## [1.7.5] - 2026-08-05
+
+### Added
 
 - **`Kista.Manager.Events`** — a new opt-in base package providing a framework-agnostic domain event model for `EntityManager`, surfacing every meaningful lifecycle change (create, update, delete, restore) as a strongly-typed event through the [Operation Pipeline](docs/entity-manager/operation-pipeline.md).
   - `IEntityEventPublisher<TEntity>` abstraction and an `EntityEventData<TEntity>` base class with per-operation POCO subclasses — `EntityCreatedData<TEntity>`, `EntityUpdatedData<TEntity>` (carries the pre-image), `EntityDeletedData<TEntity>` (carries a `DeleteKind` `Soft`/`Hard` discriminator), and `EntityRestoredData<TEntity>`.
@@ -22,6 +36,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Pluggable transports through Hermodr channels (Azure Service Bus, RabbitMQ, MassTransit, Webhook) with zero application code change; the transactional outbox is deferred to the v1.9.0 audit-trail milestone.
   - See [Domain Events](docs/entity-manager/domain-events.md).
 - **`GetEntityKeyType(Type)`** on `RepositoryContextBuilder` — resolves the key type registered for a given entity type by scanning the registered `IRepository<,>` services, enabling cross-cutting registrations (such as `WithEntityEvents()`) to be applied to all tracked entity types.
+
+### Changed
+- None.
+
+### Fixed
+- None.
+
+### Chores
+- Removed the `Kista.SampleApp.DomainEvents` sample from `Kista.sln` (net9.0-only, incompatible with the net8.0 CI matrix leg); the sample now ships its own `.slnx`, aligning with the `OperationPipeline`/`SoftDelete`/`Owners` sample pattern.
+- `Kista.sln`, `Directory.Packages.props`, and `website/sidebars.ts` updated for the two new packages, the new test projects (`Kista.Manager.Events.XUnit`, `Kista.Manager.Hermodr.XUnit`), and the Domain Events sample; `ROADMAP.md` updated, with the Domain Events feature marked ✅ Completed.
+
+## [1.7.4] - 2026-08-02
+
+### Added
+
 - **Builtin `CacheInterceptor<TEntity, TKey>`** — the entity cache is aligned to the operation pipeline, replacing the former inline `SetToCacheAsync` / `EvictAsync` helpers duplicated across the write methods of `EntityManager` with an interceptor that runs in `PostWriteAsync`.
   - `Create`, `Update`, and `Restore` re-cache the written entity; `Remove` re-caches soft-deletable entities and evicts non-soft-deletable ones; `HardDelete` evicts; cache failures are logged and swallowed.
   - The interceptor is appended to the chain only when an `IEntityCache<TEntity>` is registered, so the cache concern is removable for tests or custom cache strategies without subclassing the manager.
@@ -35,11 +64,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`RemoveRangeAsync` cache behavior aligned with `RemoveAsync`**: soft-deletable entities in a range Remove are now re-cached (the cached entry is refreshed with the soft-delete stamp applied) instead of evicted, matching the single `RemoveAsync`; non-soft-deletable entities in a range Remove continue to be evicted.
 
 ### Fixed
-
 - None.
 
 ### Chores
-
 - Bump `@docusaurus/*` from 3.10.1 to 3.10.2 and override 11 transitive vulnerable dependencies in `website/package-lock.json` (7 high, 3 medium, 1 low — `brace-expansion`, `body-parser`, `js-yaml`, `webpack-dev-server`, `shell-quote`, `fast-uri`, `svgo`); `npm audit` reports 0 vulnerabilities.
 
 ## [1.7.3] - 2026-07-21

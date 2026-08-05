@@ -191,19 +191,7 @@ public class UserScopedRepositorySecurityTests {
     [Fact]
     public async Task Should_ThrowOnFind_When_NoUserAndDefaultOptions() {
         // Arrange — no user accessor strategy, default options (ThrowWhenUserNotSet = true).
-        var services = new ServiceCollection();
-        services.AddRepositoryContext()
-            .AddRepository<SecNoteRepository>(repo => repo
-                .WithOwnerScoping(), ServiceLifetime.Singleton);
-
-        // No strategies registered — composite returns null.
-        var composite = new CompositeUserIdentifierStrategy<string>();
-        services.AddSingleton(composite);
-        services.AddSingleton<IUserAccessor<string>>(
-            sp => new StrategyBasedUserAccessor<string>(composite, sp));
-
-        var provider = services.BuildServiceProvider();
-        var repo = provider.GetRequiredService<IRepository<SecNoteEntity, Guid>>();
+        var repo = BuildNoUserServices();
 
         // Act + Assert — must throw, not return empty.
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -214,18 +202,7 @@ public class UserScopedRepositorySecurityTests {
     [Fact]
     public async Task Should_ThrowOnUpdate_When_NoUserAndDefaultOptions() {
         // Arrange — no user, default options (fail-closed).
-        var services = new ServiceCollection();
-        services.AddRepositoryContext()
-            .AddRepository<SecNoteRepository>(repo => repo
-                .WithOwnerScoping(), ServiceLifetime.Singleton);
-
-        var composite = new CompositeUserIdentifierStrategy<string>();
-        services.AddSingleton(composite);
-        services.AddSingleton<IUserAccessor<string>>(
-            sp => new StrategyBasedUserAccessor<string>(composite, sp));
-
-        var provider = services.BuildServiceProvider();
-        var repo = provider.GetRequiredService<IRepository<SecNoteEntity, Guid>>();
+        var repo = BuildNoUserServices();
 
         // Act + Assert — update must throw, not silently proceed.
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -253,6 +230,27 @@ public class UserScopedRepositorySecurityTests {
             sp => new StrategyBasedUserAccessor<string>(composite, sp));
 
         return services.BuildServiceProvider();
+    }
+
+    /// <summary>
+    /// Builds a service provider with owner scoping enabled but NO user
+    /// accessor strategies registered, so the composite returns null and the
+    /// default <c>ThrowWhenUserNotSet</c> behaviour is exercised.
+    /// </summary>
+    private static IRepository<SecNoteEntity, Guid> BuildNoUserServices() {
+        var services = new ServiceCollection();
+        services.AddRepositoryContext()
+            .AddRepository<SecNoteRepository>(repo => repo
+                .WithOwnerScoping(), ServiceLifetime.Singleton);
+
+        // No strategies registered — composite returns null.
+        var composite = new CompositeUserIdentifierStrategy<string>();
+        services.AddSingleton(composite);
+        services.AddSingleton<IUserAccessor<string>>(
+            sp => new StrategyBasedUserAccessor<string>(composite, sp));
+
+        var provider = services.BuildServiceProvider();
+        return provider.GetRequiredService<IRepository<SecNoteEntity, Guid>>();
     }
 
     // ============================================================

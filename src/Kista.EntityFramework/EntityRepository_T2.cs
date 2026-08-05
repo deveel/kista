@@ -570,39 +570,7 @@ namespace Kista
 		/// </param>
 		protected virtual async ValueTask SoftDeleteRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken) {
 			try {
-				var now = ResolveSystemTime().UtcNow;
-
-				// Build an O(1) lookup from the change tracker's Local entries once,
-				// instead of calling Local.FirstOrDefault (O(N)) per entity → O(N²).
-				var trackedByKey = new Dictionary<TKey, TEntity>();
-				foreach (var local in Entities.Local) {
-					var localKey = GetEntityKey(local);
-					if (localKey != null && !EqualityComparer<TKey>.Default.Equals(localKey, default))
-						trackedByKey[localKey] = local;
-				}
-
-				foreach (var item in entities) {
-					var entityId = GetEntityKey(item);
-					if (EqualityComparer<TKey>.Default.Equals(entityId, default))
-						throw new RepositoryException("One of the entities has no primary key configured");
-
-					var entry = Context.Entry(item);
-					if (entry.State == EntityState.Detached) {
-						entry = ResolveEntryForEntityKey(item, entityId, trackedByKey);
-					}
-
-					if (item is ISoftDeletable softDeletable) {
-						softDeletable.IsDeleted = true;
-						softDeletable.DeletedAtUtc = now;
-					}
-
-					if (!ReferenceEquals(entry.Entity, item))
-						entry.CurrentValues.SetValues(item);
-
-					entry.State = EntityState.Modified;
-				}
-
-				await Context.SaveChangesAsync(true, cancellationToken);
+				await ApplyRangeStateAsync(entities, EntityState.Modified, stampSoftDelete: true, cancellationToken);
 			} catch (DbUpdateConcurrencyException ex) {
 				throw new RepositoryException("One or more entities were not found in the repository", ex);
 			} catch (DbUpdateException ex) {
@@ -616,35 +584,73 @@ namespace Kista
 			ThrowIfDisposed();
 
 			try {
-				// Build an O(1) lookup from the change tracker's Local entries once,
-				// instead of calling Local.FirstOrDefault (O(N)) per entity → O(N²).
-				var trackedByKey = new Dictionary<TKey, TEntity>();
-				foreach (var local in Entities.Local) {
-					var localKey = GetEntityKey(local);
-					if (localKey != null && !EqualityComparer<TKey>.Default.Equals(localKey, default))
-						trackedByKey[localKey] = local;
-				}
-
-				foreach (var item in entities) {
-					var entityId = GetEntityKey(item);
-					if (EqualityComparer<TKey>.Default.Equals(entityId, default))
-						throw new RepositoryException("One of the entities has no primary key configured");
-
-					var entry = Context.Entry(item);
-					if (entry.State == EntityState.Detached) {
-						entry = ResolveEntryForEntityKey(item, entityId, trackedByKey);
-					}
-
-					entry.State = EntityState.Deleted;
-				}
-
-				await Context.SaveChangesAsync(true, cancellationToken);
+				await ApplyRangeStateAsync(entities, EntityState.Deleted, stampSoftDelete: false, cancellationToken);
 			} catch (DbUpdateConcurrencyException ex) {
 				throw new RepositoryException("One or more entities were not found in the repository", ex);
 			} catch (Exception ex) {
 				Logger.LogUnknownError(ex, typeof(TEntity));
 				throw new RepositoryException("Unknown error while trying to remove a range of entities from the repository", ex);
 			}
+		}
+
+		/// <summary>
+		/// Shared core of <see cref="SoftDeleteRangeAsync"/> and
+		/// <see cref="HardDeleteRangeAsync"/>: builds an O(1) lookup from the
+		/// change tracker's local entries, resolves a tracked entry for each
+		/// entity (attaching by key when detached), optionally stamps
+		/// <see cref="ISoftDeletable"/> fields, assigns the target
+		/// <paramref name="state"/> to every entry, and persists the batch.
+		/// </summary>
+		/// <param name="entities">The entities to delete (soft or hard).</param>
+		/// <param name="state">
+		/// The target <see cref="EntityState"/> —
+		/// <see cref="EntityState.Modified"/> for soft-delete,
+		/// <see cref="EntityState.Deleted"/> for hard-delete.
+		/// </param>
+		/// <param name="stampSoftDelete">
+		/// When <c>true</c>, sets <see cref="ISoftDeletable.IsDeleted"/> and
+		/// <see cref="ISoftDeletable.DeletedAtUtc"/> on each soft-deletable entity.
+		/// </param>
+		/// <param name="cancellationToken">A token to cancel the operation.</param>
+		private async ValueTask ApplyRangeStateAsync(
+			IEnumerable<TEntity> entities,
+			EntityState state,
+			bool stampSoftDelete,
+			CancellationToken cancellationToken) {
+
+			var now = stampSoftDelete ? ResolveSystemTime().UtcNow : DateTimeOffset.MinValue;
+
+			// Build an O(1) lookup from the change tracker's Local entries once,
+			// instead of calling Local.FirstOrDefault (O(N)) per entity → O(N²).
+			var trackedByKey = new Dictionary<TKey, TEntity>();
+			foreach (var local in Entities.Local) {
+				var localKey = GetEntityKey(local);
+				if (localKey != null && !EqualityComparer<TKey>.Default.Equals(localKey, default))
+					trackedByKey[localKey] = local;
+			}
+
+			foreach (var item in entities) {
+				var entityId = GetEntityKey(item);
+				if (EqualityComparer<TKey>.Default.Equals(entityId, default))
+					throw new RepositoryException("One of the entities has no primary key configured");
+
+				var entry = Context.Entry(item);
+				if (entry.State == EntityState.Detached) {
+					entry = ResolveEntryForEntityKey(item, entityId, trackedByKey);
+				}
+
+				if (stampSoftDelete && item is ISoftDeletable softDeletable) {
+					softDeletable.IsDeleted = true;
+					softDeletable.DeletedAtUtc = now;
+				}
+
+				if (!ReferenceEquals(entry.Entity, item))
+					entry.CurrentValues.SetValues(item);
+
+				entry.State = state;
+			}
+
+			await Context.SaveChangesAsync(true, cancellationToken);
 		}
 
 		/// <summary>

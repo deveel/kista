@@ -59,11 +59,43 @@ jobs:
         min-versions-to-keep: 10
         delete-only-pre-release-versions: "true"
 
+    - name: Remove the Old Kista.EntityFramework.MultiTenant Package
+      uses: actions/delete-package-versions@v4
+      with:
+        package-name: 'Kista.EntityFramework.MultiTenant'
+        package-type: 'nuget'
+        min-versions-to-keep: 10
+        delete-only-pre-release-versions: "true"
+
+    - name: Remove the Old Kista.Owners Package
+      uses: actions/delete-package-versions@v4
+      with:
+        package-name: 'Kista.Owners'
+        package-type: 'nuget'
+        min-versions-to-keep: 10
+        delete-only-pre-release-versions: "true"
+
 
     - name: Remove the Old Kista.Manager Package
       uses: actions/delete-package-versions@v4
       with:
         package-name: 'Kista.Manager'
+        package-type: 'nuget'
+        min-versions-to-keep: 10
+        delete-only-pre-release-versions: "true"
+
+    - name: Remove the Old Kista.Manager.Events Package
+      uses: actions/delete-package-versions@v4
+      with:
+        package-name: 'Kista.Manager.Events'
+        package-type: 'nuget'
+        min-versions-to-keep: 10
+        delete-only-pre-release-versions: "true"
+
+    - name: Remove the Old Kista.Manager.Hermodr Package
+      uses: actions/delete-package-versions@v4
+      with:
+        package-name: 'Kista.Manager.Hermodr'
         package-type: 'nuget'
         min-versions-to-keep: 10
         delete-only-pre-release-versions: "true"
@@ -88,6 +120,22 @@ jobs:
       uses: actions/delete-package-versions@v4
       with:
         package-name: 'Kista.Manager.EasyCaching'
+        package-type: 'nuget'
+        min-versions-to-keep: 10
+        delete-only-pre-release-versions: "true"
+
+    - name: Remove the Old Kista.Manager.FusionCache Package
+      uses: actions/delete-package-versions@v4
+      with:
+        package-name: 'Kista.Manager.FusionCache'
+        package-type: 'nuget'
+        min-versions-to-keep: 10
+        delete-only-pre-release-versions: "true"
+
+    - name: Remove the Old Kista.Manager.DistributedCache Package
+      uses: actions/delete-package-versions@v4
+      with:
+        package-name: 'Kista.Manager.DistributedCache'
         package-type: 'nuget'
         min-versions-to-keep: 10
         delete-only-pre-release-versions: "true"

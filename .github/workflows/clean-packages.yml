@@ -124,6 +124,22 @@ jobs:
         min-versions-to-keep: 10
         delete-only-pre-release-versions: "true"
 
+    - name: Remove the Old Kista.Manager.FusionCache Package
+      uses: actions/delete-package-versions@v4
+      with:
+        package-name: 'Kista.Manager.FusionCache'
+        package-type: 'nuget'
+        min-versions-to-keep: 10
+        delete-only-pre-release-versions: "true"
+
+    - name: Remove the Old Kista.Manager.DistributedCache Package
+      uses: actions/delete-package-versions@v4
+      with:
+        package-name: 'Kista.Manager.DistributedCache'
+        package-type: 'nuget'
+        min-versions-to-keep: 10
+        delete-only-pre-release-versions: "true"
+
     - name: Remove the Old Kista.HealthChecks Package
       uses: actions/delete-package-versions@v4
       with:

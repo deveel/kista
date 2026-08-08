@@ -91,6 +91,7 @@ const sidebars: SidebarsConfig = {
       'migrating-from-1.7',
       'migrating-from-1.7.2',
       'migrating-from-1.7.3',
+      'migrating-from-1.7.5',
       ],
     },
     'roadmap',
